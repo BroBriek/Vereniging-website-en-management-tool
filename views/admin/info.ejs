@@ -1,0 +1,136 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Handleiding & Hulp</h1>
+        <a href="/admin" class="btn btn-secondary">Terug naar Dashboard</a>
+    </div>
+
+    <div class="row">
+        <!-- Left Column: CMS Manual -->
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Hoe werkt de website?</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="text-primary">1. Pagina's Bewerken</h5>
+                    <p>
+                        De meeste pagina's (Home, Praktisch, Afdelingen, T-Shirts) hebben een vaste layout. 
+                        Je kunt de tekst en titels aanpassen.
+                    </p>
+                    <ul>
+                        <li>Ga naar het <strong>Dashboard</strong> of klik op de <strong>"Bewerk Pagina"</strong> knop die bovenaan verschijnt als je ingelogd bent.</li>
+                        <li>Vul de tekstvakken in en klik op <strong>Opslaan</strong>.</li>
+                    </ul>
+
+                    <h5 class="text-primary mt-4">2. Leiding Beheren</h5>
+                    <p>
+                        Bij het tabblad <strong>Leiding</strong> kun je nieuwe leiding toevoegen.
+                    </p>
+                    <ul>
+                        <li>Selecteer de juiste <strong>Groep</strong> (Ribbels, Speelclub, etc.).</li>
+                        <li>De website zet ze automatisch in de juiste kleur en volgorde.</li>
+                        <li>Als een groep meer dan 4 leiding heeft, wordt het automatisch een horizontale schuiflijst (carousel).</li>
+                    </ul>
+
+                    <h5 class="text-primary mt-4">3. Kalender</h5>
+                    <p>
+                        Activiteiten worden automatisch gesorteerd op datum.
+                    </p>
+                    <ul>
+                        <li>Oude evenementen verdwijnen vanzelf van de site (maar blijven in de database).</li>
+                        <li>Klik op een evenement in de kalender om te zien hoe het eruit ziet voor bezoekers.</li>
+                    </ul>
+
+                    <h5 class="text-primary mt-4">4. Foto's & Bestanden</h5>
+                    <p>
+                        Via <strong>"Bestanden & Foto's"</strong> in het dashboard kun je afbeeldingen uploaden.
+                    </p>
+                    <ul>
+                        <li>Upload een foto.</li>
+                        <li>Klik op <strong>"Kopieer URL"</strong> als je de link nodig hebt.</li>
+                        <li>Klik op <strong>"Kopieer HTML"</strong> om een kant-en-klare code te krijgen die je in een tekstvak kunt plakken.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: HTML Tutorial -->
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="bi bi-code-slash me-2"></i>HTML voor Beginners</h4>
+                </div>
+                <div class="card-body">
+                    <p>
+                        In de meeste tekstvakken mag je <strong>HTML-code</strong> gebruiken om je tekst op te maken. 
+                        Hier zijn de belangrijkste codes die je moet kennen:
+                    </p>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Wat je wil doen</th>
+                                    <th>De code</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Vette tekst</strong></td>
+                                    <td><code>&lt;b&gt;Mijn Tekst&lt;/b&gt;</code></td>
+                                </tr>
+                                <tr>
+                                    <td><em>Schuine tekst</em></td>
+                                    <td><code>&lt;i&gt;Mijn Tekst&lt;/i&gt;</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Nieuwe regel (Enter)</td>
+                                    <td><code>&lt;br&gt;</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Link naar website</td>
+                                    <td><code>&lt;a href="https://google.com"&gt;Klik Hier&lt;/a&gt;</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Afbeelding tonen</td>
+                                    <td><code>&lt;img src="/uploads/foto.jpg"&gt;</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <strong>Tip:</strong> Bij de tool <strong>"Bestanden & Foto's"</strong> kun je op de knop <strong>"Kopieer HTML"</strong> klikken. Je krijgt dan direct de juiste code voor je foto die je hieronder kunt plakken!
+                        </small>
+                    </div>
+                    
+                    <h5>Voorbeeldje:</h5>
+                    <div class="p-3 bg-light border rounded mb-2">
+                        <code>
+                            Hallo &lt;b&gt;iedereen&lt;/b&gt;!<br>
+                            Hier is een foto van ons kamp:<br>
+                            &lt;br&gt;<br>
+                            &lt;img src="/img/Hero.jpg" width="100%" style="border-radius: 10px;"&gt;<br>
+                            &lt;br&gt;<br>
+                            Groetjes van de leiding.
+                        </code>
+                    </div>
+                    <strong>Resultaat:</strong>
+                    <div class="p-3 border rounded bg-white">
+                        Hallo <b>iedereen</b>!<br>
+                        Hier is een foto van ons kamp:<br>
+                        <br>
+                        <img src="/img/Hero.jpg" width="100%" style="border-radius: 10px;" alt="Voorbeeld Foto"><br>
+                        <br>
+                        Groetjes van de leiding.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

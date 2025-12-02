@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+<h1>Leiding Beheren</h1>
+<a href="/admin" class="btn btn-secondary mb-3">Terug</a>
+
+<div class="card mb-4">
+    <div class="card-header">Nieuwe Leiding Toevoegen</div>
+    <div class="card-body">
+        <form action="/admin/leaders" method="POST" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label>Naam</label>
+                    <input type="text" class="form-control" name="name" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Groep</label>
+                    <select class="form-select" name="group">
+                        <option>Ribbels</option>
+                        <option>Speelclub</option>
+                        <option>Rakwi's</option>
+                        <option>Tito's</option>
+                        <option>Keti's</option>
+                        <option>Aspi's</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Aantal jaren leiding</label>
+                    <input type="number" class="form-control" name="years_active" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Studie/Werk</label>
+                    <input type="text" class="form-control" name="study">
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label>Extra Info</label>
+                    <textarea class="form-control" name="extra_info" rows="2"></textarea>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label>Foto</label>
+                    <input type="file" class="form-control" name="image">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Toevoegen</button>
+        </form>
+    </div>
+</div>
+
+<h3>Huidige Leiding</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Naam</th>
+            <th>Groep</th>
+            <th>Jaren</th>
+            <th>Actie</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% leaders.forEach(leader => { %>
+            <tr>
+                <td><%= leader.name %></td>
+                <td><%= leader.group %></td>
+                <td><%= leader.years_active %></td>
+                <td>
+                    <form action="/admin/leaders/<%= leader.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
+                    </form>
+                </td>
+            </tr>
+        <% }) %>
+    </tbody>
+</table>
+<%- include('../partials/footer') %>

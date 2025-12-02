@@ -1,0 +1,88 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Kalender</h1>
+        <% if (user) { %>
+            <a href="/admin/events" class="btn btn-chiro btn-sm">Bewerk Kalender</a>
+        <% } %>
+    </div>
+
+    <% if (events.length === 0) { %>
+        <div class="alert alert-warning text-center p-5 rounded-3 shadow-sm">
+            <h3 class="mb-3">Geen activiteiten gepland</h3>
+            <p>Houd deze pagina in de gaten voor komende evenementen!</p>
+        </div>
+    <% } else { %>
+        <div class="list-group shadow-sm rounded-3">
+            <% events.forEach(event => { 
+                const dateObj = new Date(event.date);
+                const day = dateObj.getDate();
+                const monthNames = ["JAN", "FEB", "MRT", "APR", "MEI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
+                const month = monthNames[dateObj.getMonth()];
+            %>
+                <button type="button" class="list-group-item list-group-item-action d-flex align-items-center p-3 border-0 border-bottom" 
+                         data-event="<%= JSON.stringify(event) %>"
+                         onclick="openEventModal(this)">
+                        
+                    <div class="calendar-date-badge me-4">
+                        <span class="calendar-day"><%= day %></span>
+                        <span class="calendar-month"><%= month %></span>
+                    </div>
+                    
+                    <div class="flex-grow-1">
+                        <h4 class="mb-0 text-primary fw-bold"><%= event.title %></h4>
+                    </div>
+                    
+                    <i class="bi bi-chevron-right fs-4 text-muted"></i>
+                </button>
+            <% }) %>
+        </div>
+    <% } %>
+</div>
+
+<!-- Event Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title text-uppercase fw-bold text-danger" id="modalEventDate"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 pb-5 pt-2">
+                <h2 class="mb-4 text-primary" id="modalEventTitle"></h2>
+                <div class="p-4 bg-light rounded-3 border-start border-4 border-warning fs-5">
+                    <!-- Content will be injected as HTML -->
+                    <div id="modalEventDesc"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-chiro" data-bs-dismiss="modal">Sluiten</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEventModal(element) {
+        const eventJson = element.getAttribute('data-event');
+        if (!eventJson) return;
+        
+        const event = JSON.parse(eventJson);
+        
+        // Format date for modal
+        const dateObj = new Date(event.date);
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = dateObj.toLocaleDateString('nl-NL', options);
+        
+        document.getElementById('modalEventDate').textContent = formattedDate;
+        document.getElementById('modalEventTitle').textContent = event.title;
+        // Use innerHTML to render HTML tags from the description
+        document.getElementById('modalEventDesc').innerHTML = event.description || '<span class="text-muted fst-italic">Geen beschrijving beschikbaar.</span>';
+        
+        const myModal = new bootstrap.Modal(document.getElementById('eventModal'));
+        myModal.show();
+    }
+</script>
+
+<%- include('../partials/footer') %>

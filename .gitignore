@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Database & Sessions (Local data)
+*.sqlite
+database.sqlite
+sessions.sqlite
+
+# Backups
+backups/
+
+# User Uploads (Keep folder, ignore content)
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db

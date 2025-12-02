@@ -1,0 +1,32 @@
+<%- include('../partials/header') %>
+
+<div class="hero-section">
+    <img src="<%= (content.hero_image && content.hero_image.content) ? content.hero_image.content : '/img/Hero.jpg' %>" alt="Chiro Hero" class="hero-img">
+    <div class="hero-text">
+        <h1><%= (content.hero_title && content.hero_title.content) ? content.hero_title.content : 'Welkom bij Chiro!' %></h1>
+        <p><%= (content.hero_text && content.hero_text.content) ? content.hero_text.content : 'Samen spelen, samen leven.' %></p>
+    </div>
+</div>
+
+<% if (user) { %>
+    <div class="container mb-4">
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <span>Admin modus actief</span>
+            <a href="/admin/page/home" class="btn btn-chiro btn-sm">Bewerk deze pagina</a>
+        </div>
+    </div>
+<% } %>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card p-4">
+                <div class="card-body">
+                    <%- (content.intro && content.intro.content) ? content.intro.content : '<p class="text-center">Welkom op onze nieuwe website. Hier vind je alle info over onze werking.</p>' %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

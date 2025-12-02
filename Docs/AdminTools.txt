@@ -1,0 +1,4 @@
+Admin Management Script:
+      Je kunt nu admins toevoegen of verwijderen via de terminal.
+       * Toevoegen: node scripts/manage_admin.js add <gebruikersnaam> <wachtwoord>
+       * Verwijderen: node scripts/manage_admin.js remove <gebruikersnaam>
