@@ -1,0 +1,22 @@
+<%- include('../partials/header') %>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mt-5">
+            <div class="card-header bg-danger text-white">Login Leiding</div>
+            <div class="card-body">
+                <form action="/auth/login" method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Gebruikersnaam</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Wachtwoord</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">Inloggen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<%- include('../partials/footer') %>

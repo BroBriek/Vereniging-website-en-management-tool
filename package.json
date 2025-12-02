@@ -1,0 +1,29 @@
+{
+  "name": "chirosite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "backup": "node scripts/backup.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.1",
+    "connect-sqlite3": "^0.9.16",
+    "dotenv": "^17.2.3",
+    "ejs": "^3.1.10",
+    "express": "^5.2.1",
+    "express-session": "^1.18.2",
+    "method-override": "^3.0.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.11",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "sequelize": "^6.37.7",
+    "sqlite3": "^5.1.7"
+  }
+}

@@ -1,0 +1,104 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Bestandsbeheer</h1>
+        <a href="/admin" class="btn btn-secondary">Terug naar Dashboard</a>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <%= error %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <%= success %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+
+    <!-- Upload Area -->
+    <div class="card mb-5 p-4 text-center" style="border: 3px dashed #ccc; background-color: #f9f9f9;">
+        <h4 class="mb-3">Upload een nieuw bestand</h4>
+        <form action="/admin/uploads" method="POST" enctype="multipart/form-data" class="d-flex justify-content-center align-items-center flex-column">
+            <div class="mb-3">
+                <input type="file" name="file" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-success">Uploaden</button>
+        </form>
+    </div>
+
+    <!-- Gallery -->
+    <h3 class="mb-3">Beschikbare Bestanden</h3>
+    <% if(files.length === 0) { %>
+        <div class="alert alert-info">Nog geen bestanden geüpload.</div>
+    <% } else { %>
+        <div class="row">
+            <% files.forEach(file => { 
+                const isImage = file.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                const fileUrl = `/uploads/${file}`;
+                const htmlTag = `<img src="${fileUrl}" alt="${file}" class="img-fluid">`;
+            %>
+                <div class="col-md-4 col-lg-3 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center py-2 px-3 bg-light">
+                            <small class="text-truncate" title="<%= file %>"><%= file %></small>
+                            <form action="/admin/uploads/<%= file %>?_method=DELETE" method="POST" onsubmit="return confirm('Dit bestand definitief verwijderen?');" class="m-0">
+                                <button type="submit" class="btn btn-link text-danger p-0"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-center bg-white" style="height: 150px; overflow: hidden;">
+                            <% if(isImage) { %>
+                                <img src="<%= fileUrl %>" class="img-fluid" style="max-height: 100%; max-width: 100%;">
+                            <% } else { %>
+                                <i class="bi bi-file-earmark fs-1 text-muted"></i>
+                            <% } %>
+                        </div>
+                        <div class="card-body p-2 text-center bg-light border-top">
+                            <div class="btn-group w-100">
+                                <button class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('<%= fileUrl %>')">
+                                    Kopieer URL
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('<%= htmlTag.replace(/'/g, "\\'") %>')">
+                                    Kopieer HTML
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% })
+            %>
+        </div>
+    <% }
+    %>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="copyToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        Gekopieerd naar klembord!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            const toastEl = document.getElementById('copyToast');
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            alert('Kon niet kopiëren. Handmatig selecteren aub.');
+        });
+    }
+</script>
+
+<%- include('../partials/footer') %>

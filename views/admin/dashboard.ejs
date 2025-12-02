@@ -1,0 +1,59 @@
+<%- include('../partials/header') %>
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1>Admin Dashboard</h1>
+        <p>Welkom, <%= user.username %>!</p>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Leiding Beheren</h5>
+                <p class="card-text">Voeg leiding toe, wijzig of verwijder.</p>
+                <a href="/admin/leaders" class="btn btn-primary">Ga naar Leiding</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Kalender Beheren</h5>
+                <p class="card-text">Plan nieuwe activiteiten.</p>
+                <a href="/admin/events" class="btn btn-primary">Ga naar Kalender</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Bestanden & Foto's</h5>
+                <p class="card-text">Upload afbeeldingen voor gebruik op pagina's.</p>
+                <a href="/admin/uploads" class="btn btn-primary">Upload Beheer</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12 mb-4">
+        <div class="alert alert-info d-flex align-items-center">
+            <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+            <div>
+                <strong>Hulp nodig?</strong>
+                <br>
+                Bekijk de <a href="/admin/info" class="alert-link">handleiding en HTML-tips</a> om te leren hoe je de site aanpast.
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12 mt-4">
+        <h3>Pagina's Bewerken</h3>
+        <div class="list-group">
+            <a href="/admin/page/home" class="list-group-item list-group-item-action">Home</a>
+            <a href="/admin/page/praktisch" class="list-group-item list-group-item-action">Praktisch</a>
+            <a href="/admin/page/afdelingen" class="list-group-item list-group-item-action">Afdelingen</a>
+            <a href="/admin/page/t-shirts" class="list-group-item list-group-item-action">T-Shirts</a>
+        </div>
+    </div>
+</div>
+<%- include('../partials/footer') %>

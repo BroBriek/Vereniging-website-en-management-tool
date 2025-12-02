@@ -1,0 +1,51 @@
+<%- include('../partials/header') %>
+<h1>Kalender Beheren</h1>
+<a href="/admin" class="btn btn-secondary mb-3">Terug</a>
+
+<div class="card mb-4">
+    <div class="card-header">Nieuwe Activiteit</div>
+    <div class="card-body">
+        <form action="/admin/events" method="POST">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label>Titel</label>
+                    <input type="text" class="form-control" name="title" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label>Datum</label>
+                    <input type="date" class="form-control" name="date" required>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label>Beschrijving</label>
+                    <textarea class="form-control" name="description" rows="2"></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Toevoegen</button>
+        </form>
+    </div>
+</div>
+
+<h3>Geplande Activiteiten</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Datum</th>
+            <th>Titel</th>
+            <th>Actie</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% events.forEach(event => { %>
+            <tr>
+                <td><%= event.date %></td>
+                <td><%= event.title %></td>
+                <td>
+                    <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
+                    </form>
+                </td>
+            </tr>
+        <% }) %>
+    </tbody>
+</table>
+<%- include('../partials/footer') %>

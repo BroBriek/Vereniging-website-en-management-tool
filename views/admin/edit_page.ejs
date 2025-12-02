@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+<h1>Bewerk Pagina: <%= slug %></h1>
+<a href="/admin" class="btn btn-secondary mb-3">Terug naar Dashboard</a>
+
+<form action="/admin/page/<%= slug %>" method="POST" enctype="multipart/form-data">
+    <% if (slug === 'home') { %>
+        <h3>Banner</h3>
+        <div class="mb-3 card p-3">
+            <label class="form-label fw-bold">Huidige Hero Afbeelding</label>
+            <% if (contentMap.hero_image && contentMap.hero_image.content) { %>
+                <img src="<%= contentMap.hero_image.content %>" alt="Current Hero" class="img-fluid mb-2 rounded" style="max-height: 200px;">
+            <% } else { %>
+                <p class="text-muted">Nog geen afbeelding ingesteld (standaard 'Hero.jpg' wordt gebruikt).</p>
+            <% } %>
+            <label class="form-label">Nieuwe Afbeelding Uploaden</label>
+            <input type="file" class="form-control" name="image" accept="image/*">
+            <input type="hidden" name="image_key" value="hero_image">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Titel</label>
+            <input type="text" class="form-control" name="hero_title" value="<%= contentMap.hero_title ? contentMap.hero_title.content : '' %>">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Ondertitel</label>
+            <input type="text" class="form-control" name="hero_text" value="<%= contentMap.hero_text ? contentMap.hero_text.content : '' %>">
+        </div>
+        <h3>Intro</h3>
+        <div class="mb-3">
+            <label class="form-label">Tekst (HTML toegestaan)</label>
+            <textarea class="form-control" name="intro" rows="5"><%= contentMap.intro ? contentMap.intro.content : '' %></textarea>
+        </div>
+    <% } else { %>
+        <div class="mb-3">
+            <label class="form-label">Hoofdtekst (HTML toegestaan)</label>
+            <textarea class="form-control" name="main" rows="10"><%= contentMap.main ? contentMap.main.content : '' %></textarea>
+        </div>
+    <% } %>
+    
+    <button type="submit" class="btn btn-success">Opslaan</button>
+</form>
+<%- include('../partials/footer') %>
