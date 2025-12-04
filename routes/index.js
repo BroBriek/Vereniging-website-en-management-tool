@@ -8,6 +8,8 @@ router.get('/leiding', publicController.getLeaders);
 router.get('/kalender', publicController.getCalendar);
 router.get('/afdelingen', publicController.getDepartments);
 router.get('/t-shirts', publicController.getShirts);
+router.get('/inschrijven', publicController.getRegister);
+router.post('/inschrijven', publicController.postRegister);
 router.get('/contact', publicController.getContact);
 router.post('/contact', publicController.postContact);
 

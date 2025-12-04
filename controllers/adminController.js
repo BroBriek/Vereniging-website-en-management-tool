@@ -1,4 +1,8 @@
-const { PageContent, Leader, Event } = require('../models');
+const { PageContent, Leader, Event, Registration, User } = require('../models');
+const ExcelJS = require('exceljs');
+const { exec } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 exports.getDashboard = (req, res) => {
     res.render('admin/dashboard', { title: 'Admin Dashboard', user: req.user });
@@ -45,10 +49,36 @@ exports.getLeaders = async (req, res) => {
 };
 
 exports.postLeader = async (req, res) => {
-    const { name, group, years_active, study, extra_info } = req.body;
+    const { name, group, years_active, study, extra_info, birth_date } = req.body;
+    const is_head_leader = req.body.is_head_leader === 'on';
     const image = req.file ? `/uploads/${req.file.filename}` : null;
     
-    await Leader.create({ name, group, years_active, study, extra_info, image });
+    await Leader.create({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader });
+    res.redirect('/admin/leaders');
+};
+
+exports.getEditLeader = async (req, res) => {
+    const leader = await Leader.findByPk(req.params.id);
+    if (!leader) {
+        return res.redirect('/admin/leaders');
+    }
+    res.render('admin/edit_leader', { title: 'Bewerk Leiding', leader, user: req.user });
+};
+
+exports.updateLeader = async (req, res) => {
+    const { name, group, years_active, study, extra_info, birth_date } = req.body;
+    const is_head_leader = req.body.is_head_leader === 'on';
+    const leader = await Leader.findByPk(req.params.id);
+    
+    if (leader) {
+        let image = leader.image;
+        if (req.file) {
+            image = `/uploads/${req.file.filename}`;
+        }
+        
+        await leader.update({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader });
+    }
+    
     res.redirect('/admin/leaders');
 };
 
@@ -75,4 +105,180 @@ exports.deleteEvent = async (req, res) => {
 
 exports.getInfo = (req, res) => {
     res.render('admin/info', { title: 'Handleiding', user: req.user });
+};
+
+exports.getRegistrations = async (req, res) => {
+    const registrations = await Registration.findAll({
+        order: [
+            ['group', 'ASC'],
+            ['type', 'DESC'], // 'leiding' > 'lid' ?? 'leiding' comes after 'lid' alphabetically. 'lid' vs 'leiding'. 'leiding' should be first.
+                              // 'leiding' > 'lid' alphabetically? 'e' vs 'i'. 'leiding' is first alphabetically. 
+                              // So ASC: leiding, lid. DESC: lid, leiding.
+                              // Wait, 'l' is same. 'e' (5) < 'i' (9). So 'leiding' < 'lid'.
+                              // So ASC sorting puts 'leiding' before 'lid'. Correct.
+            ['lastName', 'ASC']
+        ]
+    });
+    res.render('admin/registrations', { title: 'Inschrijvingen', registrations, user: req.user });
+};
+
+exports.deleteRegistration = async (req, res) => {
+    try {
+        await Registration.destroy({ where: { id: req.params.id } });
+        res.redirect('/admin/registrations?success=Inschrijving verwijderd.');
+    } catch (error) {
+        console.error('Error deleting registration:', error);
+        res.redirect('/admin/registrations?error=Kon inschrijving niet verwijderen.');
+    }
+};
+
+exports.exportRegistrationsExcel = async (req, res) => {
+    const registrations = await Registration.findAll({
+        order: [
+            ['group', 'ASC'],
+            ['type', 'ASC'],
+            ['lastName', 'ASC']
+        ]
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Inschrijvingen');
+
+    // Define columns
+    worksheet.columns = [
+        { header: 'Groep', key: 'group', width: 15 },
+        { header: 'Rol', key: 'type', width: 10 },
+        { header: 'Voornaam', key: 'firstName', width: 20 },
+        { header: 'Achternaam', key: 'lastName', width: 20 },
+        { header: 'Email', key: 'email', width: 30 },
+        { header: 'Telefoon (Ouders/Leiding)', key: 'primaryPhone', width: 20 },
+        { header: 'GSM Lid (Optioneel)', key: 'memberPhone', width: 20 },
+        { header: 'Namen Ouders/Voogd', key: 'parentsNames', width: 30 },
+        { header: 'Foto Toestemming', key: 'photoPermission', width: 20 },
+        { header: 'Medische Info', key: 'medicalInfo', width: 40 }
+    ];
+
+    // Add rows
+    registrations.forEach(reg => {
+        worksheet.addRow({
+            group: reg.group,
+            type: reg.type,
+            firstName: reg.firstName,
+            lastName: reg.lastName,
+            email: reg.email,
+            primaryPhone: reg.type === 'lid' ? reg.parentsPhone : reg.phone,
+            memberPhone: reg.memberPhone,
+            parentsNames: reg.parentsNames,
+            photoPermission: reg.photoPermission ? 'Ja' : 'Nee',
+            medicalInfo: reg.medicalInfo
+        });
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=' + 'inschrijvingen.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+};
+
+exports.resetRegistrations = async (req, res) => {
+    try {
+        await Registration.destroy({ where: {}, truncate: false }); // SQLite truncate workaround
+        res.redirect('/admin?success=Ledenlijst succesvol gewist.');
+    } catch (error) {
+        console.error('Reset Registrations Error:', error);
+        res.redirect('/admin?error=Kon ledenlijst niet wissen.');
+    }
+};
+
+exports.triggerBackup = (req, res) => {
+    // Execute the existing backup script
+    exec('node scripts/backup.js', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Backup error: ${error.message}`);
+            return res.redirect('/admin?error=Backup mislukt: ' + encodeURIComponent(error.message));
+        }
+        console.log(`Backup output: ${stdout}`);
+        res.redirect('/admin?success=Backup succesvol gemaakt!');
+    });
+};
+
+exports.resetWebsite = async (req, res) => {
+    const { password } = req.body;
+    
+    if (!req.user) return res.redirect('/auth/login');
+
+    try {
+        const isMatch = await req.user.validatePassword(password);
+        if (!isMatch) {
+            return res.redirect('/admin?error=Fout wachtwoord. Reset geannuleerd.');
+        }
+
+        // Delete all data except Users and Uploads (Uploads are files, not DB)
+        await Promise.all([
+            Registration.destroy({ where: {}, truncate: false }),
+            Leader.destroy({ where: {}, truncate: false }),
+            Event.destroy({ where: {}, truncate: false }),
+            PageContent.destroy({ where: {}, truncate: false })
+        ]);
+
+        // Delete all uploads (except .gitkeep)
+        const uploadsDir = path.join(__dirname, '../public/uploads');
+        fs.readdir(uploadsDir, (err, files) => {
+            if (err) console.error('Error reading uploads dir:', err);
+            else {
+                for (const file of files) {
+                    if (file !== '.gitkeep') {
+                        fs.unlink(path.join(uploadsDir, file), err => {
+                            if (err) console.error('Error deleting file:', file, err);
+                        });
+                    }
+                }
+            }
+        });
+
+        res.redirect('/admin?success=Website volledig gereset (inclusief afbeeldingen).');
+    } catch (error) {
+        console.error('Reset Website Error:', error);
+        res.redirect('/admin?error=Er ging iets mis bij het resetten.');
+    }
+};
+
+exports.getUsers = async (req, res) => {
+    try {
+        const users = await User.findAll({ 
+            where: {
+                username: { [require('sequelize').Op.ne]: 'Admin' } // Exclude 'Admin'
+            },
+            order: [['username', 'ASC']] 
+        });
+        res.render('admin/users', { title: 'Beheer Gebruikers', users, user: req.user });
+    } catch (error) {
+        console.error('Error getting users:', error);
+        res.redirect('/admin');
+    }
+};
+
+exports.postUser = async (req, res) => {
+    const { username, password, role } = req.body;
+    try {
+        await User.create({ username, password, role });
+        res.redirect('/admin/users');
+    } catch (error) {
+        console.error('Error creating user:', error);
+        res.redirect('/admin/users?error=Kon gebruiker niet aanmaken (bestaat de naam al?)');
+    }
+};
+
+exports.deleteUser = async (req, res) => {
+    if (req.params.id == req.user.id) {
+        return res.redirect('/admin/users?error=Je kan jezelf niet verwijderen.');
+    }
+    try {
+        await User.destroy({ where: { id: req.params.id } });
+        res.redirect('/admin/users');
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.redirect('/admin/users?error=Kon gebruiker niet verwijderen.');
+    }
 };

@@ -6,7 +6,7 @@ exports.getLogin = (req, res) => {
 
 exports.postLogin = (req, res, next) => {
   passport.authenticate('local', {
-    successRedirect: '/admin',
+    successRedirect: '/feed', // Redirect to feed by default
     failureRedirect: '/auth/login',
   })(req, res, next);
 };

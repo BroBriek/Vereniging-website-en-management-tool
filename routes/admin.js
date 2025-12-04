@@ -11,6 +11,11 @@ router.use(ensureAdmin);
 router.get('/', adminController.getDashboard);
 router.get('/info', adminController.getInfo);
 
+// User Management
+router.get('/users', adminController.getUsers);
+router.post('/users', adminController.postUser);
+router.delete('/users/:id', adminController.deleteUser);
+
 // Upload Manager
 router.get('/uploads', uploadController.getUploads);
 router.post('/uploads', (req, res, next) => {
@@ -23,6 +28,16 @@ router.post('/uploads', (req, res, next) => {
 }, uploadController.postUpload);
 router.delete('/uploads/:filename', uploadController.deleteUpload);
 
+// Registrations
+router.get('/registrations', adminController.getRegistrations);
+router.get('/registrations/export', adminController.exportRegistrationsExcel);
+router.delete('/registrations/:id', adminController.deleteRegistration);
+
+// Danger Zone
+router.post('/danger/reset-registrations', adminController.resetRegistrations);
+router.post('/danger/reset-website', adminController.resetWebsite);
+router.post('/danger/backup', adminController.triggerBackup);
+
 // Page Content Editors
 router.get('/page/:page', adminController.getEditPage);
 router.post('/page/:page', upload.single('image'), adminController.postEditPage);
@@ -30,11 +45,27 @@ router.post('/page/:page', upload.single('image'), adminController.postEditPage)
 // Leader CRUD
 router.get('/leaders', adminController.getLeaders);
 router.post('/leaders', upload.single('image'), adminController.postLeader);
+router.get('/leaders/:id/edit', adminController.getEditLeader);
+router.put('/leaders/:id', upload.single('image'), adminController.updateLeader);
 router.delete('/leaders/:id', adminController.deleteLeader);
 
-// Event CRUD
+const financeController = require('../controllers/financeController');
+
+// Existing Event CRUD
 router.get('/events', adminController.getEvents);
 router.post('/events', adminController.postEvent);
 router.delete('/events/:id', adminController.deleteEvent);
+
+// --- Finance Tool ---
+router.get('/finance', financeController.getIndex); // Root
+router.get('/finance/info', financeController.getInfo); // Info/Help Page
+router.get('/finance/:folderId', financeController.getIndex); // Subfolder
+router.post('/finance', financeController.postItem); // Create in Root
+router.post('/finance/:folderId', financeController.postItem); // Create in Subfolder
+router.put('/finance/item/:id', financeController.updateItem); // Update Item
+router.delete('/finance/item/:id', financeController.deleteItem);
+router.get('/finance/:folderId/export', financeController.exportFolder);
+// Route to export root? (Optional, let's map it to '0' or handle in controller)
+router.get('/finance/export/root', financeController.exportFolder);
 
 module.exports = router;

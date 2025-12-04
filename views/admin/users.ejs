@@ -1,0 +1,68 @@
+<%- include('../partials/header') %>
+<h1>Gebruikers Beheren</h1>
+<a href="/admin" class="btn btn-secondary mb-3">Terug</a>
+
+<% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+<div class="card mb-4">
+    <div class="card-header">Nieuwe Gebruiker Toevoegen</div>
+    <div class="card-body">
+        <form action="/admin/users" method="POST">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label>Gebruikersnaam</label>
+                    <input type="text" class="form-control" name="username" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label>Wachtwoord</label>
+                    <input type="password" class="form-control" name="password" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label>Rol</label>
+                    <select class="form-select" name="role">
+                        <option value="leader">Leiding (Geen Admin)</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Toevoegen</button>
+        </form>
+    </div>
+</div>
+
+<h3>Huidige Gebruikers</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Gebruikersnaam</th>
+            <th>Rol</th>
+            <th>Actie</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% users.forEach(u => { %>
+            <tr>
+                <td><%= u.username %></td>
+                <td>
+                    <% if(u.role === 'admin') { %>
+                        <span class="badge bg-danger">Admin</span>
+                    <% } else { %>
+                        <span class="badge bg-info">Leiding</span>
+                    <% } %>
+                </td>
+                <td>
+                    <% if (user.id !== u.id) { %>
+                    <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
+                    </form>
+                    <% } else { %>
+                        <span class="text-muted">(Jezelf)</span>
+                    <% } %>
+                </td>
+            </tr>
+        <% }) %>
+    </tbody>
+</table>
+<%- include('../partials/footer') %>

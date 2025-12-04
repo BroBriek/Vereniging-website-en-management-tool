@@ -16,14 +16,26 @@
                          onclick="openLeaderModal(this)">
                         <div class="card h-100 leader-card">
                             <% if(leader.image) { %>
-                                <img src="<%= leader.image %>" class="card-img-top" alt="<%= leader.name %>" 
+                                <img src="<%= leader.image %>" class="card-img-top <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" alt="<%= leader.name %>" 
                                      style="height: 250px; object-fit: cover;" draggable="false" ondragstart="return false;">
                             <% } else { %>
-                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 250px;">Geen foto</div>
+                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" style="height: 250px;">Geen foto</div>
                             <% } %>
-                            <div class="card-body text-center">
-                                <h5 class="card-title"><%= leader.name %></h5>
-                                <small class="text-muted"><%= leader.years_active %> jaar leiding</small>
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <%= leader.name %>
+                                    <% if(leader.is_head_leader) { %>
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;">Hoofdleiding</span>
+                                    <% } %>
+                                </h5>
+                                <p class="card-text">
+                                    <small class="text-muted"><%= leader.years_active %> jaar leiding</small><br>
+                                    <strong>Studie/Werk:</strong> <%= leader.study %>
+                                    <% if(leader.extra_info) { %>
+                                        <br>
+                                        <span class="fst-italic text-muted small"><%= leader.extra_info %></span>
+                                    <% } %>
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -38,12 +50,17 @@
                          onclick="openLeaderModal(this)">
                         <div class="card h-100 leader-card">
                             <% if(leader.image) { %>
-                                <img src="<%= leader.image %>" class="card-img-top" alt="<%= leader.name %>" style="height: 250px; object-fit: cover;">
+                                <img src="<%= leader.image %>" class="card-img-top <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" alt="<%= leader.name %>" style="height: 250px; object-fit: cover;">
                             <% } else { %>
-                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 250px;">Geen foto</div>
+                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" style="height: 250px;">Geen foto</div>
                             <% } %>
                             <div class="card-body">
-                                <h5 class="card-title"><%= leader.name %></h5>
+                                <h5 class="card-title">
+                                    <%= leader.name %>
+                                    <% if(leader.is_head_leader) { %>
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;">Hoofdleiding</span>
+                                    <% } %>
+                                </h5>
                                 <p class="card-text">
                                     <small class="text-muted"><%= leader.years_active %> jaar leiding</small><br>
                                     <strong>Studie/Werk:</strong> <%= leader.study %>
@@ -64,16 +81,38 @@
 <!-- Zwoele Modal -->
 <div class="modal fade" id="leaderModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <img id="modalImage" src="" class="leader-modal-img" alt="Leader">
-            <div class="modal-header border-0 pb-0">
-                <h2 class="modal-title w-100 text-center" id="modalName"></h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg">
+            <div class="position-relative">
+                <img id="modalImage" src="" class="leader-modal-img w-100" alt="Leader" style="height: 300px; object-fit: cover; border-top-left-radius: calc(0.3rem - 1px); border-top-right-radius: calc(0.3rem - 1px);">
+                <button type="button" class="btn-close bg-white position-absolute top-0 end-0 m-3 p-2 shadow-sm opacity-100" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center px-4 pb-5">
-                <p class="text-muted mb-1"><span id="modalYears"></span> jaar leiding</p>
-                <h5 class="mb-3 text-primary" id="modalStudy"></h5>
-                <p class="lead fst-italic" id="modalExtra"></p>
+            
+            <div class="modal-body px-4 py-4">
+                <h2 class="modal-title text-center fw-bold mb-4" id="modalName"></h2>
+
+                <!-- Info Stats Row -->
+                <div class="row justify-content-center g-3 mb-4">
+                    <div class="col-auto">
+                        <div class="p-2 border rounded bg-light text-center" style="min-width: 100px;">
+                            <div class="text-muted small text-uppercase mb-1"><i class="bi bi-hourglass-split text-primary"></i> Ervaring</div>
+                            <div class="fw-bold text-dark"><span id="modalYears"></span> jaar</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-auto" id="modalBirthDateWrapper" style="display:none;">
+                        <div class="p-2 border rounded bg-light text-center" style="min-width: 120px;">
+                            <div class="text-muted small text-uppercase mb-1"><i class="bi bi-gift text-primary"></i> Verjaardag</div>
+                            <div class="fw-bold text-dark" id="modalBirthDate"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <h5 class="mb-3 text-primary fw-bold" id="modalStudy"></h5>
+                    <div class="d-flex justify-content-center">
+                        <p class="lead fst-italic text-muted" id="modalExtra" style="max-width: 80%;"></p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -90,11 +129,29 @@
         document.getElementById('modalYears').textContent = leader.years_active;
         document.getElementById('modalStudy').textContent = leader.study || '';
         document.getElementById('modalExtra').textContent = leader.extra_info || '';
+
+        const birthDateWrapper = document.getElementById('modalBirthDateWrapper');
+        const birthDateSpan = document.getElementById('modalBirthDate');
+        if (leader.birth_date) {
+            const date = new Date(leader.birth_date);
+            // Format: 12 mei 2001
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            birthDateSpan.textContent = date.toLocaleDateString('nl-BE', options);
+            birthDateWrapper.style.display = 'block';
+        } else {
+            birthDateWrapper.style.display = 'none';
+        }
         
         const img = document.getElementById('modalImage');
         if (leader.image) {
             img.src = leader.image;
             img.style.display = 'block';
+            if (leader.is_head_leader) {
+                // Optionally add a border inside the modal too, or leave it clean
+                img.style.borderBottom = "5px solid #ffc107"; // Gold bottom border for HL
+            } else {
+                img.style.borderBottom = "none";
+            }
         } else {
             img.style.display = 'none';
         }
