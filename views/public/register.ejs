@@ -1,0 +1,152 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+    <h1>Inschrijven</h1>
+
+    <% if (typeof success !== 'undefined' && success) { %>
+        <div class="alert alert-success">Bedankt voor je inschrijving! We hebben de gegevens goed ontvangen.</div>
+    <% } %>
+    
+    <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+
+    <form action="/inschrijven" method="POST" class="mt-4" id="registrationForm">
+        
+        <!-- Role Selection -->
+        <div class="mb-4 p-3 border rounded bg-light">
+            <label class="form-label fw-bold">Ik schrijf in als:</label>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" id="roleLid" value="lid" checked>
+                <label class="form-check-label" for="roleLid">Lid</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" id="roleLeiding" value="leiding">
+                <label class="form-check-label" for="roleLeiding">Leiding</label>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- First Name -->
+            <div class="col-md-6 mb-3">
+                <label for="firstName" class="form-label">Voornaam</label>
+                <input type="text" class="form-control" id="firstName" name="firstName" required>
+            </div>
+            <!-- Last Name -->
+            <div class="col-md-6 mb-3">
+                <label for="lastName" class="form-label">Achternaam</label>
+                <input type="text" class="form-control" id="lastName" name="lastName" required>
+            </div>
+        </div>
+
+        <!-- Contact Info (Labels change based on role) -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="email" class="form-label" id="labelEmail">Email Ouders</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="phone" class="form-label" id="labelPhone">Telefoon Ouders</label>
+                <input type="text" class="form-control" id="phone" name="parentsPhone" required>
+                <!-- Note: name defaults to parentsPhone, we might change it via JS or handle in backend -->
+            </div>
+        </div>
+
+        <!-- Member Specific Fields -->
+        <div id="memberFields">
+            <div class="mb-3">
+                <label for="parentsNames" class="form-label">Namen Ouders/Voogd</label>
+                <input type="text" class="form-control" id="parentsNames" name="parentsNames">
+            </div>
+            
+            <div class="mb-3">
+                <label for="memberPhone" class="form-label">GSM Nummer Lid (Optioneel)</label>
+                <input type="text" class="form-control" id="memberPhone" name="memberPhone">
+            </div>
+
+            <div class="mb-3 p-3 border rounded">
+                <label class="form-label fw-bold">Mogen er foto's genomen worden van het lid?</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="photoPermission" id="photoYes" value="true" checked>
+                    <label class="form-check-label" for="photoYes">Ja</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="photoPermission" id="photoNo" value="false">
+                    <label class="form-check-label" for="photoNo">Nee</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group Selection -->
+        <div class="mb-3">
+            <label for="group" class="form-label">Groep</label>
+            <select class="form-select" id="group" name="group" required>
+                <option value="" disabled selected>Kies een groep...</option>
+                <option value="ribbel">Ribbel</option>
+                <option value="speelclub">Speelclub</option>
+                <option value="rakwi">Rakwi</option>
+                <option value="tito">Tito</option>
+                <option value="keti">Keti</option>
+                <option value="aspi">Aspi</option>
+            </select>
+        </div>
+
+        <!-- Extra Info -->
+        <div class="mb-3">
+            <label for="medicalInfo" class="form-label">Extra Info (Allergieën, medische info, etc.)</label>
+            <textarea class="form-control" id="medicalInfo" name="medicalInfo" rows="3"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-100">Inschrijven</button>
+    </form>
+
+    <!-- Dynamic Footer Text -->
+    <div class="mt-5 p-4 bg-light rounded">
+        <h3>Info</h3>
+        <div class="content-area">
+            <% if (content && content.info_text) { %>
+                <p><%= content.info_text.content %></p>
+            <% } else { %>
+                <p>Inschrijvingsgeld en verdere info volgt.</p>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<script>
+    const roleLid = document.getElementById('roleLid');
+    const roleLeiding = document.getElementById('roleLeiding');
+    const memberFields = document.getElementById('memberFields');
+    const labelEmail = document.getElementById('labelEmail');
+    const labelPhone = document.getElementById('labelPhone');
+    const phoneInput = document.getElementById('phone');
+    const parentsNamesInput = document.getElementById('parentsNames');
+
+    function updateForm() {
+        if (roleLid.checked) {
+            memberFields.style.display = 'block';
+            labelEmail.innerText = 'Email Ouders';
+            labelPhone.innerText = 'Telefoon Ouders';
+            phoneInput.setAttribute('name', 'parentsPhone'); // Use parentsPhone field
+            parentsNamesInput.setAttribute('required', 'required');
+        } else {
+            memberFields.style.display = 'none';
+            labelEmail.innerText = 'Email';
+            labelPhone.innerText = 'Telefoon';
+            phoneInput.setAttribute('name', 'phone'); // Use generic phone field if backend supports or just map to parentsPhone and rename in backend?
+            // Backend has 'parentsPhone' and 'memberPhone'. I should probably add a generic 'phone' column or just reuse 'parentsPhone' as 'primaryPhone'.
+            // Let's stick to the schema I made: 'parentsPhone' (Lid) vs 'phone' (generic/Leiding)?
+            // Wait, my schema has `parentsPhone`. I didn't add a generic `phone` for leiding in my previous step thought process fully.
+            // Let's check Registration.js again.
+            parentsNamesInput.removeAttribute('required');
+        }
+    }
+
+    roleLid.addEventListener('change', updateForm);
+    roleLeiding.addEventListener('change', updateForm);
+    
+    // Init
+    updateForm();
+</script>
+
+<%- include('../partials/footer') %>

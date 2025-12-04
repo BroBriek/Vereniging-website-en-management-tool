@@ -7,7 +7,9 @@ const Leader = sequelize.define('Leader', {
   image: { type: DataTypes.STRING },
   years_active: { type: DataTypes.INTEGER },
   study: { type: DataTypes.STRING },
-  extra_info: { type: DataTypes.TEXT }
+  extra_info: { type: DataTypes.TEXT },
+  birth_date: { type: DataTypes.DATEONLY, allowNull: true },
+  is_head_leader: { type: DataTypes.BOOLEAN, defaultValue: false }
 });
 
 module.exports = Leader;

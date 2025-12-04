@@ -1,0 +1,74 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Inschrijvingen</h1>
+        <div>
+            <a href="/admin/registrations/export" class="btn btn-primary"><i class="bi bi-file-earmark-spreadsheet"></i> Exporteer naar Excel</a>
+            <a href="/admin" class="btn btn-secondary">Terug</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Groep</th>
+                    <th>Rol</th>
+                    <th>Naam</th>
+                    <th>Contact (Email/Tel)</th>
+                    <th>Ouders / Extra</th>
+                    <th>Medisch</th>
+                    <th>Actie</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% registrations.forEach(reg => { %>
+                    <tr>
+                        <td><span class="badge bg-secondary"><%= reg.group %></span></td>
+                        <td>
+                            <% if (reg.type === 'leiding') { %>
+                                <span class="badge bg-danger">Leiding</span>
+                            <% } else { %>
+                                <span class="badge bg-success">Lid</span>
+                            <% } %>
+                        </td>
+                        <td><strong><%= reg.firstName %> <%= reg.lastName %></strong></td>
+                        <td>
+                            <%= reg.email %><br>
+                            <small class="text-muted"><%= reg.type === 'lid' ? reg.parentsPhone : reg.phone %></small>
+                        </td>
+                        <td>
+                            <% if (reg.type === 'lid') { %>
+                                <small>Ouders: <%= reg.parentsNames %></small><br>
+                                <% if(reg.memberPhone) { %><small>GSM Lid: <%= reg.memberPhone %></small><br><% } %>
+                                <small>Foto's: <%= reg.photoPermission ? 'Ja' : 'Nee' %></small>
+                            <% } else { %>
+                                -
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if (reg.medicalInfo) { %>
+                                <span class="text-danger" title="<%= reg.medicalInfo %>"><i class="bi bi-exclamation-circle-fill"></i> Zie info</span>
+                            <% } else { %>
+                                <span class="text-muted">-</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <form action="/admin/registrations/<%= reg.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijder"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+                <% if (registrations.length === 0) { %>
+                    <tr>
+                        <td colspan="7" class="text-center">Nog geen inschrijvingen.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

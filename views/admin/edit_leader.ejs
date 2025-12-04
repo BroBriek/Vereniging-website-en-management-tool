@@ -1,0 +1,65 @@
+<%- include('../partials/header') %>
+<h1>Leiding Bewerken</h1>
+<a href="/admin/leaders" class="btn btn-secondary mb-3">Terug</a>
+
+<div class="card mb-4">
+    <div class="card-header">Leiding Bewerken: <%= leader.name %></div>
+    <div class="card-body">
+        <form action="/admin/leaders/<%= leader.id %>?_method=PUT" method="POST" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label>Naam</label>
+                    <input type="text" class="form-control" name="name" value="<%= leader.name %>" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Groep</label>
+                    <select class="form-select" name="group">
+                        <% const groups = ["Ribbels", "Speelclub", "Rakwi's", "Tito's", "Keti's", "Aspi's"]; %>
+                        <% groups.forEach(g => { %>
+                            <option value="<%= g %>" <%= leader.group === g ? 'selected' : '' %>><%= g %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Aantal jaren leiding</label>
+                    <input type="number" class="form-control" name="years_active" value="<%= leader.years_active %>" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Studie/Werk</label>
+                    <input type="text" class="form-control" name="study" value="<%= leader.study %>">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label>Geboortedatum</label>
+                    <input type="date" class="form-control" name="birth_date" value="<%= leader.birth_date %>">
+                </div>
+                <div class="col-md-6 mb-3 d-flex align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="is_head_leader" id="headLeaderCheck" <%= leader.is_head_leader ? 'checked' : '' %>>
+                        <label class="form-check-label" for="headLeaderCheck">
+                            Hoofdleiding?
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label>Extra Info</label>
+                    <textarea class="form-control" name="extra_info" rows="2"><%= leader.extra_info %></textarea>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label>Huidige Foto</label>
+                    <% if(leader.image) { %>
+                        <div class="mb-2">
+                            <img src="<%= leader.image %>" alt="Huidige foto" style="max-height: 100px;">
+                        </div>
+                    <% } else { %>
+                        <p>Geen foto.</p>
+                    <% } %>
+                    <label>Nieuwe Foto (laat leeg om huidige te behouden)</label>
+                    <input type="file" class="form-control" name="image">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">Opslaan</button>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

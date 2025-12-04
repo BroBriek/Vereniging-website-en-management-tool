@@ -30,6 +30,18 @@
                     <label>Studie/Werk</label>
                     <input type="text" class="form-control" name="study">
                 </div>
+                <div class="col-md-6 mb-3">
+                    <label>Geboortedatum</label>
+                    <input type="date" class="form-control" name="birth_date">
+                </div>
+                <div class="col-md-6 mb-3 d-flex align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="is_head_leader" id="headLeaderCheck">
+                        <label class="form-check-label" for="headLeaderCheck">
+                            Hoofdleiding?
+                        </label>
+                    </div>
+                </div>
                 <div class="col-md-12 mb-3">
                     <label>Extra Info</label>
                     <textarea class="form-control" name="extra_info" rows="2"></textarea>
@@ -61,7 +73,8 @@
                 <td><%= leader.group %></td>
                 <td><%= leader.years_active %></td>
                 <td>
-                    <form action="/admin/leaders/<%= leader.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');">
+                    <a href="/admin/leaders/<%= leader.id %>/edit" class="btn btn-sm btn-primary">Bewerk</a>
+                    <form action="/admin/leaders/<%= leader.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
                         <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
                     </form>
                 </td>

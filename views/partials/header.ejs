@@ -26,16 +26,22 @@
                     <li class="nav-item"><a class="nav-link" href="/leiding">Leiding</a></li>
                     <li class="nav-item"><a class="nav-link" href="/kalender">Kalender</a></li>
                     <li class="nav-item"><a class="nav-link" href="/t-shirts">T-Shirts</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/inschrijven">Inschrijven</a></li>
                     <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
                     <% if (user) { %>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Admin</a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="/admin">Dashboard</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="/auth/logout">Uitloggen</a></li>
-                            </ul>
-                        </li>
+                        <li class="nav-item"><a class="nav-link fw-bold text-primary" href="/feed"><i class="bi bi-chat-square-text-fill"></i> Leidingshoekje</a></li>
+                        <% if (user.role === 'admin') { %>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Admin</a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="/admin">Dashboard</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/auth/logout">Uitloggen</a></li>
+                                </ul>
+                            </li>
+                        <% } else { %>
+                            <li class="nav-item"><a class="nav-link" href="/auth/logout">Uitloggen</a></li>
+                        <% } %>
                     <% } %>
                 </ul>
             </div>

@@ -1,0 +1,261 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>
+        <i class="bi bi-piggy-bank me-2"></i>Financieel Overzicht
+    </h1>
+    <div>
+        <a href="/admin/finance/info" class="btn btn-info text-white me-2" title="Hulp & Info">
+            <i class="bi bi-info-circle"></i> Info
+        </a>
+        <% if (currentFolder) { %>
+            <a href="/admin/finance/<%= currentFolder.id %>/export" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel"></i> Export Map
+            </a>
+        <% } else { %>
+            <a href="/admin/finance/export/root" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel"></i> Export Alles
+            </a>
+        <% } %>
+        <a href="/admin" class="btn btn-secondary">Terug naar Dashboard</a>
+    </div>
+</div>
+
+<!-- Breadcrumbs -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb bg-light p-3 rounded">
+        <li class="breadcrumb-item">
+            <a href="/admin/finance"><i class="bi bi-house-door"></i> Hoofdmap</a>
+        </li>
+        <% breadcrumbs.forEach(crumb => { %>
+            <li class="breadcrumb-item active" aria-current="page">
+                <a href="/admin/finance/<%= crumb.id %>"><%= crumb.name %></a>
+            </li>
+        <% }) %>
+    </ol>
+</nav>
+
+<!-- Stats Card -->
+<div class="card mb-4 border-primary">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <h5 class="card-title m-0">Totaal Saldo (Huidige Map + Submappen)</h5>
+        <h3 class="m-0 <%= currentTotal >= 0 ? 'text-success' : 'text-danger' %>">
+            € <%= parseFloat(currentTotal).toFixed(2) %>
+        </h3>
+    </div>
+</div>
+
+<!-- Table Layout -->
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 15%;">Datum</th>
+                    <th style="width: 50%;">Omschrijving</th>
+                    <th style="width: 25%; text-align: right;">Bedrag / Saldo</th>
+                    <th style="width: 10%; text-align: right;">Acties</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (items.length === 0) { %>
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-3">
+                            Deze map is nog leeg.
+                        </td>
+                    </tr>
+                <% } %>
+
+                <% items.forEach(item => { %>
+                    <% 
+                        let itemDate = '-';
+                        if (item.date) {
+                            itemDate = new Date(item.date).toLocaleDateString('nl-BE');
+                        } else if (item.createdAt) {
+                            itemDate = new Date(item.createdAt).toLocaleDateString('nl-BE');
+                        }
+                    %>
+                    <% if (item.amount === null) { %>
+                        <!-- Folder Item -->
+                        <tr style="cursor: pointer;" onclick="window.location='/admin/finance/<%= item.id %>'">
+                            <td><%= itemDate %></td>
+                            <td>
+                                <i class="bi bi-folder-fill text-warning me-2 fs-5"></i>
+                                <span class="fw-bold"><%= item.name %></span>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge bg-light text-dark border">
+                                    Tot: € <%= parseFloat(item.total).toFixed(2) %>
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary border-0 me-1" 
+                                        onclick="event.stopPropagation(); openEditModal('<%= item.id %>', '<%= item.name %>', '<%= item.amount %>', '<%= item.date %>')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form action="/admin/finance/item/<%= item.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Map verwijderen? Alle inhoud gaat verloren!');" class="d-inline" onclick="event.stopPropagation();">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% } else { %>
+                        <!-- Transaction Item -->
+                        <tr>
+                            <td><%= itemDate %></td>
+                            <td>
+                                <i class="bi bi-receipt text-secondary me-2 fs-5"></i>
+                                <%= item.name %>
+                            </td>
+                            <td class="text-end">
+                                <span class="<%= item.amount >= 0 ? 'text-success' : 'text-danger' %> fw-bold">
+                                    € <%= parseFloat(item.amount).toFixed(2) %>
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary border-0 me-1" 
+                                        onclick="openEditModal('<%= item.id %>', '<%= item.name %>', '<%= item.amount %>', '<%= item.date %>')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form action="/admin/finance/item/<%= item.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Transactie verwijderen?');" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% } %>
+                <% }) %>
+
+                <!-- Input Row -->
+                <tr class="bg-light border-top border-2">
+                    <form action="/admin/finance/<%= currentFolder ? currentFolder.id : '' %>" method="POST">
+                        <td>
+                            <input type="date" class="form-control form-control-sm" name="date" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm" name="name" placeholder="Nieuwe map of transactie naam..." required>
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" class="form-control form-control-sm text-end" name="amount" placeholder="Leeg = Map">
+                        </td>
+                        <td class="text-end">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </td>
+                    </form>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="form-text mt-2 text-end small">Laat bedrag leeg om een map te maken.</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Item Bewerken</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Datum</label>
+                        <input type="date" class="form-control" name="date" id="editDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Omschrijving</label>
+                        <input type="text" class="form-control" name="name" id="editName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Bedrag (€)</label>
+                        <input type="number" step="0.01" class="form-control" name="amount" id="editAmount">
+                        <div class="form-text">Laat leeg om dit item als map in te stellen.</div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                        <button type="submit" class="btn btn-primary">Opslaan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Check for URL params for alerts
+    const urlParams = new URLSearchParams(window.location.search);
+    const successMsg = urlParams.get('success');
+    const errorMsg = urlParams.get('error');
+    
+    if (successMsg) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success fixed-top m-3';
+        alertDiv.style.zIndex = '2000';
+        alertDiv.innerText = successMsg;
+        document.body.prepend(alertDiv);
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
+    
+    if (errorMsg) {
+        // Create a modal for error to ensure it's seen as a popup
+        const errorModalHtml = `
+            <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content border-danger">
+                  <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Fout</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p class="fw-bold">${errorMsg}</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', errorModalHtml);
+        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
+        
+        // Also clear the URL param so refresh doesn't show it again
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    function openEditModal(id, name, amount, date) {
+        // Set form action
+        const form = document.getElementById('editForm');
+        form.action = `/admin/finance/item/${id}?_method=PUT`;
+        
+        // Fill inputs
+        document.getElementById('editName').value = name;
+        
+        // Handle amount (if null/empty string, leave blank)
+        if (amount && amount !== 'null') {
+            document.getElementById('editAmount').value = amount;
+        } else {
+            document.getElementById('editAmount').value = '';
+        }
+        
+        // Handle date formatting (YYYY-MM-DD) for input[type=date]
+        if (date && date !== 'null') {
+             // Date string from EJS might be ISO or just Date string. 
+             // We need YYYY-MM-DD
+             const d = new Date(date);
+             const yyyy = d.getFullYear();
+             const mm = String(d.getMonth() + 1).padStart(2, '0');
+             const dd = String(d.getDate()).padStart(2, '0');
+             document.getElementById('editDate').value = `${yyyy}-${mm}-${dd}`;
+        } else {
+             document.getElementById('editDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('editModal'));
+        modal.show();
+    }
+</script>
+
+<%- include('../partials/footer') %>

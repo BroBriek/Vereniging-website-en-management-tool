@@ -1,0 +1,446 @@
+<%- include('../partials/header') %>
+
+<%
+// Helper for generating Chiro-themed vibrant colors based on username
+function getAvatarColor(username) {
+    if (!username) return '#ffffff'; // Default white background
+    
+    // Vibrant colors from the Chiro theme, or good complementary bright colors
+    const vibrantColors = [
+        '#f1c40f', // Speelclub Yellow (from style.css)
+        '#2ecc71', // Rakwis Green (from style.css)
+        '#e67e22', // Aspis Orange (from style.css)
+        '#e74c3c', // Titos Red (from style.css) - Vibrant, but still readable with dark text
+        '#3498db', // Ketis Blue (from style.css) - Vibrant, but still readable with dark text
+        '#8e44ad'  // Ribbels Purple (from style.css) - Vibrant, but still readable with dark text
+    ];
+    
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const index = Math.abs(hash) % vibrantColors.length;
+    return vibrantColors[index];
+}
+%>
+
+<div class="container mt-4">
+    <h1>Leidingshoekje</h1>
+    <p class="lead">Welkom, <%= user.username %>!</p>
+
+    <!-- Create Post Button -->
+    <button class="btn btn-primary mb-4" type="button" data-bs-toggle="collapse" data-bs-target="#createPostForm" aria-expanded="false" aria-controls="createPostForm">
+        Nieuw Bericht Schrijven
+    </button>
+
+    <!-- Create Post Form (Collapsed) -->
+    <div class="collapse mb-4" id="createPostForm">
+        <div class="card card-body">
+            <form action="/feed/post" method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label class="form-label">Bericht</label>
+                    <textarea class="form-control" name="content" rows="3" required></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Bestanden toevoegen (PDF, Word, Txt)</label>
+                    <input type="file" class="form-control" name="attachments" multiple>
+                </div>
+
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#pollBuilder" aria-expanded="false">
+                        + Poll Toevoegen
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#formBuilderSection" aria-expanded="false">
+                        + Formulier Toevoegen
+                    </button>
+                </div>
+
+                <!-- Poll Builder -->
+                <div class="collapse mb-3 p-3 border rounded bg-light" id="pollBuilder">
+                    <h5>Poll Maken</h5>
+                    <div class="mb-2">
+                        <input type="text" class="form-control" name="poll_question" placeholder="Poll Vraag">
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="poll_multiple" id="pollMultiple">
+                        <label class="form-check-label" for="pollMultiple">
+                            Meerdere antwoorden mogelijk?
+                        </label>
+                    </div>
+                    <div id="pollOptions">
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" name="poll_options" placeholder="Optie 1">
+                        </div>
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" name="poll_options" placeholder="Optie 2">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPollOption()">+ Optie</button>
+                </div>
+
+                <!-- Form Builder Section -->
+                <div class="collapse mb-3 p-3 border rounded bg-light" id="formBuilderSection">
+                    <h5>Formulier Maken</h5>
+                    <div id="formBuilderPreview" class="mb-2"></div>
+                    
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addFieldModal">
+                        + Veld Toevoegen
+                    </button>
+                    <input type="hidden" name="form_schema" id="formSchemaJson">
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success" onclick="saveFormSchema()">Plaatsen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Feed Timeline -->
+    <div class="feed-timeline">
+        <% posts.forEach(post => { 
+            const bgColor = getAvatarColor(post.author ? post.author.username : '');
+        %>
+            <div class="card mb-4 shadow-sm border-0" id="post-<%= post.id %>" style="background-color: <%= bgColor %>;">
+                <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-bottom-0">
+                    <div>
+                        <strong><%= post.author ? post.author.username : 'Onbekend' %></strong>
+                        <small class="text-muted mx-2"><%= new Date(post.createdAt).toLocaleString() %></small>
+                    </div>
+                    <% if (post.authorId === user.id || user.role === 'admin') { %>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-link text-dark p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" onclick="enableEditMode('<%= post.id %>')">Bewerken (Tekst)</a></li>
+                                <li>
+                                    <form action="/feed/post/<%= post.id %>/delete" method="POST" onsubmit="return confirm('Post verwijderen?');">
+                                        <button type="submit" class="dropdown-item text-danger">Verwijderen</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    <% } %>
+                </div>
+                <div class="card-body">
+
+                    <!-- View Mode -->
+                    <div id="post-content-view-<%= post.id %>">
+                        <p class="card-text" style="white-space: pre-line;"><%= post.content %></p>
+                    </div>
+
+                    <!-- Edit Mode (Hidden) -->
+                    <div id="post-content-edit-<%= post.id %>" class="d-none mb-3">
+                        <form action="/feed/post/<%= post.id %>/update" method="POST">
+                            <textarea class="form-control mb-2" name="content" rows="3"><%= post.content %></textarea>
+                            <button type="submit" class="btn btn-sm btn-success">Opslaan</button>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="disableEditMode('<%= post.id %>')">Annuleren</button>
+                        </form>
+                    </div>
+
+                    <!-- Attachments -->
+                    <% if (post.attachments && post.attachments.length > 0) { %>
+                        <div class="mb-3">
+                            <h6>Bijlagen:</h6>
+                            <ul class="list-group list-group-flush">
+                                <% post.attachments.forEach(file => { %>
+                                    <li class="list-group-item">
+                                        <a href="<%= file.path %>" target="_blank"><i class="bi bi-file-earmark"></i> <%= file.originalName %></a>
+                                    </li>
+                                <% }) %>
+                            </ul>
+                        </div>
+                    <% } %>
+
+                    <!-- Poll -->
+                    <% if (post.poll) { %>
+                        <div class="alert alert-secondary">
+                            <h5>Poll: <%= post.poll.question %></h5>
+                            <% 
+                                // Calculate results
+                                const totalVotes = post.responses.filter(r => r.type === 'poll').length;
+                                const counts = {};
+                                const voters = {}; // Map option index -> Array of names
+                                post.poll.options.forEach((opt, idx) => {
+                                    counts[idx] = 0;
+                                    voters[idx] = [];
+                                });
+
+                                // User's current vote(s)
+                                let myVotes = [];
+                                
+                                post.responses.filter(r => r.type === 'poll').forEach(r => {
+                                    let indices = [];
+                                    // Normalize data (single int or array of ints)
+                                    if (r.data.optionIndices) indices = r.data.optionIndices;
+                                    else if (r.data.optionIndex !== undefined) indices = [parseInt(r.data.optionIndex)];
+                                    
+                                    indices.forEach(idx => {
+                                        if (counts[idx] !== undefined) {
+                                            counts[idx]++;
+                                            if(r.user) voters[idx].push(r.user.username);
+                                        }
+                                    });
+
+                                    if (r.userId === user.id) myVotes = indices;
+                                });
+                            %>
+                            
+                            <form action="/feed/respond" method="POST" class="mt-2">
+                                <input type="hidden" name="postId" value="<%= post.id %>">
+                                <input type="hidden" name="type" value="poll">
+                                
+                                <% post.poll.options.forEach((option, index) => { 
+                                    const count = counts[index] || 0;
+                                    // We can't easily calc simple % if multiple allowed per person, but standard is % of total voters or total votes?
+                                    // Usually % of voters. Let's stick to raw counts for clarity if multiple allowed.
+                                    // Or just simple (count / totalResponses) * 100?
+                                    // Let's do (count / total unique voters) * 100 if we want meaningful %.
+                                    // But let's stick to totalVotes (number of people who voted) as denominator.
+                                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                                    const isChecked = myVotes.includes(index) ? 'checked' : '';
+                                %>
+                                    <div class="mb-3 border-bottom pb-2">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <% if (post.poll.allowMultiple) { %>
+                                                <div class="form-check me-2">
+                                                    <input class="form-check-input" type="checkbox" name="data[optionIndex][]" value="<%= index %>" <%= isChecked %>>
+                                                </div>
+                                            <% } else { %>
+                                                <div class="form-check me-2">
+                                                    <input class="form-check-input" type="radio" name="data[optionIndex]" value="<%= index %>" <%= isChecked %>>
+                                                </div>
+                                            <% } %>
+                                            
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between">
+                                                    <span><%= option %></span>
+                                                    <span><%= count %> stemmen</span>
+                                                </div>
+                                                <div class="progress" style="height: 10px;">
+                                                    <div class="progress-bar" role="progressbar" style="width: <%= pct %>%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Show who voted -->
+                                        <div class="small text-muted ms-4">
+                                            <% if(voters[index].length > 0) { %>
+                                                <i class="bi bi-person-fill"></i> <%= voters[index].join(', ') %>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                                
+                                <button type="submit" class="btn btn-sm btn-primary">Stemmen</button>
+                            </form>
+                        </div>
+                    <% } %>
+
+                    <!-- Dynamic Form -->
+                    <% if (post.form) { %>
+                        <div class="card mb-3 border-info">
+                            <div class="card-header bg-info text-white">Invulformulier</div>
+                            <div class="card-body">
+                                <% 
+                                    const myResponse = post.responses.find(r => r.userId === user.id && r.type === 'form');
+                                %>
+                                
+                                <% if (myResponse) { %>
+                                    <div class="alert alert-success py-1">Je hebt dit ingevuld!</div>
+                                <% } %>
+
+                                <form action="/feed/respond" method="POST">
+                                    <input type="hidden" name="postId" value="<%= post.id %>">
+                                    <input type="hidden" name="type" value="form">
+                                    
+                                    <% post.form.forEach((field, idx) => { %>
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-bold"><%= field.label %></label>
+                                            <% if (field.type === 'text') { %>
+                                                <input type="text" class="form-control form-control-sm" name="data[<%= field.label %>]" required>
+                                            <% } else if (field.type === 'checkbox') { %>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="data[<%= field.label %>]" value="Ja">
+                                                    <label class="form-check-label">Ja</label>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% }) %>
+                                    
+                                    <button type="submit" class="btn btn-sm btn-primary" <%= myResponse ? 'disabled' : '' %>>Verstuur</button>
+                                </form>
+                                
+                                <hr>
+                                <!-- Form Results List -->
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#results-<%= post.id %>">
+                                    Bekijk Inzendingen (<%= post.responses.filter(r => r.type === 'form').length %>)
+                                </button>
+                                <div class="collapse mt-2" id="results-<%= post.id %>">
+                                    <div class="list-group list-group-flush">
+                                        <% post.responses.filter(r => r.type === 'form').forEach(r => { %>
+                                            <div class="list-group-item py-2">
+                                                <strong class="text-primary"><%= r.user ? r.user.username : 'Onbekend' %></strong>
+                                                <div class="ms-2 small border-start ps-2">
+                                                <% if (typeof r.data === 'object') { %>
+                                                    <% Object.keys(r.data).forEach(key => { %>
+                                                        <div><span class="text-muted"><%= key %>:</span> <%= r.data[key] %></div>
+                                                    <% }) %>
+                                                <% } else { %>
+                                                    <%= JSON.stringify(r.data) %>
+                                                <% } %>
+                                                </div>
+                                            </div>
+                                        <% }) %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+
+                </div>
+                
+                <!-- Comments Section -->
+                <div class="card-footer bg-light">
+                    <!-- Existing comments code ... (collapsed for brevity unless I need to change it, but I should preserve it) -->
+                    <h6>Reacties</h6>
+                    <% post.comments.forEach(comment => { %>
+                        <div class="d-flex mb-2">
+                            <div class="flex-grow-1">
+                                <strong><%= comment.author ? comment.author.username : 'Onbekend' %>:</strong>
+                                <span><%= comment.content %></span>
+                                
+                                <% if (comment.replies && comment.replies.length > 0) { %>
+                                    <div class="ms-4 mt-1 border-start ps-2">
+                                        <% comment.replies.forEach(reply => { %>
+                                            <div>
+                                                <small><strong><%= reply.author ? reply.author.username : 'Onbekend' %>:</strong> <%= reply.content %></small>
+                                            </div>
+                                        <% }) %>
+                                    </div>
+                                <% } %>
+
+                                <a href="#" onclick="document.getElementById('reply-form-<%= comment.id %>').style.display='block'; return false;" class="text-muted small d-block">Beantwoorden</a>
+                                <div id="reply-form-<%= comment.id %>" style="display:none;" class="mt-1">
+                                    <form action="/feed/comment" method="POST" class="d-flex">
+                                        <input type="hidden" name="postId" value="<%= post.id %>">
+                                        <input type="hidden" name="parentId" value="<%= comment.id %>">
+                                        <input type="text" name="content" class="form-control form-control-sm me-2" placeholder="Schrijf een antwoord..." required>
+                                        <button type="submit" class="btn btn-sm btn-primary">Stuur</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+
+                    <form action="/feed/comment" method="POST" class="mt-2">
+                        <input type="hidden" name="postId" value="<%= post.id %>">
+                        <div class="input-group">
+                            <input type="text" name="content" class="form-control" placeholder="Schrijf een reactie..." required>
+                            <button class="btn btn-outline-secondary" type="submit">Plaatsen</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+<!-- Add Field Modal -->
+<div class="modal fade" id="addFieldModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nieuw Veld</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+            <label class="form-label">Veld Naam (Vraag)</label>
+            <input type="text" class="form-control" id="newFieldLabel" placeholder="bv. Eten?">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Type</label>
+            <select class="form-select" id="newFieldType">
+                <option value="text">Tekst (Vrij invullen)</option>
+                <option value="checkbox">Checkbox (Ja/Nee)</option>
+            </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+        <button type="button" class="btn btn-primary" onclick="addFormFieldConfirm()">Toevoegen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Edit Mode Toggle
+function enableEditMode(id) {
+    document.getElementById('post-content-view-' + id).classList.add('d-none');
+    document.getElementById('post-content-edit-' + id).classList.remove('d-none');
+}
+function disableEditMode(id) {
+    document.getElementById('post-content-view-' + id).classList.remove('d-none');
+    document.getElementById('post-content-edit-' + id).classList.add('d-none');
+}
+
+function addPollOption() {
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.innerHTML = '<input type="text" class="form-control" name="poll_options" placeholder="Extra Optie">';
+    document.getElementById('pollOptions').appendChild(div);
+}
+
+let formFields = [];
+
+function addFormFieldConfirm() {
+    const label = document.getElementById('newFieldLabel').value;
+    const type = document.getElementById('newFieldType').value;
+    
+    if(!label) {
+        alert("Geef een naam op!");
+        return;
+    }
+    
+    formFields.push({ label, type });
+    renderFormBuilder();
+    
+    // Close modal (needs bootstrap js loaded)
+    const modalEl = document.getElementById('addFieldModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
+    
+    // Clear inputs
+    document.getElementById('newFieldLabel').value = '';
+}
+
+function renderFormBuilder() {
+    const container = document.getElementById('formBuilderPreview');
+    container.innerHTML = '';
+    formFields.forEach((f, i) => {
+        const div = document.createElement('div');
+        div.className = 'alert alert-info py-1 px-2 d-inline-block me-2 mb-2';
+        div.innerHTML = `<strong>${f.label}</strong> <small class="text-muted">(${f.type})</small> <span style="cursor:pointer;" onclick="removeField(${i})">&times;</span>`;
+        container.appendChild(div);
+    });
+}
+
+function removeField(index) {
+    if(confirm('Verwijder dit veld?')) {
+        formFields.splice(index, 1);
+        renderFormBuilder();
+    }
+}
+
+function saveFormSchema() {
+    if(formFields.length > 0) {
+        document.getElementById('formSchemaJson').value = JSON.stringify(formFields);
+    }
+}
+</script>
+
+<%- include('../partials/footer') %>

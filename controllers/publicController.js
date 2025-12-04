@@ -1,4 +1,4 @@
-const { PageContent, Leader, Event } = require('../models');
+const { PageContent, Leader, Event, Registration } = require('../models');
 const { Op } = require('sequelize');
 
 const getContent = async (slug) => {
@@ -48,6 +48,22 @@ exports.getDepartments = async (req, res) => {
 exports.getShirts = async (req, res) => {
     const content = await getContent('shirts');
     res.render('public/shirts', { title: 'T-Shirts', content });
+};
+
+exports.getRegister = async (req, res) => {
+    const content = await getContent('register');
+    res.render('public/register', { title: 'Inschrijven', content });
+};
+
+exports.postRegister = async (req, res) => {
+    const content = await getContent('register');
+    try {
+        await Registration.create(req.body);
+        res.render('public/register', { title: 'Inschrijven', content, success: true });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.render('public/register', { title: 'Inschrijven', content, error: 'Er ging iets mis bij het opslaan. Controleer of alle velden correct zijn ingevuld.' });
+    }
 };
 
 const nodemailer = require('nodemailer');

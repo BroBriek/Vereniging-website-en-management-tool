@@ -51,13 +51,20 @@ De website is nu bereikbaar via `http://localhost:3000` (of de ingestelde poort)
 
 ## 5. Admin Beheer (Command Line)
 
-Omdat er geen "registratie" knop is op de website (voor veiligheid), moeten admins via de server-console (terminal) worden beheerd.
+De hoofd-administrator ('Admin') is een speciaal account dat niet zichtbaar is in de gebruikerslijst op het dashboard. Dit account kan niet verwijderd worden via de website.
 
-### Admin Toevoegen
+### Admin Toevoegen (Eerste keer)
+```bash
+node scripts/manage_admin.js add Admin <wachtwoord>
+```
+*Opmerking:* De gebruiker 'Admin' is speciaal en wordt verborgen in de GUI.
+
+### Extra Admins/Leiding Toevoegen
+Je kan extra admins of leiding toevoegen via het **Admin Dashboard** op de website.
+Of via de command line:
 ```bash
 node scripts/manage_admin.js add <gebruikersnaam> <wachtwoord>
 ```
-*Voorbeeld:* `node scripts/manage_admin.js add hoofdleiding chiro123`
 
 ### Admin Verwijderen
 ```bash
@@ -68,44 +75,45 @@ node scripts/manage_admin.js remove <gebruikersnaam>
 
 Eenmaal ingelogd op `/auth/login`, heeft de admin toegang tot:
 
+- **Leidingshoekje:**
+  - Een interne feed voor alle leiding.
+  - Plaats berichten, polls en formulieren.
+  - Upload documenten (PDF, Word).
+- **Gebruikers Beheer:**
+  - Beheer accounts voor andere leiding en admins.
+  - *Let op: Het hoofdaccount 'Admin' is hier onzichtbaar.*
 - **Pagina's Bewerken:** Teksten aanpassen op Home, Praktisch, Afdelingen, etc.
 - **Leiding Beheer:**
-  - Toevoegen/verwijderen van leiding.
-  - Automatische indeling in groepen (kleuren).
-  - Automatische carousel weergave bij >4 leiding per groep.
-- **Kalender Beheer:** Toevoegen van activiteiten. Verlopen activiteiten verdwijnen automatisch van de publieke lijst.
+  - Toevoegen/verwijderen van leiding info voor de publieke site.
+- **Kalender Beheer:** Toevoegen van activiteiten.
 - **Bestanden & Foto's:**
   - Uploaden van afbeeldingen naar de server.
-  - Krijg direct HTML-code (`<img src="...">`) om in teksten te plakken.
+- **Inschrijvingen:** Bekijk en exporteer ledenlijst naar Excel.
+- **Danger Zone:**
+  - **Maak Backup:** Handmatige trigger voor systeembackup.
+  - **Reset Ledenlijst:** Verwijdert alle inschrijvingen.
+  - **Reset Website:** Verwijdert alle content (teksten, events, leden, inschrijvingen) én alle geüploade media.
 
 ## 7. Mappenstructuur
 
 - `/config`: Database en paspoort configuratie.
-- `/controllers`: Logica van de applicatie (wat gebeurt er als je een pagina opvraagt).
-- `/models`: Database definities (User, Leader, Event, PageContent).
-- `/public`: Statische bestanden (CSS, JS, geüploade afbeeldingen).
+- `/controllers`: Logica van de applicatie.
+- `/models`: Database definities.
+- `/public`: Statische bestanden.
 - `/routes`: URL definities.
-- `/views`: De HTML/EJS templates van de pagina's.
-- `/scripts`: Beheertools (zoals admin aanmaken).
+- `/views`: De HTML/EJS templates.
+- `/scripts`: Beheertools.
 
 ## 8. Veiligheid & Backups
 
-Het is belangrijk om regelmatig backups te maken van de website data.
+Het is belangrijk om regelmatig backups te maken.
 
 ### Automatische Backup Maken
-Er is een ingebouwd commando om direct een volledige backup te maken van de database én alle geüploade bestanden.
-
 ```bash
 npm run backup
 ```
 
 Dit script:
-1. Maakt een map `backups/` aan (als die nog niet bestaat).
-2. Maakt daarin een submap met de datum en tijd (bijv. `backup-2023-10-25-T14-30-00`).
-3. Kopieert `database.sqlite`, `sessions.sqlite` en de map `public/uploads` naar deze veilige locatie.
-
-Het is aan te raden om de inhoud van de `backups/` map af en toe te downloaden naar een externe harde schijf of cloudopslag.
-
-- **Database:** De data zit in `database.sqlite`.
-- **Afbeeldingen:** De uploads zitten in `public/uploads/`.
-- **Wachtwoorden:** Wachtwoorden worden veilig gehasht (versleuteld) opgeslagen.
+1. Maakt een map `backups/` aan.
+2. Maakt daarin een submap met de datum en tijd.
+3. Kopieert `database.sqlite`, `sessions.sqlite` en de map `public/uploads` naar deze locatie.

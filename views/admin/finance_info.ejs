@@ -1,0 +1,83 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-info-circle-fill me-2"></i>Hulp bij Financiën
+        </h1>
+        <a href="/admin/finance" class="btn btn-secondary">Terug naar Overzicht</a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="bi bi-piggy-bank me-2"></i>Hoe werkt de financiëntool?</h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead">
+                        Met deze tool kun je de inkomsten en uitgaven van de Chiro bijhouden in een mappenstructuur.
+                    </p>
+
+                    <h5 class="text-success mt-4">1. Mappen vs. Transacties</h5>
+                    <p>Het systeem maakt onderscheid tussen twee soorten items:</p>
+                    <ul>
+                        <li>
+                            <strong><i class="bi bi-folder-fill text-warning"></i> Mappen:</strong> 
+                            Worden gebruikt om transacties te groeperen (bv. "Kamp 2024", "Drankverkoop"). 
+                            Een map heeft <em>geen eigen bedrag</em>, maar toont de som van alles wat erin zit.
+                        </li>
+                        <li>
+                            <strong><i class="bi bi-receipt text-secondary"></i> Transacties:</strong> 
+                            Dit zijn de effectieve inkomsten of uitgaven. Ze hebben een specifiek bedrag en een datum.
+                        </li>
+                    </ul>
+
+                    <h5 class="text-success mt-4">2. Nieuwe items toevoegen</h5>
+                    <p>Onderaan elke lijst zie je een invoerbalk:</p>
+                    <ul>
+                        <li>
+                            <strong>Een map maken:</strong> Vul een naam in, maar laat het veld <strong>Bedrag</strong> <em>helemaal leeg</em>.
+                        </li>
+                        <li>
+                            <strong>Een transactie maken:</strong> Vul een naam én een bedrag in.
+                            <ul>
+                                <li>Positief bedrag (bv. <code>50</code>) = Inkomsten (Winst)</li>
+                                <li>Negatief bedrag (bv. <code>-20.50</code>) = Uitgaven (Verlies)</li>
+                            </ul> 
+                        </li>
+                    </ul>
+
+                    <h5 class="text-success mt-4">3. Navigeren & Totalen</h5>
+                    <p>
+                        Je kunt oneindig diep mappen in mappen maken.
+                    </p>
+                    <ul>
+                        <li>Klik op een mapnaam om deze te openen.</li>
+                        <li>Bovenaan zie je een "broodkruimelpad" (bv. <em>Hoofdmap > Kamp 2024 > Eten</em>) om snel terug te keren.</li>
+                        <li>Het <strong>Totaal Saldo</strong> bovenaan de pagina berekent automatisch de som van <em>alles</em> wat zich in de huidige map (en alle submappen daaronder) bevindt.</li>
+                    </ul>
+
+                    <h5 class="text-success mt-4">4. Exporteren naar Excel</h5>
+                    <p>
+                        Wil je de boekhouding delen of offline bewaren?
+                    </p>
+                    <ul>
+                        <li>Klik op de groene knop <strong>"Export Map"</strong> (of "Export Alles" in de hoofdmap).</li>
+                        <li>Je krijgt een Excel-bestand met een platte lijst van alle transacties binnen die map (inclusief submappen), netjes met datum en pad.</li>
+                    </ul>
+
+                    <div class="alert alert-warning mt-4">
+                        <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Opgelet bij verwijderen!</h5>
+                        <p class="mb-0">
+                            Als je een <strong>map</strong> verwijdert, worden ook <strong>alle submappen en transacties</strong> daarin onherroepelijk verwijderd! 
+                            Wees hier dus voorzichtig mee.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
