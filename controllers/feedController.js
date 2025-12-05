@@ -1,5 +1,15 @@
 const { Post, Comment, User, PostResponse } = require('../models');
 const path = require('path');
+const webpush = require('web-push');
+
+// Configure web-push
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+      'mailto:admin@chirosite.local',
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+}
 
 exports.getFeed = async (req, res) => {
     try {
@@ -67,13 +77,51 @@ exports.postCreatePost = async (req, res) => {
             }
         }
 
-        await Post.create({
+        const newPost = await Post.create({
             content,
             attachments,
             poll,
             form,
             authorId: req.user.id
         });
+
+        // Send Push Notifications (Async)
+        (async () => {
+            try {
+                const users = await User.findAll();
+                const payload = JSON.stringify({
+                    title: 'Nieuw Bericht in Leidingshoekje',
+                    body: `${req.user.username}: ${content.substring(0, 40)}${content.length > 40 ? '...' : ''}`,
+                });
+
+                for (const user of users) {
+                    if (user.pushSubscriptions && Array.isArray(user.pushSubscriptions)) {
+                        let subChanged = false;
+                        // Iterate backwards to allow removal
+                        for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
+                            const sub = user.pushSubscriptions[i];
+                            try {
+                                await webpush.sendNotification(sub, payload);
+                            } catch (err) {
+                                if (err.statusCode === 410 || err.statusCode === 404) {
+                                    // Subscription is dead, remove it
+                                    user.pushSubscriptions.splice(i, 1);
+                                    subChanged = true;
+                                }
+                            }
+                        }
+                        if (subChanged) {
+                            // Re-assign to trigger update
+                            user.pushSubscriptions = [...user.pushSubscriptions]; 
+                            user.changed('pushSubscriptions', true);
+                            await user.save();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Notification Error:', error);
+            }
+        })();
 
         res.redirect('/feed');
     } catch (error) {
@@ -85,12 +133,48 @@ exports.postCreatePost = async (req, res) => {
 exports.postComment = async (req, res) => {
     try {
         const { postId, content, parentId } = req.body;
-        await Comment.create({
+        const comment = await Comment.create({
             content,
             postId,
             parentId: parentId || null,
             userId: req.user.id
         });
+
+        // Send Notification if it's a reply
+        if (parentId) {
+            const parentComment = await Comment.findByPk(parentId, {
+                include: [{ model: User, as: 'author' }]
+            });
+
+            if (parentComment && parentComment.author && parentComment.author.id !== req.user.id) {
+                const targetUser = parentComment.author;
+                const payload = JSON.stringify({
+                    title: 'Nieuwe reactie',
+                    body: `${req.user.username} reageerde op je: "${content.substring(0, 30)}..."`
+                });
+
+                if (targetUser.pushSubscriptions && Array.isArray(targetUser.pushSubscriptions)) {
+                    let subChanged = false;
+                    for (let i = targetUser.pushSubscriptions.length - 1; i >= 0; i--) {
+                        const sub = targetUser.pushSubscriptions[i];
+                        try {
+                            await webpush.sendNotification(sub, payload);
+                        } catch (err) {
+                            if (err.statusCode === 410 || err.statusCode === 404) {
+                                targetUser.pushSubscriptions.splice(i, 1);
+                                subChanged = true;
+                            }
+                        }
+                    }
+                    if (subChanged) {
+                        targetUser.pushSubscriptions = [...targetUser.pushSubscriptions];
+                        targetUser.changed('pushSubscriptions', true);
+                        await targetUser.save();
+                    }
+                }
+            }
+        }
+
         res.redirect('/feed');
     } catch (error) {
         console.error('Comment Error:', error);

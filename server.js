@@ -48,6 +48,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/', require('./routes/index'));
 app.use('/auth', require('./routes/auth'));
+app.use('/account', require('./routes/account'));
 app.use('/admin', require('./routes/admin'));
 app.use('/feed', require('./routes/feed'));
 

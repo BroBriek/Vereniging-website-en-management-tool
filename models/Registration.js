@@ -15,6 +15,10 @@ const Registration = sequelize.define('Registration', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  birthdate: {
+    type: DataTypes.DATEONLY,
+    allowNull: false
+  },
   // Specific for 'lid' (Member)
   memberPhone: {
     type: DataTypes.STRING,
