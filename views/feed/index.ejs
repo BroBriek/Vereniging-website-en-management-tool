@@ -306,7 +306,12 @@ function getAvatarColor(username) {
                 <div class="card-footer bg-light">
                     <!-- Existing comments code ... (collapsed for brevity unless I need to change it, but I should preserve it) -->
                     <h6>Reacties</h6>
-                    <% post.comments.forEach(comment => { %>
+                    <% 
+                        const visibleComments = post.comments.slice(0, 3);
+                        const hiddenComments = post.comments.slice(3);
+                    %>
+
+                    <% visibleComments.forEach(comment => { %>
                         <div class="d-flex mb-2">
                             <div class="flex-grow-1">
                                 <strong><%= comment.author ? comment.author.username : 'Onbekend' %>:</strong>
@@ -334,6 +339,42 @@ function getAvatarColor(username) {
                             </div>
                         </div>
                     <% }) %>
+
+                    <% if (hiddenComments.length > 0) { %>
+                        <div class="collapse" id="hidden-comments-<%= post.id %>">
+                            <% hiddenComments.forEach(comment => { %>
+                                <div class="d-flex mb-2">
+                                    <div class="flex-grow-1">
+                                        <strong><%= comment.author ? comment.author.username : 'Onbekend' %>:</strong>
+                                        <span><%= comment.content %></span>
+                                        
+                                        <% if (comment.replies && comment.replies.length > 0) { %>
+                                            <div class="ms-4 mt-1 border-start ps-2">
+                                                <% comment.replies.forEach(reply => { %>
+                                                    <div>
+                                                        <small><strong><%= reply.author ? reply.author.username : 'Onbekend' %>:</strong> <%= reply.content %></small>
+                                                    </div>
+                                                <% }) %>
+                                            </div>
+                                        <% } %>
+
+                                        <a href="#" onclick="document.getElementById('reply-form-<%= comment.id %>').style.display='block'; return false;" class="text-muted small d-block">Beantwoorden</a>
+                                        <div id="reply-form-<%= comment.id %>" style="display:none;" class="mt-1">
+                                            <form action="/feed/comment" method="POST" class="d-flex">
+                                                <input type="hidden" name="postId" value="<%= post.id %>">
+                                                <input type="hidden" name="parentId" value="<%= comment.id %>">
+                                                <input type="text" name="content" class="form-control form-control-sm me-2" placeholder="Schrijf een antwoord..." required>
+                                                <button type="submit" class="btn btn-sm btn-primary">Stuur</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                        <button class="btn btn-sm btn-link text-decoration-none mb-2 ps-0 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hidden-comments-<%= post.id %>" aria-expanded="false" onclick="this.textContent = this.textContent.includes('Bekijk') ? 'Verberg reacties' : 'Bekijk alle reacties'">
+                            Bekijk alle reacties
+                        </button>
+                    <% } %>
 
                     <form action="/feed/comment" method="POST" class="mt-2">
                         <input type="hidden" name="postId" value="<%= post.id %>">

@@ -1,0 +1,156 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <h1>Account Instellingen</h1>
+    <p class="lead">Beheer je account en voorkeuren.</p>
+    
+    <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+    <% } %>
+    
+    <% if (error) { %>
+        <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+
+    <div class="row">
+        <!-- Password Settings -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    Wachtwoord Wijzigen
+                </div>
+                <div class="card-body">
+                    <form action="/account/password" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Huidig Wachtwoord</label>
+                            <input type="password" class="form-control" name="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nieuw Wachtwoord</label>
+                            <input type="password" class="form-control" name="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Bevestig Nieuw Wachtwoord</label>
+                            <input type="password" class="form-control" name="confirmPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Wachtwoord Bijwerken</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    Meldingen
+                </div>
+                <div class="card-body">
+                    <p>Ontvang meldingen wanneer er een nieuw bericht in het leidingshoekje wordt geplaatst.</p>
+                    
+                    <div id="notification-ui">
+                        <button id="enable-push-btn" class="btn btn-outline-success w-100">
+                            <i class="bi bi-bell"></i> Meldingen Inschakelen (op dit toestel)
+                        </button>
+                        <p id="push-status" class="mt-2 text-muted small"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const VAPID_PUBLIC_KEY = '<%= vapidPublicKey %>';
+
+// Function to convert VAPID key
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+const enableBtn = document.getElementById('enable-push-btn');
+const statusText = document.getElementById('push-status');
+
+async function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Service Worker registered');
+      return registration;
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+    }
+  }
+  return null;
+}
+
+async function subscribeUserToPush() {
+  if (!VAPID_PUBLIC_KEY) {
+      alert('Server configuratie fout: VAPID key ontbreekt.');
+      return;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    if (!registration) return;
+
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+
+    console.log('Received PushSubscription:', JSON.stringify(subscription));
+
+    // Send subscription to server
+    await fetch('/account/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(subscription),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    statusText.innerText = 'Meldingen zijn ingeschakeld voor dit toestel.';
+    enableBtn.disabled = true;
+    enableBtn.innerText = 'Ingeschakeld';
+    enableBtn.classList.remove('btn-outline-success');
+    enableBtn.classList.add('btn-success');
+
+  } catch (err) {
+    console.error('Failed to subscribe the user: ', err);
+    statusText.innerText = 'Kon meldingen niet inschakelen. Sta meldingen toe in je browser.';
+  }
+}
+
+// Check current status
+if ('serviceWorker' in navigator && 'PushManager' in window) {
+    registerServiceWorker().then(async () => {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (subscription) {
+             statusText.innerText = 'Meldingen zijn al actief op dit toestel.';
+             enableBtn.disabled = true;
+             enableBtn.innerText = 'Al Ingeschakeld';
+             enableBtn.classList.remove('btn-outline-success');
+             enableBtn.classList.add('btn-success');
+        }
+    });
+
+    enableBtn.addEventListener('click', subscribeUserToPush);
+} else {
+    statusText.innerText = 'Push meldingen worden niet ondersteund door deze browser.';
+    enableBtn.disabled = true;
+}
+</script>
+
+<%- include('../partials/footer') %>

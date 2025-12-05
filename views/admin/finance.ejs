@@ -5,8 +5,11 @@
         <i class="bi bi-piggy-bank me-2"></i>Financieel Overzicht
     </h1>
     <div>
-        <a href="/admin/finance/info" class="btn btn-info text-white me-2" title="Hulp & Info">
-            <i class="bi bi-info-circle"></i> Info
+        <a href="/admin/finance/info" class="btn btn-info text-white me-2" title="Financiën Hulp & Info">
+            <i class="bi bi-info-circle"></i> Financiën Info
+        </a>
+        <a href="/admin/info" class="btn btn-info text-white me-2" title="Algemene Hulp & Info">
+            <i class="bi bi-info-circle"></i> Algemene Info
         </a>
         <% if (currentFolder) { %>
             <a href="/admin/finance/<%= currentFolder.id %>/export" class="btn btn-success">
@@ -94,7 +97,13 @@
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <form action="/admin/finance/item/<%= item.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Map verwijderen? Alle inhoud gaat verloren!');" class="d-inline" onclick="event.stopPropagation();">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
+                                    <% if (item.childrenCount > 0) { %>
+                                        <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top" title="Maak de map eerst leeg voor dat je deze kan verwijderen!">
+                                            <button type="button" class="btn btn-sm btn-outline-danger border-0" disabled style="pointer-events: none;"><i class="bi bi-trash"></i></button>
+                                        </span>
+                                    <% } else { %>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
+                                    <% } %>
                                 </form>
                             </td>
                         </tr>
@@ -183,6 +192,12 @@
 </div>
 
 <script>
+    // Initialize Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
     // Check for URL params for alerts
     const urlParams = new URLSearchParams(window.location.search);
     const successMsg = urlParams.get('success');

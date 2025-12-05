@@ -3,7 +3,12 @@
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Bestandsbeheer</h1>
-        <a href="/admin" class="btn btn-secondary">Terug naar Dashboard</a>
+        <div>
+            <a href="/admin/info" class="btn btn-info text-white me-2" title="Algemene Hulp & Info">
+                <i class="bi bi-info-circle"></i> Algemene Info
+            </a>
+            <a href="/admin" class="btn btn-secondary">Terug naar Dashboard</a>
+        </div>
     </div>
 
     <% if (typeof error !== 'undefined' && error) { %>

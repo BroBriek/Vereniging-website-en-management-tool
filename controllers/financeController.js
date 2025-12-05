@@ -60,6 +60,7 @@ exports.getIndex = async (req, res) => {
         const data = item.toJSON();
         if (item.amount === null) {
             data.total = await calculateFolderTotal(item.id);
+            data.childrenCount = await FinanceItem.count({ where: { parentId: item.id } });
         }
         return data;
     }));

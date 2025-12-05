@@ -15,11 +15,21 @@ const User = sequelize.define('User', {
   role: {
     type: DataTypes.STRING,
     defaultValue: 'admin'
+  },
+  pushSubscriptions: {
+    type: DataTypes.JSON,
+    defaultValue: []
   }
 });
 
 User.beforeCreate(async (user) => {
   if (user.password) {
+    user.password = await bcrypt.hash(user.password, 10);
+  }
+});
+
+User.beforeUpdate(async (user) => {
+  if (user.changed('password')) {
     user.password = await bcrypt.hash(user.password, 10);
   }
 });
