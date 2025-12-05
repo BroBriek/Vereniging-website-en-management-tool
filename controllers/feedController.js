@@ -1,6 +1,8 @@
 const { Post, Comment, User, PostResponse } = require('../models');
 const path = require('path');
 const webpush = require('web-push');
+const { sendMail } = require('../config/mailer');
+const { Op } = require('sequelize');
 
 // Configure web-push
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -123,6 +125,22 @@ exports.postCreatePost = async (req, res) => {
             }
         })();
 
+        (async () => {
+            try {
+                const users = await User.findAll({ where: { email: { [Op.ne]: null }, emailVerified: true, emailNotificationsEnabled: true } });
+                const baseUrl = `${req.protocol}://${req.get('host')}`;
+                const subject = 'Nieuw Bericht in Leidingshoekje';
+                const preview = `${req.user.username}: ${content.substring(0, 40)}${content.length > 40 ? '...' : ''}`;
+                const html = `<p>${preview}</p><p><a href="${baseUrl}/feed">Open Leidingshoekje</a></p>`;
+                const text = `${preview}\n\nOpen: ${baseUrl}/feed`;
+                for (const u of users) {
+                    await sendMail({ to: u.email, subject, text, html });
+                }
+            } catch (error) {
+                console.error('Email Notification Error:', error);
+            }
+        })();
+
         res.redirect('/feed');
     } catch (error) {
         console.error('Create Post Error:', error);
@@ -170,6 +188,27 @@ exports.postComment = async (req, res) => {
                         targetUser.pushSubscriptions = [...targetUser.pushSubscriptions];
                         targetUser.changed('pushSubscriptions', true);
                         await targetUser.save();
+                    }
+                }
+            }
+        }
+
+        if (parentId) {
+            const parentComment = await Comment.findByPk(parentId, {
+                include: [{ model: User, as: 'author' }]
+            });
+            if (parentComment && parentComment.author && parentComment.author.id !== req.user.id) {
+                const targetUser = parentComment.author;
+                if (targetUser.email && targetUser.emailVerified && targetUser.emailNotificationsEnabled) {
+                    const baseUrl = `${req.protocol}://${req.get('host')}`;
+                    const subject = 'Nieuwe reactie';
+                    const preview = `${req.user.username} reageerde op je: "${content.substring(0, 30)}..."`;
+                    const html = `<p>${preview}</p><p><a href="${baseUrl}/feed">Bekijk</a></p>`;
+                    const text = `${preview}\n\nBekijk: ${baseUrl}/feed`;
+                    try {
+                        await sendMail({ to: targetUser.email, subject, text, html });
+                    } catch (error) {
+                        console.error('Email Notification Error:', error);
                     }
                 }
             }
@@ -280,4 +319,3 @@ exports.updatePost = async (req, res) => {
         res.redirect('/feed?error=Kon post niet bijwerken');
     }
 };
-

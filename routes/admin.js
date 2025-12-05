@@ -37,6 +37,7 @@ router.delete('/registrations/:id', adminController.deleteRegistration);
 router.post('/danger/reset-registrations', adminController.resetRegistrations);
 router.post('/danger/reset-website', adminController.resetWebsite);
 router.post('/danger/backup', adminController.triggerBackup);
+router.get('/danger/test-push', adminController.testPush);
 
 // Page Content Editors
 router.get('/page/:page', adminController.getEditPage);

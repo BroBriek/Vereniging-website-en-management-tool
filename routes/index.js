@@ -12,5 +12,7 @@ router.get('/inschrijven', publicController.getRegister);
 router.post('/inschrijven', publicController.postRegister);
 router.get('/contact', publicController.getContact);
 router.post('/contact', publicController.postContact);
+router.get('/robots.txt', publicController.getRobotsTxt);
+router.get('/sitemap.xml', publicController.getSitemapXml);
 
 module.exports = router;

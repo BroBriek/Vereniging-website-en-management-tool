@@ -3,6 +3,9 @@ const path = require('path');
 
 exports.getUploads = (req, res) => {
     const uploadDir = path.join(__dirname, '../public/uploads');
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+    }
     
     fs.readdir(uploadDir, (err, files) => {
         if (err) {

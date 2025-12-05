@@ -294,3 +294,29 @@ input:focus, textarea:focus {
 .calendar-card:hover .calendar-icon {
     transform: translateX(5px);
 }
+
+@media (max-width: 768px) {
+    body { font-size: 1.1rem; }
+    .hero-img { height: 50vh; }
+    .hero-text { padding: 1.2rem; max-width: 90%; bottom: 15%; }
+    .navbar { padding: 0.75rem 0; }
+    .navbar-brand { font-size: 1.5rem; }
+    .nav-link { font-size: 1.05rem; margin: 0 6px; }
+    .leader-card-wrapper { width: 70vw; }
+    .leader-modal-img { height: 260px; }
+    .calendar-title { font-size: 1.25rem; }
+    .calendar-date-badge { width: 64px; }
+}
+
+@media (max-width: 576px) {
+    body { font-size: 1rem; }
+    .hero-img { height: 40vh; }
+    .hero-text { padding: 1rem; bottom: 12%; }
+    .navbar-brand { font-size: 1.3rem; }
+    .nav-link { font-size: 0.95rem; margin: 0 4px; }
+    .leader-card-wrapper { width: 85vw; }
+    .leader-modal-img { height: 200px; }
+    .calendar-card { padding: 1rem; }
+    .calendar-title { font-size: 1.15rem; }
+    .calendar-date-badge { width: 60px; margin-right: 1rem; }
+}
