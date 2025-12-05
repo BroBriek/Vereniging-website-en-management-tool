@@ -1,4 +1,5 @@
-const { PageContent, Leader, Event, Registration, User } = require('../models');
+const { PageContent, Leader, Event, Registration, User, Post, Comment, PostResponse } = require('../models');
+const webpush = require('web-push');
 const ExcelJS = require('exceljs');
 const { exec } = require('child_process');
 const fs = require('fs');
@@ -49,12 +50,16 @@ exports.getLeaders = async (req, res) => {
 };
 
 exports.postLeader = async (req, res) => {
-    const { name, group, years_active, study, extra_info, birth_date } = req.body;
-    const is_head_leader = req.body.is_head_leader === 'on';
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
-    
-    await Leader.create({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader });
-    res.redirect('/admin/leaders');
+    try {
+        const { name, group, years_active, study, extra_info, birth_date } = req.body;
+        const is_head_leader = req.body.is_head_leader === 'on';
+        const image = req.file ? `/uploads/${req.file.filename}` : null;
+        await Leader.create({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader });
+        res.redirect('/admin/leaders');
+    } catch (error) {
+        console.error('Error creating leader:', error);
+        res.redirect('/admin/leaders?error=Kon leiding niet aanmaken');
+    }
 };
 
 exports.getEditLeader = async (req, res) => {
@@ -66,25 +71,32 @@ exports.getEditLeader = async (req, res) => {
 };
 
 exports.updateLeader = async (req, res) => {
-    const { name, group, years_active, study, extra_info, birth_date } = req.body;
-    const is_head_leader = req.body.is_head_leader === 'on';
-    const leader = await Leader.findByPk(req.params.id);
-    
-    if (leader) {
-        let image = leader.image;
-        if (req.file) {
-            image = `/uploads/${req.file.filename}`;
+    try {
+        const { name, group, years_active, study, extra_info, birth_date } = req.body;
+        const is_head_leader = req.body.is_head_leader === 'on';
+        const leader = await Leader.findByPk(req.params.id);
+        if (leader) {
+            let image = leader.image;
+            if (req.file) {
+                image = `/uploads/${req.file.filename}`;
+            }
+            await leader.update({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader });
         }
-        
-        await leader.update({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader });
+        res.redirect('/admin/leaders');
+    } catch (error) {
+        console.error('Error updating leader:', error);
+        res.redirect('/admin/leaders?error=Kon leiding niet bijwerken');
     }
-    
-    res.redirect('/admin/leaders');
 };
 
 exports.deleteLeader = async (req, res) => {
-    await Leader.destroy({ where: { id: req.params.id } });
-    res.redirect('/admin/leaders');
+    try {
+        await Leader.destroy({ where: { id: req.params.id } });
+        res.redirect('/admin/leaders');
+    } catch (error) {
+        console.error('Error deleting leader:', error);
+        res.redirect('/admin/leaders?error=Kon leiding niet verwijderen');
+    }
 };
 
 exports.getEvents = async (req, res) => {
@@ -93,14 +105,24 @@ exports.getEvents = async (req, res) => {
 };
 
 exports.postEvent = async (req, res) => {
-    const { title, date, description } = req.body;
-    await Event.create({ title, date, description });
-    res.redirect('/admin/events');
+    try {
+        const { title, date, description } = req.body;
+        await Event.create({ title, date, description });
+        res.redirect('/admin/events');
+    } catch (error) {
+        console.error('Error creating event:', error);
+        res.redirect('/admin/events?error=Kon evenement niet aanmaken');
+    }
 };
 
 exports.deleteEvent = async (req, res) => {
-    await Event.destroy({ where: { id: req.params.id } });
-    res.redirect('/admin/events');
+    try {
+        await Event.destroy({ where: { id: req.params.id } });
+        res.redirect('/admin/events');
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        res.redirect('/admin/events?error=Kon evenement niet verwijderen');
+    }
 };
 
 exports.getInfo = (req, res) => {
@@ -205,6 +227,46 @@ exports.triggerBackup = (req, res) => {
     });
 };
 
+exports.testPush = async (req, res) => {
+    try {
+        const users = await User.findAll();
+        const payload = JSON.stringify({
+            title: 'Testmelding',
+            body: 'PWA push werkt!'
+        });
+
+        let sent = 0;
+        for (const user of users) {
+            if (user.pushSubscriptions && Array.isArray(user.pushSubscriptions)) {
+                let subChanged = false;
+                for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
+                    const sub = user.pushSubscriptions[i];
+                    try {
+                        await webpush.sendNotification(sub, payload);
+                        sent++;
+                    } catch (err) {
+                        if (err.statusCode === 410 || err.statusCode === 404) {
+                            user.pushSubscriptions.splice(i, 1);
+                            subChanged = true;
+                        }
+                        console.error('Test push error:', err && err.message ? err.message : err);
+                    }
+                }
+                if (subChanged) {
+                    user.pushSubscriptions = [...user.pushSubscriptions];
+                    user.changed('pushSubscriptions', true);
+                    await user.save();
+                }
+            }
+        }
+
+        res.redirect('/admin?success=' + encodeURIComponent(`Test push verzonden naar ${sent} subscriptions`));
+    } catch (error) {
+        console.error('Test Push Error:', error);
+        res.redirect('/admin?error=' + encodeURIComponent('Kon testmelding niet verzenden'));
+    }
+};
+
 exports.resetWebsite = async (req, res) => {
     const { password } = req.body;
     
@@ -264,11 +326,19 @@ exports.getUsers = async (req, res) => {
 exports.postUser = async (req, res) => {
     const { username, password, role } = req.body;
     try {
-        await User.create({ username, password, role });
+        const name = (username || '').trim();
+        if (!name || !password) {
+            return res.redirect('/admin/users?error=Vul een gebruikersnaam en wachtwoord in');
+        }
+        const exists = await User.findOne({ where: { username: name } });
+        if (exists) {
+            return res.redirect('/admin/users?error=Gebruikersnaam bestaat al');
+        }
+        await User.create({ username: name, password, role });
         res.redirect('/admin/users');
     } catch (error) {
         console.error('Error creating user:', error);
-        res.redirect('/admin/users?error=Kon gebruiker niet aanmaken (bestaat de naam al?)');
+        res.redirect('/admin/users?error=Kon gebruiker niet aanmaken');
     }
 };
 
@@ -277,8 +347,28 @@ exports.deleteUser = async (req, res) => {
         return res.redirect('/admin/users?error=Je kan jezelf niet verwijderen.');
     }
     try {
-        await User.destroy({ where: { id: req.params.id } });
-        res.redirect('/admin/users');
+        const targetId = parseInt(req.params.id);
+        const t = await require('../models').sequelize.transaction();
+        try {
+            const posts = await Post.findAll({ where: { authorId: targetId }, transaction: t });
+            const postIds = posts.map(p => p.id);
+
+            if (postIds.length > 0) {
+                await Comment.destroy({ where: { postId: postIds }, transaction: t });
+                await PostResponse.destroy({ where: { postId: postIds }, transaction: t });
+                await Post.destroy({ where: { id: postIds }, transaction: t });
+            }
+
+            await Comment.update({ userId: null }, { where: { userId: targetId }, transaction: t });
+            await PostResponse.update({ userId: null }, { where: { userId: targetId }, transaction: t });
+
+            await User.destroy({ where: { id: targetId }, transaction: t });
+            await t.commit();
+            res.redirect('/admin/users');
+        } catch (err) {
+            await t.rollback();
+            throw err;
+        }
     } catch (error) {
         console.error('Error deleting user:', error);
         res.redirect('/admin/users?error=Kon gebruiker niet verwijderen.');

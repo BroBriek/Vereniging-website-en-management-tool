@@ -19,6 +19,22 @@ const User = sequelize.define('User', {
   pushSubscriptions: {
     type: DataTypes.JSON,
     defaultValue: []
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  emailVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  emailVerificationToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  emailNotificationsEnabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 });
 

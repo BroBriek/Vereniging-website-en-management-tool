@@ -1,0 +1,14 @@
+{
+  "name": "Chiro Vreugdeland",
+  "short_name": "Chiro",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fdfbf7",
+  "theme_color": "#db3e41",
+  "description": "Chiro website met meldingen voor leiding en leden.",
+  "icons": [
+    { "src": "/img/Hero.jpg", "sizes": "192x192", "type": "image/jpeg" },
+    { "src": "/img/Hero.jpg", "sizes": "512x512", "type": "image/jpeg" }
+  ]
+}

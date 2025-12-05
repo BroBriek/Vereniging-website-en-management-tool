@@ -17,7 +17,7 @@ const Registration = sequelize.define('Registration', {
   },
   birthdate: {
     type: DataTypes.DATEONLY,
-    allowNull: false
+    allowNull: true
   },
   // Specific for 'lid' (Member)
   memberPhone: {
@@ -56,6 +56,10 @@ const Registration = sequelize.define('Registration', {
   group: {
     type: DataTypes.ENUM('ribbel', 'speelclub', 'rakwi', 'tito', 'keti', 'aspi'),
     allowNull: false
+  },
+  privacyAccepted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 });
 

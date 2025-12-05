@@ -6,6 +6,7 @@ const passport = require('passport');
 const methodOverride = require('method-override');
 const { sequelize, syncDatabase } = require('./models');
 const SQLiteStore = require('connect-sqlite3')(session);
+const webpush = require('web-push');
 
 // Init App
 const app = express();
@@ -15,6 +16,15 @@ require('./config/passport')(passport);
 
 // Database Sync
 syncDatabase();
+
+// Web Push VAPID configuration
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:admin@chirosite.local',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 // View Engine
 app.set('view engine', 'ejs');
@@ -29,7 +39,7 @@ app.use(methodOverride('_method'));
 // Sessions
 app.use(session({
   store: new SQLiteStore({ db: 'sessions.sqlite', dir: '.' }),
-  secret: 'secret_chiro_key_change_me', // In production this should be in .env
+  secret: process.env.SESSION_SECRET || 'secret_chiro_key_change_me',
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 } // 1 week
@@ -51,6 +61,17 @@ app.use('/auth', require('./routes/auth'));
 app.use('/account', require('./routes/account'));
 app.use('/admin', require('./routes/admin'));
 app.use('/feed', require('./routes/feed'));
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).send('Pagina niet gevonden');
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).send('Er ging iets mis');
+});
 
 // Start Server
 const PORT = process.env.PORT || 3000;
