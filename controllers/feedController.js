@@ -3,6 +3,29 @@ const path = require('path');
 const { Op } = require('sequelize');
 const NotificationService = require('../services/NotificationService');
 
+// View Helpers
+const getAvatarColor = (username) => {
+    if (!username) return '#db3e41';
+    const vibrantColors = ['#f1c40f', '#2ecc71', '#e67e22', '#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#d35400'];
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return vibrantColors[Math.abs(hash) % vibrantColors.length];
+};
+
+const getInitials = (username) => {
+    if (!username) return '?';
+    return username.substring(0, 2).toUpperCase();
+};
+
+const highlightMentions = (text) => {
+    if (!text) return '';
+    return text.replace(/@(\w+)/g, '<span class="text-primary fw-bold">@$1</span>');
+};
+
+const viewHelpers = { getAvatarColor, getInitials, highlightMentions };
+
 const getAccessibleGroups = async (user) => {
     if (user.role === 'admin') {
         return await FeedGroup.findAll({ order: [['year', 'DESC'], ['name', 'ASC']] });
@@ -55,6 +78,10 @@ exports.getFeed = async (req, res) => {
         } else {
             activeGroup = allGroups[0] || null;
         }
+
+        const limit = parseInt(process.env.FEED_PAGINATION_LIMIT) || 10;
+        const offset = parseInt(req.query.offset) || 0;
+
         const posts = await Post.findAll({
             where: activeGroup ? { groupId: activeGroup.id } : {},
             include: [
@@ -66,9 +93,39 @@ exports.getFeed = async (req, res) => {
                 ], where: { parentId: null }, required: false },
                 { model: PostResponse, as: 'responses', include: [{ model: User, as: 'user', attributes: ['id', 'username'] }] }
             ],
-            order: [['createdAt', 'DESC'], [{ model: Comment, as: 'comments' }, 'createdAt', 'ASC']]
+            order: [['createdAt', 'DESC'], [{ model: Comment, as: 'comments' }, 'createdAt', 'ASC']],
+            limit: limit,
+            offset: offset,
+            distinct: true // Important for correct count with includes
         });
-        res.render('feed/index', { title: 'Leidingshoekje', posts, user: req.user, groups: allGroups, activeGroup });
+
+        // Handle AJAX request for more posts
+        if (req.xhr || req.query.ajax) {
+            return res.render('feed/feed_items', { 
+                posts, 
+                user: req.user, 
+                ...viewHelpers 
+            }, (err, html) => {
+                if (err) {
+                    console.error('Render Partial Error:', err);
+                    return res.status(500).json({ error: 'Render Error' });
+                }
+                res.json({ 
+                    html, 
+                    hasMore: posts.length === limit 
+                });
+            });
+        }
+
+        res.render('feed/index', { 
+            title: 'Leidingshoekje', 
+            posts, 
+            user: req.user, 
+            groups: allGroups, 
+            activeGroup,
+            limit, // Pass limit to view for initial button state
+            ...viewHelpers
+        });
     } catch (error) {
         console.error('Feed Error:', error);
         res.status(500).send('Server Error');
