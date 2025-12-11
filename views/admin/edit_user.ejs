@@ -1,0 +1,48 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>Gebruiker bewerken</h1>
+  <a href="/admin/users" class="btn btn-secondary">Terug</a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">Basis</div>
+  <div class="card-body">
+    <form action="/admin/users/<%= target.id %>?_method=PUT" method="POST">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label>Gebruikersnaam</label>
+          <input type="text" class="form-control" value="<%= target.username %>" disabled>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label>Rol</label>
+          <select class="form-select" name="role">
+            <option value="leader" <%= target.role === 'leader' ? 'selected' : '' %>>Leiding</option>
+            <option value="admin" <%= target.role === 'admin' ? 'selected' : '' %>>Administrator</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        Admins hebben automatisch toegang tot alle leidingshoekjes.
+      </div>
+
+      <div class="mb-3">
+        <h5>Toegang tot Leidingshoekjes</h5>
+        <div class="row">
+          <% groups.forEach(g => { %>
+            <div class="col-md-4 mb-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="groups" value="<%= g.id %>" <%= accessIds.includes(g.id) ? 'checked' : '' %>>
+                <label class="form-check-label"><%= g.name %> <%= g.year ? '(' + g.year + ')' : '' %></label>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-success">Opslaan</button>
+    </form>
+  </div>
+  </div>
+
+<%- include('../partials/footer') %>

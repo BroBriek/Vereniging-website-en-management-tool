@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>Bestanden</h1>
+  <a href="/feed/group/<%= group.slug %>" class="btn btn-secondary">Terug naar <%= group.name %></a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    Alle geüploade bestanden in <strong><%= group.name %></strong>
+  </div>
+  <div class="card-body">
+    <% if (files.length === 0) { %>
+      <div class="alert alert-info">Nog geen bestanden geüpload.</div>
+    <% } else { %>
+      <ul class="list-group list-group-flush">
+        <% files.forEach(f => { %>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="<%= f.path %>" target="_blank"><i class="bi bi-file-earmark"></i> <%= f.originalName %></a>
+            <a class="btn btn-sm btn-outline-primary" href="/feed/group/<%= group.slug %>#post-<%= f.postId %>">Ga naar post</a>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

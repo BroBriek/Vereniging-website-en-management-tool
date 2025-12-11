@@ -1,51 +1,86 @@
-const { Post, Comment, User, PostResponse } = require('../models');
+const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess } = require('../models');
 const path = require('path');
-const webpush = require('web-push');
-const { sendMail } = require('../config/mailer');
 const { Op } = require('sequelize');
+const NotificationService = require('../services/NotificationService');
 
-// Configure web-push
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-    webpush.setVapidDetails(
-      'mailto:admin@chirosite.local',
-      process.env.VAPID_PUBLIC_KEY,
-      process.env.VAPID_PRIVATE_KEY
-    );
-}
+const getAccessibleGroups = async (user) => {
+    if (user.role === 'admin') {
+        return await FeedGroup.findAll({ order: [['year', 'DESC'], ['name', 'ASC']] });
+    }
+    const groups = await FeedGroup.findAll({
+        include: [{ model: User, as: 'members', where: { id: user.id }, required: true }],
+        order: [['year', 'DESC'], ['name', 'ASC']]
+    });
+    return groups;
+};
+
+const ensureAccessToGroup = async (user, group) => {
+    if (!group) return false;
+    if (user.role === 'admin') return true;
+    const count = await UserGroupAccess.count({ where: { userId: user.id, feedGroupId: group.id } });
+    return count > 0;
+};
+
+exports.searchUsers = async (req, res) => {
+    try {
+        const query = req.query.q || '';
+        if (query.length < 1) return res.json([]);
+        
+        const users = await User.findAll({
+            where: {
+                username: { 
+                    [Op.like]: `%${query}%`,
+                    [Op.ne]: 'Admin'
+                }
+            },
+            attributes: ['id', 'username'],
+            limit: 5
+        });
+        res.json(users);
+    } catch (error) {
+        console.error('Search Users Error:', error);
+        res.status(500).json({ error: 'Search failed' });
+    }
+};
 
 exports.getFeed = async (req, res) => {
     try {
+        const slug = req.params.slug || null;
+        const allGroups = await getAccessibleGroups(req.user);
+        let activeGroup = null;
+        if (slug) {
+            activeGroup = await FeedGroup.findOne({ where: { slug } });
+            const allowed = await ensureAccessToGroup(req.user, activeGroup);
+            if (!allowed) return res.status(403).send('Geen toegang');
+        } else {
+            activeGroup = allGroups[0] || null;
+        }
         const posts = await Post.findAll({
+            where: activeGroup ? { groupId: activeGroup.id } : {},
             include: [
                 { model: User, as: 'author', attributes: ['id', 'username'] },
-                {
-                    model: Comment,
-                    as: 'comments',
-                    include: [
-                        { model: User, as: 'author', attributes: ['id', 'username'] },
-                        { 
-                            model: Comment, 
-                            as: 'replies',
-                            include: [{ model: User, as: 'author', attributes: ['id', 'username'] }]
-                        }
-                    ],
-                    where: { parentId: null }, // Fetch top-level comments only (replies are nested)
-                    required: false
-                },
-                {
-                    model: PostResponse,
-                    as: 'responses',
-                    include: [{ model: User, as: 'user', attributes: ['id', 'username'] }]
-                }
+                { model: Like, as: 'likes', include: [{ model: User, as: 'user', attributes: ['username'] }] },
+                { model: Comment, as: 'comments', include: [
+                    { model: User, as: 'author', attributes: ['id', 'username'] },
+                    { model: Comment, as: 'replies', include: [{ model: User, as: 'author', attributes: ['id', 'username'] }] }
+                ], where: { parentId: null }, required: false },
+                { model: PostResponse, as: 'responses', include: [{ model: User, as: 'user', attributes: ['id', 'username'] }] }
             ],
             order: [['createdAt', 'DESC'], [{ model: Comment, as: 'comments' }, 'createdAt', 'ASC']]
         });
-        
-        res.render('feed/index', { title: 'Leidingshoekje', posts, user: req.user });
+        res.render('feed/index', { title: 'Leidingshoekje', posts, user: req.user, groups: allGroups, activeGroup });
     } catch (error) {
         console.error('Feed Error:', error);
         res.status(500).send('Server Error');
     }
+};
+
+// Helper to find mentions
+const extractMentions = (text) => {
+    if (!text) return [];
+    const matches = text.match(/@(\w+)/g);
+    if (!matches) return [];
+    return [...new Set(matches.map(m => m.substring(1)))]; // Remove @ and unique
 };
 
 exports.postCreatePost = async (req, res) => {
@@ -79,68 +114,55 @@ exports.postCreatePost = async (req, res) => {
             }
         }
 
-        const newPost = await Post.create({
-            content,
-            attachments,
-            poll,
-            form,
-            authorId: req.user.id
-        });
+        const groupId = req.body.groupId ? parseInt(req.body.groupId) : null;
+        let group = null;
+        if (groupId) {
+            group = await FeedGroup.findByPk(groupId);
+            const allowed = await ensureAccessToGroup(req.user, group);
+            if (!allowed) return res.redirect('/feed?error=Geen toegang');
+        }
 
-        // Send Push Notifications (Async)
+        const newPost = await Post.create({ content, attachments, poll, form, authorId: req.user.id, groupId: group ? group.id : null });
+
+        // Send Notifications via NotificationService
         (async () => {
-            try {
-                const users = await User.findAll();
-                const payload = JSON.stringify({
-                    title: 'Nieuw Bericht in Leidingshoekje',
-                    body: `${req.user.username}: ${content.substring(0, 40)}${content.length > 40 ? '...' : ''}`,
+            const messageData = {
+                title: 'Nieuw Bericht in Leidingshoekje',
+                body: `${req.user.username}: ${(content || '').substring(0, 40)}${(content && content.length > 40) ? '...' : ''}`,
+                url: group ? `/feed/group/${group.slug}` : '/feed'
+            };
+
+            // 1. Group/Global Notification
+            if (group) {
+                await NotificationService.sendGroupNotification(group.id, messageData);
+            } else {
+                const allUsers = await User.findAll();
+                await Promise.allSettled(allUsers.map(u => NotificationService.sendIndividualNotification(u, messageData)));
+            }
+
+            // 2. Mention Notifications
+            const mentionedUsernames = extractMentions(content);
+            if (mentionedUsernames.length > 0) {
+                const mentionedUsers = await User.findAll({
+                    where: {
+                        username: { [Op.in]: mentionedUsernames },
+                        id: { [Op.ne]: req.user.id } // Don't notify self
+                    }
                 });
 
-                for (const user of users) {
-                    if (user.pushSubscriptions && Array.isArray(user.pushSubscriptions)) {
-                        let subChanged = false;
-                        // Iterate backwards to allow removal
-                        for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
-                            const sub = user.pushSubscriptions[i];
-                            try {
-                                await webpush.sendNotification(sub, payload);
-                            } catch (err) {
-                                if (err.statusCode === 410 || err.statusCode === 404) {
-                                    // Subscription is dead, remove it
-                                    user.pushSubscriptions.splice(i, 1);
-                                    subChanged = true;
-                                }
-                            }
-                        }
-                        if (subChanged) {
-                            // Re-assign to trigger update
-                            user.pushSubscriptions = [...user.pushSubscriptions]; 
-                            user.changed('pushSubscriptions', true);
-                            await user.save();
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Notification Error:', error);
+                const mentionMessage = {
+                    title: 'Je bent genoemd in een bericht',
+                    body: `${req.user.username} noemde je: "${(content || '').substring(0, 30)}..."`,
+                    url: group ? `/feed/group/${group.slug}#post-${newPost.id}` : `/feed#post-${newPost.id}`
+                };
+
+                await Promise.allSettled(mentionedUsers.map(u => NotificationService.sendIndividualNotification(u, mentionMessage)));
             }
         })();
 
-        (async () => {
-            try {
-                const users = await User.findAll({ where: { email: { [Op.ne]: null }, emailVerified: true, emailNotificationsEnabled: true } });
-                const baseUrl = `${req.protocol}://${req.get('host')}`;
-                const subject = 'Nieuw Bericht in Leidingshoekje';
-                const preview = `${req.user.username}: ${content.substring(0, 40)}${content.length > 40 ? '...' : ''}`;
-                const html = `<p>${preview}</p><p><a href="${baseUrl}/feed">Open Leidingshoekje</a></p>`;
-                const text = `${preview}\n\nOpen: ${baseUrl}/feed`;
-                for (const u of users) {
-                    await sendMail({ to: u.email, subject, text, html });
-                }
-            } catch (error) {
-                console.error('Email Notification Error:', error);
-            }
-        })();
-
+        if (group) {
+            return res.redirect('/feed/group/' + group.slug);
+        }
         res.redirect('/feed');
     } catch (error) {
         console.error('Create Post Error:', error);
@@ -158,63 +180,53 @@ exports.postComment = async (req, res) => {
             userId: req.user.id
         });
 
-        // Send Notification if it's a reply
-        if (parentId) {
-            const parentComment = await Comment.findByPk(parentId, {
-                include: [{ model: User, as: 'author' }]
-            });
+        const post = await Post.findByPk(postId);
+        let group = null;
+        if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
 
-            if (parentComment && parentComment.author && parentComment.author.id !== req.user.id) {
-                const targetUser = parentComment.author;
-                const payload = JSON.stringify({
-                    title: 'Nieuwe reactie',
-                    body: `${req.user.username} reageerde op je: "${content.substring(0, 30)}..."`
+        // Send Notification if it's a reply
+        (async () => {
+            if (parentId) {
+                const parentComment = await Comment.findByPk(parentId, {
+                    include: [{ model: User, as: 'author' }]
                 });
 
-                if (targetUser.pushSubscriptions && Array.isArray(targetUser.pushSubscriptions)) {
-                    let subChanged = false;
-                    for (let i = targetUser.pushSubscriptions.length - 1; i >= 0; i--) {
-                        const sub = targetUser.pushSubscriptions[i];
-                        try {
-                            await webpush.sendNotification(sub, payload);
-                        } catch (err) {
-                            if (err.statusCode === 410 || err.statusCode === 404) {
-                                targetUser.pushSubscriptions.splice(i, 1);
-                                subChanged = true;
-                            }
-                        }
-                    }
-                    if (subChanged) {
-                        targetUser.pushSubscriptions = [...targetUser.pushSubscriptions];
-                        targetUser.changed('pushSubscriptions', true);
-                        await targetUser.save();
-                    }
+                if (parentComment && parentComment.author && parentComment.author.id !== req.user.id) {
+                    const targetUser = parentComment.author;
+                    const messageData = {
+                        title: 'Nieuwe reactie',
+                        body: `${req.user.username} reageerde op je: "${content.substring(0, 30)}"...`,
+                        url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`
+                    };
+                    NotificationService.sendIndividualNotification(targetUser, messageData);
                 }
             }
-        }
 
-        if (parentId) {
-            const parentComment = await Comment.findByPk(parentId, {
-                include: [{ model: User, as: 'author' }]
-            });
-            if (parentComment && parentComment.author && parentComment.author.id !== req.user.id) {
-                const targetUser = parentComment.author;
-                if (targetUser.email && targetUser.emailVerified && targetUser.emailNotificationsEnabled) {
-                    const baseUrl = `${req.protocol}://${req.get('host')}`;
-                    const subject = 'Nieuwe reactie';
-                    const preview = `${req.user.username} reageerde op je: "${content.substring(0, 30)}..."`;
-                    const html = `<p>${preview}</p><p><a href="${baseUrl}/feed">Bekijk</a></p>`;
-                    const text = `${preview}\n\nBekijk: ${baseUrl}/feed`;
-                    try {
-                        await sendMail({ to: targetUser.email, subject, text, html });
-                    } catch (error) {
-                        console.error('Email Notification Error:', error);
+            // Mention Notifications
+            const mentionedUsernames = extractMentions(content);
+            if (mentionedUsernames.length > 0) {
+                const mentionedUsers = await User.findAll({
+                    where: {
+                        username: { [Op.in]: mentionedUsernames },
+                        id: { [Op.ne]: req.user.id }
                     }
-                }
-            }
-        }
+                });
 
-        res.redirect('/feed');
+                const mentionMessage = {
+                    title: 'Je bent genoemd in een reactie',
+                    body: `${req.user.username} noemde je: "${content.substring(0, 30)}..."`,
+                    url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`
+                };
+
+                await Promise.allSettled(mentionedUsers.map(u => NotificationService.sendIndividualNotification(u, mentionMessage)));
+            }
+        })();
+
+        if (!post) return res.redirect('/feed');
+        const ok = await ensureAccessToGroup(req.user, group || null);
+        if (!ok) return res.redirect('/feed');
+        
+        res.redirect(post.groupId && group ? '/feed/group/' + group.slug : '/feed');
     } catch (error) {
         console.error('Comment Error:', error);
         res.redirect('/feed');
@@ -226,6 +238,11 @@ exports.postResponse = async (req, res) => {
     try {
         const { postId, type, data } = req.body;
         const userId = req.user.id;
+        const post = await Post.findByPk(postId);
+        let group = null;
+        if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
+        const ok = await ensureAccessToGroup(req.user, group || null);
+        if (!ok) return res.redirect('/feed');
 
         if (type === 'poll') {
             // data.optionIndex can be a single string/number OR an array of strings/numbers if multiple checkboxes checked
@@ -271,10 +288,52 @@ exports.postResponse = async (req, res) => {
             }
         }
 
+        if (post && post.groupId && group) {
+            return res.redirect('/feed/group/' + group.slug);
+        }
         res.redirect('/feed');
     } catch (error) {
         console.error('Response Error:', error);
         res.redirect('/feed?error=Fout bij verzenden');
+    }
+};
+
+exports.toggleLike = async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const userId = req.user.id;
+
+        const existingLike = await Like.findOne({
+            where: { postId, userId }
+        });
+
+        if (existingLike) {
+            await existingLike.destroy();
+        } else {
+            await Like.create({ postId, userId });
+        }
+
+        // Return JSON if AJAX, otherwise redirect
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+             const likes = await Like.findAll({
+                 where: { postId },
+                 include: [{ model: User, as: 'user', attributes: ['username'] }]
+             });
+             const likeCount = likes.length;
+             const likers = likes.map(l => l.user ? l.user.username : 'Onbekend');
+             return res.json({ success: true, liked: !existingLike, count: likeCount, likers });
+        }
+
+        const post = await Post.findByPk(postId);
+        let group = null;
+        if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
+        res.redirect((post && post.groupId && group) ? ('/feed/group/' + group.slug + '#' + 'post-' + postId) : ('/feed#' + 'post-' + postId));
+    } catch (error) {
+        console.error('Toggle Like Error:', error);
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({ error: 'Server Error' });
+        }
+        res.redirect('/feed');
     }
 };
 
@@ -287,12 +346,6 @@ exports.deletePost = async (req, res) => {
         if (post.authorId !== req.user.id && req.user.role !== 'admin') {
             return res.redirect('/feed?error=Geen rechten');
         }
-
-        // Manually delete dependencies to avoid SQLite FK issues
-        await Promise.all([
-            Comment.destroy({ where: { postId: post.id } }),
-            PostResponse.destroy({ where: { postId: post.id } })
-        ]);
 
         await post.destroy();
         res.redirect('/feed?success=Post verwijderd');
@@ -313,9 +366,67 @@ exports.updatePost = async (req, res) => {
         }
 
         await post.update({ content });
+        let group = null;
+        if (post.groupId) group = await FeedGroup.findByPk(post.groupId);
+        if (group) return res.redirect('/feed/group/' + group.slug + '?success=Post bijgewerkt');
         res.redirect('/feed?success=Post bijgewerkt');
     } catch (error) {
         console.error('Update Post Error:', error);
         res.redirect('/feed?error=Kon post niet bijwerken');
+    }
+};
+
+exports.updateComment = async (req, res) => {
+    try {
+        const { content } = req.body;
+        const comment = await Comment.findByPk(req.params.id);
+        if (!comment) return res.redirect('/feed?error=Reactie niet gevonden');
+
+        if (comment.userId !== req.user.id && req.user.role !== 'admin') {
+            return res.redirect('/feed?error=Geen rechten');
+        }
+
+        await comment.update({ content });
+        res.redirect('/feed?success=Reactie bijgewerkt');
+    } catch (error) {
+        console.error('Update Comment Error:', error);
+        res.redirect('/feed?error=Kon reactie niet bijwerken');
+    }
+};
+
+exports.deleteComment = async (req, res) => {
+    try {
+        const comment = await Comment.findByPk(req.params.id);
+        if (!comment) return res.redirect('/feed?error=Reactie niet gevonden');
+
+        if (comment.userId !== req.user.id && req.user.role !== 'admin') {
+            return res.redirect('/feed?error=Geen rechten');
+        }
+
+        await comment.destroy();
+        res.redirect('/feed?success=Reactie verwijderd');
+    } catch (error) {
+        console.error('Delete Comment Error:', error);
+        res.redirect('/feed?error=Kon reactie niet verwijderen');
+    }
+};
+
+exports.getGroupFiles = async (req, res) => {
+    try {
+        const slug = req.params.slug;
+        const group = await FeedGroup.findOne({ where: { slug } });
+        const allowed = await ensureAccessToGroup(req.user, group);
+        if (!allowed) return res.status(403).send('Geen toegang');
+        const posts = await Post.findAll({ where: { groupId: group.id } });
+        const files = [];
+        posts.forEach(p => {
+            if (Array.isArray(p.attachments)) {
+                p.attachments.forEach(a => files.push({ path: a.path, originalName: a.originalName, postId: p.id }));
+            }
+        });
+        res.render('feed/files', { title: 'Bestanden', files, group, user: req.user });
+    } catch (error) {
+        console.error('Files Error:', error);
+        res.status(500).send('Server Error');
     }
 };

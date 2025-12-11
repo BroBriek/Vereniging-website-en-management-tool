@@ -60,6 +60,7 @@
                     <% } %>
                 </td>
                 <td>
+                    <a href="/admin/users/<%= u.id %>/edit" class="btn btn-sm btn-primary me-2">Bewerken</a>
                     <% if (user.id !== u.id) { %>
                     <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
                         <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
