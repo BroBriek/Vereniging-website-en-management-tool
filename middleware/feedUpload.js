@@ -19,23 +19,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
-    storage: storage,
-    fileFilter: function (req, file, cb) {
-        const filetypes = /pdf|doc|docx|txt/;
-        // Check mime
-        const mimetype = filetypes.test(file.mimetype) || 
-                         file.mimetype === 'application/msword' || 
-                         file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-                         file.mimetype === 'application/pdf' ||
-                         file.mimetype === 'text/plain';
-                         
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-        
-        if (extname) { // Mime type checking can be finicky with some browsers/OS, relying on extension + specific mimes
-            return cb(null, true);
-        }
-        cb(new Error("Fout: Alleen documenten (PDF, Word) toegelaten!"));
-      }
+    storage: storage
 });
 
 module.exports = upload;

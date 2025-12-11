@@ -1,0 +1,79 @@
+<%
+function getAvatarColor(username) {
+    if (!username) return '#db3e41';
+    const vibrantColors = ['#f1c40f', '#2ecc71', '#e67e22', '#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#d35400'];
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return vibrantColors[Math.abs(hash) % vibrantColors.length];
+}
+function getInitials(username) {
+    if (!username) return '?';
+    return username.substring(0, 2).toUpperCase();
+}
+function highlightMentions(text) {
+    if (!text) return '';
+    return text.replace(/@(\w+)/g, '<span class="text-primary fw-bold">@$1</span>');
+}
+%>
+<div class="d-flex mb-3 align-items-start" id="comment-container-<%= comment.id %>">
+    <div class="avatar-circle me-2 flex-shrink-0" style="background-color: <%= getAvatarColor(comment.author ? comment.author.username : '') %>; width: 32px; height: 32px; font-size: 0.8rem;">
+        <%= getInitials(comment.author ? comment.author.username : '') %>
+    </div>
+    <div class="flex-grow-1">
+        <div class="comment-bubble d-inline-block">
+            <div class="d-flex justify-content-between align-items-baseline mb-1">
+                <span class="fw-bold small me-2"><%= comment.author ? comment.author.username : 'Onbekend' %></span>
+                <% if ((comment.author && user && comment.author.id === user.id) || user.role === 'admin') { %>
+                    <div class="dropdown">
+                        <a href="#" class="text-muted small" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" style="font-size: 0.85rem;">
+                            <li><a class="dropdown-item" href="#" onclick="enableCommentEdit('<%= comment.id %>'); return false;">Bewerken</a></li>
+                            <li>
+                                <form action="/feed/comment/<%= comment.id %>/delete" method="POST" onsubmit="return confirm('Verwijderen?');">
+                                    <button type="submit" class="dropdown-item text-danger">Verwijderen</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                <% } %>
+            </div>
+            
+            <div id="comment-content-view-<%= comment.id %>">
+                <span class="small text-dark"><%- highlightMentions(comment.content) %></span>
+            </div>
+            
+            <div id="comment-content-edit-<%= comment.id %>" class="d-none mt-2">
+                <form action="/feed/comment/<%= comment.id %>/update" method="POST">
+                    <input type="text" name="content" class="form-control form-control-sm mb-1" value="<%= comment.content %>">
+                    <button type="submit" class="btn btn-sm btn-success py-0">Ok</button>
+                    <button type="button" class="btn btn-sm btn-light py-0" onclick="disableCommentEdit('<%= comment.id %>')">X</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="ms-1 mt-1">
+            <a href="#" onclick="document.getElementById('reply-form-<%= comment.id %>').classList.toggle('d-none'); return false;" class="small text-muted text-decoration-none fw-bold" style="font-size: 0.75rem;">Beantwoorden</a>
+        </div>
+
+        <!-- Reply Input -->
+        <div id="reply-form-<%= comment.id %>" class="d-none mt-2">
+            <form action="/feed/comment" method="POST" class="d-flex">
+                <input type="hidden" name="postId" value="<%= post.id %>">
+                <input type="hidden" name="parentId" value="<%= comment.id %>">
+                <input type="text" name="content" class="form-control form-control-sm rounded-pill me-2" placeholder="Antwoord..." required>
+                <button type="submit" class="btn btn-sm btn-primary rounded-circle"><i class="bi bi-send"></i></button>
+            </form>
+        </div>
+
+        <!-- Nested Replies -->
+        <% if (comment.replies && comment.replies.length > 0) { %>
+            <div class="mt-2">
+                <% comment.replies.forEach(reply => { %>
+                    <%- include('comment_partial', { comment: reply, user: user, post: post }) %>
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+</div>

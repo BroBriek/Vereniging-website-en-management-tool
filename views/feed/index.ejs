@@ -1,297 +1,449 @@
 <%- include('../partials/header') %>
 
 <%
-// Helper for generating Chiro-themed vibrant colors based on username
+// Helper functions
 function getAvatarColor(username) {
-    if (!username) return '#ffffff'; // Default white background
-    
-    // Vibrant colors from the Chiro theme, or good complementary bright colors
-    const vibrantColors = [
-        '#f1c40f', // Speelclub Yellow (from style.css)
-        '#2ecc71', // Rakwis Green (from style.css)
-        '#e67e22', // Aspis Orange (from style.css)
-        '#e74c3c', // Titos Red (from style.css) - Vibrant, but still readable with dark text
-        '#3498db', // Ketis Blue (from style.css) - Vibrant, but still readable with dark text
-        '#8e44ad'  // Ribbels Purple (from style.css) - Vibrant, but still readable with dark text
-    ];
-    
+    if (!username) return '#db3e41'; // Chiro Red Default
+    const vibrantColors = ['#f1c40f', '#2ecc71', '#e67e22', '#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#d35400'];
     let hash = 0;
     for (let i = 0; i < username.length; i++) {
         hash = username.charCodeAt(i) + ((hash << 5) - hash);
     }
-    
-    const index = Math.abs(hash) % vibrantColors.length;
-    return vibrantColors[index];
+    return vibrantColors[Math.abs(hash) % vibrantColors.length];
+}
+
+function getInitials(username) {
+    if (!username) return '?';
+    return username.substring(0, 2).toUpperCase();
+}
+
+function highlightMentions(text) {
+    if (!text) return '';
+    // Regular expression to find @username. \w+ matches one or more word characters (letters, numbers, underscore)
+    return text.replace(/@(\w+)/g, '<span class="text-primary fw-bold">@$1</span>');
 }
 %>
 
-<div class="container mt-4">
-    <h1>Leidingshoekje</h1>
-    <p class="lead">Welkom, <%= user.username %>!</p>
+<style>
+    /* Modern Feed Styles */
+    body {
+        background-color: #f8f9fa;
+    }
+    
+    .font-playful {
+        font-family: 'Fredoka', 'Patrick Hand', sans-serif;
+    }
 
-    <!-- Create Post Button -->
-    <button class="btn btn-primary mb-4" type="button" data-bs-toggle="collapse" data-bs-target="#createPostForm" aria-expanded="false" aria-controls="createPostForm">
-        Nieuw Bericht Schrijven
-    </button>
+    .feed-header-card {
+        background: linear-gradient(135deg, #db3e41 0%, #a62d2f 100%);
+        color: white;
+        border: none;
+        border-radius: 1rem;
+    }
+
+    .nav-chip {
+        border-radius: 50rem;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+        background-color: white;
+        color: #555;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .nav-chip:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        color: #db3e41;
+    }
+    
+    .nav-chip.active {
+        background-color: #db3e41;
+        color: white;
+        box-shadow: 0 4px 8px rgba(219, 62, 65, 0.3);
+    }
+
+    .post-card {
+        border: none;
+        border-radius: 1rem;
+        background: white;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.03);
+        transition: transform 0.2s;
+        overflow: hidden;
+    }
+    
+    /* .post-card:hover {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    } */
+
+    .avatar-circle {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+
+    .comment-bubble {
+        background-color: #f0f2f5;
+        border-radius: 1rem;
+        padding: 0.75rem 1rem;
+        position: relative;
+    }
+    
+    .btn-action {
+        border-radius: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        transition: background 0.2s;
+    }
+    
+    .btn-action:hover {
+        background-color: #f0f2f5;
+    }
+
+    .poll-bar {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        background-color: #e9ecef;
+        height: 1.5rem;
+    }
+    
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        background-color: #333;
+        border-radius: 50%;
+        width: 2rem;
+        height: 2rem;
+        background-size: 50%;
+    }
+
+    /* Read More Truncation */
+    .post-content-collapsed {
+        max-height: 200px;
+        overflow: hidden;
+        position: relative;
+    }
+    .post-content-collapsed::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 80px;
+        background: linear-gradient(to bottom, transparent, #ffffff);
+        pointer-events: none;
+    }
+</style>
+
+<div class="container mt-4" style="max-width: 800px;">
+    
+    <!-- Welcome Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="font-playful text-dark mb-0">Leidingshoekje</h1>
+            <p class="text-muted mb-0">Hey <%= user.username %>, wat speelt er vandaag?</p>
+        </div>
+        <% if (user.role === 'admin') { %>
+            <a href="/admin/feedgroups" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                <i class="bi bi-gear-fill"></i> Beheer
+            </a>
+        <% } %>
+    </div>
+
+    <% if (!groups || groups.length === 0) { %>
+        <div class="alert alert-warning text-center p-5 rounded-4 shadow-sm">
+            <h4 class="font-playful mb-3"><i class="bi bi-emoji-frown display-4"></i><br>Oei!</h4>
+            <p class="lead mb-2">Je hoofdleiding heeft je precies niet zo graag want je zit in nog geen groep.</p>
+            <p class="text-muted">Vraag dit eens eventjes na bij hun.</p>
+        </div>
+    <% } else { %>
+
+    <!-- Groups Navigation (Modern Carousel) -->
+    <% if (typeof groups !== 'undefined' && groups && groups.length > 0) { %>
+        <%
+            const chunkSize = 3;
+            const chunks = [];
+            for (let i = 0; i < groups.length; i += chunkSize) {
+                chunks.push(groups.slice(i, i + chunkSize));
+            }
+        %>
+        <div id="feedGroupsCarousel" class="carousel slide mb-4" data-bs-ride="false" data-bs-interval="false">
+            <div class="carousel-inner">
+                <% chunks.forEach((chunk, index) => { %>
+                    <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                        <div class="d-flex justify-content-center gap-2 py-2 px-4">
+                            <% chunk.forEach(g => { %>
+                                <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>">
+                                    <%= g.name %> <small class="opacity-75"><%= g.year ? g.year : '' %></small>
+                                </a>
+                            <% }) %>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+            <% if (chunks.length > 1) { %>
+                <button class="carousel-control-prev" type="button" data-bs-target="#feedGroupsCarousel" data-bs-slide="prev" style="width: 5%; left: -10px;">
+                    <span class="carousel-control-prev-icon shadow-sm" aria-hidden="true"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#feedGroupsCarousel" data-bs-slide="next" style="width: 5%; right: -10px;">
+                    <span class="carousel-control-next-icon shadow-sm" aria-hidden="true"></span>
+                </button>
+            <% } %>
+        </div>
+
+        <% if (activeGroup) { %>
+            <div class="text-center mb-4">
+                <a href="/feed/group/<%= activeGroup.slug %>/files" class="btn btn-light btn-sm text-muted rounded-pill border">
+                    <i class="bi bi-folder-fill text-warning"></i> Bestanden van <%= activeGroup.name %>
+                </a>
+            </div>
+        <% } %>
+    <% } %>
+
+    <!-- Create Post Trigger -->
+    <div class="card post-card mb-4">
+        <div class="card-body d-flex align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#createPostForm" role="button">
+            <div class="avatar-circle me-3" style="background-color: <%= getAvatarColor(user.username) %>; width: 40px; height: 40px; font-size: 1rem;">
+                <%= getInitials(user.username) %>
+            </div>
+            <div class="bg-light rounded-pill px-3 py-2 flex-grow-1 text-muted">
+                Schrijf een bericht, <%= user.username %>...
+            </div>
+            <div class="ms-3 text-primary">
+                <i class="bi bi-pencil-square fs-5"></i>
+            </div>
+        </div>
+    </div>
 
     <!-- Create Post Form (Collapsed) -->
     <div class="collapse mb-4" id="createPostForm">
-        <div class="card card-body">
-            <form action="/feed/post" method="POST" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label class="form-label">Bericht</label>
-                    <textarea class="form-control" name="content" rows="3" required></textarea>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label">Bestanden toevoegen (PDF, Word, Txt)</label>
-                    <input type="file" class="form-control" name="attachments" multiple>
-                </div>
-
-                <div class="d-flex gap-2 mb-3">
-                    <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#pollBuilder" aria-expanded="false">
-                        + Poll Toevoegen
-                    </button>
-                    <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#formBuilderSection" aria-expanded="false">
-                        + Formulier Toevoegen
-                    </button>
-                </div>
-
-                <!-- Poll Builder -->
-                <div class="collapse mb-3 p-3 border rounded bg-light" id="pollBuilder">
-                    <h5>Poll Maken</h5>
-                    <div class="mb-2">
-                        <input type="text" class="form-control" name="poll_question" placeholder="Poll Vraag">
+        <div class="card post-card border-primary">
+            <div class="card-body">
+                <h5 class="card-title font-playful mb-3">Nieuw Bericht</h5>
+                <form action="/feed/post" method="POST" enctype="multipart/form-data">
+                    <% if (activeGroup) { %>
+                        <input type="hidden" name="groupId" value="<%= activeGroup.id %>">
+                    <% } %>
+                    <div class="mb-3">
+                        <textarea class="form-control border-0 bg-light" name="content" rows="4" placeholder="Wat wil je delen?" required style="resize: none;"></textarea>
                     </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" name="poll_multiple" id="pollMultiple">
-                        <label class="form-check-label" for="pollMultiple">
-                            Meerdere antwoorden mogelijk?
-                        </label>
-                    </div>
-                    <div id="pollOptions">
-                        <div class="input-group mb-2">
-                            <input type="text" class="form-control" name="poll_options" placeholder="Optie 1">
-                        </div>
-                        <div class="input-group mb-2">
-                            <input type="text" class="form-control" name="poll_options" placeholder="Optie 2">
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPollOption()">+ Optie</button>
-                </div>
-
-                <!-- Form Builder Section -->
-                <div class="collapse mb-3 p-3 border rounded bg-light" id="formBuilderSection">
-                    <h5>Formulier Maken</h5>
-                    <div id="formBuilderPreview" class="mb-2"></div>
                     
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addFieldModal">
-                        + Veld Toevoegen
-                    </button>
-                    <input type="hidden" name="form_schema" id="formSchemaJson">
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted text-uppercase fw-bold">Bijlagen</label>
+                        <input type="file" class="form-control form-control-sm" name="attachments" multiple>
+                    </div>
 
-                <div class="mt-3">
-                    <button type="submit" class="btn btn-success" onclick="saveFormSchema()">Plaatsen</button>
-                </div>
-            </form>
+                    <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-outline-primary btn-sm rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target="#pollBuilder">
+                            <i class="bi bi-bar-chart"></i> Poll
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target="#formBuilderSection">
+                            <i class="bi bi-ui-checks"></i> Formulier
+                        </button>
+                    </div>
+
+                    <!-- Poll Builder -->
+                    <div class="collapse mb-3 p-3 rounded bg-light" id="pollBuilder">
+                        <h6 class="font-playful">Poll Instellingen</h6>
+                        <div class="mb-2">
+                            <input type="text" class="form-control form-control-sm" name="poll_question" placeholder="Poll Vraag">
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="poll_multiple" id="pollMultiple">
+                            <label class="form-check-label small" for="pollMultiple">Meerdere antwoorden mogelijk</label>
+                        </div>
+                        <div id="pollOptions">
+                            <input type="text" class="form-control form-control-sm mb-2" name="poll_options" placeholder="Optie 1">
+                            <input type="text" class="form-control form-control-sm mb-2" name="poll_options" placeholder="Optie 2">
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" onclick="addPollOption()">+ Optie toevoegen</button>
+                    </div>
+
+                    <!-- Form Builder -->
+                    <div class="collapse mb-3 p-3 rounded bg-light" id="formBuilderSection">
+                        <h6 class="font-playful">Formulier Instellingen</h6>
+                        <div id="formBuilderPreview" class="mb-2"></div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#addFieldModal">
+                            + Veld Toevoegen
+                        </button>
+                        <input type="hidden" name="form_schema" id="formSchemaJson">
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-light rounded-pill me-2" data-bs-toggle="collapse" data-bs-target="#createPostForm">Annuleren</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4" onclick="saveFormSchema()">Plaatsen</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- Feed Timeline -->
     <div class="feed-timeline">
         <% posts.forEach(post => { 
-            const bgColor = getAvatarColor(post.author ? post.author.username : '');
+            const avatarColor = getAvatarColor(post.author ? post.author.username : '');
+            const initials = getInitials(post.author ? post.author.username : '');
         %>
-            <div class="card mb-4 shadow-sm border-0" id="post-<%= post.id %>" style="background-color: <%= bgColor %>;">
-                <div class="card-header d-flex justify-content-between align-items-center bg-transparent border-bottom-0">
-                    <div>
-                        <strong><%= post.author ? post.author.username : 'Onbekend' %></strong>
-                        <small class="text-muted mx-2"><%= new Date(post.createdAt).toLocaleString() %></small>
+            <div class="card post-card mb-4" id="post-<%= post.id %>">
+                <div class="card-header bg-transparent border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-circle me-3" style="background-color: <%= avatarColor %>;">
+                            <%= initials %>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold"><%= post.author ? post.author.username : 'Onbekend' %></h6>
+                            <small class="text-muted" style="font-size: 0.8rem;">
+                                <%= new Date(post.createdAt).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) %>
+                            </small>
+                        </div>
                     </div>
-                    <% if (post.authorId === user.id || user.role === 'admin') { %>
+                    <% if ((post.author && user && post.author.id === user.id) || user.role === 'admin') { %>
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-link text-dark p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-three-dots-vertical"></i>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#" onclick="enableEditMode('<%= post.id %>')">Bewerken (Tekst)</a></li>
+                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                <li><a class="dropdown-item" href="#" onclick="enableEditMode('<%= post.id %>')"><i class="bi bi-pencil me-2"></i>Bewerken</a></li>
                                 <li>
                                     <form action="/feed/post/<%= post.id %>/delete" method="POST" onsubmit="return confirm('Post verwijderen?');">
-                                        <button type="submit" class="dropdown-item text-danger">Verwijderen</button>
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Verwijderen</button>
                                     </form>
                                 </li>
                             </ul>
                         </div>
                     <% } %>
                 </div>
-                <div class="card-body">
 
-                    <!-- View Mode -->
-                    <div id="post-content-view-<%= post.id %>">
-                        <p class="card-text" style="white-space: pre-line;"><%= post.content %></p>
+                <div class="card-body">
+                    <!-- Post Content -->
+                    <div id="post-content-view-<%= post.id %>" class="mb-3">
+                        <div id="post-text-container-<%= post.id %>" class="post-text-container">
+                            <p class="card-text text-dark" style="white-space: pre-line; font-size: 1.05rem;"><%- highlightMentions(post.content) %></p>
+                        </div>
+                        <button id="read-more-btn-<%= post.id %>" class="btn btn-link btn-sm p-0 text-decoration-none d-none mt-1 fw-bold" onclick="expandPost('<%= post.id %>')">
+                            Meer weergeven <i class="bi bi-chevron-down"></i>
+                        </button>
                     </div>
 
-                    <!-- Edit Mode (Hidden) -->
                     <div id="post-content-edit-<%= post.id %>" class="d-none mb-3">
                         <form action="/feed/post/<%= post.id %>/update" method="POST">
                             <textarea class="form-control mb-2" name="content" rows="3"><%= post.content %></textarea>
-                            <button type="submit" class="btn btn-sm btn-success">Opslaan</button>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="disableEditMode('<%= post.id %>')">Annuleren</button>
+                            <button type="submit" class="btn btn-sm btn-success rounded-pill">Opslaan</button>
+                            <button type="button" class="btn btn-sm btn-light rounded-pill" onclick="disableEditMode('<%= post.id %>')">Annuleren</button>
                         </form>
                     </div>
 
                     <!-- Attachments -->
                     <% if (post.attachments && post.attachments.length > 0) { %>
-                        <div class="mb-3">
-                            <h6>Bijlagen:</h6>
-                            <ul class="list-group list-group-flush">
-                                <% post.attachments.forEach(file => { %>
-                                    <li class="list-group-item">
-                                        <a href="<%= file.path %>" target="_blank"><i class="bi bi-file-earmark"></i> <%= file.originalName %></a>
-                                    </li>
-                                <% }) %>
-                            </ul>
+                        <div class="mb-3 d-flex flex-wrap gap-2">
+                            <% post.attachments.forEach(file => { %>
+                                <a href="<%= file.path %>" target="_blank" class="btn btn-light btn-sm border text-primary">
+                                    <i class="bi bi-file-earmark-text me-1"></i> <%= file.originalName %>
+                                </a>
+                            <% }) %>
                         </div>
                     <% } %>
 
-                    <!-- Poll -->
+                    <!-- Polls & Forms -->
                     <% if (post.poll) { %>
-                        <div class="alert alert-secondary">
-                            <h5>Poll: <%= post.poll.question %></h5>
+                        <div class="bg-light p-3 rounded-3 mb-3 border">
+                            <h6 class="font-playful mb-3"><i class="bi bi-bar-chart-fill text-primary me-2"></i><%= post.poll.question %></h6>
                             <% 
-                                // Calculate results
                                 const totalVotes = post.responses.filter(r => r.type === 'poll').length;
                                 const counts = {};
-                                const voters = {}; // Map option index -> Array of names
-                                post.poll.options.forEach((opt, idx) => {
-                                    counts[idx] = 0;
-                                    voters[idx] = [];
-                                });
-
-                                // User's current vote(s)
+                                const voters = {}; 
+                                post.poll.options.forEach((opt, idx) => { counts[idx] = 0; voters[idx] = []; });
                                 let myVotes = [];
-                                
                                 post.responses.filter(r => r.type === 'poll').forEach(r => {
-                                    let indices = [];
-                                    // Normalize data (single int or array of ints)
-                                    if (r.data.optionIndices) indices = r.data.optionIndices;
-                                    else if (r.data.optionIndex !== undefined) indices = [parseInt(r.data.optionIndex)];
-                                    
+                                    let indices = Array.isArray(r.data.optionIndices) ? r.data.optionIndices : (r.data.optionIndex !== undefined ? [parseInt(r.data.optionIndex)] : []);
                                     indices.forEach(idx => {
                                         if (counts[idx] !== undefined) {
                                             counts[idx]++;
                                             if(r.user) voters[idx].push(r.user.username);
                                         }
                                     });
-
                                     if (r.userId === user.id) myVotes = indices;
                                 });
                             %>
-                            
-                            <form action="/feed/respond" method="POST" class="mt-2">
+                            <form action="/feed/respond" method="POST">
                                 <input type="hidden" name="postId" value="<%= post.id %>">
                                 <input type="hidden" name="type" value="poll">
-                                
                                 <% post.poll.options.forEach((option, index) => { 
                                     const count = counts[index] || 0;
-                                    // We can't easily calc simple % if multiple allowed per person, but standard is % of total voters or total votes?
-                                    // Usually % of voters. Let's stick to raw counts for clarity if multiple allowed.
-                                    // Or just simple (count / totalResponses) * 100?
-                                    // Let's do (count / total unique voters) * 100 if we want meaningful %.
-                                    // But let's stick to totalVotes (number of people who voted) as denominator.
                                     const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
                                     const isChecked = myVotes.includes(index) ? 'checked' : '';
                                 %>
-                                    <div class="mb-3 border-bottom pb-2">
-                                        <div class="d-flex align-items-center mb-1">
-                                            <% if (post.poll.allowMultiple) { %>
-                                                <div class="form-check me-2">
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between font-monospace small mb-1">
+                                            <span><%= option %></span>
+                                            <span><%= count %></span>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                <% if (post.poll.allowMultiple) { %>
                                                     <input class="form-check-input" type="checkbox" name="data[optionIndex][]" value="<%= index %>" <%= isChecked %>>
-                                                </div>
-                                            <% } else { %>
-                                                <div class="form-check me-2">
+                                                <% } else { %>
                                                     <input class="form-check-input" type="radio" name="data[optionIndex]" value="<%= index %>" <%= isChecked %>>
-                                                </div>
-                                            <% } %>
-                                            
-                                            <div class="flex-grow-1">
-                                                <div class="d-flex justify-content-between">
-                                                    <span><%= option %></span>
-                                                    <span><%= count %> stemmen</span>
-                                                </div>
-                                                <div class="progress" style="height: 10px;">
-                                                    <div class="progress-bar" role="progressbar" style="width: <%= pct %>%"></div>
-                                                </div>
+                                                <% } %>
+                                            </div>
+                                            <div class="flex-grow-1 poll-bar position-relative">
+                                                <div class="bg-primary h-100" style="width: <%= pct %>%; transition: width 0.5s;"></div>
                                             </div>
                                         </div>
-                                        <!-- Show who voted -->
-                                        <div class="small text-muted ms-4">
-                                            <% if(voters[index].length > 0) { %>
-                                                <i class="bi bi-person-fill"></i> <%= voters[index].join(', ') %>
-                                            <% } %>
-                                        </div>
+                                        <% if(voters[index].length > 0) { %>
+                                            <div class="small text-muted mt-1 ms-4" style="font-size: 0.75rem;">
+                                                <%= voters[index].join(', ') %>
+                                            </div>
+                                        <% } %>
                                     </div>
                                 <% }) %>
-                                
-                                <button type="submit" class="btn btn-sm btn-primary">Stemmen</button>
+                                <button type="submit" class="btn btn-primary btn-sm rounded-pill mt-2">Stemmen</button>
                             </form>
                         </div>
                     <% } %>
 
-                    <!-- Dynamic Form -->
                     <% if (post.form) { %>
-                        <div class="card mb-3 border-info">
-                            <div class="card-header bg-info text-white">Invulformulier</div>
-                            <div class="card-body">
-                                <% 
-                                    const myResponse = post.responses.find(r => r.userId === user.id && r.type === 'form');
-                                %>
-                                
+                        <div class="card border-info mb-3">
+                            <div class="card-header bg-info text-white py-1 small fw-bold">Formulier</div>
+                            <div class="card-body p-3">
+                                <% const myResponse = post.responses.find(r => r.userId === user.id && r.type === 'form'); %>
                                 <% if (myResponse) { %>
-                                    <div class="alert alert-success py-1">Je hebt dit ingevuld!</div>
+                                    <div class="badge bg-success mb-2">Ingevuld!</div>
                                 <% } %>
-
                                 <form action="/feed/respond" method="POST">
                                     <input type="hidden" name="postId" value="<%= post.id %>">
                                     <input type="hidden" name="type" value="form">
-                                    
                                     <% post.form.forEach((field, idx) => { %>
                                         <div class="mb-2">
-                                            <label class="form-label small fw-bold"><%= field.label %></label>
+                                            <label class="form-label small fw-bold mb-0"><%= field.label %></label>
                                             <% if (field.type === 'text') { %>
                                                 <input type="text" class="form-control form-control-sm" name="data[<%= field.label %>]" required>
                                             <% } else if (field.type === 'checkbox') { %>
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="checkbox" name="data[<%= field.label %>]" value="Ja">
-                                                    <label class="form-check-label">Ja</label>
+                                                    <label class="form-check-label small">Ja</label>
                                                 </div>
                                             <% } %>
                                         </div>
                                     <% }) %>
-                                    
-                                    <button type="submit" class="btn btn-sm btn-primary" <%= myResponse ? 'disabled' : '' %>>Verstuur</button>
+                                    <button type="submit" class="btn btn-sm btn-primary rounded-pill mt-2" <%= myResponse ? 'disabled' : '' %>>Verstuur</button>
                                 </form>
-                                
-                                <hr>
-                                <!-- Form Results List -->
-                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#results-<%= post.id %>">
-                                    Bekijk Inzendingen (<%= post.responses.filter(r => r.type === 'form').length %>)
-                                </button>
+                                <hr class="my-2">
+                                <a class="text-decoration-none small text-muted" data-bs-toggle="collapse" href="#results-<%= post.id %>">
+                                    <i class="bi bi-eye"></i> Bekijk <%= post.responses.filter(r => r.type === 'form').length %> inzendingen
+                                </a>
                                 <div class="collapse mt-2" id="results-<%= post.id %>">
-                                    <div class="list-group list-group-flush">
+                                    <div class="bg-light rounded p-2 small">
                                         <% post.responses.filter(r => r.type === 'form').forEach(r => { %>
-                                            <div class="list-group-item py-2">
-                                                <strong class="text-primary"><%= r.user ? r.user.username : 'Onbekend' %></strong>
-                                                <div class="ms-2 small border-start ps-2">
-                                                <% if (typeof r.data === 'object') { %>
-                                                    <% Object.keys(r.data).forEach(key => { %>
-                                                        <div><span class="text-muted"><%= key %>:</span> <%= r.data[key] %></div>
-                                                    <% }) %>
-                                                <% } else { %>
-                                                    <%= JSON.stringify(r.data) %>
-                                                <% } %>
-                                                </div>
+                                            <div class="mb-1">
+                                                <strong class="text-dark"><%= r.user ? r.user.username : 'Onbekend' %></strong>:
+                                                <span class="text-muted"><%= typeof r.data === 'object' ? JSON.stringify(r.data).replace(/[{"}]/g, '').replace(/:/g, ': ') : r.data %></span>
                                             </div>
                                         <% }) %>
                                     </div>
@@ -300,125 +452,102 @@ function getAvatarColor(username) {
                         </div>
                     <% } %>
 
+                    <!-- Action Bar (Likes & Comment Count) -->
+                    <div class="d-flex align-items-center justify-content-between mt-3 pt-3 border-top">
+                        <div class="d-flex align-items-center">
+                            <% 
+                                const likes = post.likes || [];
+                                const isLiked = likes.some(l => l.userId === user.id);
+                                const likeCount = likes.length;
+                                const likerNames = likes.map(l => l.user ? l.user.username : 'Onbekend').join(', ');
+                            %>
+                            <form action="/feed/post/<%= post.id %>/like" method="POST" class="like-form" data-post-id="<%= post.id %>">
+                                <button type="submit" class="btn btn-action d-flex align-items-center <%= isLiked ? 'text-danger' : 'text-muted' %> bg-transparent border-0 p-0 me-3">
+                                    <i class="bi <%= isLiked ? 'bi-heart-fill' : 'bi-heart' %> fs-5 me-1"></i>
+                                    <span class="fw-bold like-count"><%= likeCount > 0 ? likeCount : '' %></span>
+                                </button>
+                            </form>
+                            <% if (likeCount > 0) { %>
+                                <small class="text-muted likers-list" style="font-size: 0.8rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= likerNames %></small>
+                            <% } else { %>
+                                <small class="text-muted likers-list"></small>
+                            <% } %>
+                        </div>
+                        <div class="text-muted small">
+                            <%= post.comments.length %> reacties
+                        </div>
+                    </div>
                 </div>
-                
+
                 <!-- Comments Section -->
-                <div class="card-footer bg-light">
-                    <!-- Existing comments code ... (collapsed for brevity unless I need to change it, but I should preserve it) -->
-                    <h6>Reacties</h6>
+                <div class="bg-light bg-opacity-50 p-3 rounded-bottom-4">
                     <% 
                         const visibleComments = post.comments.slice(0, 3);
                         const hiddenComments = post.comments.slice(3);
                     %>
 
                     <% visibleComments.forEach(comment => { %>
-                        <div class="d-flex mb-2">
-                            <div class="flex-grow-1">
-                                <strong><%= comment.author ? comment.author.username : 'Onbekend' %>:</strong>
-                                <span><%= comment.content %></span>
-                                
-                                <% if (comment.replies && comment.replies.length > 0) { %>
-                                    <div class="ms-4 mt-1 border-start ps-2">
-                                        <% comment.replies.forEach(reply => { %>
-                                            <div>
-                                                <small><strong><%= reply.author ? reply.author.username : 'Onbekend' %>:</strong> <%= reply.content %></small>
-                                            </div>
-                                        <% }) %>
-                                    </div>
-                                <% } %>
-
-                                <a href="#" onclick="document.getElementById('reply-form-<%= comment.id %>').style.display='block'; return false;" class="text-muted small d-block">Beantwoorden</a>
-                                <div id="reply-form-<%= comment.id %>" style="display:none;" class="mt-1">
-                                    <form action="/feed/comment" method="POST" class="d-flex">
-                                        <input type="hidden" name="postId" value="<%= post.id %>">
-                                        <input type="hidden" name="parentId" value="<%= comment.id %>">
-                                        <input type="text" name="content" class="form-control form-control-sm me-2" placeholder="Schrijf een antwoord..." required>
-                                        <button type="submit" class="btn btn-sm btn-primary">Stuur</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+                        <%- include('comment_partial', { comment: comment, user: user, post: post }) %>
                     <% }) %>
 
                     <% if (hiddenComments.length > 0) { %>
                         <div class="collapse" id="hidden-comments-<%= post.id %>">
                             <% hiddenComments.forEach(comment => { %>
-                                <div class="d-flex mb-2">
-                                    <div class="flex-grow-1">
-                                        <strong><%= comment.author ? comment.author.username : 'Onbekend' %>:</strong>
-                                        <span><%= comment.content %></span>
-                                        
-                                        <% if (comment.replies && comment.replies.length > 0) { %>
-                                            <div class="ms-4 mt-1 border-start ps-2">
-                                                <% comment.replies.forEach(reply => { %>
-                                                    <div>
-                                                        <small><strong><%= reply.author ? reply.author.username : 'Onbekend' %>:</strong> <%= reply.content %></small>
-                                                    </div>
-                                                <% }) %>
-                                            </div>
-                                        <% } %>
-
-                                        <a href="#" onclick="document.getElementById('reply-form-<%= comment.id %>').style.display='block'; return false;" class="text-muted small d-block">Beantwoorden</a>
-                                        <div id="reply-form-<%= comment.id %>" style="display:none;" class="mt-1">
-                                            <form action="/feed/comment" method="POST" class="d-flex">
-                                                <input type="hidden" name="postId" value="<%= post.id %>">
-                                                <input type="hidden" name="parentId" value="<%= comment.id %>">
-                                                <input type="text" name="content" class="form-control form-control-sm me-2" placeholder="Schrijf een antwoord..." required>
-                                                <button type="submit" class="btn btn-sm btn-primary">Stuur</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+                                <%- include('comment_partial', { comment: comment, user: user, post: post }) %>
                             <% }) %>
                         </div>
-                        <button class="btn btn-sm btn-link text-decoration-none mb-2 ps-0 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hidden-comments-<%= post.id %>" aria-expanded="false" onclick="this.textContent = this.textContent.includes('Bekijk') ? 'Verberg reacties' : 'Bekijk alle reacties'">
-                            Bekijk alle reacties
+                        <button class="btn btn-link btn-sm text-decoration-none text-muted ps-0" type="button" data-bs-toggle="collapse" data-bs-target="#hidden-comments-<%= post.id %>">
+                            Toon meer reacties...
                         </button>
                     <% } %>
 
-                    <form action="/feed/comment" method="POST" class="mt-2">
-                        <input type="hidden" name="postId" value="<%= post.id %>">
-                        <div class="input-group">
-                            <input type="text" name="content" class="form-control" placeholder="Schrijf een reactie..." required>
-                            <button class="btn btn-outline-secondary" type="submit">Plaatsen</button>
+                    <!-- New Comment Input -->
+                    <form action="/feed/comment" method="POST" class="mt-3 d-flex align-items-center">
+                        <div class="avatar-circle me-2" style="background-color: <%= getAvatarColor(user.username) %>; width: 32px; height: 32px; font-size: 0.8rem;">
+                            <%= getInitials(user.username) %>
                         </div>
+                        <input type="hidden" name="postId" value="<%= post.id %>">
+                        <input type="text" name="content" class="form-control rounded-pill border-0 bg-white shadow-sm" placeholder="Schrijf een reactie..." required>
+                        <button class="btn btn-link text-primary" type="submit"><i class="bi bi-send-fill"></i></button>
                     </form>
                 </div>
             </div>
         <% }) %>
     </div>
+    <% } %>
 </div>
 
-<!-- Add Field Modal -->
-<div class="modal fade" id="addFieldModal" tabindex="-1" aria-hidden="true">
+<!-- Re-usable Modal for Fields -->
+<div class="modal fade" id="addFieldModal" tabindex="-1">
   <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Nieuw Veld</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0">
+        <h5 class="modal-title font-playful">Nieuw Veld</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
-            <label class="form-label">Veld Naam (Vraag)</label>
-            <input type="text" class="form-control" id="newFieldLabel" placeholder="bv. Eten?">
+            <label class="form-label">Vraag/Label</label>
+            <input type="text" class="form-control" id="newFieldLabel" placeholder="bv. Vegetarisch?">
         </div>
         <div class="mb-3">
             <label class="form-label">Type</label>
             <select class="form-select" id="newFieldType">
-                <option value="text">Tekst (Vrij invullen)</option>
-                <option value="checkbox">Checkbox (Ja/Nee)</option>
+                <option value="text">Tekstveld</option>
+                <option value="checkbox">Ja/Nee Vinkje</option>
             </select>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
-        <button type="button" class="btn btn-primary" onclick="addFormFieldConfirm()">Toevoegen</button>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Annuleren</button>
+        <button type="button" class="btn btn-primary rounded-pill" onclick="addFormFieldConfirm()">Toevoegen</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
+// Keep existing scripts for Edit Mode, Polls, Forms, and Like AJAX
 // Edit Mode Toggle
 function enableEditMode(id) {
     document.getElementById('post-content-view-' + id).classList.add('d-none');
@@ -429,59 +558,111 @@ function disableEditMode(id) {
     document.getElementById('post-content-edit-' + id).classList.add('d-none');
 }
 
+function enableCommentEdit(id) {
+    const viewEl = document.getElementById('comment-content-view-' + id);
+    const editEl = document.getElementById('comment-content-edit-' + id);
+    if(viewEl) viewEl.classList.add('d-none');
+    if(editEl) editEl.classList.remove('d-none');
+}
+
+function disableCommentEdit(id) {
+    const viewEl = document.getElementById('comment-content-view-' + id);
+    const editEl = document.getElementById('comment-content-edit-' + id);
+    if(viewEl) viewEl.classList.remove('d-none');
+    if(editEl) editEl.classList.add('d-none');
+}
+
 function addPollOption() {
     const div = document.createElement('div');
-    div.className = 'input-group mb-2';
-    div.innerHTML = '<input type="text" class="form-control" name="poll_options" placeholder="Extra Optie">';
-    document.getElementById('pollOptions').appendChild(div);
+    div.innerHTML = '<input type="text" class="form-control form-control-sm mb-2" name="poll_options" placeholder="Extra Optie">';
+    document.getElementById('pollOptions').appendChild(div.firstChild);
 }
 
 let formFields = [];
-
 function addFormFieldConfirm() {
     const label = document.getElementById('newFieldLabel').value;
     const type = document.getElementById('newFieldType').value;
-    
-    if(!label) {
-        alert("Geef een naam op!");
-        return;
-    }
-    
+    if(!label) { alert("Geef een naam op!"); return; }
     formFields.push({ label, type });
     renderFormBuilder();
-    
-    // Close modal (needs bootstrap js loaded)
     const modalEl = document.getElementById('addFieldModal');
     const modal = bootstrap.Modal.getInstance(modalEl);
     modal.hide();
-    
-    // Clear inputs
     document.getElementById('newFieldLabel').value = '';
 }
-
 function renderFormBuilder() {
     const container = document.getElementById('formBuilderPreview');
     container.innerHTML = '';
     formFields.forEach((f, i) => {
         const div = document.createElement('div');
-        div.className = 'alert alert-info py-1 px-2 d-inline-block me-2 mb-2';
-        div.innerHTML = `<strong>${f.label}</strong> <small class="text-muted">(${f.type})</small> <span style="cursor:pointer;" onclick="removeField(${i})">&times;</span>`;
+        div.className = 'badge bg-secondary me-1 mb-1 p-2 fw-normal';
+        div.innerHTML = `${f.label} <small class="opacity-75">(${f.type})</small> <span style="cursor:pointer; margin-left:5px;" onclick="removeField(${i})">&times;</span>`;
         container.appendChild(div);
     });
 }
-
 function removeField(index) {
     if(confirm('Verwijder dit veld?')) {
         formFields.splice(index, 1);
         renderFormBuilder();
     }
 }
-
 function saveFormSchema() {
     if(formFields.length > 0) {
         document.getElementById('formSchemaJson').value = JSON.stringify(formFields);
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const likeForms = document.querySelectorAll('.like-form');
+    likeForms.forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('button');
+            const icon = btn.querySelector('i');
+            const countSpan = btn.querySelector('.like-count');
+            const likersSpan = this.parentElement.querySelector('.likers-list');
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.liked) {
+                        btn.classList.remove('text-muted'); btn.classList.add('text-danger');
+                        icon.classList.remove('bi-heart'); icon.classList.add('bi-heart-fill');
+                    } else {
+                        btn.classList.remove('text-danger'); btn.classList.add('text-muted');
+                        icon.classList.remove('bi-heart-fill'); icon.classList.add('bi-heart');
+                    }
+                    countSpan.textContent = data.count > 0 ? data.count : '';
+                    if (likersSpan && data.likers) likersSpan.textContent = data.likers.join(', ');
+                }
+            } catch (error) { 
+                console.error('Like failed via AJAX, falling back to form submit', error);
+                this.submit(); 
+            }
+        });
+    });
+
+    // Check for long posts
+    document.querySelectorAll('.post-text-container').forEach(container => {
+        if (container.scrollHeight > 200) {
+            container.classList.add('post-content-collapsed');
+            const id = container.id.replace('post-text-container-', '');
+            const btn = document.getElementById('read-more-btn-' + id);
+            if (btn) btn.classList.remove('d-none');
+        }
+    });
+});
+
+function expandPost(id) {
+    const container = document.getElementById('post-text-container-' + id);
+    const btn = document.getElementById('read-more-btn-' + id);
+    if (container) container.classList.remove('post-content-collapsed');
+    if (btn) btn.remove();
+}
 </script>
 
+<script src="/js/mention.js"></script>
 <%- include('../partials/footer') %>

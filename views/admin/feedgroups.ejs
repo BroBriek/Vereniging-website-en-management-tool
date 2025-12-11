@@ -1,0 +1,107 @@
+<%- include('../partials/header') %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>Leidingshoekjes beheren</h1>
+  <a href="/admin" class="btn btn-secondary">Terug</a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">Nieuwe pagina toevoegen</div>
+  <div class="card-body">
+    <form action="/admin/feedgroups" method="POST">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label>Naam</label>
+          <input type="text" name="name" class="form-control" placeholder="vb. Groep 2025" required>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Jaar (optioneel)</label>
+          <input type="text" name="year" class="form-control" placeholder="2025">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label>Omschrijving</label>
+          <input type="text" name="description" class="form-control" placeholder="Omschrijving">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-success">Toevoegen</button>
+    </form>
+  </div>
+</div>
+
+<h3>Bestaande Leidingshoekjes</h3>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Naam</th>
+      <th>Slug</th>
+      <th>Jaar</th>
+      <th>Acties</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% groups.forEach(g => { %>
+      <tr>
+        <td><%= g.name %></td>
+        <td><code><%= g.slug %></code></td>
+        <td><%= g.year || '' %></td>
+        <td>
+          <button class="btn btn-sm btn-warning me-1" onclick="openEditModal('<%= g.id %>', '<%= g.name %>', '<%= g.year || '' %>', '<%= g.description || '' %>')">Bewerk</button>
+          <form action="/admin/feedgroups/<%= g.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Verwijderen?');" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editGroupModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Groep Bewerken</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editGroupForm" action="" method="POST">
+          <input type="hidden" name="_method" value="PUT">
+          <div class="mb-3">
+            <label>Naam</label>
+            <input type="text" name="name" id="editName" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label>Jaar</label>
+            <input type="text" name="year" id="editYear" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label>Omschrijving</label>
+            <input type="text" name="description" id="editDesc" class="form-control">
+          </div>
+          <div class="text-end">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+            <button type="submit" class="btn btn-primary">Opslaan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openEditModal(id, name, year, desc) {
+    const form = document.getElementById('editGroupForm');
+    // Ensure ID is valid before setting action
+    if (id) {
+        form.action = '/admin/feedgroups/' + id;
+    }
+    
+    document.getElementById('editName').value = name;
+    document.getElementById('editYear').value = year;
+    document.getElementById('editDesc').value = desc;
+    
+    const modal = new bootstrap.Modal(document.getElementById('editGroupModal'));
+    modal.show();
+}
+</script>
+
+<%- include('../partials/footer') %>

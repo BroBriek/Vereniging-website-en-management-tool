@@ -17,6 +17,10 @@ const Post = sequelize.define('Post', {
   form: {
     type: DataTypes.JSON,
     allowNull: true // [{ label: String, type: String, required: Boolean, options: [String] }]
+  },
+  groupId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 });
 

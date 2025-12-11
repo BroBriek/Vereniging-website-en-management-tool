@@ -34,7 +34,17 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Method Override (Query String & Body)
 app.use(methodOverride('_method'));
+app.use(methodOverride(function (req, res) {
+  if (req.body && typeof req.body === 'object' && '_method' in req.body) {
+    // look in urlencoded POST bodies and delete it
+    var method = req.body._method
+    delete req.body._method
+    return method
+  }
+}));
 
 // Sessions
 app.use(session({
@@ -49,9 +59,17 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Global Variables
+// Global Variables & Alert Middleware
 app.use((req, res, next) => {
   res.locals.user = req.user || null;
+  
+  // Extract alerts from query params
+  if (req.query.error) {
+    res.locals.error = req.query.error;
+  }
+  if (req.query.success) {
+    res.locals.success = req.query.success;
+  }
   next();
 });
 
@@ -64,13 +82,23 @@ app.use('/feed', require('./routes/feed'));
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).send('Pagina niet gevonden');
+  res.status(404).render('error', {
+      title: 'Pagina Niet Gevonden',
+      status: 404,
+      message: 'Oeps! Pagina niet gevonden',
+      description: 'De pagina die je zoekt bestaat niet of is verplaatst.'
+  });
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).send('Er ging iets mis');
+  res.status(500).render('error', {
+      title: 'Server Fout',
+      status: 500,
+      message: 'Er ging iets mis',
+      description: 'Onze excuses, er is een interne serverfout opgetreden.'
+  });
 });
 
 // Start Server

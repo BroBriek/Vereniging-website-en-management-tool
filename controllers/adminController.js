@@ -1,9 +1,9 @@
-const { PageContent, Leader, Event, Registration, User, Post, Comment, PostResponse } = require('../models');
-const webpush = require('web-push');
+const { PageContent, Leader, Event, Registration, User, Post, Comment, PostResponse, FeedGroup, UserGroupAccess } = require('../models');
 const ExcelJS = require('exceljs');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const NotificationService = require('../services/NotificationService');
 
 exports.getDashboard = (req, res) => {
     res.render('admin/dashboard', { title: 'Admin Dashboard', user: req.user });
@@ -230,37 +230,16 @@ exports.triggerBackup = (req, res) => {
 exports.testPush = async (req, res) => {
     try {
         const users = await User.findAll();
-        const payload = JSON.stringify({
+        const messageData = {
             title: 'Testmelding',
-            body: 'PWA push werkt!'
-        });
+            body: 'PWA push werkt!',
+            url: '/feed'
+        };
 
-        let sent = 0;
-        for (const user of users) {
-            if (user.pushSubscriptions && Array.isArray(user.pushSubscriptions)) {
-                let subChanged = false;
-                for (let i = user.pushSubscriptions.length - 1; i >= 0; i--) {
-                    const sub = user.pushSubscriptions[i];
-                    try {
-                        await webpush.sendNotification(sub, payload);
-                        sent++;
-                    } catch (err) {
-                        if (err.statusCode === 410 || err.statusCode === 404) {
-                            user.pushSubscriptions.splice(i, 1);
-                            subChanged = true;
-                        }
-                        console.error('Test push error:', err && err.message ? err.message : err);
-                    }
-                }
-                if (subChanged) {
-                    user.pushSubscriptions = [...user.pushSubscriptions];
-                    user.changed('pushSubscriptions', true);
-                    await user.save();
-                }
-            }
-        }
+        const promises = users.map(user => NotificationService.sendIndividualNotification(user, messageData));
+        await Promise.allSettled(promises);
 
-        res.redirect('/admin?success=' + encodeURIComponent(`Test push verzonden naar ${sent} subscriptions`));
+        res.redirect('/admin?success=' + encodeURIComponent(`Test push verstuurd naar ${users.length} gebruikers (check logs voor details).`));
     } catch (error) {
         console.error('Test Push Error:', error);
         res.redirect('/admin?error=' + encodeURIComponent('Kon testmelding niet verzenden'));
@@ -334,7 +313,22 @@ exports.postUser = async (req, res) => {
         if (exists) {
             return res.redirect('/admin/users?error=Gebruikersnaam bestaat al');
         }
-        await User.create({ username: name, password, role });
+        const newUser = await User.create({ username: name, password, role });
+
+        // Auto-assign to latest group if not admin
+        if (role !== 'admin') {
+            const latestGroup = await FeedGroup.findOne({
+                order: [['year', 'DESC'], ['createdAt', 'DESC']]
+            });
+            if (latestGroup) {
+                await UserGroupAccess.create({
+                    userId: newUser.id,
+                    feedGroupId: latestGroup.id,
+                    role: 'member'
+                });
+            }
+        }
+
         res.redirect('/admin/users');
     } catch (error) {
         console.error('Error creating user:', error);
@@ -348,29 +342,114 @@ exports.deleteUser = async (req, res) => {
     }
     try {
         const targetId = parseInt(req.params.id);
-        const t = await require('../models').sequelize.transaction();
-        try {
-            const posts = await Post.findAll({ where: { authorId: targetId }, transaction: t });
-            const postIds = posts.map(p => p.id);
-
-            if (postIds.length > 0) {
-                await Comment.destroy({ where: { postId: postIds }, transaction: t });
-                await PostResponse.destroy({ where: { postId: postIds }, transaction: t });
-                await Post.destroy({ where: { id: postIds }, transaction: t });
-            }
-
-            await Comment.update({ userId: null }, { where: { userId: targetId }, transaction: t });
-            await PostResponse.update({ userId: null }, { where: { userId: targetId }, transaction: t });
-
-            await User.destroy({ where: { id: targetId }, transaction: t });
-            await t.commit();
-            res.redirect('/admin/users');
-        } catch (err) {
-            await t.rollback();
-            throw err;
+        const user = await User.findByPk(targetId);
+        if (user) {
+            await user.destroy();
         }
+        res.redirect('/admin/users');
     } catch (error) {
         console.error('Error deleting user:', error);
         res.redirect('/admin/users?error=Kon gebruiker niet verwijderen.');
+    }
+};
+
+exports.getFeedGroups = async (req, res) => {
+    const groups = await FeedGroup.findAll({ order: [['year', 'DESC'], ['name', 'ASC']] });
+    res.render('admin/feedgroups', { title: 'Leidingshoekjes', groups, user: req.user });
+};
+
+exports.postFeedGroup = async (req, res) => {
+    try {
+        let { name, year, description } = req.body;
+        name = (name || '').trim();
+        const base = (name + (year ? '-' + year : '')).toLowerCase();
+        const slug = base.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        if (!name) return res.redirect('/admin/feedgroups?error=Naam vereist');
+        await FeedGroup.create({ name, year, description, slug });
+        res.redirect('/admin/feedgroups');
+    } catch (error) {
+        console.error('Error creating feed group:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.redirect('/admin/feedgroups?error=Een groep met deze naam/jaar combinatie bestaat al.');
+        }
+        res.redirect('/admin/feedgroups?error=Kon groep niet aanmaken');
+    }
+};
+
+exports.updateFeedGroup = async (req, res) => {
+    try {
+        const { id } = req.params;
+        let { name, year, description } = req.body;
+        const group = await FeedGroup.findByPk(id);
+        if (!group) return res.redirect('/admin/feedgroups?error=Niet gevonden');
+
+        name = (name || '').trim();
+        const base = (name + (year ? '-' + year : '')).toLowerCase();
+        const slug = base.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+        if (!name) return res.redirect('/admin/feedgroups?error=Naam vereist');
+
+        await group.update({ name, year, description, slug });
+        res.redirect('/admin/feedgroups?success=Aangepast');
+    } catch (error) {
+        console.error('Error updating feed group:', error);
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.redirect('/admin/feedgroups?error=Een groep met deze naam/jaar combinatie bestaat al.');
+        }
+        res.redirect('/admin/feedgroups?error=Kon groep niet bijwerken');
+    }
+};
+
+exports.deleteFeedGroup = async (req, res) => {
+    try {
+        const group = await FeedGroup.findByPk(req.params.id);
+        if (group) {
+            await group.destroy();
+        }
+        res.redirect('/admin/feedgroups');
+    } catch (error) {
+        console.error('Error deleting feed group:', error);
+        res.redirect('/admin/feedgroups?error=Kon groep niet verwijderen');
+    }
+};
+
+exports.getEditUser = async (req, res) => {
+    try {
+        const target = await User.findByPk(req.params.id);
+        if (!target) return res.redirect('/admin/users');
+        const groups = await FeedGroup.findAll({ order: [['year', 'DESC'], ['name', 'ASC']] });
+        const access = await UserGroupAccess.findAll({ where: { userId: target.id } });
+        const accessIds = access.map(a => a.feedGroupId);
+        res.render('admin/edit_user', { title: 'Gebruiker bewerken', target, groups, accessIds, user: req.user });
+    } catch (error) {
+        console.error('Error loading edit user:', error);
+        res.redirect('/admin/users');
+    }
+};
+
+exports.updateUser = async (req, res) => {
+    try {
+        const target = await User.findByPk(req.params.id);
+        if (!target) return res.redirect('/admin/users');
+        const role = req.body.role || target.role;
+        await target.update({ role });
+
+        const selected = req.body.groups;
+        // Normalize to array of integers
+        let selectedIds = [];
+        if (Array.isArray(selected)) selectedIds = selected.map(id => parseInt(id));
+        else if (selected) selectedIds = [parseInt(selected)];
+
+        // Admins have access to all implicitly; clear explicit entries
+        await UserGroupAccess.destroy({ where: { userId: target.id } });
+
+        if (role !== 'admin' && selectedIds.length > 0) {
+            await UserGroupAccess.bulkCreate(selectedIds.map(gid => ({ userId: target.id, feedGroupId: gid, role: 'member' })));
+        }
+
+        res.redirect('/admin/users');
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.redirect('/admin/users?error=Kon gebruiker niet bijwerken');
     }
 };

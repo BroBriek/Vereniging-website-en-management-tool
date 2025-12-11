@@ -15,6 +15,8 @@ router.get('/info', adminController.getInfo);
 router.get('/users', adminController.getUsers);
 router.post('/users', adminController.postUser);
 router.delete('/users/:id', adminController.deleteUser);
+router.get('/users/:id/edit', adminController.getEditUser);
+router.put('/users/:id', adminController.updateUser);
 
 // Upload Manager
 router.get('/uploads', uploadController.getUploads);
@@ -68,5 +70,11 @@ router.delete('/finance/item/:id', financeController.deleteItem);
 router.get('/finance/:folderId/export', financeController.exportFolder);
 // Route to export root? (Optional, let's map it to '0' or handle in controller)
 router.get('/finance/export/root', financeController.exportFolder);
+
+// Leidingshoekjes beheer
+router.get('/feedgroups', adminController.getFeedGroups);
+router.post('/feedgroups', adminController.postFeedGroup);
+router.put('/feedgroups/:id', adminController.updateFeedGroup);
+router.delete('/feedgroups/:id', adminController.deleteFeedGroup);
 
 module.exports = router;

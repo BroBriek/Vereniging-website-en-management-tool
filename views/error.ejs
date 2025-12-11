@@ -1,0 +1,55 @@
+<%- include('partials/header') %>
+
+<div class="container text-center mt-5">
+    <div class="display-1 text-danger mb-4">
+        <% if (status === 404) { %>
+            <i class="bi bi-binoculars-fill"></i>
+        <% } else if (status === 403) { %>
+            <i class="bi bi-shield-lock-fill"></i>
+        <% } else if (status === 500) { %>
+            <i class="bi bi-cone-striped"></i>
+        <% } else { %>
+            <i class="bi bi-emoji-dizzy-fill"></i>
+        <% } %>
+    </div>
+    
+    <h1 class="display-4 font-playful fw-bold">
+        <% if (status === 404) { %>
+            Oei, het spoor bijster?
+        <% } else if (status === 403) { %>
+            Halt! Wachtwoord?
+        <% } else if (status === 500) { %>
+            Aangebrand!
+        <% } else { %>
+            <%= status %> - Oeps!
+        <% } %>
+    </h1>
+
+    <p class="lead mt-3 mb-4" style="font-size: 1.5rem;">
+        <% if (status === 404) { %>
+            Het lijkt erop dat deze pagina op dropping is vertrokken en niet meer is teruggekeerd. <br>
+            Pak snel je <strong>verrekijker</strong> en zoek een ander pad! 🌲🔭
+        <% } else if (status === 403) { %>
+            Gij moogt hier ni binnen! <br>
+            Dit terrein is <strong>verboden toegang</strong>. Heb je wel je uniform aan? 🛑👮
+        <% } else if (status === 500) { %>
+            De kookploeg heeft de server laten aanbranden. 🔥🍳 <br>
+            We zijn druk bezig met blussen, probeer het zo meteen nog eens!
+        <% } else { %>
+            <%= description || 'Er is iets misgegaan. Probeer eens te roepen, misschien helpt dat.' %>
+        <% } %>
+    </p>
+    
+    <div class="mt-4">
+        <a href="/" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+            <i class="bi bi-house-door-fill me-2"></i> Terug naar het heem
+        </a>
+        <% if (user) { %>
+            <a href="/feed" class="btn btn-outline-danger btn-lg rounded-pill px-5 ms-2 shadow-sm">
+                <i class="bi bi-chat-quote-fill me-2"></i> Leidingshoekje
+            </a>
+        <% } %>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
