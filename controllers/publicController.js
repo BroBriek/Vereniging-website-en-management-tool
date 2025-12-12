@@ -121,10 +121,21 @@ exports.postRegister = async (req, res) => {
 const nodemailer = require('nodemailer');
 
 exports.getContact = (req, res) => {
-    res.render('public/contact', { title: 'Contact' });
+    res.render('public/contact', { 
+        title: 'Contact', 
+        contactFormDisabled: process.env.DISABLE_CONTACT_FORM === 'true' 
+    });
 };
 
 exports.postContact = async (req, res) => {
+    if (process.env.DISABLE_CONTACT_FORM === 'true') {
+        return res.render('public/contact', { 
+            title: 'Contact', 
+            contactFormDisabled: true, 
+            error: 'Deze functie is tijdelijk nog niet beschikbaar' 
+        });
+    }
+
     const { name, email, message } = req.body;
 
     // Setup Nodemailer transporter (You need to configure this with real credentials in .env)
