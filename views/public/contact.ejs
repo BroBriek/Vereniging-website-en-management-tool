@@ -3,19 +3,29 @@
 <% if (typeof success !== 'undefined' && success) { %>
     <div class="alert alert-success">Bedankt voor je bericht! We nemen zo snel mogelijk contact op.</div>
 <% } %>
-<form action="/contact" method="POST" class="mt-4">
-    <div class="mb-3">
-        <label for="name" class="form-label">Naam</label>
-        <input type="text" class="form-control" id="name" name="name" required>
-    </div>
-    <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input type="email" class="form-control" id="email" name="email" required>
-    </div>
-    <div class="mb-3">
-        <label for="message" class="form-label">Bericht</label>
-        <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
-    </div>
-    <button type="submit" class="btn btn-primary">Verstuur</button>
-</form>
+<div style="position: relative; min-height: 400px;">
+    <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %>
+        <div class="d-flex justify-content-center align-items-center" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background-color: rgba(255,255,255,0.6);">
+            <div class="alert alert-warning shadow-lg p-4">
+                <h4 class="alert-heading text-center mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Deze functie is tijdelijk nog niet beschikbaar</h4>
+            </div>
+        </div>
+    <% } %>
+
+    <form action="/contact" method="POST" class="mt-4" <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> style="filter: blur(3px); pointer-events: none; user-select: none;" tabindex="-1" <% } %>>
+        <div class="mb-3">
+            <label for="name" class="form-label">Naam</label>
+            <input type="text" class="form-control" id="name" name="name" required <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> disabled <% } %>>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> disabled <% } %>>
+        </div>
+        <div class="mb-3">
+            <label for="message" class="form-label">Bericht</label>
+            <textarea class="form-control" id="message" name="message" rows="5" required <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> disabled <% } %>></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> disabled <% } %>>Verstuur</button>
+    </form>
+</div>
 <%- include('../partials/footer') %>
