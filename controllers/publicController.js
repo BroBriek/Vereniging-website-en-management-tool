@@ -15,7 +15,11 @@ const getContent = async (slug) => {
 exports.getHome = async (req, res) => {
     try {
         const content = await getContent('home');
-        res.render('public/home', { title: 'Home', content });
+        res.render('public/home', { 
+            title: 'Home', 
+            description: 'Welkom bij Chiro Vreugdeland Meeuwen! De plek voor spel, plezier en vriendschap in Meeuwen. Ontdek onze werking.',
+            content 
+        });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
     }
@@ -24,7 +28,11 @@ exports.getHome = async (req, res) => {
 exports.getPractical = async (req, res) => {
     try {
         const content = await getContent('practical');
-        res.render('public/practical', { title: 'Praktisch', content });
+        res.render('public/practical', { 
+            title: 'Praktisch', 
+            description: 'Praktische info over Chiro Vreugdeland: lidgeld, uniformen, uren en locatie.',
+            content 
+        });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
     }
@@ -40,7 +48,11 @@ exports.getLeaders = async (req, res) => {
             if (!groups[l.group]) groups[l.group] = [];
             groups[l.group].push(l);
         });
-        res.render('public/leaders', { title: 'Leiding', groups });
+        res.render('public/leaders', { 
+            title: 'Leiding', 
+            description: 'Maak kennis met de leiding van Chiro Vreugdeland.',
+            groups 
+        });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
     }
@@ -52,7 +64,11 @@ exports.getCalendar = async (req, res) => {
             where: { date: { [Op.gte]: new Date() } },
             order: [['date', 'ASC']]
         });
-        res.render('public/calendar', { title: 'Kalender', events });
+        res.render('public/calendar', { 
+            title: 'Kalender', 
+            description: 'De kalender van Chiro Vreugdeland: mis geen enkele activiteit, zondag of evenement!',
+            events 
+        });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
     }
@@ -61,7 +77,11 @@ exports.getCalendar = async (req, res) => {
 exports.getDepartments = async (req, res) => {
     try {
         const content = await getContent('departments');
-        res.render('public/departments', { title: 'Afdelingen', content });
+        res.render('public/departments', { 
+            title: 'Afdelingen', 
+            description: 'Ontdek onze afdelingen: Ribbels, Speelclub, Rakwi\'s, Tito\'s, Keti\'s en Aspi\'s.',
+            content 
+        });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
     }
@@ -70,7 +90,11 @@ exports.getDepartments = async (req, res) => {
 exports.getShirts = async (req, res) => {
     try {
         const content = await getContent('shirts');
-        res.render('public/shirts', { title: 'T-Shirts', content });
+        res.render('public/shirts', { 
+            title: 'T-Shirts', 
+            description: 'Koop coole Chiro Vreugdeland T-shirts. Bekijk hier de maten en prijzen.',
+            content 
+        });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
     }
@@ -79,7 +103,11 @@ exports.getShirts = async (req, res) => {
 exports.getRegister = async (req, res) => {
     try {
         const content = await getContent('register');
-        res.render('public/register', { title: 'Inschrijven', content });
+        res.render('public/register', { 
+            title: 'Inschrijven', 
+            description: 'Schrijf je in voor het nieuwe Chirojaar bij Chiro Vreugdeland Meeuwen!',
+            content 
+        });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
     }
@@ -111,10 +139,20 @@ exports.postRegister = async (req, res) => {
             throw new Error('missing fields');
         }
         await Registration.create(payload);
-        res.render('public/register', { title: 'Inschrijven', content, success: true });
+        res.render('public/register', { 
+            title: 'Inschrijven', 
+            description: 'Schrijf je in voor het nieuwe Chirojaar bij Chiro Vreugdeland Meeuwen!',
+            content, 
+            success: true 
+        });
     } catch (error) {
         console.error('Registration error:', error);
-        res.render('public/register', { title: 'Inschrijven', content, error: 'Er ging iets mis bij het opslaan. Controleer of alle velden correct zijn ingevuld.' });
+        res.render('public/register', { 
+            title: 'Inschrijven', 
+            description: 'Schrijf je in voor het nieuwe Chirojaar bij Chiro Vreugdeland Meeuwen!',
+            content, 
+            error: 'Er ging iets mis bij het opslaan. Controleer of alle velden correct zijn ingevuld.' 
+        });
     }
 };
 
@@ -123,6 +161,7 @@ const nodemailer = require('nodemailer');
 exports.getContact = (req, res) => {
     res.render('public/contact', { 
         title: 'Contact', 
+        description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen voor al je vragen.',
         contactFormDisabled: process.env.DISABLE_CONTACT_FORM === 'true' 
     });
 };
@@ -131,6 +170,7 @@ exports.postContact = async (req, res) => {
     if (process.env.DISABLE_CONTACT_FORM === 'true') {
         return res.render('public/contact', { 
             title: 'Contact', 
+            description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen voor al je vragen.',
             contactFormDisabled: true, 
             error: 'Deze functie is tijdelijk nog niet beschikbaar' 
         });
