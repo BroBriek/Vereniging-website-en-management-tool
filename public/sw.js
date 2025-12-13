@@ -14,7 +14,7 @@ self.addEventListener('push', function(event) {
 
   const options = {
     body: data.body,
-    icon: '/img/Hero.jpg', // Using existing image as icon
+    icon: 'favicon.jpg', // Using existing image as icon
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
