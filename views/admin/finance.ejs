@@ -192,53 +192,55 @@
 </div>
 
 <script>
-    // Initialize Tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl)
-    })
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
 
-    // Check for URL params for alerts
-    const urlParams = new URLSearchParams(window.location.search);
-    const successMsg = urlParams.get('success');
-    const errorMsg = urlParams.get('error');
-    
-    if (successMsg) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-success fixed-top m-3';
-        alertDiv.style.zIndex = '2000';
-        alertDiv.innerText = successMsg;
-        document.body.prepend(alertDiv);
-        setTimeout(() => alertDiv.remove(), 5000);
-    }
-    
-    if (errorMsg) {
-        // Create a modal for error to ensure it's seen as a popup
-        const errorModalHtml = `
-            <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog">
-                <div class="modal-content border-danger">
-                  <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Fout</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body">
-                    <p class="fw-bold">${errorMsg}</p>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
+        // Check for URL params for alerts
+        const urlParams = new URLSearchParams(window.location.search);
+        const successMsg = urlParams.get('success');
+        const errorMsg = urlParams.get('error');
+        
+        if (successMsg) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success fixed-top m-3';
+            alertDiv.style.zIndex = '2000';
+            alertDiv.innerText = successMsg;
+            document.body.prepend(alertDiv);
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+        
+        if (errorMsg) {
+            // Create a modal for error to ensure it's seen as a popup
+            const errorModalHtml = `
+                <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+                  <div class="modal-dialog">
+                    <div class="modal-content border-danger">
+                      <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Fout</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <p class="fw-bold">\${errorMsg}</p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', errorModalHtml);
-        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        errorModal.show();
-        
-        // Also clear the URL param so refresh doesn't show it again
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
+            `;
+            document.body.insertAdjacentHTML('beforeend', errorModalHtml);
+            const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
+            
+            // Also clear the URL param so refresh doesn't show it again
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    });
 
     function openEditModal(id, name, amount, date) {
         // Set form action
