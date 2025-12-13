@@ -3,7 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title : 'Chiro Website' %></title>
+    <title><%= typeof title !== 'undefined' ? title : 'Chiro Meeuwen' %></title>
+    <meta name="description" content="<%= typeof description !== 'undefined' ? description : 'Chiro Vreugdeland Meeuwen - Samen maken we plezier!' %>">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://chiromeeuwen.be/">
+    <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland' %>">
+    <meta property="og:description" content="<%= typeof description !== 'undefined' ? description : 'Chiro Vreugdeland Meeuwen - De tofste jeugdbeweging van Meeuwen!' %>">
+    <meta property="og:image" content="https://chiromeeuwen.be/favicon.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary">
+    <meta property="twitter:url" content="https://chiromeeuwen.be/">
+    <meta property="twitter:title" content="<%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland' %>">
+    <meta property="twitter:description" content="<%= typeof description !== 'undefined' ? description : 'Chiro Vreugdeland Meeuwen - De tofste jeugdbeweging van Meeuwen!' %>">
+    <meta property="twitter:image" content="https://chiromeeuwen.be/favicon.png">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
