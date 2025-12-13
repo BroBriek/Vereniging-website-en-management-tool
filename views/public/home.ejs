@@ -1,7 +1,7 @@
 <%- include('../partials/header') %>
 
 <div class="hero-section">
-    <img src="<%= (content.hero_image && content.hero_image.content) ? content.hero_image.content : '/img/Hero.jpg' %>" alt="Chiro Hero" class="hero-img">
+    <img src="<%= (content.hero_image && content.hero_image.content) ? content.hero_image.content : 'favicon.jpg' %>" alt="Chiro Hero" class="hero-img">
     <div class="hero-text">
         <h1><%= (content.hero_title && content.hero_title.content) ? content.hero_title.content : 'Welkom bij Chiro!' %></h1>
         <p><%= (content.hero_text && content.hero_text.content) ? content.hero_text.content : 'Samen spelen, samen leven.' %></p>
