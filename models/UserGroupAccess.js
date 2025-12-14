@@ -14,7 +14,6 @@ const UserGroupAccess = sequelize.define('UserGroupAccess', {
   },
   userId: {
     type: DataTypes.INTEGER,
-    unique: false,
     references: {
       model: 'Users',
       key: 'id'
@@ -22,7 +21,6 @@ const UserGroupAccess = sequelize.define('UserGroupAccess', {
   },
   feedGroupId: {
     type: DataTypes.INTEGER,
-    unique: false,
     references: {
       model: 'FeedGroups',
       key: 'id'
@@ -31,6 +29,7 @@ const UserGroupAccess = sequelize.define('UserGroupAccess', {
 }, {
   indexes: [
     {
+      name: 'user_group_unique',
       unique: true,
       fields: ['userId', 'feedGroupId']
     }
