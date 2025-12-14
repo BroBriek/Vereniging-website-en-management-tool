@@ -157,6 +157,7 @@ exports.postRegister = async (req, res) => {
 };
 
 const nodemailer = require('nodemailer');
+const { sendMail } = require('../config/mailer');
 
 exports.getContact = (req, res) => {
     res.render('public/contact', { 
@@ -178,33 +179,17 @@ exports.postContact = async (req, res) => {
 
     const { name, email, message } = req.body;
 
-    // Setup Nodemailer transporter (You need to configure this with real credentials in .env)
-    // For now, we'll assume a standard SMTP or a placeholder
-    const transporter = nodemailer.createTransport({
-        service: 'outlook', // Since the target is outlook.com
-        auth: {
-            user: 'Chiromeeuwen@outlook.com', // The account sending the email (usually)
-            pass: process.env.EMAIL_PASSWORD // PASSWORD SHOULD BE IN ENV
-        }
-    });
-
-    const mailOptions = {
-        from: email, // From the user's email (might be flagged as spam if not authenticated properly, better to set 'from' to your own email and 'replyTo' to user)
-        to: 'Chiromeeuwen@outlook.com',
-        subject: `Nieuw bericht van ${name} via Website`,
-        text: `Naam: ${name}\nEmail: ${email}\n\nBericht:\n${message}`
-    };
-
     try {
-        // Note: This will fail without a valid password in .env. 
-        // For this demo/CLI environment, we might just log it if it fails or assume the user will config it.
-        // To prevent crashing the demo if no password is set, we can check env or just wrap in try/catch.
-        
-        if (process.env.EMAIL_PASSWORD) {
-            await transporter.sendMail(mailOptions);
-        } else {
-            console.log('SIMULATED EMAIL:', mailOptions);
-        }
+        await sendMail({
+            to: 'Chiromeeuwen@outlook.com',
+            replyTo: email,
+            subject: `Nieuw bericht van ${name} via Website`,
+            text: `Naam: ${name}\nEmail: ${email}\n\nBericht:\n${message}`,
+            html: `<p><strong>Naam:</strong> ${name}</p>
+                   <p><strong>Email:</strong> ${email}</p>
+                   <p><strong>Bericht:</strong></p>
+                   <p>${message.replace(/\n/g, '<br>')}</p>`
+        });
         
         res.render('public/contact', { title: 'Contact', success: true });
     } catch (error) {
