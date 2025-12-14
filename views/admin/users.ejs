@@ -39,7 +39,12 @@
     </div>
 </div>
 
-<h3>Huidige Gebruikers</h3>
+<% 
+    const activeUsers = users.filter(u => u.isActive !== false);
+    const inactiveUsers = users.filter(u => u.isActive === false);
+%>
+
+<h3>Actieve Gebruikers</h3>
 <table class="table table-striped">
     <thead>
         <tr>
@@ -49,7 +54,7 @@
         </tr>
     </thead>
     <tbody>
-        <% users.forEach(u => { %>
+        <% activeUsers.forEach(u => { %>
             <tr>
                 <td><%= u.username %></td>
                 <td>
@@ -62,9 +67,14 @@
                 <td>
                     <a href="/admin/users/<%= u.id %>/edit" class="btn btn-sm btn-primary me-2">Bewerken</a>
                     <% if (user.id !== u.id) { %>
-                    <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
-                        <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
-                    </form>
+                        <form action="/admin/users/<%= u.id %>/toggle-status?_method=PUT" method="POST" style="display:inline;" class="me-1">
+                            <button type="submit" class="btn btn-sm btn-warning" title="Zet op non-actief (oud-leiding)">
+                                <i class="bi bi-archive"></i> Naar Oud
+                            </button>
+                        </form>
+                        <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                        </form>
                     <% } else { %>
                         <span class="text-muted">(Jezelf)</span>
                     <% } %>
@@ -73,4 +83,47 @@
         <% }) %>
     </tbody>
 </table>
+
+<div class="mt-5">
+    <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#inactiveUsersList" aria-expanded="false" aria-controls="inactiveUsersList">
+        <i class="bi bi-clock-history"></i> Toon Oud-Leiding (<%= inactiveUsers.length %>)
+    </button>
+    
+    <div class="collapse mt-3" id="inactiveUsersList">
+        <div class="card card-body bg-light">
+            <h4 class="text-muted">Oud-Leiding (Inactief)</h4>
+            <% if (inactiveUsers.length === 0) { %>
+                <p class="text-muted">Geen oud-leiding.</p>
+            <% } else { %>
+                <table class="table table-sm text-muted">
+                    <thead>
+                        <tr>
+                            <th>Gebruikersnaam</th>
+                            <th>Rol</th>
+                            <th>Actie</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% inactiveUsers.forEach(u => { %>
+                            <tr>
+                                <td><%= u.username %></td>
+                                <td><span class="badge bg-secondary">Oud-Leiding</span></td>
+                                <td>
+                                    <form action="/admin/users/<%= u.id %>/toggle-status?_method=PUT" method="POST" style="display:inline;" class="me-1">
+                                        <button type="submit" class="btn btn-sm btn-success" title="Maak weer actief">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Activeren
+                                        </button>
+                                    </form>
+                                    <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Definitief verwijderen?');" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } %>
+        </div>
+    </div>
+</div>
 <%- include('../partials/footer') %>

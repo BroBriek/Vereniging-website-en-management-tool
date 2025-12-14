@@ -17,6 +17,7 @@ router.post('/users', adminController.postUser);
 router.delete('/users/:id', adminController.deleteUser);
 router.get('/users/:id/edit', adminController.getEditUser);
 router.put('/users/:id', adminController.updateUser);
+router.put('/users/:id/toggle-status', adminController.toggleUserStatus);
 
 // Upload Manager
 router.get('/uploads', uploadController.getUploads);

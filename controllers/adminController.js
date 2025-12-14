@@ -353,6 +353,26 @@ exports.deleteUser = async (req, res) => {
     }
 };
 
+exports.toggleUserStatus = async (req, res) => {
+    if (req.params.id == req.user.id) {
+        return res.redirect('/admin/users?error=Je kan jezelf niet deactiveren.');
+    }
+    try {
+        const target = await User.findByPk(req.params.id);
+        if (target) {
+            // Toggle isActive. If it's null/undefined, treat as true (active), so toggle to false.
+            // If it is false, toggle to true.
+            // But DB default is true.
+            const currentStatus = target.isActive === false ? false : true;
+            await target.update({ isActive: !currentStatus });
+        }
+        res.redirect('/admin/users');
+    } catch (error) {
+        console.error('Error toggling user status:', error);
+        res.redirect('/admin/users?error=Kon status niet wijzigen.');
+    }
+};
+
 exports.getFeedGroups = async (req, res) => {
     const groups = await FeedGroup.findAll({ order: [['year', 'DESC'], ['name', 'ASC']] });
     res.render('admin/feedgroups', { title: 'Leidingshoekjes', groups, user: req.user });
