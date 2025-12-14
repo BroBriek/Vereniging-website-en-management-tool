@@ -92,11 +92,45 @@ exports.updateEmail = async (req, res) => {
     user.emailVerificationToken = crypto.randomBytes(32).toString('hex');
     await user.save();
     const verifyUrl = `${req.protocol}://${req.get('host')}/account/email/verify/${user.emailVerificationToken}`;
+    
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+            .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .header { background-color: #db0029; color: #ffffff; padding: 30px 20px; text-align: center; }
+            .header h1 { margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+            .content { padding: 30px; color: #333333; line-height: 1.6; text-align: center; }
+            .btn { display: inline-block; background-color: #db0029; color: #ffffff !important; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold; margin-top: 20px; }
+            .footer { background-color: #333333; color: #cccccc; padding: 20px; text-align: center; font-size: 12px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Chiro Vreugdeland</h1>
+            </div>
+            <div class="content">
+                <p>Dag <strong>${user.username || 'Chiro-vriend'}</strong>,</p>
+                <p>Je hebt je e-mailadres gewijzigd of ingesteld. Klik op de onderstaande knop om je adres te bevestigen.</p>
+                <a href="${verifyUrl}" class="btn">Verifieer E-mailadres</a>
+                <p style="margin-top: 30px; font-size: 0.9em; color: #666;">Heb je dit niet aangevraagd? Dan kun je deze e-mail negeren.</p>
+            </div>
+            <div class="footer">
+                <p>&copy; ${new Date().getFullYear()} Chiro Vreugdeland Meeuwen</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
     await sendMail({
       to: user.email,
       subject: 'Verifieer je e-mailadres',
       text: `Bevestig je e-mailadres door deze link te openen: ${verifyUrl}`,
-      html: `<p>Bevestig je e-mailadres voor ChiroSite.</p><p><a href="${verifyUrl}">Verifieer</a></p>`
+      html: html
     });
     res.render('account/settings', { ...renderContext, success: 'Verificatiemail verzonden.' });
   } catch (err) {
