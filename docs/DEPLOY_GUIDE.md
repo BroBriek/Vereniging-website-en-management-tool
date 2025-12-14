@@ -134,7 +134,7 @@ server {
     server_name jouwdomein.com www.jouwdomein.com;
 
     # Upload limiet verhogen (voor foto's)
-    client_max_body_size 10M;
+    client_max_body_size 50M;
 
     location / {
         proxy_pass http://localhost:3000;
