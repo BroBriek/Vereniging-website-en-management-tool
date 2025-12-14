@@ -2,15 +2,95 @@ const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const { sendMail } = require('../config/mailer');
+const fs = require('fs');
+const path = require('path');
 
-exports.getSettings = (req, res) => {
-  res.render('account/settings', {
-    title: 'Account Instellingen',
-    user: req.user,
-    vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-    error: null,
-    success: null
-  });
+exports.getSettings = async (req, res) => {
+  try {
+      const user = await User.findByPk(req.user.id);
+      res.render('account/settings', {
+        title: 'Account Instellingen',
+        user: user,
+        vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+        error: null,
+        success: null
+      });
+  } catch (err) {
+      console.error(err);
+      res.render('error', {
+          title: 'Fout',
+          status: 500,
+          message: 'Kon instellingen niet laden',
+          description: 'Er is een fout opgetreden bij het laden van je instellingen.'
+      });
+  }
+};
+
+exports.uploadProfilePicture = async (req, res) => {
+  const renderContext = {
+      title: 'Account Instellingen',
+      user: req.user,
+      vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+      error: null,
+      success: null
+  };
+  
+  try {
+      if (!req.file) {
+          return res.render('account/settings', { ...renderContext, error: 'Geen bestand geüpload of bestandstype niet toegestaan.' });
+      }
+
+      const user = await User.findByPk(req.user.id);
+      
+      // Delete old profile picture if exists
+      if (user.profilePicture) {
+          const oldPath = path.join(__dirname, '../public', user.profilePicture);
+          if (fs.existsSync(oldPath)) {
+              fs.unlinkSync(oldPath);
+          }
+      }
+
+      // Save new path relative to public folder
+      user.profilePicture = '/uploads/profiles/' + req.file.filename;
+      await user.save();
+      
+      // Update render context with new user data
+      renderContext.user = user;
+      res.render('account/settings', { ...renderContext, success: 'Profielfoto bijgewerkt.' });
+
+  } catch (err) {
+      console.error(err);
+      res.render('account/settings', { ...renderContext, error: 'Kon profielfoto niet uploaden.' });
+  }
+};
+
+exports.deleteProfilePicture = async (req, res) => {
+    const renderContext = {
+        title: 'Account Instellingen',
+        user: req.user,
+        vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+        error: null,
+        success: null
+    };
+
+    try {
+        const user = await User.findByPk(req.user.id);
+        
+        if (user.profilePicture) {
+            const oldPath = path.join(__dirname, '../public', user.profilePicture);
+            if (fs.existsSync(oldPath)) {
+                fs.unlinkSync(oldPath);
+            }
+            user.profilePicture = null;
+            await user.save();
+        }
+
+        renderContext.user = user;
+        res.render('account/settings', { ...renderContext, success: 'Profielfoto verwijderd.' });
+    } catch (err) {
+        console.error(err);
+        res.render('account/settings', { ...renderContext, error: 'Kon profielfoto niet verwijderen.' });
+    }
 };
 
 exports.updatePassword = async (req, res) => {
@@ -88,6 +168,13 @@ exports.updateEmail = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
     user.email = (email || '').trim();
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(user.email)) {
+       return res.render('account/settings', { ...renderContext, user, error: 'Ongeldig e-mailadres' });
+    }
+
     user.emailVerified = false;
     user.emailVerificationToken = crypto.randomBytes(32).toString('hex');
     await user.save();
@@ -132,7 +219,7 @@ exports.updateEmail = async (req, res) => {
       text: `Bevestig je e-mailadres door deze link te openen: ${verifyUrl}`,
       html: html
     });
-    res.render('account/settings', { ...renderContext, success: 'Verificatiemail verzonden.' });
+    res.render('account/settings', { ...renderContext, user, success: 'Verificatiemail verzonden.' });
   } catch (err) {
     console.error(err);
     res.render('account/settings', { ...renderContext, error: 'Kon e-mailadres niet bijwerken' });
@@ -156,7 +243,7 @@ exports.verifyEmail = async (req, res) => {
     user.emailVerified = true;
     user.emailVerificationToken = null;
     await user.save();
-    res.render('account/settings', { ...renderContext, success: 'E-mailadres geverifieerd' });
+    res.render('account/settings', { ...renderContext, user, success: 'E-mailadres geverifieerd' });
   } catch (err) {
     console.error(err);
     res.render('account/settings', { ...renderContext, error: 'Kon e-mailadres niet verifiëren' });
@@ -174,12 +261,12 @@ exports.toggleEmailNotifications = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
     if (!user.email || !user.emailVerified) {
-      return res.render('account/settings', { ...renderContext, error: 'Verifieer eerst je e-mailadres' });
+      return res.render('account/settings', { ...renderContext, user, error: 'Verifieer eerst je e-mailadres' });
     }
     const enabled = req.body.enabled === 'on' || req.body.enabled === 'true';
     user.emailNotificationsEnabled = enabled;
     await user.save();
-    res.render('account/settings', { ...renderContext, success: 'E-mailmeldingen bijgewerkt' });
+    res.render('account/settings', { ...renderContext, user, success: 'E-mailmeldingen bijgewerkt' });
   } catch (err) {
     console.error(err);
     res.render('account/settings', { ...renderContext, error: 'Kon voorkeur niet opslaan' });
