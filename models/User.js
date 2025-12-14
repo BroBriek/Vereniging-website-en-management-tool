@@ -35,6 +35,10 @@ const User = sequelize.define('User', {
   emailNotificationsEnabled: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  profilePicture: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 });
 

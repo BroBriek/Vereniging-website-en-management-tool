@@ -85,11 +85,11 @@ exports.getFeed = async (req, res) => {
         const posts = await Post.findAll({
             where: activeGroup ? { groupId: activeGroup.id } : {},
             include: [
-                { model: User, as: 'author', attributes: ['id', 'username'] },
+                { model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] },
                 { model: Like, as: 'likes', include: [{ model: User, as: 'user', attributes: ['username'] }] },
                 { model: Comment, as: 'comments', include: [
-                    { model: User, as: 'author', attributes: ['id', 'username'] },
-                    { model: Comment, as: 'replies', include: [{ model: User, as: 'author', attributes: ['id', 'username'] }] }
+                    { model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] },
+                    { model: Comment, as: 'replies', include: [{ model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] }] }
                 ], where: { parentId: null }, required: false },
                 { model: PostResponse, as: 'responses', include: [{ model: User, as: 'user', attributes: ['id', 'username'] }] }
             ],

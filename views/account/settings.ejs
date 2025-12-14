@@ -4,15 +4,54 @@
     <h1>Account Instellingen</h1>
     <p class="lead">Beheer je account en voorkeuren.</p>
     
-    <% if (success) { %>
-        <div class="alert alert-success"><%= success %></div>
-    <% } %>
-    
-    <% if (error) { %>
-        <div class="alert alert-danger"><%= error %></div>
-    <% } %>
-
     <div class="row">
+        <!-- Profile Picture Settings -->
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header text-white" style="background-color: #db3e41;">
+                    Profielfoto
+                </div>
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-4 text-center">
+                        <% if (user.profilePicture) { %>
+                            <img src="<%= user.profilePicture %>" alt="Profielfoto" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid #db3e41;">
+                        <% } else { %>
+                            <% 
+                                const getAvatarColor = (username) => {
+                                    if (!username) return '#db3e41';
+                                    const vibrantColors = ['#f1c40f', '#2ecc71', '#e67e22', '#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#d35400'];
+                                    let hash = 0;
+                                    for (let i = 0; i < username.length; i++) {
+                                        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+                                    }
+                                    return vibrantColors[Math.abs(hash) % vibrantColors.length];
+                                };
+                                const getInitials = (username) => {
+                                    if (!username) return '?';
+                                    return username.substring(0, 2).toUpperCase();
+                                };
+                            %>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 100px; height: 100px; font-size: 2.5rem; background-color: <%= getAvatarColor(user.username) %>;">
+                                <%= getInitials(user.username) %>
+                            </div>
+                        <% } %>
+                    </div>
+                    <div class="flex-grow-1">
+                        <form action="/account/profile-picture" method="POST" enctype="multipart/form-data" class="d-flex gap-2 align-items-center mb-2">
+                            <input type="file" class="form-control" name="profilePicture" accept="image/*" required>
+                            <button type="submit" class="btn btn-primary">Uploaden</button>
+                        </form>
+                        <% if (user.profilePicture) { %>
+                            <form action="/account/profile-picture/delete" method="POST">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Ben je zeker dat je je profielfoto wilt verwijderen?')">Profielfoto Verwijderen</button>
+                            </form>
+                        <% } %>
+                        <p class="text-muted small mt-2 mb-0">Upload een afbeelding (JPG, PNG, GIF). Max 5MB.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Password Settings -->
         <div class="col-md-6 mb-4">
             <div class="card">

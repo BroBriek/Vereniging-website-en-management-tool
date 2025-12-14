@@ -431,8 +431,16 @@ exports.updateUser = async (req, res) => {
     try {
         const target = await User.findByPk(req.params.id);
         if (!target) return res.redirect('/admin/users');
-        const role = req.body.role || target.role;
-        await target.update({ role });
+        
+        const updates = { role: req.body.role || target.role };
+        const role = updates.role;
+        
+        // Handle password update if provided
+        if (req.body.password && req.body.password.trim() !== '') {
+            updates.password = req.body.password.trim();
+        }
+
+        await target.update(updates);
 
         const selected = req.body.groups;
         // Normalize to array of integers
