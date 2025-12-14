@@ -21,7 +21,7 @@
             </div>
             <% if ((post.author && user && post.author.id === user.id) || user.role === 'admin') { %>
                 <div class="dropdown">
-                    <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-link text-muted p-0" type="button" data-bs-toggle="dropdown" aria-label="Opties voor bericht">
                         <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
@@ -103,9 +103,9 @@
                                 <div class="d-flex align-items-center">
                                     <div class="me-2">
                                         <% if (post.poll.allowMultiple) { %>
-                                            <input class="form-check-input" type="checkbox" name="data[optionIndex][]" value="<%= index %>" <%= isChecked %>>
+                                            <input class="form-check-input" type="checkbox" name="data[optionIndex][]" value="<%= index %>" <%= isChecked %> aria-label="<%= option %>">
                                         <% } else { %>
-                                            <input class="form-check-input" type="radio" name="data[optionIndex]" value="<%= index %>" <%= isChecked %>>
+                                            <input class="form-check-input" type="radio" name="data[optionIndex]" value="<%= index %>" <%= isChecked %> aria-label="<%= option %>">
                                         <% } %>
                                     </div>
                                     <div class="flex-grow-1 poll-bar position-relative">
@@ -139,10 +139,10 @@
                                 <div class="mb-2">
                                     <label class="form-label small fw-bold mb-0"><%= field.label %></label>
                                     <% if (field.type === 'text') { %>
-                                        <input type="text" class="form-control form-control-sm" name="data[<%= field.label %>]" required>
+                                        <input type="text" class="form-control form-control-sm" name="data[<%= field.label %>]" required aria-label="<%= field.label %>">
                                     <% } else if (field.type === 'checkbox') { %>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="data[<%= field.label %>]" value="Ja">
+                                            <input class="form-check-input" type="checkbox" name="data[<%= field.label %>]" value="Ja" aria-label="<%= field.label %>">
                                             <label class="form-check-label small">Ja</label>
                                         </div>
                                     <% } %>
@@ -178,7 +178,7 @@
                         const likerNames = likes.map(l => l.user ? l.user.username : 'Onbekend').join(', ');
                     %>
                     <form action="/feed/post/<%= post.id %>/like" method="POST" class="like-form" data-post-id="<%= post.id %>">
-                        <button type="submit" class="btn btn-action d-flex align-items-center <%= isLiked ? 'text-danger' : 'text-muted' %> bg-transparent border-0 p-0 me-3">
+                        <button type="submit" class="btn btn-action d-flex align-items-center <%= isLiked ? 'text-danger' : 'text-muted' %> bg-transparent border-0 p-0 me-3" aria-label="Vind ik leuk">
                             <i class="bi <%= isLiked ? 'bi-heart-fill' : 'bi-heart' %> fs-5 me-1"></i>
                             <span class="fw-bold like-count"><%= likeCount > 0 ? likeCount : '' %></span>
                         </button>
@@ -228,7 +228,7 @@
                 <% } %>
                 <input type="hidden" name="postId" value="<%= post.id %>">
                 <input type="text" name="content" class="form-control rounded-pill border-0 bg-white shadow-sm" placeholder="Schrijf een reactie..." required>
-                <button class="btn btn-link text-primary" type="submit"><i class="bi bi-send-fill"></i></button>
+                <button class="btn btn-link text-primary" type="submit" aria-label="Verstuur reactie"><i class="bi bi-send-fill"></i></button>
             </form>
         </div>
     </div>
