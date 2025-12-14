@@ -66,6 +66,19 @@ const syncDatabase = async () => {
 
     await sequelize.sync();
 
+    // Manual Migration: Add profilePicture column if missing (for SQLite deployments)
+    try {
+        const [results] = await sequelize.query("PRAGMA table_info(Users);");
+        const hasProfilePicture = results.some(c => c.name === 'profilePicture');
+        if (!hasProfilePicture) {
+            console.log('Migrating: Adding profilePicture column to Users table...');
+            await sequelize.query('ALTER TABLE Users ADD COLUMN profilePicture TEXT;');
+            console.log('Migration successful.');
+        }
+    } catch (migErr) {
+        console.error('Migration error (ignoring if benign):', migErr);
+    }
+
     if (sequelize.getDialect() === 'sqlite') {
       await sequelize.query('PRAGMA foreign_keys = ON');
     }
