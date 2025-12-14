@@ -17,10 +17,19 @@ const createTransporter = () => {
       auth: { user: 'apikey', pass: process.env.MAILERSEND_API_KEY }
     });
   }
-  if (process.env.EMAIL_PASSWORD) {
+  // Ionos Configuration
+  if (process.env.IONOS_EMAIL && process.env.IONOS_PASSWORD) {
     return nodemailer.createTransport({
-      service: 'outlook',
-      auth: { user: 'Chiromeeuwen@outlook.com', pass: process.env.EMAIL_PASSWORD }
+      host: process.env.IONOS_HOST || 'smtp.ionos.be',
+      port: parseInt(process.env.IONOS_PORT || '587', 10),
+      secure: process.env.IONOS_PORT === '465',
+      auth: { user: process.env.IONOS_EMAIL, pass: process.env.IONOS_PASSWORD }
+    });
+  }
+  if (process.env.GMAIL_EMAIL && process.env.GMAIL_PASSWORD) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.GMAIL_EMAIL, pass: process.env.GMAIL_PASSWORD }
     });
   }
   return null;
@@ -28,7 +37,7 @@ const createTransporter = () => {
 
 const sendMail = async ({ to, subject, text, html }) => {
   const transporter = createTransporter();
-  const from = process.env.MAILERSEND_FROM || 'no-reply@chirosite.local';
+  const from = process.env.IONOS_EMAIL || process.env.GMAIL_EMAIL || process.env.MAILERSEND_FROM || 'no-reply@chirosite.local';
   if (!transporter) {
     console.log('SIMULATED EMAIL', { from, to, subject, text, html });
     return;
