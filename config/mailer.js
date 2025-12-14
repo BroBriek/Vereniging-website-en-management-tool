@@ -20,7 +20,7 @@ const createTransporter = () => {
   // Ionos Configuration
   if (process.env.IONOS_EMAIL && process.env.IONOS_PASSWORD) {
     return nodemailer.createTransport({
-      host: process.env.IONOS_HOST || 'smtp.ionos.be',
+      host: process.env.IONOS_HOST || 'smtp.ionos.de',
       port: parseInt(process.env.IONOS_PORT || '587', 10),
       secure: process.env.IONOS_PORT === '465',
       auth: { user: process.env.IONOS_EMAIL, pass: process.env.IONOS_PASSWORD }
