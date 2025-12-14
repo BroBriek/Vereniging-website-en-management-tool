@@ -86,7 +86,8 @@ app.use((req, res) => {
       title: 'Pagina Niet Gevonden',
       status: 404,
       message: 'Oeps! Pagina niet gevonden',
-      description: 'De pagina die je zoekt bestaat niet of is verplaatst.'
+      description: 'De pagina die je zoekt bestaat niet of is verplaatst.',
+      user: req.user || null
   });
 });
 
@@ -97,7 +98,8 @@ app.use((err, req, res, next) => {
       title: 'Server Fout',
       status: 500,
       message: 'Er ging iets mis',
-      description: 'Onze excuses, er is een interne serverfout opgetreden.'
+      description: 'Onze excuses, er is een interne serverfout opgetreden.',
+      user: req.user || null
   });
 });
 
