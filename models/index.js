@@ -64,7 +64,7 @@ const syncDatabase = async () => {
       await sequelize.query('PRAGMA foreign_keys = OFF');
     }
 
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
 
     if (sequelize.getDialect() === 'sqlite') {
       await sequelize.query('PRAGMA foreign_keys = ON');
