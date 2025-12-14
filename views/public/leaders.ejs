@@ -42,8 +42,42 @@
                 <% }) %>
             </div>
         <% } else { %>
-            <!-- Standard Grid Layout for few items -->
-            <div class="row">
+            <!-- Mobile: Carousel Layout for few items -->
+            <div class="leader-carousel mb-4 d-flex d-md-none">
+                <% groups[groupName].forEach(leader => { %>
+                    <div class="leader-card-wrapper" 
+                         data-leader="<%= JSON.stringify(leader) %>"
+                         onclick="openLeaderModal(this)">
+                        <div class="card h-100 leader-card">
+                            <% if(leader.image) { %>
+                                <img src="<%= leader.image %>" class="card-img-top <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" alt="<%= leader.name %>" 
+                                     style="height: 250px; object-fit: cover;" draggable="false" ondragstart="return false;">
+                            <% } else { %>
+                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" style="height: 250px;">Geen foto</div>
+                            <% } %>
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <%= leader.name %>
+                                    <% if(leader.is_head_leader) { %>
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;">Hoofdleiding</span>
+                                    <% } %>
+                                </h5>
+                                <p class="card-text">
+                                    <small class="text-muted"><%= leader.years_active %> jaar leiding</small><br>
+                                    <strong>Studie/Werk:</strong> <%= leader.study %>
+                                    <% if(leader.extra_info) { %>
+                                        <br>
+                                        <span class="fst-italic text-muted small"><%= leader.extra_info %></span>
+                                    <% } %>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+
+            <!-- Desktop: Standard Grid Layout for few items -->
+            <div class="row d-none d-md-flex">
                 <% groups[groupName].forEach(leader => { %>
                     <div class="col-md-6 col-lg-3 mb-4" style="cursor: pointer;" 
                          data-leader="<%= JSON.stringify(leader) %>"
