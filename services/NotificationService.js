@@ -122,21 +122,68 @@ class NotificationService {
      */
     static async _sendEmailNotification(user, messageData) {
         try {
+            // Determine Base URL (fallback to chiromeeuwen.be if not set in ENV)
+            const baseUrl = process.env.APP_URL || 'https://chiromeeuwen.be';
+            
+            // Fix URL: ensure it is absolute
+            let fullUrl = messageData.url;
+            if (fullUrl && !fullUrl.startsWith('http')) {
+                // Remove leading slash if both have it to avoid double slash
+                if (fullUrl.startsWith('/')) {
+                    fullUrl = `${baseUrl}${fullUrl}`;
+                } else {
+                    fullUrl = `${baseUrl}/${fullUrl}`;
+                }
+            }
+
             const html = `
-                <h3>Hallo ${user.username},</h3>
-                <p>Er is een nieuwe melding voor jou op ChiroSite:</p>
-                <div style="border-left: 4px solid #d9534f; padding-left: 10px; margin: 15px 0;">
-                    <h4>${messageData.title}</h4>
-                    <p>${messageData.body}</p>
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+                    .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                    .header { background-color: #db0029; color: #ffffff; padding: 30px 20px; text-align: center; }
+                    .header h1 { margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+                    .content { padding: 30px; color: #333333; line-height: 1.6; }
+                    .notification-box { background-color: #fff5f5; border-left: 5px solid #db0029; padding: 20px; margin: 20px 0; border-radius: 4px; }
+                    .notification-title { margin-top: 0; color: #db0029; font-size: 18px; font-weight: bold; }
+                    .btn { display: inline-block; background-color: #db0029; color: #ffffff !important; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold; margin-top: 20px; text-align: center; }
+                    .footer { background-color: #333333; color: #cccccc; padding: 20px; text-align: center; font-size: 12px; }
+                    .footer a { color: #cccccc; text-decoration: underline; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Chiro Vreugdeland</h1>
+                    </div>
+                    <div class="content">
+                        <p>Dag <strong>${user.username}</strong>,</p>
+                        <p>Er is een nieuwe update voor jou:</p>
+                        
+                        <div class="notification-box">
+                            <div class="notification-title">${messageData.title}</div>
+                            <p style="margin-bottom: 0;">${messageData.body}</p>
+                        </div>
+
+                        <div style="text-align: center;">
+                            <a href="${fullUrl}" class="btn">Bekijk Melding</a>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <p>Je ontvangt deze e-mail omdat notificaties zijn ingeschakeld voor jouw account.</p>
+                        <p>&copy; ${new Date().getFullYear()} Chiro Vreugdeland Meeuwen</p>
+                    </div>
                 </div>
-                <p><a href="${messageData.url}" style="background-color: #d9534f; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">Bekijk Melding</a></p>
-                <p style="font-size: 0.8em; color: #777;">Je ontvangt deze e-mail omdat je e-mailmeldingen hebt ingeschakeld. Je kunt dit wijzigen in je accountinstellingen.</p>
+            </body>
+            </html>
             `;
 
             await sendMail({
                 to: user.email,
-                subject: `Nieuwe melding: ${messageData.title}`,
-                text: `${messageData.title}: ${messageData.body}. Bekijk het hier: ${messageData.url}`,
+                subject: `📢 ${messageData.title}`,
+                text: `${messageData.title}: ${messageData.body}. Bekijk het hier: ${fullUrl}`,
                 html: html
             });
         } catch (error) {
