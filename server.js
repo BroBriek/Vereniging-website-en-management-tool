@@ -11,6 +11,24 @@ const webpush = require('web-push');
 // Init App
 const app = express();
 
+// Domain Enforcer Middleware - Blocks access from old/invalid domains
+app.use((req, res, next) => {
+  const host = req.hostname;
+  
+  // Allow localhost and local IPs for development
+  if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.endsWith('.local')) {
+    return next();
+  }
+  
+  // Allow valid production domains
+  if (host === 'chiromeeuwen.be' || host === 'www.chiromeeuwen.be') {
+    return next();
+  }
+
+  // Block everything else (including printmedialounge.de)
+  res.status(404).send('Not Found');
+});
+
 // Passport Config
 require('./config/passport')(passport);
 
@@ -62,6 +80,7 @@ app.use(passport.session());
 // Global Variables & Alert Middleware
 app.use((req, res, next) => {
   res.locals.user = req.user || null;
+  res.locals.currentPath = req.path;
   
   // Extract alerts from query params
   if (req.query.error) {
