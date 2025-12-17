@@ -60,6 +60,10 @@ const Registration = sequelize.define('Registration', {
   privacyAccepted: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  period: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 });
 

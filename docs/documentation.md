@@ -88,10 +88,12 @@ Eenmaal ingelogd op `/auth/login`, heeft de admin toegang tot:
 - **Kalender Beheer:** Toevoegen van activiteiten.
 - **Bestanden & Foto's:**
   - Uploaden van afbeeldingen naar de server.
-- **Inschrijvingen:** Bekijk en exporteer ledenlijst naar Excel.
+- **Inschrijvingen:**
+  - **Overzicht & Zoeken:** Bekijk inschrijvingen per werkjaar (via het archief in de zijbalk) of zoek op naam/email.
+  - **Beheer Periodes:** Start eenvoudig een nieuw inschrijvingsjaar via de knop "Nieuwe Periode".
+  - **Export:** Exporteer ledenlijsten naar Excel of PDF (per jaar of volledig archief).
 - **Danger Zone:**
   - **Maak Backup:** Handmatige trigger voor systeembackup.
-  - **Reset Ledenlijst:** Verwijdert alle inschrijvingen.
   - **Reset Website:** Verwijdert alle content (teksten, events, leden, inschrijvingen) én alle geüploade media.
 
 ## 7. Mappenstructuur

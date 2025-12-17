@@ -1,9 +1,12 @@
-const { PageContent, Leader, Event, Registration, User, Post, Comment, PostResponse, FeedGroup, UserGroupAccess } = require('../models');
+const { PageContent, Leader, Event, Registration, User, Post, Comment, PostResponse, FeedGroup, UserGroupAccess, sequelize } = require('../models');
 const ExcelJS = require('exceljs');
+const PDFDocument = require('pdfkit');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const NotificationService = require('../services/NotificationService');
+const PeriodService = require('../services/PeriodService');
+const { sendMail } = require('../config/mailer');
 
 exports.getDashboard = (req, res) => {
     res.render('admin/dashboard', { title: 'Admin Dashboard', user: req.user });
@@ -130,18 +133,66 @@ exports.getInfo = (req, res) => {
 };
 
 exports.getRegistrations = async (req, res) => {
-    const registrations = await Registration.findAll({
-        order: [
-            ['group', 'ASC'],
-            ['type', 'DESC'], // 'leiding' > 'lid' ?? 'leiding' comes after 'lid' alphabetically. 'lid' vs 'leiding'. 'leiding' should be first.
-                              // 'leiding' > 'lid' alphabetically? 'e' vs 'i'. 'leiding' is first alphabetically. 
-                              // So ASC: leiding, lid. DESC: lid, leiding.
-                              // Wait, 'l' is same. 'e' (5) < 'i' (9). So 'leiding' < 'lid'.
-                              // So ASC sorting puts 'leiding' before 'lid'. Correct.
-            ['lastName', 'ASC']
-        ]
-    });
-    res.render('admin/registrations', { title: 'Inschrijvingen', registrations, user: req.user });
+    try {
+        const { Op } = require('sequelize');
+        const currentPeriod = await PeriodService.getCurrentPeriod();
+        
+        // 1. Get all unique periods from DB
+        const periodsData = await Registration.findAll({
+            attributes: [[sequelize.fn('DISTINCT', sequelize.col('period')), 'period']],
+            order: [['period', 'DESC']],
+            raw: true
+        });
+        const allPeriods = periodsData.map(p => p.period).filter(p => p); // Remove nulls if any
+        
+        // Ensure current period is in the list even if no registrations yet
+        if (!allPeriods.includes(currentPeriod)) {
+            allPeriods.unshift(currentPeriod);
+        }
+
+        // 2. Determine filter settings
+        const selectedPeriod = req.query.period || currentPeriod;
+        const searchQuery = (req.query.search || '').trim();
+        
+        const where = {};
+
+        // Filter by Period (unless 'all' is selected)
+        if (selectedPeriod !== 'all') {
+            where.period = selectedPeriod;
+        }
+
+        // Filter by Search
+        if (searchQuery) {
+            where[Op.or] = [
+                { firstName: { [Op.like]: `%${searchQuery}%` } },
+                { lastName: { [Op.like]: `%${searchQuery}%` } },
+                { email: { [Op.like]: `%${searchQuery}%` } },
+                { parentsNames: { [Op.like]: `%${searchQuery}%` } }
+            ];
+        }
+
+        const registrations = await Registration.findAll({
+            where,
+            order: [
+                ['group', 'ASC'],
+                ['type', 'DESC'], 
+                ['lastName', 'ASC']
+            ]
+        });
+
+        res.render('admin/registrations', { 
+            title: 'Inschrijvingen', 
+            registrations, 
+            user: req.user, 
+            currentPeriod, // The system's active period
+            selectedPeriod, // The period being viewed
+            allPeriods,
+            searchQuery
+        });
+    } catch (error) {
+        console.error('Error fetching registrations:', error);
+        res.redirect('/admin?error=Kon inschrijvingen niet ophalen');
+    }
 };
 
 exports.deleteRegistration = async (req, res) => {
@@ -155,7 +206,21 @@ exports.deleteRegistration = async (req, res) => {
 };
 
 exports.exportRegistrationsExcel = async (req, res) => {
+    const mode = req.query.mode || 'current'; // 'current' or 'all'
+    let where = {};
+    let filename = 'inschrijvingen.xlsx';
+
+    if (mode === 'current') {
+        const currentPeriod = await PeriodService.getCurrentPeriod();
+        where.period = currentPeriod;
+        filename = `inschrijvingen-${currentPeriod}.xlsx`;
+    } else {
+        // For 'all' mode, no 'where' clause is added for period, effectively getting all
+        filename = 'inschrijvingen-alles.xlsx';
+    }
+
     const registrations = await Registration.findAll({
+        where: where, // Apply the filter for the period
         order: [
             ['group', 'ASC'],
             ['type', 'ASC'],
@@ -203,6 +268,70 @@ exports.exportRegistrationsExcel = async (req, res) => {
 
     await workbook.xlsx.write(res);
     res.end();
+};
+
+exports.startNewPeriod = async (req, res) => {
+    try {
+        const newPeriod = await PeriodService.startNewPeriod();
+        res.redirect('/admin/registrations?success=' + encodeURIComponent(`Nieuwe periode gestart: ${newPeriod}`));
+    } catch (error) {
+        console.error('Error starting new period:', error);
+        res.redirect('/admin/registrations?error=Kon nieuwe periode niet starten');
+    }
+};
+
+exports.exportRegistrationsPDF = async (req, res) => {
+    try {
+        const mode = req.query.mode || 'current'; // 'current' or 'all'
+        let where = {};
+        let filename = 'ledenlijst.pdf';
+        
+        if (mode === 'current') {
+            const currentPeriod = await PeriodService.getCurrentPeriod();
+            where.period = currentPeriod;
+            filename = `ledenlijst-${currentPeriod}.pdf`;
+        } else {
+            filename = 'ledenlijst-alles.pdf';
+        }
+
+        const registrations = await Registration.findAll({
+            where,
+            order: [['period', 'DESC'], ['group', 'ASC'], ['lastName', 'ASC']]
+        });
+
+        const doc = new PDFDocument();
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        
+        doc.pipe(res);
+
+        doc.fontSize(20).text('Ledenlijst Chiro Vreugdeland', { align: 'center' });
+        doc.fontSize(12).text(`Export datum: ${new Date().toLocaleDateString('nl-BE')}`, { align: 'center' });
+        if (mode === 'current') {
+             doc.text(`Periode: ${where.period}`, { align: 'center' });
+        }
+        doc.moveDown();
+
+        registrations.forEach((reg) => {
+            if (doc.y > 700) doc.addPage();
+            
+            doc.fontSize(12).font('Helvetica-Bold').text(`${reg.firstName} ${reg.lastName} (${reg.group})`);
+            doc.fontSize(10).font('Helvetica').text(`Periode: ${reg.period || 'Onbekend'} - Type: ${reg.type}`);
+            doc.text(`Email: ${reg.email}`);
+            doc.text(`Telefoon: ${reg.type === 'lid' ? reg.parentsPhone : reg.phone}`);
+            if (reg.medicalInfo) doc.fillColor('red').text(`Medisch: ${reg.medicalInfo}`).fillColor('black');
+            doc.moveDown(0.5);
+        });
+
+        doc.end();
+
+    } catch (error) {
+        console.error('Error exporting PDF:', error);
+        // If headers sent, we can't redirect. But usually PDF generation is fast.
+        if (!res.headersSent) {
+            res.redirect('/admin/registrations?error=Kon PDF niet genereren');
+        }
+    }
 };
 
 exports.resetRegistrations = async (req, res) => {
@@ -479,5 +608,121 @@ exports.updateUser = async (req, res) => {
     } catch (error) {
         console.error('Error updating user:', error);
         res.redirect('/admin/users?error=Kon gebruiker niet bijwerken');
+    }
+};
+
+exports.getEmailTool = async (req, res) => {
+    try {
+        const currentPeriod = await PeriodService.getCurrentPeriod();
+        const periodsData = await Registration.findAll({
+            attributes: [[sequelize.fn('DISTINCT', sequelize.col('period')), 'period']],
+            order: [['period', 'DESC']],
+            raw: true
+        });
+        const periods = periodsData.map(p => p.period).filter(p => p);
+        if (!periods.includes(currentPeriod)) periods.unshift(currentPeriod);
+
+        res.render('admin/email_tool', { 
+            title: 'Email Tool', 
+            user: req.user, 
+            periods, 
+            currentPeriod 
+        });
+    } catch (error) {
+        console.error('Error loading email tool:', error);
+        res.redirect('/admin?error=Kon email tool niet laden');
+    }
+};
+
+exports.postSendEmail = async (req, res) => {
+    try {
+        const { subject, body, recipient_type, individual_email, group_selection, period } = req.body;
+        
+        let recipients = [];
+
+        if (recipient_type === 'individual') {
+            if (!individual_email) throw new Error('Geen email adres ingevuld.');
+            recipients.push(individual_email.trim());
+        } else {
+            // Group Selection
+            const where = {};
+            if (period) where.period = period;
+            
+            // Determine types to fetch
+            let typesToFetch = [];
+            if (group_selection === 'leiding') typesToFetch = ['leiding'];
+            else if (group_selection === 'leden_ouders') typesToFetch = ['lid'];
+            else if (group_selection === 'iedereen') typesToFetch = ['lid', 'leiding'];
+            
+            if (typesToFetch.length > 0) {
+                where.type = { [require('sequelize').Op.in]: typesToFetch };
+            }
+
+            const registrations = await Registration.findAll({
+                where,
+                attributes: ['email']
+            });
+            
+            // Extract and dedup emails
+            const emails = registrations.map(r => r.email).filter(e => e && e.includes('@')); // Basic validation
+            recipients = [...new Set(emails)]; // Deduplicate
+        }
+
+        if (recipients.length === 0) {
+            return res.redirect('/admin/email?error=Geen ontvangers gevonden voor deze selectie.');
+        }
+
+        // Create HTML content
+        const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+                    .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                    .header { background-color: #db0029; color: #ffffff; padding: 30px 20px; text-align: center; }
+                    .header h1 { margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+                    .content { padding: 30px; color: #333333; line-height: 1.6; }
+                    .content img { max-width: 100%; height: auto; }
+                    .footer { background-color: #333333; color: #cccccc; padding: 20px; text-align: center; font-size: 12px; }
+                    .footer a { color: #cccccc; text-decoration: underline; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Chiro Vreugdeland</h1>
+                    </div>
+                    <div class="content">
+                        ${body}
+                    </div>
+                    <div class="footer">
+                        <p>&copy; ${new Date().getFullYear()} Chiro Vreugdeland Meeuwen</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+
+        const mailOptions = {
+            subject: subject,
+            html: htmlContent,
+            from: process.env.MAIL_FROM || '"Chiro Vreugdeland" <noreply@chiromeeuwen.be>'
+        };
+
+        if (recipient_type === 'individual') {
+            mailOptions.to = recipients[0];
+        } else {
+            mailOptions.to = process.env.MAIL_FROM || 'noreply@chiromeeuwen.be';
+            mailOptions.bcc = recipients;
+        }
+
+        await sendMail(mailOptions);
+
+        res.redirect(`/admin/email?success=Email succesvol verzonden naar ${recipients.length} ontvangers.`);
+
+    } catch (error) {
+        console.error('Error sending admin email:', error);
+        res.redirect('/admin/email?error=' + encodeURIComponent('Fout bij verzenden: ' + error.message));
     }
 };

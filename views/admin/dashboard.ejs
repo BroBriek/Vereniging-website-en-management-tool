@@ -85,6 +85,16 @@
         </div>
     </div>
 
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-success">
+            <div class="card-body text-center text-success">
+                <h3 class="card-title"><i class="bi bi-envelope-fill"></i></h3>
+                <p>Stuur emails naar leiding, leden of ouders.</p>
+                <a href="/admin/email" class="btn btn-success w-100">Email Tool</a>
+            </div>
+        </div>
+    </div>
+
     <!-- Help & Pages -->
     <div class="col-md-12 mb-4">
         <div class="alert alert-info d-flex align-items-center">
@@ -92,7 +102,7 @@
             <div>
                 <strong>Hulp nodig?</strong>
                 <br>
-                Bekijk de <a href="/admin/info" class="alert-link">handleiding en HTML-tips</a> om te leren hoe je de site aanpast.
+                Bekijk de <a href="/admin/info" class="alert-link">documentatie</a> om te leren hoe je de site aanpast.
             </div>
         </div>
     </div>
@@ -115,7 +125,7 @@
             </div>
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <form action="/admin/danger/backup" method="POST">
                             <button type="submit" class="btn btn-outline-dark w-100 p-3">
                                 <i class="bi bi-hdd-fill fs-4 d-block mb-2"></i>
@@ -124,16 +134,7 @@
                         </form>
                         <small class="text-muted d-block text-center mt-2">Maakt een volledige backup van database en foto's.</small>
                     </div>
-                    <div class="col-md-4">
-                        <form action="/admin/danger/reset-registrations" method="POST" onsubmit="return confirm('Weet je zeker dat je ALLE inschrijvingen wilt verwijderen? Dit kan niet ongedaan worden gemaakt.');">
-                            <button type="submit" class="btn btn-outline-danger w-100 p-3">
-                                <i class="bi bi-people-fill fs-4 d-block mb-2"></i>
-                                Reset Ledenlijst
-                            </button>
-                        </form>
-                        <small class="text-muted d-block text-center mt-2">Verwijdert alle inschrijvingen uit de database.</small>
-                    </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <button type="button" class="btn btn-danger w-100 p-3" data-bs-toggle="modal" data-bs-target="#resetWebsiteModal">
                             <i class="bi bi-radioactive fs-4 d-block mb-2"></i>
                             Reset Website
