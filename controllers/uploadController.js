@@ -52,3 +52,13 @@ exports.deleteUpload = (req, res) => {
         res.redirect('/admin/uploads');
     });
 };
+
+exports.uploadImageApi = (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Geen afbeelding geüpload' });
+    }
+    // Return the URL for the editor
+    res.json({ 
+        url: `/uploads/${req.file.filename}` 
+    });
+};

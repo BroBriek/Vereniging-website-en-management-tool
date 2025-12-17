@@ -41,7 +41,7 @@ exports.postEditPage = async (req, res) => {
         });
     }
     
-    res.redirect(`/admin/page/${slug}`);
+    res.redirect(`/admin/page/${slug}?success=${encodeURIComponent('Pagina succesvol bijgewerkt!')}`);
 };
 
 exports.getLeaders = async (req, res) => {
