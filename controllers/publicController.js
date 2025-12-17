@@ -138,26 +138,44 @@ exports.postRegister = async (req, res) => {
         if (!payload.firstName || !payload.lastName || !payload.birthdate || !payload.email || !payload.privacyAccepted) {
             throw new Error('missing fields');
         }
-        await Registration.create(payload);
-        res.render('public/register', { 
-            title: 'Inschrijven', 
-            description: 'Schrijf je in voor het nieuwe Chirojaar bij Chiro Vreugdeland Meeuwen!',
-            content, 
-            success: true 
-        });
-    } catch (error) {
-        console.error('Registration error:', error);
-        res.render('public/register', { 
-            title: 'Inschrijven', 
-            description: 'Schrijf je in voor het nieuwe Chirojaar bij Chiro Vreugdeland Meeuwen!',
-            content, 
-            error: 'Er ging iets mis bij het opslaan. Controleer of alle velden correct zijn ingevuld.' 
-        });
-    }
-};
+        
+        payload.period = await PeriodService.getCurrentPeriod();
 
+                        await Registration.create(payload);
+                        res.render('public/register', { 
+                            title: 'Inschrijven', 
+                            description: 'Schrijf je in voor het nieuwe Chirojaar bij Chiro Vreugdeland Meeuwen!',
+                            content, 
+                            success: 'Bedankt voor je inschrijving! We hebben de gegevens goed ontvangen.' 
+                        });    } catch (error) {
+        let errorMessage = 'Er ging iets mis bij het opslaan. Controleer of alle velden correct zijn ingevuld.';
+        
+        if (error.name === 'SequelizeValidationError') {
+            // Validation error: User input issue. No server log needed, just UI feedback.
+
+            // Check for specific email error
+            const emailError = error.errors.find(e => e.path === 'email' && e.validatorKey === 'isEmail');
+            if (emailError) {
+                errorMessage = 'Het opgegeven e-mailadres is ongeldig. Controleer op typefouten.';
+            } else {
+                errorMessage = error.errors.map(e => e.message).join('. ');
+            }
+        } else {
+            // Log full error for unexpected issues
+            console.error('Registration error:', error);
+        }
+
+        res.render('public/register', { 
+                    title: 'Inschrijven', 
+                    description: 'Schrijf je in voor het nieuwe Chirojaar bij Chiro Vreugdeland Meeuwen!',
+                    content, 
+                    error: errorMessage 
+                });
+            }
+        };
 const nodemailer = require('nodemailer');
 const { sendMail } = require('../config/mailer');
+const PeriodService = require('../services/PeriodService');
 
 exports.getContact = (req, res) => {
     res.render('public/contact', { 

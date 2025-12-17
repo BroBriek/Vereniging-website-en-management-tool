@@ -3,14 +3,6 @@
 <div class="container mt-5">
     <h1>Inschrijven</h1>
 
-    <% if (typeof success !== 'undefined' && success) { %>
-        <div class="alert alert-success">Bedankt voor je inschrijving! We hebben de gegevens goed ontvangen.</div>
-    <% } %>
-    
-    <% if (typeof error !== 'undefined' && error) { %>
-        <div class="alert alert-danger"><%= error %></div>
-    <% } %>
-
     <form action="/inschrijven" method="POST" class="mt-4" id="registrationForm">
         
         <!-- Role Selection -->

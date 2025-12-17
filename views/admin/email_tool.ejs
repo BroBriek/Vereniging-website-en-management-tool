@@ -1,0 +1,105 @@
+<%- include('../partials/header') %>
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1><i class="bi bi-envelope-fill me-2"></i>Email Tool</h1>
+        <p>Stuur e-mails naar individuele personen of groepen met een mooie opmaak.</p>
+        <a href="/admin" class="btn btn-secondary mb-3">&larr; Terug naar Dashboard</a>
+    </div>
+
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Nieuwe Email Opstellen</h5>
+            </div>
+            <div class="card-body">
+                <form action="/admin/email/send" method="POST">
+                    
+                    <!-- Subject -->
+                    <div class="mb-3">
+                        <label for="subject" class="form-label fw-bold">Onderwerp</label>
+                        <input type="text" class="form-control" id="subject" name="subject" required placeholder="Onderwerp van de mail...">
+                    </div>
+
+                    <!-- Recipient Type -->
+                    <div class="mb-3 bg-light p-3 rounded">
+                        <label class="form-label fw-bold">Ontvanger(s)</label>
+                        <div class="d-flex gap-4 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="recipient_type" id="type_individual" value="individual" checked onclick="toggleRecipients()">
+                                <label class="form-check-label" for="type_individual">
+                                    Individueel
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="recipient_type" id="type_group" value="group" onclick="toggleRecipients()">
+                                <label class="form-check-label" for="type_group">
+                                    Groep (Leiding, Ouders...)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Individual Input -->
+                        <div id="individual_options" class="mt-2">
+                            <label for="individual_email" class="form-label">Email Adres</label>
+                            <input type="email" class="form-control" id="individual_email" name="individual_email" placeholder="naam@voorbeeld.be">
+                        </div>
+
+                        <!-- Group Options -->
+                        <div id="group_options" class="mt-2 d-none">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="group_selection" class="form-label">Doelgroep</label>
+                                    <select class="form-select" id="group_selection" name="group_selection">
+                                        <option value="leiding">Leiding</option>
+                                        <option value="leden_ouders">Leden & Ouders</option>
+                                        <option value="iedereen">Iedereen (Leiding + Leden/Ouders)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="period" class="form-label">Periode</label>
+                                    <select class="form-select" id="period" name="period">
+                                        <% periods.forEach(p => { %>
+                                            <option value="<%= p %>" <%= p === currentPeriod ? 'selected' : '' %>><%= p %></option>
+                                        <% }); %>
+                                    </select>
+                                    <div class="form-text">Selecteer uit welke periode je de inschrijvingen wil gebruiken.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Bericht</label>
+                        <textarea class="form-control rich-editor" name="body" rows="12"></textarea>
+                        <div class="form-text">Je kan tekst opmaken, links toevoegen en afbeeldingen invoegen.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger btn-lg w-100"><i class="bi bi-send-fill me-2"></i>Verstuur Email</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleRecipients() {
+        const typeGroup = document.getElementById('type_group').checked;
+        const individualOpts = document.getElementById('individual_options');
+        const groupOpts = document.getElementById('group_options');
+        const individualInput = document.getElementById('individual_email');
+
+        if (typeGroup) {
+            individualOpts.classList.add('d-none');
+            groupOpts.classList.remove('d-none');
+            individualInput.removeAttribute('required');
+        } else {
+            individualOpts.classList.remove('d-none');
+            groupOpts.classList.add('d-none');
+            individualInput.setAttribute('required', 'required');
+        }
+    }
+    // Run on load
+    toggleRecipients();
+</script>
+<%- include('../partials/footer') %>

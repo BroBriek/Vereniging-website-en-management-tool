@@ -11,6 +11,10 @@ router.use(ensureAdmin);
 router.get('/', adminController.getDashboard);
 router.get('/info', adminController.getInfo);
 
+// Email Tool
+router.get('/email', adminController.getEmailTool);
+router.post('/email/send', adminController.postSendEmail);
+
 // User Management
 router.get('/users', adminController.getUsers);
 router.post('/users', adminController.postUser);
@@ -35,6 +39,8 @@ router.post('/api/upload-image', upload.single('image'), uploadController.upload
 // Registrations
 router.get('/registrations', adminController.getRegistrations);
 router.get('/registrations/export', adminController.exportRegistrationsExcel);
+router.get('/registrations/export-pdf', adminController.exportRegistrationsPDF);
+router.post('/registrations/new-period', adminController.startNewPeriod);
 router.delete('/registrations/:id', adminController.deleteRegistration);
 
 // Danger Zone

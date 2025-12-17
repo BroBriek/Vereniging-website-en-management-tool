@@ -1,78 +1,159 @@
 <%- include('../partials/header') %>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Inschrijvingen</h1>
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <a href="/admin/registrations/export" class="btn btn-primary me-2"><i class="bi bi-file-earmark-spreadsheet"></i> Exporteer naar Excel</a>
-            <a href="/admin/info" class="btn btn-info text-white me-2" title="Algemene Hulp & Info">
-                <i class="bi bi-info-circle"></i> Algemene Info
-            </a>
-            <a href="/admin" class="btn btn-secondary">Terug</a>
+            <h1>
+                Inschrijvingen 
+                <span class="text-muted fs-4">
+                    <% if (selectedPeriod === 'all') { %>
+                        (Alles)
+                    <% } else { %>
+                        (<%= selectedPeriod %>)
+                    <% } %>
+                </span>
+            </h1>
+        </div>
+
+        <!-- Search Bar -->
+        <form action="/admin/registrations" method="GET" class="d-flex flex-grow-1 mx-4" style="max-width: 400px;">
+            <input type="hidden" name="period" value="<%= selectedPeriod %>">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Zoek op naam, email..." value="<%= searchQuery %>">
+                <% if (searchQuery) { %>
+                    <a href="/admin/registrations?period=<%= selectedPeriod %>" class="btn btn-outline-secondary" title="Zoekopdracht wissen"><i class="bi bi-x-lg"></i></a>
+                <% } %>
+                <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+            </div>
+        </form>
+
+        <div>
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-file-pdf"></i> PDF
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/admin/registrations/export-pdf?mode=current">Huidige Periode (<%= currentPeriod %>)</a></li>
+                    <li><a class="dropdown-item" href="/admin/registrations/export-pdf?mode=all">Alles (Archief)</a></li>
+                </ul>
+            </div>
+
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Excel
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/admin/registrations/export?mode=current">Huidige Periode (<%= currentPeriod %>)</a></li>
+                    <li><a class="dropdown-item" href="/admin/registrations/export?mode=all">Alles (Archief)</a></li>
+                </ul>
+            </div>
+            
+            <form action="/admin/registrations/new-period" method="POST" class="d-inline" onsubmit="return confirm('Ben je zeker? Dit start een nieuwe inschrijvingsperiode. De huidige lijst wordt verborgen (maar niet verwijderd).');">
+                <button type="submit" class="btn btn-warning" title="Start een nieuw werkjaar"><i class="bi bi-calendar-plus"></i> Nieuwe Periode</button>
+            </form>
+
+            <a href="/admin" class="btn btn-secondary ms-2">Terug</a>
         </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-hover table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>Groep</th>
-                    <th>Rol</th>
-                    <th>Naam</th>
-                    <th>Geboortedatum</th>
-                    <th>Contact (Email/Tel)</th>
-                    <th>Ouders / Extra</th>
-                    <th>Medisch</th>
-                    <th>Actie</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% registrations.forEach(reg => { %>
-                    <tr>
-                        <td><span class="badge bg-secondary"><%= reg.group %></span></td>
-                        <td>
-                            <% if (reg.type === 'leiding') { %>
-                                <span class="badge bg-danger">Leiding</span>
-                            <% } else { %>
-                                <span class="badge bg-success">Lid</span>
-                            <% } %>
-                        </td>
-                        <td><strong><%= reg.firstName %> <%= reg.lastName %></strong></td>
-                        <td><%= reg.birthdate %></td>
-                        <td>
-                            <%= reg.email %><br>
-                            <small class="text-muted"><%= reg.type === 'lid' ? reg.parentsPhone : reg.phone %></small>
-                        </td>
-                        <td>
-                            <% if (reg.type === 'lid') { %>
-                                <small>Ouders: <%= reg.parentsNames %></small><br>
-                                <% if(reg.memberPhone) { %><small>GSM Lid: <%= reg.memberPhone %></small><br><% } %>
-                                <small>Foto's: <%= reg.photoPermission ? 'Ja' : 'Nee' %></small>
-                            <% } else { %>
-                                -
-                            <% } %>
-                        </td>
-                        <td>
-                            <% if (reg.medicalInfo) { %>
-                                <span class="text-danger" title="<%= reg.medicalInfo %>"><i class="bi bi-exclamation-circle-fill"></i> Zie info</span>
-                            <% } else { %>
-                                <span class="text-muted">-</span>
-                            <% } %>
-                        </td>
-                        <td>
-                            <form action="/admin/registrations/<%= reg.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?');">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijder"><i class="bi bi-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
+    <div class="row">
+        <!-- Sidebar: Period Archive -->
+        <div class="col-md-2 mb-4">
+            <div class="list-group">
+                <div class="list-group-item bg-dark text-white">
+                    <i class="bi bi-archive"></i> Archief
+                </div>
+                <a href="/admin/registrations?period=all" class="list-group-item list-group-item-action <%= selectedPeriod === 'all' ? 'active' : '' %>">
+                    Alles Tonen
+                </a>
+                <% allPeriods.forEach(p => { %>
+                    <a href="/admin/registrations?period=<%= p %>" class="list-group-item list-group-item-action <%= selectedPeriod === p ? 'active' : '' %> d-flex justify-content-between align-items-center">
+                        <%= p %>
+                        <% if (p === currentPeriod) { %>
+                            <span class="badge bg-success rounded-pill" title="Huidige actieve periode">Actief</span>
+                        <% } %>
+                    </a>
                 <% }) %>
-                <% if (registrations.length === 0) { %>
-                    <tr>
-                        <td colspan="7" class="text-center">Nog geen inschrijvingen.</td>
-                    </tr>
-                <% } %>
-            </tbody>
-        </table>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10">
+            <div class="table-responsive bg-white rounded shadow-sm">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Groep</th>
+                            <th>Rol</th>
+                            <th>Naam</th>
+                            <% if (selectedPeriod === 'all') { %> <th>Jaar</th> <% } %>
+                            <th>Geboortedatum</th>
+                            <th>Contact (Email/Tel)</th>
+                            <th>Ouders / Extra</th>
+                            <th>Medisch</th>
+                            <th>Actie</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% registrations.forEach(reg => { %>
+                            <tr>
+                                <td><span class="badge bg-secondary"><%= reg.group %></span></td>
+                                <td>
+                                    <% if (reg.type === 'leiding') { %>
+                                        <span class="badge bg-danger">Leiding</span>
+                                    <% } else { %>
+                                        <span class="badge bg-success">Lid</span>
+                                    <% } %>
+                                </td>
+                                <td><strong><%= reg.firstName %> <%= reg.lastName %></strong></td>
+                                <% if (selectedPeriod === 'all') { %> 
+                                    <td><span class="badge bg-light text-dark border"><%= reg.period %></span></td> 
+                                <% } %>
+                                <td><%= reg.birthdate %></td>
+                                <td>
+                                    <%= reg.email %><br>
+                                    <small class="text-muted"><%= reg.type === 'lid' ? reg.parentsPhone : reg.phone %></small>
+                                </td>
+                                <td>
+                                    <% if (reg.type === 'lid') { %>
+                                        <small>Ouders: <%= reg.parentsNames %></small><br>
+                                        <% if(reg.memberPhone) { %><small>GSM Lid: <%= reg.memberPhone %></small><br><% } %>
+                                        <small>Foto's: <%= reg.photoPermission ? 'Ja' : 'Nee' %></small>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (reg.medicalInfo) { %>
+                                        <span class="text-danger" title="<%= reg.medicalInfo %>"><i class="bi bi-exclamation-circle-fill"></i> Zie info</span>
+                                    <% } else { %>
+                                        <span class="text-muted">-</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <form action="/admin/registrations/<%= reg.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijder"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                        <% if (registrations.length === 0) { %>
+                            <tr>
+                                <td colspan="<%= selectedPeriod === 'all' ? 9 : 8 %>" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <% if (searchQuery) { %>
+                                            Geen resultaten gevonden voor "<%= searchQuery %>" in periode <%= selectedPeriod %>.
+                                        <% } else { %>
+                                            Nog geen inschrijvingen in deze periode.
+                                        <% } %>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
