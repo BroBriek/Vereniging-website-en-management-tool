@@ -30,6 +30,7 @@ router.post('/uploads', (req, res, next) => {
     });
 }, uploadController.postUpload);
 router.delete('/uploads/:filename', uploadController.deleteUpload);
+router.post('/api/upload-image', upload.single('image'), uploadController.uploadImageApi);
 
 // Registrations
 router.get('/registrations', adminController.getRegistrations);

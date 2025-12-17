@@ -35,18 +35,18 @@
         <h3>Intro</h3>
         <div class="mb-3">
             <label class="form-label">Tekst (HTML toegestaan)</label>
-            <textarea class="form-control" name="intro" rows="5"><%= contentMap.intro ? contentMap.intro.content : '' %></textarea>
+            <textarea class="form-control rich-editor" name="intro" rows="5"><%= contentMap.intro ? contentMap.intro.content : '' %></textarea>
         </div>
     <% } else if (slug === 'register') { %>
         <h3>Info Tekst (Onderaan formulier)</h3>
         <div class="mb-3">
             <label class="form-label">Tekst over kosten, rekeningnummer, etc. (HTML toegestaan)</label>
-            <textarea class="form-control" name="info_text" rows="10"><%= contentMap.info_text ? contentMap.info_text.content : '' %></textarea>
+            <textarea class="form-control rich-editor" name="info_text" rows="10"><%= contentMap.info_text ? contentMap.info_text.content : '' %></textarea>
         </div>
     <% } else { %>
         <div class="mb-3">
             <label class="form-label">Hoofdtekst (HTML toegestaan)</label>
-            <textarea class="form-control" name="main" rows="10"><%= contentMap.main ? contentMap.main.content : '' %></textarea>
+            <textarea class="form-control rich-editor" name="main" rows="10"><%= contentMap.main ? contentMap.main.content : '' %></textarea>
         </div>
     <% } %>
     
