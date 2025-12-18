@@ -16,8 +16,8 @@ exports.getHome = async (req, res) => {
     try {
         const content = await getContent('home');
         res.render('public/home', { 
-            title: 'Home', 
-            description: 'Welkom bij Chiro Vreugdeland Meeuwen! De plek voor spel, plezier en vriendschap in Meeuwen. Ontdek onze werking.',
+            title: 'Chiro Vreugdeland Meeuwen - Jeugdbeweging Meeuwen', 
+            description: 'Chiro Vreugdeland Meeuwen: jeugdbeweging voor kinderen in Meeuwen. Elke zondag spelen, activiteiten, vriendschap en plezier. Word lid!',
             content 
         });
     } catch (error) {
@@ -29,8 +29,8 @@ exports.getPractical = async (req, res) => {
     try {
         const content = await getContent('practical');
         res.render('public/practical', { 
-            title: 'Praktisch', 
-            description: 'Praktische info over Chiro Vreugdeland: lidgeld, uniformen, uren en locatie.',
+            title: 'Praktisch - Informatie Chiro Vreugdeland', 
+            description: 'Praktische info over Chiro Vreugdeland: lidgeld, uniformen, uren, locatie en aanmelden. Alles wat je moet weten.',
             content 
         });
     } catch (error) {
@@ -49,8 +49,8 @@ exports.getLeaders = async (req, res) => {
             groups[l.group].push(l);
         });
         res.render('public/leaders', { 
-            title: 'Leiding', 
-            description: 'Maak kennis met de leiding van Chiro Vreugdeland.',
+            title: 'Onze Leiding - Chiro Vreugdeland Meeuwen', 
+            description: 'Maak kennis met het team van vrijwilligers en jeugdleiders van Chiro Vreugdeland.',
             groups 
         });
     } catch (error) {
@@ -65,8 +65,8 @@ exports.getCalendar = async (req, res) => {
             order: [['date', 'ASC']]
         });
         res.render('public/calendar', { 
-            title: 'Kalender', 
-            description: 'De kalender van Chiro Vreugdeland: mis geen enkele activiteit, zondag of evenement!',
+            title: 'Kalender & Activiteiten - Chiro Vreugdeland', 
+            description: 'De volledige kalender van Chiro Vreugdeland: mis geen activiteiten, zondagen of speciale evenementen.',
             events 
         });
     } catch (error) {
@@ -78,8 +78,8 @@ exports.getDepartments = async (req, res) => {
     try {
         const content = await getContent('departments');
         res.render('public/departments', { 
-            title: 'Afdelingen', 
-            description: 'Ontdek onze afdelingen: Ribbels, Speelclub, Rakwi\'s, Tito\'s, Keti\'s en Aspi\'s.',
+            title: 'Afdelingen - Chiro Vreugdeland Meeuwen', 
+            description: 'Ontdek alle afdelingen van Chiro: Ribbels, Speelclub, Rakwi\'s, Tito\'s, Keti\'s en Aspi\'s. Vind jouw groep!',
             content 
         });
     } catch (error) {
@@ -91,8 +91,8 @@ exports.getShirts = async (req, res) => {
     try {
         const content = await getContent('shirts');
         res.render('public/shirts', { 
-            title: 'T-Shirts', 
-            description: 'Koop coole Chiro Vreugdeland T-shirts. Bekijk hier de maten en prijzen.',
+            title: 'T-Shirts & Merchandise - Chiro Vreugdeland', 
+            description: 'Koop coole Chiro Vreugdeland T-shirts en merchandise. Bekijk maten, kleuren en prijzen.',
             content 
         });
     } catch (error) {
@@ -104,8 +104,8 @@ exports.getRegister = async (req, res) => {
     try {
         const content = await getContent('register');
         res.render('public/register', { 
-            title: 'Inschrijven', 
-            description: 'Schrijf je in voor het nieuwe Chirojaar bij Chiro Vreugdeland Meeuwen!',
+            title: 'Inschrijven bij Chiro Vreugdeland', 
+            description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
             content 
         });
     } catch (error) {
@@ -143,8 +143,8 @@ exports.postRegister = async (req, res) => {
 
                         await Registration.create(payload);
                         res.render('public/register', { 
-                            title: 'Inschrijven', 
-                            description: 'Schrijf je in voor het nieuwe Chirojaar bij Chiro Vreugdeland Meeuwen!',
+                            title: 'Inschrijven bij Chiro Vreugdeland', 
+                            description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
                             content, 
                             success: 'Bedankt voor je inschrijving! We hebben de gegevens goed ontvangen.' 
                         });    } catch (error) {
@@ -166,8 +166,8 @@ exports.postRegister = async (req, res) => {
         }
 
         res.render('public/register', { 
-                    title: 'Inschrijven', 
-                    description: 'Schrijf je in voor het nieuwe Chirojaar bij Chiro Vreugdeland Meeuwen!',
+                    title: 'Inschrijven bij Chiro Vreugdeland', 
+                    description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
                     content, 
                     error: errorMessage 
                 });
@@ -179,8 +179,8 @@ const PeriodService = require('../services/PeriodService');
 
 exports.getContact = (req, res) => {
     res.render('public/contact', { 
-        title: 'Contact', 
-        description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen voor al je vragen.',
+        title: 'Contact - Chiro Vreugdeland Meeuwen', 
+        description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen. Stel je vragen of geef feedback.',
         contactFormDisabled: process.env.DISABLE_CONTACT_FORM === 'true' 
     });
 };
@@ -188,8 +188,8 @@ exports.getContact = (req, res) => {
 exports.postContact = async (req, res) => {
     if (process.env.DISABLE_CONTACT_FORM === 'true') {
         return res.render('public/contact', { 
-            title: 'Contact', 
-            description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen voor al je vragen.',
+            title: 'Contact - Chiro Vreugdeland Meeuwen', 
+            description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen. Stel je vragen of geef feedback.',
             contactFormDisabled: true, 
             error: 'Deze functie is tijdelijk nog niet beschikbaar' 
         });
@@ -217,16 +217,56 @@ exports.postContact = async (req, res) => {
 };
 
 exports.getRobotsTxt = (req, res) => {
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const content = `User-agent: *\nDisallow: /leiding\nSitemap: ${baseUrl}/sitemap.xml\n`;
+    const content = `# Robots.txt for Chiro Vreugdeland Meeuwen
+# Allow search engines to crawl public content
+
+User-agent: *
+Allow: /
+Allow: /public/
+Allow: /*.css$
+Allow: /*.js$
+Allow: /img/
+Allow: /favicon.ico
+Allow: /manifest.json
+Disallow: /admin
+Disallow: /account
+Disallow: /auth
+Disallow: /feed
+Disallow: /api/
+Disallow: /*.json$
+Crawl-delay: 1
+User-agent: AhrefsBot
+User-agent: SemrushBot
+Disallow: /
+
+Sitemap: https://www.chiromeeuwen.be/sitemap.xml
+`;
     res.type('text/plain').send(content);
 };
 
 exports.getSitemapXml = (req, res) => {
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const urls = ['/', '/praktisch', '/kalender', '/afdelingen', '/t-shirts', '/inschrijven', '/contact'];
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-        urls.map(u => `  <url><loc>${baseUrl}${u}</loc></url>`).join('\n') +
-        `\n</urlset>`;
+    const baseUrl = 'https://www.chiromeeuwen.be';
+    const lastmod = new Date().toISOString().split('T')[0];
+    const urls = [
+        { loc: '/', changefreq: 'weekly', priority: '1.0', lastmod },
+        { loc: '/praktisch', changefreq: 'monthly', priority: '0.9', lastmod },
+        { loc: '/afdelingen', changefreq: 'yearly', priority: '0.8', lastmod },
+        { loc: '/leiding', changefreq: 'monthly', priority: '0.8', lastmod },
+        { loc: '/kalender', changefreq: 'weekly', priority: '0.9', lastmod },
+        { loc: '/t-shirts', changefreq: 'monthly', priority: '0.7', lastmod },
+        { loc: '/inschrijven', changefreq: 'yearly', priority: '0.9', lastmod },
+        { loc: '/contact', changefreq: 'yearly', priority: '0.7', lastmod }
+    ];
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+` +
+        urls.map(u => `  <url>
+    <loc>${baseUrl}${u.loc}</loc>
+    <lastmod>${u.lastmod}</lastmod>
+    <changefreq>${u.changefreq}</changefreq>
+    <priority>${u.priority}</priority>
+  </url>`).join('\n') +
+        `
+</urlset>`;
     res.type('application/xml').send(xml);
 };

@@ -3,25 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland Meeuwen' %></title>
-    <meta name="description" content="<%= typeof description !== 'undefined' ? description : 'Welkom bij Chiro Vreugdeland Meeuwen! De tofste jeugdbeweging in Meeuwen waar we elke zondag samen spelen en plezier maken.' %>">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="keywords" content="Chiro Meeuwen, Chiro Vreugdeland, jeugdbeweging, jeugdorganisatie, kinderen activiteiten, Meeuwen">
+    <title><%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland Meeuwen - Jeugdbeweging Meeuwen' %></title>
+    <meta name="description" content="<%= typeof description !== 'undefined' ? description : 'Chiro Vreugdeland Meeuwen: jeugdbeweging voor kinderen in Meeuwen. Elke zondag spelen, activiteiten, vriendschap en plezier.' %>">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://chiromeeuwen.be/">
-    <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland Meeuwen' %>">
-    <meta property="og:description" content="<%= typeof description !== 'undefined' ? description : 'Welkom bij Chiro Vreugdeland Meeuwen! De tofste jeugdbeweging in Meeuwen waar we elke zondag samen spelen en plezier maken.' %>">
-    <meta property="og:image" content="https://chiromeeuwen.be/favicon.png">
+    <meta property="og:url" content="https://www.chiromeeuwen.be<%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
+    <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland Meeuwen - Jeugdbeweging Meeuwen' %>">
+    <meta property="og:description" content="<%= typeof description !== 'undefined' ? description : 'Chiro Vreugdeland Meeuwen: jeugdbeweging voor kinderen in Meeuwen. Elke zondag spelen, activiteiten, vriendschap en plezier.' %>">">
+    <meta property="og:image" content="https://www.chiromeeuwen.be/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="nl_BE">
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary">
-    <meta property="twitter:url" content="https://chiromeeuwen.be/">
-    <meta property="twitter:title" content="<%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland Meeuwen' %>">
-    <meta property="twitter:description" content="<%= typeof description !== 'undefined' ? description : 'Welkom bij Chiro Vreugdeland Meeuwen! De tofste jeugdbeweging in Meeuwen waar we elke zondag samen spelen en plezier maken.' %>">
-    <meta property="twitter:image" content="https://chiromeeuwen.be/favicon.png">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://www.chiromeeuwen.be<%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
+    <meta property="twitter:title" content="<%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland Meeuwen - Jeugdbeweging Meeuwen' %>">
+    <meta property="twitter:description" content="<%= typeof description !== 'undefined' ? description : 'Chiro Vreugdeland Meeuwen: jeugdbeweging voor kinderen in Meeuwen. Elke zondag spelen, activiteiten, vriendschap en plezier.' %>">
+    <meta property="twitter:image" content="https://www.chiromeeuwen.be/og-image.png">
 
     <!-- Canonical Tag -->
     <link rel="canonical" href="https://www.chiromeeuwen.be<%= typeof currentPath !== 'undefined' ? currentPath : '' %>" />
+
+    <!-- Structured Data: Organization & LocalBusiness -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": ["Organization", "LocalBusiness"],
+      "name": "Chiro Vreugdeland Meeuwen",
+      "alternateName": "Chiro Meeuwen",
+      "description": "Chiro Vreugdeland Meeuwen is een jeugdbeweging in Meeuwen met activiteiten voor kinderen van alle leeftijden.",
+      "url": "https://www.chiromeeuwen.be",
+      "logo": "https://www.chiromeeuwen.be/favicon.png",
+      "image": "https://www.chiromeeuwen.be/og-image.png",
+      "keywords": "Chiro, jeugdbeweging, Meeuwen, kinderen, activiteiten",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Kloosterstraat 5",
+        "addressLocality": "Meeuwen",
+        "addressRegion": "Limburg",
+        "postalCode": "3670",
+        "addressCountry": "BE"
+      },
+      "email": "Chiromeeuwen@outlook.com",
+      "sameAs": [
+        "https://www.facebook.com/ChiroVreugdelandMeeuwen"
+      ]
+    }
+    </script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
