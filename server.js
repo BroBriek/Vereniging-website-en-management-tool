@@ -11,7 +11,7 @@ const webpush = require('web-push');
 // Init App
 const app = express();
 
-// Domain Enforcer Middleware - Blocks access from old/invalid domains
+// Domain Enforcer & Redirect Middleware
 app.use((req, res, next) => {
   const host = req.hostname;
   
@@ -20,8 +20,13 @@ app.use((req, res, next) => {
     return next();
   }
   
+  // Redirect non-www to www
+  if (host === 'chiromeeuwen.be') {
+    return res.redirect(301, 'https://www.chiromeeuwen.be' + req.originalUrl);
+  }
+  
   // Allow valid production domains
-  if (host === 'chiromeeuwen.be' || host === 'www.chiromeeuwen.be') {
+  if (host === 'www.chiromeeuwen.be') {
     return next();
   }
 
@@ -81,6 +86,13 @@ app.use(passport.session());
 app.use((req, res, next) => {
   res.locals.user = req.user || null;
   res.locals.currentPath = req.path;
+  
+  // SEO headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   
   // Extract alerts from query params
   if (req.query.error) {
