@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const words = textBeforeCursor.split(/\s+/);
             const currentWord = words[words.length - 1];
 
-            if (currentWord.startsWith('@') && currentWord.length > 1) {
+            if (currentWord.startsWith('@') && currentWord.length >= 1) {
                 activeInput = this;
                 const query = currentWord.substring(1);
                 

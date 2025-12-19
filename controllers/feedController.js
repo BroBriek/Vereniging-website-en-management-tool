@@ -47,17 +47,21 @@ const ensureAccessToGroup = async (user, group) => {
 exports.searchUsers = async (req, res) => {
     try {
         const query = req.query.q || '';
-        if (query.length < 1) return res.json([]);
         
+        const whereClause = {
+            isActive: true,
+            username: { [Op.ne]: 'Admin' }
+        };
+
+        if (query.length > 0) {
+            whereClause.username[Op.like] = `%${query}%`;
+        }
+
         const users = await User.findAll({
-            where: {
-                username: { 
-                    [Op.like]: `%${query}%`,
-                    [Op.ne]: 'Admin'
-                }
-            },
+            where: whereClause,
             attributes: ['id', 'username'],
-            limit: 5
+            limit: 5,
+            order: [['username', 'ASC']]
         });
         res.json(users);
     } catch (error) {
