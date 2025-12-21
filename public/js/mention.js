@@ -38,11 +38,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         list.innerHTML = '';
                         users.forEach(user => {
+                            const displayName = user.username.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
                             const item = document.createElement('li');
                             item.className = 'list-group-item list-group-item-action cursor-pointer d-flex align-items-center';
-                            item.innerHTML = `<i class="bi bi-person-circle me-2 text-primary"></i> ${user.username}`;
+                            item.innerHTML = `<i class="bi bi-person-circle me-2 text-primary"></i> ${displayName}`;
                             item.onclick = function() {
-                                selectUser(user.username);
+                                selectUser(user.username); // Keep insertion as raw username to be safe, or displayName if preferred. 
+                                // Actually, let's insert the capitalized name as it looks better.
+                                // selectUser(displayName);
+                            };
+                            // Let's stick to inserting what the user selects visually? 
+                            // If I insert "John", the backend sees "john". That's fine.
+                            // But if I insert "John", and the user types "@Jo...", they see "John".
+                            // Let's use displayName for insertion too.
+                            item.onclick = function() {
+                                selectUser(displayName);
                             };
                             list.appendChild(item);
                         });
