@@ -21,7 +21,10 @@ const getInitials = (username) => {
 
 const highlightMentions = (text) => {
     if (!text) return '';
-    return text.replace(/@(\w+)/g, '<span class="text-primary fw-bold">@$1</span>');
+    return text.replace(/@(\w+)/g, (match, p1) => {
+        const capitalized = p1.charAt(0).toUpperCase() + p1.slice(1).toLowerCase();
+        return `<span class="text-primary fw-bold">@${capitalized}</span>`;
+    });
 };
 
 const viewHelpers = { getAvatarColor, getInitials, highlightMentions };

@@ -581,6 +581,26 @@ exports.updateUser = async (req, res) => {
         if (!target) return res.redirect('/admin/users');
         
         const updates = { role: req.body.role || target.role };
+        
+        // Handle username update
+        if (req.body.username) {
+            const newUsername = req.body.username.trim().toLowerCase();
+            if (newUsername && newUsername !== target.username) {
+                // Check uniqueness
+                const exists = await User.findOne({ 
+                    where: { 
+                        username: newUsername,
+                        id: { [require('sequelize').Op.ne]: target.id }
+                    } 
+                });
+                
+                if (exists) {
+                    return res.redirect(`/admin/users/${target.id}/edit?error=Gebruikersnaam bestaat al`);
+                }
+                updates.username = newUsername;
+            }
+        }
+
         const role = updates.role;
         
         // Handle password update if provided

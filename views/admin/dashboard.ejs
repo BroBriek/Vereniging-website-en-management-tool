@@ -2,7 +2,9 @@
 <div class="row">
     <div class="col-12 mb-4">
         <h1>Admin Dashboard</h1>
-        <p>Welkom, <%= user.username %>!</p>
+<div class="alert alert-primary shadow-sm border-0">
+  <p class="mb-0 fs-5">Welkom, <strong><%= capitalizeName(user.username) %></strong>! Beheer hier de website en ledenadministratie.</p>
+</div>
     </div>
 
     <!-- Row 1: Website Management (Blue) -->

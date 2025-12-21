@@ -56,7 +56,7 @@
     <tbody>
         <% activeUsers.forEach(u => { %>
             <tr>
-                <td><%= u.username %></td>
+                <td><%= capitalizeName(u.username) %></td>
                 <td>
                     <% if(u.role === 'admin') { %>
                         <span class="badge bg-danger">Admin</span>
@@ -106,7 +106,7 @@
                     <tbody>
                         <% inactiveUsers.forEach(u => { %>
                             <tr>
-                                <td><%= u.username %></td>
+                                <td><%= capitalizeName(u.username) %></td>
                                 <td><span class="badge bg-secondary">Oud-Leiding</span></td>
                                 <td>
                                     <form action="/admin/users/<%= u.id %>/toggle-status?_method=PUT" method="POST" style="display:inline;" class="me-1">
