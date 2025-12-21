@@ -35,14 +35,14 @@ const createTransporter = () => {
   return null;
 };
 
-const sendMail = async ({ to, subject, text, html }) => {
+const sendMail = async ({ to, from: customFrom, ...mailOptions }) => {
   const transporter = createTransporter();
-  const from = process.env.IONOS_EMAIL || process.env.GMAIL_EMAIL || process.env.MAILERSEND_FROM || 'no-reply@chirosite.local';
+  const from = customFrom || process.env.IONOS_EMAIL || process.env.GMAIL_EMAIL || process.env.MAILERSEND_FROM || 'no-reply@chirosite.local';
   if (!transporter) {
-    console.log('SIMULATED EMAIL', { from, to, subject, text, html });
+    console.log('SIMULATED EMAIL', { from, to, ...mailOptions });
     return;
   }
-  await transporter.sendMail({ from, to, subject, text, html });
+  await transporter.sendMail({ from, to, ...mailOptions });
 };
 
 module.exports = { sendMail };
