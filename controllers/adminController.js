@@ -418,13 +418,12 @@ exports.resetWebsite = async (req, res) => {
 
 exports.getUsers = async (req, res) => {
     try {
-        const users = await User.findAll({ 
+        const users = await User.findAll({
             where: {
-                username: { [require('sequelize').Op.ne]: 'Admin' } // Exclude 'Admin'
+                username: { [require('sequelize').Op.ne]: 'admin' } // Exclude 'admin'
             },
-            order: [['username', 'ASC']] 
-        });
-        res.render('admin/users', { title: 'Beheer Gebruikers', users, user: req.user });
+            order: [['username', 'ASC']]
+        });        res.render('admin/users', { title: 'Beheer Gebruikers', users, user: req.user });
     } catch (error) {
         console.error('Error getting users:', error);
         res.redirect('/admin');
@@ -434,7 +433,7 @@ exports.getUsers = async (req, res) => {
 exports.postUser = async (req, res) => {
     const { username, password, role } = req.body;
     try {
-        const name = (username || '').trim();
+        const name = (username || '').trim().toLowerCase();
         if (!name || !password) {
             return res.redirect('/admin/users?error=Vul een gebruikersnaam en wachtwoord in');
         }

@@ -50,7 +50,7 @@ exports.searchUsers = async (req, res) => {
         
         const whereClause = {
             isActive: true,
-            username: { [Op.ne]: 'Admin' }
+            username: { [Op.ne]: 'admin' }
         };
 
         if (query.length > 0) {
@@ -141,7 +141,7 @@ const extractMentions = (text) => {
     if (!text) return [];
     const matches = text.match(/@(\w+)/g);
     if (!matches) return [];
-    return [...new Set(matches.map(m => m.substring(1)))]; // Remove @ and unique
+    return [...new Set(matches.map(m => m.substring(1).toLowerCase()))]; // Remove @ and unique
 };
 
 exports.postCreatePost = async (req, res) => {
