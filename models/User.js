@@ -46,6 +46,12 @@ const User = sequelize.define('User', {
   }
 });
 
+User.beforeValidate((user) => {
+  if (user.username) {
+    user.username = user.username.toLowerCase();
+  }
+});
+
 User.beforeCreate(async (user) => {
   if (user.password) {
     user.password = await bcrypt.hash(user.password, 10);

@@ -1,8 +1,8 @@
-const { User, sequelize } = require('../models');
-const args = process.argv.slice(2);
+const { User } = require('../models');
 
+const args = process.argv.slice(2);
 const command = args[0];
-const username = args[1];
+const username = (args[1] || '').toLowerCase();
 const password = args[2];
 
 async function manageAdmin() {
