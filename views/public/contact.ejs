@@ -12,7 +12,16 @@
         </div>
     <% } %>
 
-    <form action="/contact" method="POST" class="mt-4" <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> style="filter: blur(3px); pointer-events: none; user-select: none;" tabindex="-1" <% } %>>
+    <script src="https://www.google.com/recaptcha/api.js?render=<%= recaptchaSiteKey %>"></script>
+    <form id="contactForm" action="/contact" method="POST" class="mt-4" <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> style="filter: blur(3px); pointer-events: none; user-select: none;" tabindex="-1" <% } %>>
+        <!-- Honeypot field to prevent spam -->
+        <div style="position: absolute; left: -9999px;">
+            <label for="website">Website</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+        
+        <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response">
+
         <div class="mb-3">
             <label for="name" class="form-label">Naam</label>
             <input type="text" class="form-control" id="name" name="name" required <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> disabled <% } %>>
@@ -25,7 +34,20 @@
             <label for="message" class="form-label">Bericht</label>
             <textarea class="form-control" id="message" name="message" rows="5" required <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> disabled <% } %>></textarea>
         </div>
+
         <button type="submit" class="btn btn-primary" <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> disabled <% } %>>Verstuur</button>
     </form>
+
+    <script>
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            grecaptcha.ready(function() {
+                grecaptcha.execute('<%= recaptchaSiteKey %>', {action: 'submit'}).then(function(token) {
+                    document.getElementById('g-recaptcha-response').value = token;
+                    document.getElementById('contactForm').submit();
+                });
+            });
+        });
+    </script>
 </div>
 <%- include('../partials/footer') %>

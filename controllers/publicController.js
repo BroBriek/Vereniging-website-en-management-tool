@@ -181,7 +181,8 @@ exports.getContact = (req, res) => {
     res.render('public/contact', { 
         title: 'Contact - Chiro Vreugdeland Meeuwen', 
         description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen. Stel je vragen of geef feedback.',
-        contactFormDisabled: process.env.DISABLE_CONTACT_FORM === 'true' 
+        contactFormDisabled: process.env.DISABLE_CONTACT_FORM === 'true',
+        recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY
     });
 };
 
@@ -191,13 +192,44 @@ exports.postContact = async (req, res) => {
             title: 'Contact - Chiro Vreugdeland Meeuwen', 
             description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen. Stel je vragen of geef feedback.',
             contactFormDisabled: true, 
-            error: 'Deze functie is tijdelijk nog niet beschikbaar' 
+            error: 'Deze functie is tijdelijk nog niet beschikbaar',
+            recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY
         });
     }
 
-    const { name, email, message } = req.body;
+    const { name, email, message, website } = req.body;
+    const recaptchaResponse = req.body['g-recaptcha-response'];
+
+    // Honeypot check: if 'website' is filled, it's likely a bot.
+    if (website) {
+        console.log(`Spam detected: Honeypot filled by ${email}`);
+        return res.render('public/contact', { title: 'Contact', success: true, recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY });
+    }
+
+    // reCAPTCHA v3 verification
+    if (!recaptchaResponse) {
+        return res.render('public/contact', { 
+            title: 'Contact', 
+            error: 'Er is een fout opgetreden bij de spam-check. Probeer het opnieuw.',
+            recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY 
+        });
+    }
 
     try {
+        const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaResponse}`;
+        const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
+        const recaptchaJson = await recaptchaRes.json();
+
+        // Check success and score (0.0 - 1.0). Threshold 0.5 is standard.
+        if (!recaptchaJson.success || recaptchaJson.score < 0.5) {
+            console.log(`Spam blocked: reCAPTCHA score ${recaptchaJson.score} for ${email}`);
+            return res.render('public/contact', { 
+                title: 'Contact', 
+                error: 'Ons systeem vermoedt dat dit bericht spam is. Probeer het later opnieuw of stuur een mail via je eigen mailprogramma.',
+                recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY 
+            });
+        }
+
         await sendMail({
             to: 'Chiromeeuwen@outlook.com',
             replyTo: email,
@@ -209,10 +241,10 @@ exports.postContact = async (req, res) => {
                    <p>${message.replace(/\n/g, '<br>')}</p>`
         });
         
-        res.render('public/contact', { title: 'Contact', success: true });
+        res.render('public/contact', { title: 'Contact', success: true, recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY });
     } catch (error) {
-        console.error('Email error:', error);
-        res.render('public/contact', { title: 'Contact', error: 'Er ging iets mis bij het versturen. Probeer het later opnieuw.' });
+        console.error('Email/Captcha error:', error);
+        res.render('public/contact', { title: 'Contact', error: 'Er ging iets mis bij het versturen. Probeer het later opnieuw.', recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY });
     }
 };
 
