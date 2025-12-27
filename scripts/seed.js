@@ -4,17 +4,17 @@ const seed = async () => {
     try {
         await sequelize.sync();
 
-        // Check for admin
-        const admin = await User.findOne({ where: { username: 'leiding' } });
+        // Check for admin account
+        const admin = await User.findOne({ where: { username: 'admin' } });
         if (!admin) {
             await User.create({
-                username: 'leiding',
-                password: 'chiro', // Default simple password
+                username: 'admin',
+                password: 'admin', // Default simple password
                 role: 'admin'
             });
-            console.log('Admin user created: leiding / chiro');
+            console.log('Admin user created: admin / admin');
         } else {
-            console.log('Admin user already exists.');
+            console.log('Admin user "admin" already exists.');
         }
 
         // Seed basic page content if empty
