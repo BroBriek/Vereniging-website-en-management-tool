@@ -249,14 +249,23 @@ exports.getPM2Logs = (req, res) => {
                 const logs = {};
                 logsData.forEach(proc => {
                     try {
+                        logs[proc.name] = {
+                            pid: proc.pid,
+                            status: proc.status,
+                            stdout: '',
+                            stderr: ''
+                        };
+
                         if (fs.existsSync(proc.logPath)) {
                             const content = fs.readFileSync(proc.logPath, 'utf-8');
                             const lines = content.split('\n').slice(-numLines);
-                            logs[proc.name] = {
-                                stdout: lines.join('\n'),
-                                status: proc.status,
-                                pid: proc.pid
-                            };
+                            logs[proc.name].stdout = lines.join('\n');
+                        }
+
+                        if (fs.existsSync(proc.errPath)) {
+                            const content = fs.readFileSync(proc.errPath, 'utf-8');
+                            const lines = content.split('\n').slice(-numLines);
+                            logs[proc.name].stderr = lines.join('\n');
                         }
                     } catch (e) {
                         logs[proc.name] = { error: e.message };
