@@ -265,8 +265,16 @@
   }
 
   .table-data td {
-    padding: 10px 12px;
+    padding: 6px 8px;
     border-bottom: 1px solid #eee;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  body.modal-open {
+    overflow: hidden;
   }
 
   .table-data tr:hover {
@@ -305,7 +313,7 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 9999;
+    z-index: 99999;
     align-items: center;
     justify-content: center;
   }
@@ -323,6 +331,9 @@
     max-height: 90vh;
     overflow-y: auto;
     animation: slideDown 0.3s ease;
+    position: relative;
+    z-index: 100000;
+    pointer-events: auto;
   }
 
   @keyframes slideDown {
@@ -1091,10 +1102,17 @@
       html += '<tr>';
       columns.forEach(col => {
         let value = row[col];
-        if (typeof value === 'object') {
-          value = JSON.stringify(value).substring(0, 50) + '...';
+        if (value === null || value === undefined) {
+          value = '';
+        } else if (typeof value === 'object') {
+          value = JSON.stringify(value);
+        } else {
+          value = String(value);
         }
-        html += `<td>${escapeHtml(value)}</td>`;
+        
+        // Truncate for display if too long
+        const displayValue = value.length > 50 ? value.substring(0, 50) + '...' : value;
+        html += `<td title="${escapeHtml(value)}">${escapeHtml(displayValue)}</td>`;
       });
       html += `
         <td class="action-buttons">
@@ -1152,6 +1170,7 @@
     const fieldsContainer = document.getElementById('modal-fields');
     fieldsContainer.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading"></div> Laden...</div>';
     modal.classList.add('active');
+    document.body.classList.add('modal-open');
     
     // Store the current editing context
     window.editingContext = {
@@ -1206,6 +1225,7 @@
 
   function closeEditModal() {
     document.getElementById('edit-modal').classList.remove('active');
+    document.body.classList.remove('modal-open');
     window.editingContext = null;
   }
 
@@ -1414,7 +1434,21 @@
   }
 
   // Initial load for file explorer
-  document.addEventListener('DOMContentLoaded', loadFileExplorer);
+  document.addEventListener('DOMContentLoaded', () => {
+    // Move modal to body to prevent stacking context issues
+    const modal = document.getElementById('edit-modal');
+    if (modal) {
+      document.body.appendChild(modal);
+      
+      // Close when clicking outside dialog (on the overlay)
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeEditModal();
+        }
+      });
+    }
+    loadFileExplorer();
+  });
 </script>
 
 <%- include('../partials/footer') %>
