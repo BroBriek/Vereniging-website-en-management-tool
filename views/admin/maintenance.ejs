@@ -305,7 +305,7 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+    z-index: 9999;
     align-items: center;
     justify-content: center;
   }
@@ -489,6 +489,18 @@
     background: #e74c3c;
   }
 
+  .log-section {
+    margin-top: 10px;
+  }
+
+  .log-label {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: #555;
+    display: block;
+  }
+
   .log-content {
     background: #1e1e1e;
     color: #d4d4d4;
@@ -496,11 +508,17 @@
     border-radius: 4px;
     font-family: 'Monaco', 'Courier New', monospace;
     font-size: 12px;
-    max-height: 300px;
+    max-height: 200px;
     overflow-y: auto;
     line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-word;
+  }
+  
+  .log-content.stderr {
+    background: #2d0a0a;
+    color: #ffcccc;
+    border: 1px solid #5a1e1e;
   }
 
   /* Notification Tool */
@@ -1207,7 +1225,10 @@
       const newValue = field.value;
       const oldValue = originalData[column];
       
-      if (newValue !== oldValue) {
+      // Convert to string for comparison since inputs are always strings
+      const strOldValue = oldValue === null || oldValue === undefined ? '' : String(oldValue);
+      
+      if (newValue !== strOldValue) {
         updates[column] = newValue;
         hasChanges = true;
       }
@@ -1288,7 +1309,16 @@
                   <span>${processName} (PID: ${logData.pid})</span>
                   <span class="log-process-status ${logData.status === 'online' ? 'online' : 'stopped'}">${logData.status.toUpperCase()}</span>
                 </div>
-                <div class="log-content">${escapeHtml(logData.stdout || 'Geen logs beschikbaar')}</div>
+                
+                <div class="log-section">
+                  <span class="log-label">Output (stdout)</span>
+                  <div class="log-content">${escapeHtml(logData.stdout || 'Geen output logs')}</div>
+                </div>
+
+                <div class="log-section">
+                  <span class="log-label">Errors (stderr)</span>
+                  <div class="log-content stderr">${escapeHtml(logData.stderr || 'Geen error logs')}</div>
+                </div>
               </div>
             `;
           }
