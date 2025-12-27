@@ -85,7 +85,7 @@ Plak hierin je productie-instellingen (gebruik rechtermuisknop om te plakken):
 ```env
 PORT=3000
 SESSION_SECRET=KiesHierEenHeelLangMoeilijkWachtwoordDatNiemandRaadt
-EMAIL_PASSWORD=JouwEchteOutlookWachtwoord
+EMAIL_PASSWORD=JouwEchteWachtwoord
 NODE_ENV=production
 ```
 

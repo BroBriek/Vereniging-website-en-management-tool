@@ -30,16 +30,14 @@ Om de applicatie lokaal te draaien, volg je de onderstaande stappen:
 3.  **Database Initialisatie:**
     Dit project gebruikt SQLite als standaard database. De database zal automatisch worden gesynchroniseerd (en gealterd indien nodig) bij het opstarten van de applicatie. Er is geen handmatige migratie nodig voor de initiële setup.
 
-4.  **Omgevingsvariabelen instellen:**
-    Maak een `.env` bestand aan in de root van het project en voeg de volgende variabelen toe (pas de waarden aan indien nodig):
-    ```env
-    PORT=3000
-    SESSION_SECRET=uw_geheime_sessie_sleutel # VERPLICHT! Verander deze naar een unieke, sterke sleutel
-    EMAIL_PASSWORD=uw_email_wachtwoord # Optioneel, voor contactformulier e-mails
+4.  **Organisatie Instellen (BELANGRIJK):**
+    Gebruik de interactieve setup tool om uw Chiro organisatie in te stellen:
+    ```bash
+    node scripts/setup-organization.js
     ```
-    *   **`PORT`**: De poort waarop de server draait.
-    *   **`SESSION_SECRET`**: Een willekeurige string die gebruikt wordt om sessies te versleutelen. **Essentieel voor beveiliging.**
-    *   **`EMAIL_PASSWORD`**: Het wachtwoord voor het e-mailaccount (`Chiromeeuwen@outlook.com`) dat wordt gebruikt voor het contactformulier.
+    Dit script begeleidt u door alle instellingen (naam, adres, domein, kleuren, etc.) en genereert automatisch uw `.env` bestand.
+    
+    **Alternatief (handmatig):** Maak een `.env` bestand aan in de root van het project. Voor alle beschikbare instellingen, zie `docs/ORGANIZATION_SETUP.md`.
 
 5.  **Start de applicatie:**
     ```bash
