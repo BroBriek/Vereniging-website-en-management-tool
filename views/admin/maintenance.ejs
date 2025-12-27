@@ -827,7 +827,7 @@
   }
 
   function downloadFile(filePath) {
-    window.location.href = `/admin/api/file-download/${encodeURIComponent(filePath)}`;
+    window.location.href = `/admin/api/file-download?path=${encodeURIComponent(filePath)}`;
   }
 
   // ===== DATABASE VIEWER =====
