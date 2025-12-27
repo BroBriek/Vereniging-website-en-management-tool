@@ -18,7 +18,7 @@ router.get('/api/file-explorer', maintenanceController.getFileExplorer);
 router.get('/api/file-read', maintenanceController.readFile);
 router.post('/api/file-save', maintenanceController.saveFile);
 router.post('/api/file-delete', maintenanceController.deleteFile);
-router.get('/api/file-download/:path*', maintenanceController.downloadFile);
+router.get('/api/file-download/:path(.*)', maintenanceController.downloadFile);
 router.get('/api/db-tables', maintenanceController.getDatabaseTables);
 router.get('/api/db-data', maintenanceController.getTableData);
 router.post('/api/db-update', maintenanceController.updateTableRecord);
