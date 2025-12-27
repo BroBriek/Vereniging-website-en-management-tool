@@ -176,7 +176,7 @@ exports.getTableData = async (req, res) => {
 
 exports.updateTableRecord = async (req, res) => {
     try {
-        const { tableName, id, data } = req.body;
+        const { tableName, id, updates } = req.body;
         const model = Object.values(sequelize.models).find(m => m.tableName === tableName);
         
         if (!model) {
@@ -188,7 +188,7 @@ exports.updateTableRecord = async (req, res) => {
             return res.status(404).json({ error: 'Record not found' });
         }
         
-        await record.update(data);
+        await record.update(updates);
         res.json({ success: true, message: 'Record succesvol bijgewerkt' });
     } catch (error) {
         console.error('Update record error:', error);
@@ -292,10 +292,14 @@ exports.getNotificationTest = async (req, res) => {
 
 exports.sendTestNotification = async (req, res) => {
     try {
-        const { userId, title, body, tag } = req.body;
+        const { userId, title, body, tag, sendMethod } = req.body;
         
         if (!userId || !title || !body) {
             return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        if (!sendMethod || !['notification', 'email', 'both'].includes(sendMethod)) {
+            return res.status(400).json({ error: 'Invalid sendMethod' });
         }
         
         const user = await User.findByPk(userId);
@@ -304,23 +308,105 @@ exports.sendTestNotification = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        const subscriptions = user.pushSubscriptions || [];
-        if (subscriptions.length === 0) {
-            return res.status(400).json({ error: 'User has no push subscriptions' });
-        }
-        
-        const results = await NotificationService.sendNotification(userId, {
+        const messageData = {
             title,
             body,
             tag: tag || 'test',
             icon: '/img/logo.png',
-            badge: '/img/badge.png'
-        });
+            badge: '/img/badge.png',
+            url: '/'
+        };
+        
+        let sentToChannels = [];
+        let errors = [];
+        
+        // Send push notification
+        if (sendMethod === 'notification' || sendMethod === 'both') {
+            const subscriptions = user.pushSubscriptions || [];
+            if (subscriptions.length > 0) {
+                try {
+                    await NotificationService.sendIndividualNotification(userId, messageData);
+                    sentToChannels.push('push notification');
+                } catch (pushError) {
+                    console.error('Push notification error:', pushError);
+                    errors.push('Push notification: ' + pushError.message);
+                }
+            } else if (sendMethod === 'notification') {
+                errors.push('Gebruiker heeft geen push subscriptions');
+            }
+        }
+        
+        // Send email
+        if (sendMethod === 'email' || sendMethod === 'both') {
+            if (!user.email) {
+                errors.push('Gebruiker heeft geen email adres');
+            } else {
+                try {
+                    const { sendMail } = require('../config/mailer');
+                    await sendMail({
+                        to: user.email,
+                        subject: `📢 ${title}`,
+                        text: `${title}: ${body}`,
+                        html: `
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <style>
+                                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+                                    .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                                    .header { background-color: #db0029; color: #ffffff; padding: 30px 20px; text-align: center; }
+                                    .header h1 { margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+                                    .content { padding: 30px; color: #333333; line-height: 1.6; }
+                                    .notification-box { background-color: #fff5f5; border-left: 5px solid #db0029; padding: 20px; margin: 20px 0; border-radius: 4px; }
+                                    .notification-title { margin-top: 0; color: #db0029; font-size: 18px; font-weight: bold; }
+                                    .footer { background-color: #333333; color: #cccccc; padding: 20px; text-align: center; font-size: 12px; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="container">
+                                    <div class="header">
+                                        <h1>Chiro Vreugdeland</h1>
+                                    </div>
+                                    <div class="content">
+                                        <p>Dag <strong>${user.username}</strong>,</p>
+                                        <p>Er is een nieuwe update voor jou:</p>
+                                        
+                                        <div class="notification-box">
+                                            <div class="notification-title">${title}</div>
+                                            <p style="margin-bottom: 0;">${body}</p>
+                                        </div>
+                                    </div>
+                                    <div class="footer">
+                                        <p>&copy; ${new Date().getFullYear()} Chiro Vreugdeland Meeuwen</p>
+                                    </div>
+                                </div>
+                            </body>
+                            </html>
+                        `
+                    });
+                    sentToChannels.push('email');
+                } catch (emailError) {
+                    console.error('Email send error:', emailError);
+                    errors.push('Email: ' + emailError.message);
+                }
+            }
+        }
+        
+        if (sentToChannels.length === 0 && errors.length > 0) {
+            return res.status(400).json({ 
+                success: false,
+                error: errors.join('; ')
+            });
+        }
+        
+        let message = `Succesvol verstuurd naar: ${sentToChannels.join(', ')}`;
+        if (errors.length > 0) {
+            message += `. Fouten: ${errors.join('; ')}`;
+        }
         
         res.json({
             success: true,
-            message: `Notificatie succesvol naar ${results.sent} apparaten gestuurd`,
-            results
+            message: message
         });
     } catch (error) {
         console.error('Send notification error:', error);

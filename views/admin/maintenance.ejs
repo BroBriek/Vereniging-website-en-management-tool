@@ -296,6 +296,150 @@
     color: white;
   }
 
+  /* Edit Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .modal-dialog {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .modal-header {
+    background: #2c3e50;
+    color: white;
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-field {
+    margin-bottom: 15px;
+  }
+
+  .modal-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #2c3e50;
+    font-size: 13px;
+  }
+
+  .modal-field input,
+  .modal-field textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+
+  .modal-field textarea {
+    min-height: 80px;
+    resize: vertical;
+  }
+
+  .modal-field input:focus,
+  .modal-field textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+  }
+
+  .modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .modal-footer button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .modal-save {
+    background: #27ae60;
+    color: white;
+  }
+
+  .modal-save:hover {
+    background: #229954;
+  }
+
+  .modal-cancel {
+    background: #95a5a6;
+    color: white;
+  }
+
+  .modal-cancel:hover {
+    background: #7f8c8d;
+  }
+
   /* PM2 Logs */
   .logs-container {
     background: white;
@@ -596,11 +740,11 @@
   <!-- Notifications Tab -->
   <div id="notifications" class="tab-content">
     <div class="warning">
-      ⚠️ Dit is een testfunctie. Notificaties worden echt naar gebruikers gestuurd. Gebruik voorzichtig!
+      ⚠️ Dit is een testfunctie. Notificaties en mails worden echt naar gebruikers gestuurd. Gebruik voorzichtig!
     </div>
     
     <div class="notification-form">
-      <h2>Testnotificatie Versturen</h2>
+      <h2>Testnotificatie en/of Mail Versturen</h2>
       
       <div class="form-group">
         <label for="notif-user">Gebruiker</label>
@@ -624,11 +768,46 @@
         <input type="text" id="notif-tag" placeholder="Bijv. test_tag">
       </div>
       
+      <div class="form-group">
+        <label>Verzendmethode</label>
+        <div style="display: flex; gap: 20px; margin-top: 10px;">
+          <label style="display: flex; align-items: center; font-weight: normal; margin: 0;">
+            <input type="radio" name="send-method" value="notification" checked style="margin-right: 8px;">
+            Push Notificatie
+          </label>
+          <label style="display: flex; align-items: center; font-weight: normal; margin: 0;">
+            <input type="radio" name="send-method" value="email" style="margin-right: 8px;">
+            Email
+          </label>
+          <label style="display: flex; align-items: center; font-weight: normal; margin: 0;">
+            <input type="radio" name="send-method" value="both" style="margin-right: 8px;">
+            Beide
+          </label>
+        </div>
+      </div>
+      
       <div id="notif-feedback" style="display: none; margin-bottom: 20px;"></div>
       
       <div class="button-group">
-        <button class="primary-btn" onclick="sendTestNotification()">✉️ Notificatie Versturen</button>
+        <button class="primary-btn" onclick="sendTestNotification()">📤 Verzenden</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Record Modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3>Record aanpassen</h3>
+      <button class="modal-close" onclick="closeEditModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-fields">
+      <!-- Fields will be dynamically inserted here -->
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="closeEditModal()">Annuleren</button>
+      <button class="modal-save" onclick="saveEditedRecord()">Opslaan</button>
     </div>
   </div>
 </div>
@@ -937,12 +1116,128 @@
   }
 
   function editRecord(tableName, id) {
-    // Voor nu, toon een simpele prompt
-    const newValue = prompt('Voer de nieuwe waarde in:');
-    if (newValue === null) return;
+    // Get the row data from the table
+    const table = document.querySelector('.table-data table');
+    let rowData = null;
     
-    // Dit zou verder uitgebreid kunnen worden met een betere editor
-    alert('Geavanceerde record editing kan hier geïmplementeerd worden');
+    table.querySelectorAll('tbody tr').forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length > 0) {
+        // Get the first column value (usually id), need to match with our id
+        const firstCell = cells[0].textContent.trim();
+        // For safety, we'll fetch the data from the API instead
+      }
+    });
+    
+    // Show loading state
+    const modal = document.getElementById('edit-modal');
+    const fieldsContainer = document.getElementById('modal-fields');
+    fieldsContainer.innerHTML = '<div style="text-align: center; padding: 20px;"><div class="loading"></div> Laden...</div>';
+    modal.classList.add('active');
+    
+    // Store the current editing context
+    window.editingContext = {
+      tableName: tableName,
+      id: id,
+      originalData: null
+    };
+  
+    // Fetch table structure and current record data
+    Promise.all([
+      fetch(`/admin/api/db-data?tableName=${encodeURIComponent(tableName)}&limit=1&offset=0`).then(r => r.json()),
+      fetch(`/admin/api/db-data?tableName=${encodeURIComponent(tableName)}&limit=1000&offset=0`).then(r => r.json())
+    ])
+      .then(([structureData, fullData]) => {
+        // Find the specific record
+        const record = fullData.data.find(row => row.id === id);
+        
+        if (!record) {
+          fieldsContainer.innerHTML = '<div style="padding: 20px; color: #e74c3c;">Record niet gevonden</div>';
+          return;
+        }
+        
+        window.editingContext.originalData = { ...record };
+        
+        // Generate form fields
+        const columns = Object.keys(record);
+        let html = '';
+        
+        columns.forEach(col => {
+          const value = record[col] !== null ? record[col] : '';
+          const isLongText = typeof value === 'string' && value.length > 50;
+          const inputType = isLongText ? 'textarea' : 'input';
+          
+          html += `
+            <div class="modal-field">
+              <label for="field-${col}">${col}</label>
+              ${inputType === 'textarea' 
+                ? `<textarea id="field-${col}" data-column="${col}">${escapeHtml(value)}</textarea>`
+                : `<input type="text" id="field-${col}" data-column="${col}" value="${escapeHtml(value)}" />`
+              }
+            </div>
+          `;
+        });
+        
+        fieldsContainer.innerHTML = html;
+      })
+      .catch(err => {
+        console.error(err);
+        fieldsContainer.innerHTML = '<div style="padding: 20px; color: #e74c3c;">Fout bij laden van record: ' + err.message + '</div>';
+      });
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('active');
+    window.editingContext = null;
+  }
+
+  function saveEditedRecord() {
+    if (!window.editingContext) {
+      closeEditModal();
+      return;
+    }
+    
+    const { tableName, id, originalData } = window.editingContext;
+    const updates = {};
+    let hasChanges = false;
+    
+    // Collect all field values
+    document.querySelectorAll('#modal-fields [data-column]').forEach(field => {
+      const column = field.getAttribute('data-column');
+      const newValue = field.value;
+      const oldValue = originalData[column];
+      
+      if (newValue !== oldValue) {
+        updates[column] = newValue;
+        hasChanges = true;
+      }
+    });
+    
+    if (!hasChanges) {
+      showAlert('info', 'Geen wijzigingen aangebracht');
+      closeEditModal();
+      return;
+    }
+    
+    // Send update request
+    fetch('/admin/api/db-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tableName, id, updates })
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          showAlert('success', data.message || 'Record succesvol bijgewerkt');
+          closeEditModal();
+          loadTableData();
+        } else {
+          showAlert('error', data.error || 'Fout bij bijwerken');
+        }
+      })
+      .catch(err => {
+        showAlert('error', 'Fout: ' + err.message);
+      });
   }
 
   function deleteRecord(tableName, id) {
@@ -1027,6 +1322,7 @@
     const title = document.getElementById('notif-title').value;
     const body = document.getElementById('notif-body').value;
     const tag = document.getElementById('notif-tag').value;
+    const sendMethod = document.querySelector('input[name="send-method"]:checked').value;
     
     if (!userId || !title || !body) {
       showAlert('error', 'Vul alstublieft alle verplichte velden in');
@@ -1034,13 +1330,13 @@
     }
     
     const feedback = document.getElementById('notif-feedback');
-    feedback.innerHTML = '<div class="loading"></div> Notificatie verzenden...';
+    feedback.innerHTML = '<div class="loading"></div> Verzenden...';
     feedback.style.display = 'block';
     
     fetch('/admin/api/notification-send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, title, body, tag })
+      body: JSON.stringify({ userId, title, body, tag, sendMethod })
     })
       .then(r => r.json())
       .then(data => {
