@@ -105,7 +105,7 @@ exports.deleteFile = (req, res) => {
 
 exports.downloadFile = (req, res) => {
     try {
-        const filePath = path.join(PUBLIC_PATH, req.params.path);
+        const filePath = path.join(PUBLIC_PATH, req.query.path);
         
         // Security: prevent path traversal
         const relative = path.relative(PUBLIC_PATH, filePath);
