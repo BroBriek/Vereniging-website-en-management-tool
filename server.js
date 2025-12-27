@@ -34,6 +34,24 @@ app.use((req, res, next) => {
   res.status(404).send('Not Found');
 });
 
+// Trailing Slash Normalization Middleware (301 redirects for SEO)
+// Redirects all trailing slash URLs to non-trailing slash versions (except root)
+app.use((req, res, next) => {
+  // Skip for localhost/development environments
+  if (req.hostname === 'localhost' || req.hostname === '127.0.0.1' || req.hostname.startsWith('192.168.') || req.hostname.endsWith('.local')) {
+    return next();
+  }
+  
+  // If path has trailing slash and is not root, redirect to non-trailing version
+  if (req.path.length > 1 && req.path.endsWith('/')) {
+    const normalizedPath = req.path.slice(0, -1);
+    const redirectUrl = normalizedPath + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
+    return res.redirect(301, redirectUrl);
+  }
+  
+  next();
+});
+
 // Passport Config
 require('./config/passport')(passport);
 
@@ -85,7 +103,13 @@ app.use(passport.session());
 // Global Variables & Alert Middleware
 app.use((req, res, next) => {
   res.locals.user = req.user || null;
-  res.locals.currentPath = req.path;
+  
+  // Normalize currentPath for SEO (remove trailing slash unless root)
+  let normalizedPath = req.path;
+  if (normalizedPath.length > 1 && normalizedPath.endsWith('/')) {
+    normalizedPath = normalizedPath.slice(0, -1);
+  }
+  res.locals.currentPath = normalizedPath;
   
   // Helper for capitalizing names
   res.locals.capitalizeName = (name) => {
