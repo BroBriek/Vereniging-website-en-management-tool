@@ -1,0 +1,1094 @@
+<%- include('../partials/header') %>
+
+<style>
+  .maintenance-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .tab-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+    flex-wrap: wrap;
+  }
+
+  .tab-nav button {
+    padding: 12px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    color: #666;
+  }
+
+  .tab-nav button.active {
+    color: #2c3e50;
+    border-bottom-color: #3498db;
+    font-weight: 600;
+  }
+
+  .tab-nav button:hover {
+    color: #2c3e50;
+  }
+
+  .tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* File Explorer */
+  .file-explorer {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .file-breadcrumb {
+    margin-bottom: 20px;
+    padding: 10px;
+    background: white;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .file-breadcrumb button {
+    background: none;
+    border: none;
+    color: #3498db;
+    cursor: pointer;
+    padding: 0 5px;
+  }
+
+  .file-breadcrumb button:hover {
+    text-decoration: underline;
+  }
+
+  .file-list {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .file-item:hover {
+    background: #f0f7ff;
+  }
+
+  .file-item.directory {
+    font-weight: 500;
+  }
+
+  .file-item-icon {
+    width: 20px;
+    margin-right: 10px;
+    text-align: center;
+  }
+
+  .file-item-name {
+    flex: 1;
+  }
+
+  .file-item-size {
+    color: #999;
+    font-size: 12px;
+    min-width: 80px;
+    text-align: right;
+  }
+
+  .file-item-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: 10px;
+  }
+
+  .file-item-actions button {
+    padding: 4px 8px;
+    font-size: 12px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .file-item-actions .edit-btn {
+    background: #3498db;
+    color: white;
+  }
+
+  .file-item-actions .delete-btn {
+    background: #e74c3c;
+    color: white;
+  }
+
+  .file-item-actions .download-btn {
+    background: #27ae60;
+    color: white;
+  }
+
+  .file-item-actions button:hover {
+    opacity: 0.8;
+  }
+
+  /* File Editor */
+  .file-editor {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: 20px;
+    display: none;
+  }
+
+  .file-editor.open {
+    display: block;
+  }
+
+  .file-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .file-editor-header h3 {
+    margin: 0;
+  }
+
+  .file-editor-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .file-editor textarea {
+    width: 100%;
+    height: 400px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    resize: vertical;
+  }
+
+  /* Database Viewer */
+  .db-container {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 20px;
+  }
+
+  .db-tables {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .table-list {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .table-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .table-item:hover {
+    background: #f0f7ff;
+  }
+
+  .table-item.active {
+    background: #3498db;
+    color: white;
+  }
+
+  .db-viewer {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+  }
+
+  .table-controls {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .table-data {
+    overflow-x: auto;
+  }
+
+  .table-data table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .table-data th {
+    background: #2c3e50;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .table-data td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .table-data tr:hover {
+    background: #f9f9f9;
+  }
+
+  .table-data .action-buttons {
+    display: flex;
+    gap: 5px;
+  }
+
+  .table-data .action-buttons button {
+    padding: 4px 8px;
+    font-size: 12px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  .table-data .edit-row {
+    background: #3498db;
+    color: white;
+  }
+
+  .table-data .delete-row {
+    background: #e74c3c;
+    color: white;
+  }
+
+  /* PM2 Logs */
+  .logs-container {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+  }
+
+  .logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .log-process {
+    margin-bottom: 20px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+  }
+
+  .log-process-header {
+    background: #2c3e50;
+    color: white;
+    padding: 10px 15px;
+    margin: -15px -15px 15px -15px;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .log-process-status {
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .log-process-status.online {
+    background: #27ae60;
+  }
+
+  .log-process-status.stopped {
+    background: #e74c3c;
+  }
+
+  .log-content {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Notification Tool */
+  .notification-form {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  button.primary-btn {
+    background: #3498db;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  button.primary-btn:hover {
+    background: #2980b9;
+  }
+
+  button.secondary-btn {
+    background: #95a5a6;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+
+  button.secondary-btn:hover {
+    background: #7f8c8d;
+  }
+
+  .alert {
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+
+  .alert.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .alert.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .alert.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+  }
+
+  .loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .pagination {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+    align-items: center;
+  }
+
+  .pagination button {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+
+  .pagination button:hover {
+    background: #f0f0f0;
+  }
+
+  .pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+</style>
+
+<div class="maintenance-container">
+  <h1>🔧 Onderhoudstools</h1>
+  <p style="color: #666;">Geavanceerde beheerstools voor sitebeheer. Alleen beschikbaar voor admin gebruikers.</p>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab(event, 'file-explorer')">📁 Bestandsbeheer</button>
+    <button class="tab-btn" onclick="switchTab(event, 'database')">🗄️ Database</button>
+    <button class="tab-btn" onclick="switchTab(event, 'logs')">📋 Logs</button>
+    <button class="tab-btn" onclick="switchTab(event, 'notifications')">🔔 Notificaties</button>
+  </div>
+
+  <!-- File Explorer Tab -->
+  <div id="file-explorer" class="tab-content active">
+    <div class="file-explorer">
+      <div class="file-breadcrumb">
+        <button onclick="navigateToFolder('')">📁 /public</button>
+        <span id="breadcrumb-trail"></span>
+      </div>
+      
+      <div id="file-list" class="file-list" style="min-height: 300px;">
+        <div style="padding: 20px; text-align: center; color: #999;">
+          Laden... <div class="loading"></div>
+        </div>
+      </div>
+      
+      <div class="file-editor" id="file-editor">
+        <div class="file-editor-header">
+          <h3>Bewerk bestand: <span id="editor-filename"></span></h3>
+          <div class="file-editor-actions">
+            <button class="secondary-btn" onclick="closeFileEditor()">Sluiten</button>
+            <button class="primary-btn" onclick="saveFile()">💾 Opslaan</button>
+          </div>
+        </div>
+        <textarea id="file-content"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Database Tab -->
+  <div id="database" class="tab-content">
+    <div class="db-container">
+      <div class="db-tables">
+        <h3 style="padding: 15px; margin: 0; border-bottom: 1px solid #ddd;">Tabellen</h3>
+        <div class="table-list" id="table-list">
+          <div style="padding: 20px; text-align: center; color: #999;">
+            Laden... <div class="loading"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="db-viewer">
+        <div class="table-controls">
+          <select id="records-per-page" style="width: auto; padding: 8px;">
+            <option value="10">10 records per pagina</option>
+            <option value="25">25 records per pagina</option>
+            <option value="50" selected>50 records per pagina</option>
+            <option value="100">100 records per pagina</option>
+          </select>
+          <button class="primary-btn" onclick="loadTableData()" style="width: auto;">🔄 Vernieuwen</button>
+        </div>
+        <div class="table-data" id="table-data">
+          <p style="text-align: center; color: #999; padding: 40px;">Selecteer een tabel om de gegevens te bekijken</p>
+        </div>
+        <div class="pagination" id="pagination" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logs Tab -->
+  <div id="logs" class="tab-content">
+    <div class="logs-container">
+      <div class="logs-header">
+        <h2 style="margin: 0;">PM2 Proceslogs</h2>
+        <button class="primary-btn" onclick="refreshPM2Logs()">🔄 Vernieuwen</button>
+      </div>
+      
+      <div id="logs-content" style="min-height: 400px;">
+        <div style="padding: 20px; text-align: center; color: #999;">
+          Laden... <div class="loading"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Tab -->
+  <div id="notifications" class="tab-content">
+    <div class="warning">
+      ⚠️ Dit is een testfunctie. Notificaties worden echt naar gebruikers gestuurd. Gebruik voorzichtig!
+    </div>
+    
+    <div class="notification-form">
+      <h2>Testnotificatie Versturen</h2>
+      
+      <div class="form-group">
+        <label for="notif-user">Gebruiker</label>
+        <select id="notif-user" required>
+          <option value="">-- Selecteer een gebruiker --</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="notif-title">Titel</label>
+        <input type="text" id="notif-title" placeholder="Bijv. Belangrijk bericht" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="notif-body">Bericht</label>
+        <textarea id="notif-body" placeholder="Bijv. Dit is een testnotificatie" required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="notif-tag">Tag (optioneel)</label>
+        <input type="text" id="notif-tag" placeholder="Bijv. test_tag">
+      </div>
+      
+      <div id="notif-feedback" style="display: none; margin-bottom: 20px;"></div>
+      
+      <div class="button-group">
+        <button class="primary-btn" onclick="sendTestNotification()">✉️ Notificatie Versturen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentFolder = '';
+  let selectedTable = null;
+  let currentPage = 0;
+  let recordsPerPage = 50;
+  let totalRecords = 0;
+  let currentFilePath = null;
+
+  // Tab switching
+  function switchTab(event, tabName) {
+    event.preventDefault();
+    
+    // Hide all tabs
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    
+    // Deactivate all buttons
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Show selected tab
+    document.getElementById(tabName).classList.add('active');
+    event.target.classList.add('active');
+    
+    // Load content if needed
+    if (tabName === 'file-explorer' && currentFolder === '') {
+      loadFileExplorer();
+    } else if (tabName === 'database') {
+      if (selectedTable === null) {
+        loadTables();
+      }
+    } else if (tabName === 'logs') {
+      refreshPM2Logs();
+    } else if (tabName === 'notifications') {
+      loadNotificationUsers();
+    }
+  }
+
+  // ===== FILE EXPLORER =====
+  function loadFileExplorer() {
+    fetch(`/admin/api/file-explorer?path=${encodeURIComponent(currentFolder)}`)
+      .then(r => r.json())
+      .then(data => {
+        displayFileList(data.items);
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById('file-list').innerHTML = '<div class="alert error">Fout bij laden van bestanden</div>';
+      });
+  }
+
+  function displayFileList(items) {
+    let html = '';
+    
+    if (currentFolder !== '') {
+      html += `
+        <div class="file-item directory" onclick="navigateToFolder('${getParentFolder(currentFolder)}')">
+          <div class="file-item-icon">📁</div>
+          <div class="file-item-name">..</div>
+        </div>
+      `;
+    }
+    
+    items.forEach(item => {
+      const icon = item.isDirectory ? '📁' : getFileIcon(item.extension);
+      const size = item.size ? formatBytes(item.size) : '-';
+      const actions = item.isDirectory ? '' : `
+        <div class="file-item-actions">
+          <button class="edit-btn" onclick="editFile('${item.path}')">✏️ Edit</button>
+          <button class="download-btn" onclick="downloadFile('${item.path}')">⬇️ Download</button>
+          <button class="delete-btn" onclick="deleteFile('${item.path}')">🗑️ Verwijderen</button>
+        </div>
+      `;
+      
+      const classes = item.isDirectory ? 'file-item directory' : 'file-item';
+      const onclick = item.isDirectory ? `onclick="navigateToFolder('${item.path}')"` : '';
+      
+      html += `
+        <div class="${classes}" ${onclick}>
+          <div class="file-item-icon">${icon}</div>
+          <div class="file-item-name">${item.name}</div>
+          ${item.isDirectory ? '' : `<div class="file-item-size">${size}</div>`}
+          ${actions}
+        </div>
+      `;
+    });
+    
+    document.getElementById('file-list').innerHTML = html;
+    updateBreadcrumb();
+  }
+
+  function navigateToFolder(path) {
+    currentFolder = path;
+    loadFileExplorer();
+  }
+
+  function getParentFolder(path) {
+    const parts = path.split('/');
+    parts.pop();
+    return parts.join('/');
+  }
+
+  function updateBreadcrumb() {
+    if (!currentFolder) {
+      document.getElementById('breadcrumb-trail').innerHTML = '';
+      return;
+    }
+    
+    const parts = currentFolder.split('/');
+    let html = '';
+    let path = '';
+    
+    parts.forEach((part, idx) => {
+      path += (idx === 0 ? '' : '/') + part;
+      html += ` / <button onclick="navigateToFolder('${path}')">${part}</button>`;
+    });
+    
+    document.getElementById('breadcrumb-trail').innerHTML = html;
+  }
+
+  function getFileIcon(ext) {
+    const icons = {
+      '.html': '🌐',
+      '.css': '🎨',
+      '.js': '⚙️',
+      '.json': '📄',
+      '.png': '🖼️',
+      '.jpg': '🖼️',
+      '.gif': '🖼️',
+      '.svg': '🖼️',
+      '.pdf': '📕',
+      '.txt': '📝'
+    };
+    return icons[ext] || '📄';
+  }
+
+  function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  function editFile(filePath) {
+    currentFilePath = filePath;
+    fetch(`/admin/api/file-read?path=${encodeURIComponent(filePath)}`)
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('editor-filename').textContent = filePath;
+        document.getElementById('file-content').value = data.content;
+        document.getElementById('file-editor').classList.add('open');
+        document.getElementById('file-content').focus();
+      })
+      .catch(err => alert('Fout bij lezen bestand: ' + err.message));
+  }
+
+  function closeFileEditor() {
+    document.getElementById('file-editor').classList.remove('open');
+    currentFilePath = null;
+  }
+
+  function saveFile() {
+    const content = document.getElementById('file-content').value;
+    fetch('/admin/api/file-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: currentFilePath, content })
+    })
+      .then(r => r.json())
+      .then(data => {
+        showAlert('success', data.message || 'Bestand opgeslagen!');
+        closeFileEditor();
+      })
+      .catch(err => showAlert('error', 'Fout: ' + err.message));
+  }
+
+  function deleteFile(filePath) {
+    if (!confirm(`Weet je zeker dat je '${filePath}' wilt verwijderen?`)) return;
+    
+    fetch('/admin/api/file-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: filePath })
+    })
+      .then(r => r.json())
+      .then(data => {
+        loadFileExplorer();
+        showAlert('success', data.message || 'Bestand verwijderd!');
+      })
+      .catch(err => showAlert('error', 'Fout: ' + err.message));
+  }
+
+  function downloadFile(filePath) {
+    window.location.href = `/admin/api/file-download/${encodeURIComponent(filePath)}`;
+  }
+
+  // ===== DATABASE VIEWER =====
+  function loadTables() {
+    fetch('/admin/api/db-tables')
+      .then(r => r.json())
+      .then(data => {
+        let html = '';
+        data.tables.forEach(table => {
+          html += `
+            <div class="table-item" onclick="selectTable('${table.name}')">
+              ${table.name}
+            </div>
+          `;
+        });
+        document.getElementById('table-list').innerHTML = html || '<p style="padding: 20px; text-align: center; color: #999;">Geen tabellen gevonden</p>';
+      })
+      .catch(err => {
+        document.getElementById('table-list').innerHTML = '<div class="alert error">Fout bij laden tabellen</div>';
+      });
+  }
+
+  function selectTable(tableName) {
+    selectedTable = tableName;
+    document.querySelectorAll('.table-item').forEach(el => el.classList.remove('active'));
+    event.target.classList.add('active');
+    currentPage = 0;
+    loadTableData();
+  }
+
+  function loadTableData() {
+    if (!selectedTable) return;
+    
+    recordsPerPage = parseInt(document.getElementById('records-per-page').value);
+    const offset = currentPage * recordsPerPage;
+    
+    fetch(`/admin/api/db-data?tableName=${encodeURIComponent(selectedTable)}&limit=${recordsPerPage}&offset=${offset}`)
+      .then(r => r.json())
+      .then(data => {
+        totalRecords = data.total;
+        displayTableData(data.data);
+        updatePagination();
+      })
+      .catch(err => {
+        document.getElementById('table-data').innerHTML = '<div class="alert error">Fout bij laden tabelgegevens</div>';
+      });
+  }
+
+  function displayTableData(rows) {
+    if (rows.length === 0) {
+      document.getElementById('table-data').innerHTML = '<p style="padding: 20px; text-align: center; color: #999;">Geen gegevens gevonden</p>';
+      return;
+    }
+    
+    const columns = Object.keys(rows[0]);
+    let html = '<table><thead><tr>';
+    
+    columns.forEach(col => {
+      html += `<th>${col}</th>`;
+    });
+    html += '<th>Acties</th></tr></thead><tbody>';
+    
+    rows.forEach(row => {
+      html += '<tr>';
+      columns.forEach(col => {
+        let value = row[col];
+        if (typeof value === 'object') {
+          value = JSON.stringify(value).substring(0, 50) + '...';
+        }
+        html += `<td>${escapeHtml(value)}</td>`;
+      });
+      html += `
+        <td class="action-buttons">
+          <button class="edit-row" onclick="editRecord('${selectedTable}', ${row.id})">✏️ Bewerk</button>
+          <button class="delete-row" onclick="deleteRecord('${selectedTable}', ${row.id})">🗑️ Verwijder</button>
+        </td>
+      </tr>`;
+    });
+    
+    html += '</tbody></table>';
+    document.getElementById('table-data').innerHTML = html;
+  }
+
+  function updatePagination() {
+    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+    if (totalPages <= 1) {
+      document.getElementById('pagination').style.display = 'none';
+      return;
+    }
+    
+    let html = '';
+    
+    if (currentPage > 0) {
+      html += `<button onclick="currentPage = 0; loadTableData();">⬅️ Eerste</button>`;
+      html += `<button onclick="currentPage--; loadTableData();">< Vorige</button>`;
+    }
+    
+    html += `<span>Pagina ${currentPage + 1} van ${totalPages}</span>`;
+    
+    if (currentPage < totalPages - 1) {
+      html += `<button onclick="currentPage++; loadTableData();">Volgende ></button>`;
+      html += `<button onclick="currentPage = ${totalPages - 1}; loadTableData();">Laatste ➡️</button>`;
+    }
+    
+    document.getElementById('pagination').innerHTML = html;
+    document.getElementById('pagination').style.display = 'flex';
+  }
+
+  function editRecord(tableName, id) {
+    // Voor nu, toon een simpele prompt
+    const newValue = prompt('Voer de nieuwe waarde in:');
+    if (newValue === null) return;
+    
+    // Dit zou verder uitgebreid kunnen worden met een betere editor
+    alert('Geavanceerde record editing kan hier geïmplementeerd worden');
+  }
+
+  function deleteRecord(tableName, id) {
+    if (!confirm('Weet je zeker dat je dit record wilt verwijderen?')) return;
+    
+    fetch('/admin/api/db-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tableName, id })
+    })
+      .then(r => r.json())
+      .then(data => {
+        showAlert('success', data.message);
+        loadTableData();
+      })
+      .catch(err => showAlert('error', 'Fout: ' + err.message));
+  }
+
+  // ===== PM2 LOGS =====
+  function refreshPM2Logs() {
+    const container = document.getElementById('logs-content');
+    container.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Laden... <div class="loading"></div></div>';
+    
+    fetch('/admin/api/pm2-logs?lines=100')
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          container.innerHTML = `<div class="alert info">${data.message}</div>`;
+          return;
+        }
+        
+        let html = '';
+        for (const [processName, logData] of Object.entries(data.processes)) {
+          if (logData.error) {
+            html += `
+              <div class="log-process">
+                <div class="log-process-header">
+                  <span>${processName}</span>
+                  <span class="log-process-status stopped">FOUT</span>
+                </div>
+                <div style="padding: 15px; color: #e74c3c;">Fout: ${logData.error}</div>
+              </div>
+            `;
+          } else {
+            html += `
+              <div class="log-process">
+                <div class="log-process-header">
+                  <span>${processName} (PID: ${logData.pid})</span>
+                  <span class="log-process-status ${logData.status === 'online' ? 'online' : 'stopped'}">${logData.status.toUpperCase()}</span>
+                </div>
+                <div class="log-content">${escapeHtml(logData.stdout || 'Geen logs beschikbaar')}</div>
+              </div>
+            `;
+          }
+        }
+        
+        container.innerHTML = html || '<div style="padding: 20px; text-align: center; color: #999;">Geen processen gevonden</div>';
+      })
+      .catch(err => {
+        container.innerHTML = `<div class="alert error">Fout bij laden logs: ${err.message}</div>`;
+      });
+  }
+
+  // ===== NOTIFICATIONS =====
+  function loadNotificationUsers() {
+    fetch('/admin/api/notification-users')
+      .then(r => r.json())
+      .then(data => {
+        let html = '<option value="">-- Selecteer een gebruiker --</option>';
+        data.users.forEach(user => {
+          html += `<option value="${user.id}">${user.username} (${user.email || 'geen email'})</option>`;
+        });
+        document.getElementById('notif-user').innerHTML = html;
+      })
+      .catch(err => {
+        showAlert('error', 'Fout bij laden gebruikers: ' + err.message);
+      });
+  }
+
+  function sendTestNotification() {
+    const userId = document.getElementById('notif-user').value;
+    const title = document.getElementById('notif-title').value;
+    const body = document.getElementById('notif-body').value;
+    const tag = document.getElementById('notif-tag').value;
+    
+    if (!userId || !title || !body) {
+      showAlert('error', 'Vul alstublieft alle verplichte velden in');
+      return;
+    }
+    
+    const feedback = document.getElementById('notif-feedback');
+    feedback.innerHTML = '<div class="loading"></div> Notificatie verzenden...';
+    feedback.style.display = 'block';
+    
+    fetch('/admin/api/notification-send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, title, body, tag })
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          showAlert('success', data.message);
+          document.getElementById('notif-title').value = '';
+          document.getElementById('notif-body').value = '';
+          document.getElementById('notif-tag').value = '';
+        } else {
+          showAlert('error', data.error || 'Er ging iets mis');
+        }
+        feedback.style.display = 'none';
+      })
+      .catch(err => {
+        showAlert('error', 'Fout: ' + err.message);
+        feedback.style.display = 'none';
+      });
+  }
+
+  // ===== UTILITIES =====
+  function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function showAlert(type, message) {
+    const alertId = 'alert-' + Date.now();
+    const html = `<div id="${alertId}" class="alert ${type}">${message}</div>`;
+    
+    // Show in the first available alert container, or create a temp one
+    let container = document.querySelector('.notification-form');
+    if (!container) container = document.querySelector('.tab-content.active');
+    if (!container) container = document.body;
+    
+    const el = document.createElement('div');
+    el.innerHTML = html;
+    container.insertBefore(el.firstElementChild, container.firstChild);
+    
+    setTimeout(() => {
+      const alert = document.getElementById(alertId);
+      if (alert) alert.remove();
+    }, 5000);
+  }
+
+  // Initial load for file explorer
+  document.addEventListener('DOMContentLoaded', loadFileExplorer);
+</script>
+
+<%- include('../partials/footer') %>

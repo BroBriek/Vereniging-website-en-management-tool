@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const uploadController = require('../controllers/uploadController');
+const maintenanceController = require('../controllers/maintenanceController');
 const { ensureAuthenticated, ensureAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
@@ -10,6 +11,21 @@ router.use(ensureAdmin);
 
 router.get('/', adminController.getDashboard);
 router.get('/info', adminController.getInfo);
+
+// Maintenance Tools (restricted to admin user only)
+router.get('/maintenance', maintenanceController.getMaintenanceTools);
+router.get('/api/file-explorer', maintenanceController.getFileExplorer);
+router.get('/api/file-read', maintenanceController.readFile);
+router.post('/api/file-save', maintenanceController.saveFile);
+router.post('/api/file-delete', maintenanceController.deleteFile);
+router.get('/api/file-download/:path(*)', maintenanceController.downloadFile);
+router.get('/api/db-tables', maintenanceController.getDatabaseTables);
+router.get('/api/db-data', maintenanceController.getTableData);
+router.post('/api/db-update', maintenanceController.updateTableRecord);
+router.post('/api/db-delete', maintenanceController.deleteTableRecord);
+router.get('/api/pm2-logs', maintenanceController.getPM2Logs);
+router.get('/api/notification-users', maintenanceController.getNotificationTest);
+router.post('/api/notification-send', maintenanceController.sendTestNotification);
 
 // Email Tool
 router.get('/email', adminController.getEmailTool);
