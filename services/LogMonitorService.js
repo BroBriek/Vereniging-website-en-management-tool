@@ -32,10 +32,10 @@ const sendErrorNotification = async (errorLog) => {
   try {
     await sendMail({
       to: adminEmail,
-      subject: '⚠️ Foutmelding in PM2 Log',
+      subject: '⚠️ Foutmelding in PM2 Log ⚠️',
       text: `Er is een fout gedetecteerd in de PM2 logs:\n\n${errorLog}\n\n(Dit is een automatisch bericht. Je ontvangt de komende 5 minuten geen nieuwe meldingen.)`,
       html: `
-        <h3>⚠️ Foutmelding in PM2 Log</h3>
+        <h3>⚠️ Foutmelding in PM2 Log ⚠️</h3>
         <p>Er is een fout gedetecteerd in de PM2 logs:</p>
         <pre style="background: #f4f4f4; padding: 10px; border: 1px solid #ddd; overflow-x: auto;">${errorLog}</pre>
         <p><small>(Dit is een automatisch bericht. Je ontvangt de komende 5 minuten geen nieuwe meldingen.)</small></p>
