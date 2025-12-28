@@ -24,6 +24,7 @@ router.get('/api/db-data', maintenanceController.getTableData);
 router.post('/api/db-update', maintenanceController.updateTableRecord);
 router.post('/api/db-delete', maintenanceController.deleteTableRecord);
 router.get('/api/pm2-logs', maintenanceController.getPM2Logs);
+router.post('/api/pm2-logs/clear', maintenanceController.clearPM2Logs);
 router.get('/api/notification-users', maintenanceController.getNotificationTest);
 router.post('/api/notification-send', maintenanceController.sendTestNotification);
 

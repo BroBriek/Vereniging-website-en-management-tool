@@ -283,6 +283,21 @@ exports.getPM2Logs = (req, res) => {
     }
 };
 
+exports.clearPM2Logs = (req, res) => {
+    try {
+        exec('pm2 flush', (error, stdout, stderr) => {
+            if (error) {
+                console.error('Failed to clear logs:', error);
+                return res.status(500).json({ error: 'Kon logs niet wissen: ' + error.message });
+            }
+            res.json({ success: true, message: 'PM2 logs succesvol gewist.' });
+        });
+    } catch (error) {
+        console.error('Clear PM2 logs error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // ==================== Notifications ====================
 exports.getNotificationTest = async (req, res) => {
     try {

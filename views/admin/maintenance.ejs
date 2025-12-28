@@ -755,7 +755,10 @@
     <div class="logs-container">
       <div class="logs-header">
         <h2 style="margin: 0;">PM2 Proceslogs</h2>
-        <button class="primary-btn" onclick="refreshPM2Logs()">🔄 Vernieuwen</button>
+        <div>
+            <button class="secondary-btn" onclick="clearPM2Logs()" style="margin-right: 10px; background-color: #e74c3c;">🗑️ Logs Wissen</button>
+            <button class="primary-btn" onclick="refreshPM2Logs()">🔄 Vernieuwen</button>
+        </div>
       </div>
       
       <div id="logs-content" style="min-height: 400px;">
@@ -1298,6 +1301,22 @@
   }
 
   // ===== PM2 LOGS =====
+  function clearPM2Logs() {
+    if (!confirm('Weet je zeker dat je ALLE PM2 logs wilt wissen? Dit kan niet ongedaan worden gemaakt.')) return;
+    
+    fetch('/admin/api/pm2-logs/clear', { method: 'POST' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          showAlert('success', data.message);
+          refreshPM2Logs();
+        } else {
+          showAlert('error', data.error);
+        }
+      })
+      .catch(err => showAlert('error', 'Fout: ' + err.message));
+  }
+
   function refreshPM2Logs() {
     const container = document.getElementById('logs-content');
     container.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Laden... <div class="loading"></div></div>';
