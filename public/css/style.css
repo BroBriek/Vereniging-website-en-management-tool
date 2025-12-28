@@ -320,3 +320,23 @@ input:focus, textarea:focus {
     .calendar-title { font-size: 1.15rem; }
     .calendar-date-badge { width: 60px; margin-right: 1rem; }
 }
+
+/* Compact Table Styles for Admin Dashboard */
+.table {
+    font-size: 0.85rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.table th, .table td {
+    padding: 0.3rem 0.5rem !important;
+    white-space: normal !important; /* Force text wrapping */
+    word-break: break-word !important; /* Break long words/URLs */
+    vertical-align: middle !important;
+}
+
+/* Ensure actions column doesn't wrap awkwardly if buttons are there */
+.table td:last-child {
+    white-space: nowrap !important;
+    width: 1%; /* Shrink to fit content */
+}
