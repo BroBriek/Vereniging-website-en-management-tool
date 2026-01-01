@@ -1,9 +1,15 @@
-document.addEventListener("DOMContentLoaded", function() {
-    // Select all textareas with class 'rich-editor'
-    const editors = document.querySelectorAll('.rich-editor');
+// Make it global so it can be called dynamically
+window.initializeRichEditors = function(elements) {
+    // If specific elements passed, use them. Otherwise find all uninitialized .rich-editor
+    if (!elements) {
+        // We use a class 'rich-editor-initialized' to prevent double init
+        elements = document.querySelectorAll('.rich-editor:not(.rich-editor-initialized)');
+    } else if (elements instanceof Element) {
+        elements = [elements];
+    }
 
-    if (editors.length === 0) return;
-
+    if (elements.length === 0) return;
+    
     // Load Quill CSS if not already loaded
     if (!document.querySelector('link[href*="quill.snow.css"]')) {
         const link = document.createElement('link');
@@ -12,18 +18,21 @@ document.addEventListener("DOMContentLoaded", function() {
         document.head.appendChild(link);
     }
 
-    // Load Quill JS and then initialize
+    // Ensure Quill is loaded
     if (typeof Quill === 'undefined') {
         const script = document.createElement('script');
         script.src = 'https://cdn.quilljs.com/1.3.6/quill.min.js';
-        script.onload = () => initializeEditors(editors);
+        script.onload = () => runInit(elements);
         document.head.appendChild(script);
     } else {
-        initializeEditors(editors);
+        runInit(elements);
     }
 
-    function initializeEditors(elements) {
-        elements.forEach(textarea => {
+    function runInit(targets) {
+        targets.forEach(textarea => {
+            if(textarea.classList.contains('rich-editor-initialized')) return;
+            textarea.classList.add('rich-editor-initialized');
+
             // Create a container for the editor
             const container = document.createElement('div');
             // Set a default height or copy from textarea
@@ -78,9 +87,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         formData.append('image', file);
 
                         try {
-                            // Show loading placeholder or state if possible
                             const range = quill.getSelection();
-                            
                             const response = await fetch('/admin/api/upload-image', {
                                 method: 'POST',
                                 body: formData
@@ -89,8 +96,6 @@ document.addEventListener("DOMContentLoaded", function() {
                             if (!response.ok) throw new Error('Upload failed');
 
                             const data = await response.json();
-                            
-                            // Insert image
                             quill.insertEmbed(range.index, 'image', data.url);
                         } catch (error) {
                             console.error('Error:', error);
@@ -99,10 +104,10 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                 };
             }
-            
-            // Optional: Handle paste events to upload images instead of base64
-            // (For simplicity, we leave base64 paste as fallback or implement paste handler later if needed.
-            // Quill's default paste matches the "Simple" requirement, but let's stick to the button handler for now.)
         });
     }
+};
+
+document.addEventListener("DOMContentLoaded", function() {
+    window.initializeRichEditors();
 });

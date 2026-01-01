@@ -21,8 +21,10 @@ const getInitials = (username) => {
 
 const highlightMentions = (text) => {
     if (!text) return '';
-    return text.replace(/@(\w+)/g, (match, p1) => {
-        const capitalized = p1.charAt(0).toUpperCase() + p1.slice(1).toLowerCase();
+    // Match HTML tags OR mentions. Capture group 1 is tag, group 2 is username.
+    return text.replace(/(<[^>]+>)|@(\w+)/g, (match, tag, username) => {
+        if (tag) return tag; // Return HTML tags unchanged
+        const capitalized = username.charAt(0).toUpperCase() + username.slice(1).toLowerCase();
         return `<span class="text-primary fw-bold">@${capitalized}</span>`;
     });
 };
@@ -89,21 +91,58 @@ exports.getFeed = async (req, res) => {
         const limit = parseInt(process.env.FEED_PAGINATION_LIMIT) || 10;
         const offset = parseInt(req.query.offset) || 0;
 
-        const posts = await Post.findAll({
+        // 1. Fetch Posts (without nested comments to avoid limit/offset issues and messy includes)
+        const postsData = await Post.findAll({
             where: activeGroup ? { groupId: activeGroup.id } : {},
             include: [
                 { model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] },
                 { model: Like, as: 'likes', include: [{ model: User, as: 'user', attributes: ['username'] }] },
-                { model: Comment, as: 'comments', include: [
-                    { model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] },
-                    { model: Comment, as: 'replies', include: [{ model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] }] }
-                ], where: { parentId: null }, required: false },
                 { model: PostResponse, as: 'responses', include: [{ model: User, as: 'user', attributes: ['id', 'username'] }] }
             ],
-            order: [['createdAt', 'DESC'], [{ model: Comment, as: 'comments' }, 'createdAt', 'ASC']],
+            order: [['createdAt', 'DESC']],
             limit: limit,
             offset: offset,
-            distinct: true // Important for correct count with includes
+            distinct: true
+        });
+
+        // 2. Fetch all comments for these posts
+        const postIds = postsData.map(p => p.id);
+        const allComments = await Comment.findAll({
+            where: { postId: { [Op.in]: postIds } },
+            include: [{ model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] }],
+            order: [['createdAt', 'ASC']] // Chronological order
+        });
+
+        // 3. Build Comment Trees
+        const commentMap = {};
+        const commentsByPost = {};
+        
+        postIds.forEach(id => { commentsByPost[id] = []; });
+        
+        // First pass: map all comments and initialize replies
+        const plainComments = allComments.map(c => {
+            const json = c.toJSON();
+            json.replies = [];
+            commentMap[json.id] = json;
+            return json;
+        });
+
+        // Second pass: build hierarchy
+        plainComments.forEach(c => {
+            if (c.parentId && commentMap[c.parentId]) {
+                commentMap[c.parentId].replies.push(c);
+            } else {
+                if (commentsByPost[c.postId]) {
+                    commentsByPost[c.postId].push(c);
+                }
+            }
+        });
+
+        // Attach comments to posts
+        const posts = postsData.map(p => {
+            const json = p.toJSON();
+            json.comments = commentsByPost[p.id] || [];
+            return json;
         });
 
         // Handle AJAX request for more posts
@@ -119,7 +158,7 @@ exports.getFeed = async (req, res) => {
                 }
                 res.json({ 
                     html, 
-                    hasMore: posts.length === limit 
+                    hasMore: postsData.length === limit 
                 });
             });
         }
