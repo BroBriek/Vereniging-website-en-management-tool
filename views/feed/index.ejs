@@ -184,19 +184,19 @@
 
     <!-- Create Post Trigger -->
     <div class="card post-card mb-4">
-        <div class="card-body d-flex align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#createPostForm" role="button" tabindex="0" aria-label="Nieuw bericht maken" onkeydown="if(event.key==='Enter'||event.key===' '){this.click()}">
-                         <% if (user.profilePicture) { %>
-                            <img src="<%= user.profilePicture %>" class="rounded-circle me-3 border shadow-sm" style="width: 40px; height: 40px; object-fit: cover;" alt="<%= capitalizeName(user.username) %>">
-                         <% } else { %>                <div class="avatar-circle me-3" style="background-color: <%= getAvatarColor(user.username) %>; width: 40px; height: 40px; font-size: 1rem;">
+        <div class="card-body d-flex align-items-center p-3">
+             <% if (user.profilePicture) { %>
+                <img src="<%= user.profilePicture %>" class="rounded-circle me-3 border shadow-sm" style="width: 40px; height: 40px; object-fit: cover;" alt="<%= capitalizeName(user.username) %>">
+             <% } else { %>
+                <div class="avatar-circle me-3" style="background-color: <%= getAvatarColor(user.username) %>; width: 40px; height: 40px; font-size: 1rem;">
                     <%= getInitials(user.username) %>
                 </div>
             <% } %>
              <div class="flex-grow-1">
-                <textarea class="form-control border-0 bg-light" name="content" rows="3" placeholder="Schrijf een bericht, <%= capitalizeName(user.username) %>..." style="resize: none;"></textarea>
+                <button type="button" class="btn btn-light w-100 text-start rounded-pill border text-muted px-4 py-2" data-bs-toggle="collapse" data-bs-target="#createPostForm">
+                    <i class="bi bi-pencil-square me-2"></i> Schrijf een bericht, <%= capitalizeName(user.username) %>...
+                </button>
              </div>
-            <div class="ms-3 text-primary">
-                <i class="bi bi-pencil-square fs-5"></i>
-            </div>
         </div>
     </div>
 
