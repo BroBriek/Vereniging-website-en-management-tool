@@ -73,10 +73,23 @@ function highlightMentions(text) {
 
         <!-- Nested Replies -->
         <% if (comment.replies && comment.replies.length > 0) { %>
-            <div class="mt-2">
-                <% comment.replies.forEach(reply => { %>
-                    <%- include('comment_partial', { comment: reply, user: user, post: post }) %>
-                <% }) %>
+            <div class="mt-2 ms-3 ps-3 border-start">
+                <% 
+                   const firstReply = comment.replies[0];
+                   const otherReplies = comment.replies.slice(1);
+                %>
+                <%- include('comment_partial', { comment: firstReply, user: user, post: post }) %>
+                
+                <% if (otherReplies.length > 0) { %>
+                    <div class="collapse" id="replies-<%= comment.id %>">
+                        <% otherReplies.forEach(reply => { %>
+                            <%- include('comment_partial', { comment: reply, user: user, post: post }) %>
+                        <% }) %>
+                    </div>
+                    <button class="btn btn-link btn-sm text-decoration-none text-muted p-0 mt-1" type="button" data-bs-toggle="collapse" data-bs-target="#replies-<%= comment.id %>" onclick="this.textContent = this.textContent.includes('Toon') ? 'Verberg antwoorden' : 'Toon nog <%= otherReplies.length %> antwoorden'">
+                        <i class="bi bi-arrow-return-right"></i> Toon nog <%= otherReplies.length %> antwoorden
+                    </button>
+                <% } %>
             </div>
         <% } %>
     </div>

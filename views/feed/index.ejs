@@ -210,7 +210,7 @@
                         <input type="hidden" name="groupId" value="<%= activeGroup.id %>">
                     <% } %>
                     <div class="mb-3">
-                        <textarea class="form-control border-0 bg-light" name="content" rows="4" placeholder="Wat wil je delen?" required style="resize: none;"></textarea>
+                        <textarea class="form-control rich-editor" name="content" rows="4" placeholder="Wat wil je delen?"></textarea>
                     </div>
                     
                     <div class="mb-3">
@@ -470,6 +470,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Initialize features for new posts
                     newItems.forEach(item => initPostFeatures(item));
+                    
+                    if (window.initializeRichEditors) {
+                        window.initializeRichEditors();
+                    }
                     
                     currentOffset += limit;
                     

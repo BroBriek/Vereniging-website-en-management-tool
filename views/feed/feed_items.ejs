@@ -40,7 +40,7 @@
             <!-- Post Content -->
             <div id="post-content-view-<%= post.id %>" class="mb-3">
                 <div id="post-text-container-<%= post.id %>" class="post-text-container">
-                    <p class="card-text text-dark" style="white-space: pre-line; font-size: 1.05rem;"><%- highlightMentions(post.content) %></p>
+                    <div class="card-text text-dark" style="font-size: 1.05rem; white-space: pre-line;"><%- highlightMentions(post.content) %></div>
                 </div>
                 <button id="read-more-btn-<%= post.id %>" class="btn btn-link btn-sm p-0 text-decoration-none d-none mt-1 fw-bold" onclick="expandPost('<%= post.id %>')">
                     Meer weergeven <i class="bi bi-chevron-down"></i>
@@ -49,7 +49,7 @@
 
             <div id="post-content-edit-<%= post.id %>" class="d-none mb-3">
                 <form action="/feed/post/<%= post.id %>/update" method="POST">
-                    <textarea class="form-control mb-2" name="content" rows="3"><%= post.content %></textarea>
+                    <textarea class="form-control rich-editor mb-2" name="content" rows="3"><%= post.content %></textarea>
                     <button type="submit" class="btn btn-sm btn-success rounded-pill">Opslaan</button>
                     <button type="button" class="btn btn-sm btn-light rounded-pill" onclick="disableEditMode('<%= post.id %>')">Annuleren</button>
                 </form>
