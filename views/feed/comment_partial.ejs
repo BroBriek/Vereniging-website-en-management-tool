@@ -63,11 +63,11 @@ function highlightMentions(text) {
 
         <!-- Reply Input -->
         <div id="reply-form-<%= comment.id %>" class="d-none mt-2">
-            <form action="/feed/comment" method="POST" class="d-flex">
+            <form action="/feed/comment" method="POST" class="d-flex align-items-center">
                 <input type="hidden" name="postId" value="<%= post.id %>">
                 <input type="hidden" name="parentId" value="<%= comment.id %>">
                 <input type="text" name="content" class="form-control form-control-sm rounded-pill me-2" placeholder="Antwoord..." required>
-                <button type="submit" class="btn btn-sm btn-primary rounded-circle"><i class="bi bi-send"></i></button>
+                <button type="submit" class="btn btn-sm btn-primary rounded-circle d-flex align-items-center justify-content-center p-0" style="width: 32px; height: 32px; flex-shrink: 0;"><i class="bi bi-send"></i></button>
             </form>
         </div>
 
