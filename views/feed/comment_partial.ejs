@@ -19,7 +19,7 @@ function highlightMentions(text) {
 %>
 <div class="d-flex mb-3 align-items-start" id="comment-container-<%= comment.id %>">
     <% if (comment.author && comment.author.profilePicture) { %>
-        <img src="<%= comment.author.profilePicture %>" class="rounded-circle me-2 flex-shrink-0 border shadow-sm" style="width: 32px; height: 32px; object-fit: cover;" alt="<%= capitalizeName(comment.author.username) %>">
+        <img src="<%= comment.author.profilePicture %>" class="rounded-circle me-2 flex-shrink-0 border shadow-sm" style="width: 32px; height: 32px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(comment.author.username) %>" onclick="showPolaroid('<%= comment.author.profilePicture %>', '<%= capitalizeName(comment.author.username) %>')">
     <% } else { %>
         <div class="avatar-circle me-2 flex-shrink-0" style="background-color: <%= getAvatarColor(comment.author ? comment.author.username : '') %>; width: 32px; height: 32px; font-size: 0.8rem;">
             <%= getInitials(comment.author ? comment.author.username : '') %>
