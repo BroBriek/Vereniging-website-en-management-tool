@@ -5,6 +5,17 @@ const command = args[0];
 const username = (args[1] || '').toLowerCase();
 const password = args[2];
 
+/**
+ * Manage admins.
+ *
+ * Usage:
+ *   node scripts/manage_admin.js add <username> <password>
+ *   node scripts/manage_admin.js remove <username>
+ *
+ * @param {string} command - Command to execute (add or remove).
+ * @param {string} username - Username of the admin to add or remove.
+ * @param {string} password - Password of the admin to add.
+ */
 async function manageAdmin() {
     try {
         if (command === 'add') {

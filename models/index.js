@@ -64,6 +64,14 @@ const syncDatabase = async () => {
       await sequelize.query('PRAGMA foreign_keys = OFF');
     }
 
+    // Sync User specifically with alter: true to add profilePicture
+    console.log('Syncing User model...');
+    await User.sync({ alter: true });
+
+    // Sync the rest without alter (or with alter if safe, but we know UGA fails)
+    // We can try to sync everything else. 
+    // If we run sequelize.sync() now, it will check everything.
+    // Let's just run sync() without alter for the rest to ensure tables exist.
     await sequelize.sync();
 
     if (sequelize.getDialect() === 'sqlite') {

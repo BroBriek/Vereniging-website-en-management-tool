@@ -438,6 +438,187 @@ exports.sendTestNotification = async (req, res) => {
     }
 };
 
+// ==================== Backup Management ====================
+exports.getBackups = (req, res) => {
+    try {
+        const backupDir = path.join(__dirname, '..', 'backups');
+        
+        if (!fs.existsSync(backupDir)) {
+            fs.mkdirSync(backupDir);
+        }
+        
+        const files = fs.readdirSync(backupDir, { withFileTypes: true });
+        const backups = files
+            .filter(file => file.isDirectory())
+            .map(file => {
+                const fullPath = path.join(backupDir, file.name);
+                const stat = fs.statSync(fullPath);
+                return {
+                    name: file.name,
+                    created: stat.birthtime,
+                    path: file.name // just the folder name
+                };
+            })
+            .sort((a, b) => b.created - a.created);
+            
+        res.json({ backups });
+    } catch (error) {
+        console.error('Get backups error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.createBackup = (req, res) => {
+    try {
+        const scriptPath = path.join(__dirname, '..', 'scripts', 'backup.js');
+        
+        exec(`node "${scriptPath}"`, (error, stdout, stderr) => {
+            if (error) {
+                console.error('Backup creation failed:', error);
+                return res.status(500).json({ error: 'Backup maken mislukt: ' + error.message });
+            }
+            res.json({ success: true, message: 'Backup succesvol aangemaakt', output: stdout });
+        });
+    } catch (error) {
+        console.error('Create backup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.deleteBackup = (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
+        
+        // Security: validate name is just a folder name, not path traversal
+        if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+            return res.status(403).json({ error: 'Ongeldige backup naam' });
+        }
+        
+        const backupPath = path.join(__dirname, '..', 'backups', name);
+        
+        if (fs.existsSync(backupPath)) {
+            fs.rmSync(backupPath, { recursive: true, force: true });
+            res.json({ success: true, message: 'Backup verwijderd' });
+        } else {
+            res.status(404).json({ error: 'Backup niet gevonden' });
+        }
+    } catch (error) {
+        console.error('Delete backup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getBackupContent = (req, res) => {
+    try {
+        const { name } = req.query;
+        if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
+
+        // Security check
+        if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+            return res.status(403).json({ error: 'Ongeldige backup naam' });
+        }
+
+        const backupPath = path.join(__dirname, '..', 'backups', name);
+        if (!fs.existsSync(backupPath)) {
+            return res.status(404).json({ error: 'Backup niet gevonden' });
+        }
+
+        const getFiles = (dir, relativeDir = '') => {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            const files = [];
+
+            for (const entry of entries) {
+                const relativePath = path.join(relativeDir, entry.name);
+                if (entry.isDirectory()) {
+                    files.push(...getFiles(path.join(dir, entry.name), relativePath));
+                } else {
+                    const stats = fs.statSync(path.join(dir, entry.name));
+                    files.push({
+                        path: relativePath,
+                        size: stats.size
+                    });
+                }
+            }
+            return files;
+        };
+
+        const contents = getFiles(backupPath);
+        res.json({ contents });
+    } catch (error) {
+        console.error('Get backup content error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.restoreBackup = async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
+
+        // Security check
+        if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+            return res.status(403).json({ error: 'Ongeldige backup naam' });
+        }
+
+        const backupPath = path.join(__dirname, '..', 'backups', name);
+        if (!fs.existsSync(backupPath)) {
+            return res.status(404).json({ error: 'Backup niet gevonden' });
+        }
+
+        const rootDir = path.join(__dirname, '..');
+        const dbFile = path.join(rootDir, 'database.sqlite');
+        const uploadsDir = path.join(rootDir, 'public', 'uploads');
+        
+        // Restore Database
+        const backupDb = path.join(backupPath, 'database.sqlite');
+        if (fs.existsSync(backupDb)) {
+            // Backup current DB just in case? Maybe too much overhead for now.
+            // Copy file
+            fs.copyFileSync(backupDb, dbFile);
+        }
+
+        // Restore Sessions (if exists)
+        const backupSessions = path.join(backupPath, 'sessions.sqlite');
+        const sessionFile = path.join(rootDir, 'sessions.sqlite');
+        if (fs.existsSync(backupSessions)) {
+            fs.copyFileSync(backupSessions, sessionFile);
+        }
+        
+        // Sync database to ensure schema is up to date (adds missing columns like profilePicture)
+        try {
+            await User.sync({ alter: true });
+            await sequelize.sync();
+            console.log('Database synced after restore.');
+        } catch (syncError) {
+            console.error('Error syncing database after restore:', syncError);
+            // We continue, as the file restore itself was successful
+        }
+
+        // Restore Uploads
+        const backupUploads = path.join(backupPath, 'uploads');
+        if (fs.existsSync(backupUploads)) {
+            // Remove current uploads? Or overwrite? 
+            // Safer to remove current and copy backup to ensure exact state.
+            if (fs.existsSync(uploadsDir)) {
+                fs.rmSync(uploadsDir, { recursive: true, force: true });
+            }
+            fs.mkdirSync(uploadsDir, { recursive: true });
+            fs.cpSync(backupUploads, uploadsDir, { recursive: true });
+        }
+
+        // Trigger restart if PM2 is available?
+        // We can try to use exec to reload pm2 if it's running.
+        // But for now, we just return success.
+        
+        res.json({ success: true, message: 'Backup succesvol teruggezet. Het kan zijn dat de server herstart moet worden.' });
+
+    } catch (error) {
+        console.error('Restore backup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // ==================== Main View ====================
 exports.getMaintenanceTools = async (req, res) => {
     try {

@@ -688,6 +688,7 @@
 
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab(event, 'file-explorer')">📁 Bestandsbeheer</button>
+    <button class="tab-btn" onclick="switchTab(event, 'backups')">📦 Backups</button>
     <button class="tab-btn" onclick="switchTab(event, 'database')">🗄️ Database</button>
     <button class="tab-btn" onclick="switchTab(event, 'logs')">📋 Logs</button>
     <button class="tab-btn" onclick="switchTab(event, 'notifications')">🔔 Notificaties</button>
@@ -716,6 +717,40 @@
           </div>
         </div>
         <textarea id="file-content"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backups Tab -->
+  <div id="backups" class="tab-content">
+    <div class="logs-container"> <!-- Reuse container style -->
+        <div class="logs-header">
+            <h2 style="margin: 0;">Systeem Backups</h2>
+            <button class="primary-btn" onclick="createBackup()">➕ Maak Backup</button>
+        </div>
+        
+        <div id="backup-list" class="file-list" style="min-height: 200px;">
+            <div style="padding: 20px; text-align: center; color: #999;">
+                Laden... <div class="loading"></div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- Backup Content Modal -->
+  <div class="modal-overlay" id="backup-content-modal">
+    <div class="modal-dialog" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3>Backup Inhoud: <span id="backup-name-display"></span></h3>
+        <button class="modal-close" onclick="closeBackupContentModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="backup-files-list" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 13px;">
+          Laden...
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-cancel" onclick="closeBackupContentModal()">Sluiten</button>
       </div>
     </div>
   </div>
@@ -871,6 +906,8 @@
     // Load content if needed
     if (tabName === 'file-explorer' && currentFolder === '') {
       loadFileExplorer();
+    } else if (tabName === 'backups') {
+      loadBackups();
     } else if (tabName === 'database') {
       if (selectedTable === null) {
         loadTables();
@@ -1368,6 +1405,159 @@
       .catch(err => {
         container.innerHTML = `<div class="alert error">Fout bij laden logs: ${err.message}</div>`;
       });
+  }
+
+  // ===== BACKUPS =====
+  function loadBackups() {
+    fetch('/admin/api/backups')
+      .then(r => r.json())
+      .then(data => {
+        displayBackups(data.backups);
+      })
+      .catch(err => {
+        document.getElementById('backup-list').innerHTML = '<div class="alert error">Fout bij laden backups: ' + err.message + '</div>';
+      });
+  }
+
+  function displayBackups(backups) {
+    if (backups.length === 0) {
+      document.getElementById('backup-list').innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Geen backups gevonden</div>';
+      return;
+    }
+
+    let html = '';
+    backups.forEach(backup => {
+        const createdDate = new Date(backup.created).toLocaleString('nl-NL');
+        html += `
+            <div class="file-item">
+                <div class="file-item-icon">📦</div>
+                <div class="file-item-name">
+                    <strong>${backup.name}</strong><br>
+                    <small style="color: #666;">Aangemaakt: ${createdDate}</small>
+                </div>
+                <div class="file-item-actions">
+                    <button class="secondary-btn" onclick="viewBackupContent('${backup.name}')">👁️ Inhoud</button>
+                    <button class="primary-btn" onclick="restoreBackup('${backup.name}')" style="background-color: #f39c12;">♻️ Herstel</button>
+                    <button class="delete-btn" onclick="deleteBackup('${backup.name}')">🗑️ Verwijder</button>
+                </div>
+            </div>
+        `;
+    });
+    document.getElementById('backup-list').innerHTML = html;
+  }
+
+  function createBackup() {
+    const btn = document.querySelector('button[onclick="createBackup()"]');
+    const originalText = btn.textContent;
+    btn.textContent = 'Bezig...';
+    btn.disabled = true;
+
+    fetch('/admin/api/backups/create', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                loadBackups();
+            } else {
+                showAlert('error', data.error);
+            }
+        })
+        .catch(err => showAlert('error', 'Fout: ' + err.message))
+        .finally(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        });
+  }
+
+  function deleteBackup(name) {
+    if (!confirm(`Weet je zeker dat je backup '${name}' wilt verwijderen?`)) return;
+
+    fetch('/admin/api/backups/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            loadBackups();
+        } else {
+            showAlert('error', data.error);
+        }
+    })
+    .catch(err => showAlert('error', 'Fout: ' + err.message));
+  }
+
+  function restoreBackup(name) {
+    if (!confirm(`⚠️ WAARSCHUWING: Weet je ZEKER dat je backup '${name}' wilt terugzetten?\n\n- De huidige database wordt overschreven.\n- Alle huidige uploads worden vervangen.\n- Dit kan niet ongedaan worden gemaakt (behalve door eerst een nieuwe backup te maken).`)) return;
+
+    // Optional: Ask for a second confirmation or force a backup first? 
+    // Let's stick to a strong warning.
+
+    const loadingId = 'restore-loading-' + Date.now();
+    showAlert('info', `<span id="${loadingId}">Herstel bezig... Even geduld... <div class="loading"></div></span>`);
+
+    fetch('/admin/api/backups/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        const el = document.getElementById(loadingId);
+        if (el && el.parentElement) el.parentElement.remove();
+
+        if (data.success) {
+            showAlert('success', data.message);
+        } else {
+            showAlert('error', data.error);
+        }
+    })
+    .catch(err => showAlert('error', 'Fout: ' + err.message));
+  }
+
+  function viewBackupContent(name) {
+    document.getElementById('backup-name-display').textContent = name;
+    document.getElementById('backup-files-list').innerHTML = 'Laden... <div class="loading"></div>';
+    
+    const modal = document.getElementById('backup-content-modal');
+    modal.classList.add('active');
+    document.body.classList.add('modal-open');
+
+    fetch(`/admin/api/backups/content?name=${encodeURIComponent(name)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('backup-files-list').innerHTML = `<div style="color: red;">${data.error}</div>`;
+                return;
+            }
+
+            if (data.contents.length === 0) {
+                document.getElementById('backup-files-list').innerHTML = '<i>Lege backup</i>';
+                return;
+            }
+
+            let html = '<ul style="list-style: none; padding: 0;">';
+            data.contents.forEach(file => {
+                html += `
+                    <li style="padding: 5px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                        <span>${file.path}</span>
+                        <span style="color: #999;">${formatBytes(file.size)}</span>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            document.getElementById('backup-files-list').innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById('backup-files-list').innerHTML = `<div style="color: red;">Fout: ${err.message}</div>`;
+        });
+  }
+
+  function closeBackupContentModal() {
+    document.getElementById('backup-content-modal').classList.remove('active');
+    document.body.classList.remove('modal-open');
   }
 
   // ===== NOTIFICATIONS =====
