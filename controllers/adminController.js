@@ -401,8 +401,19 @@ exports.resetWebsite = async (req, res) => {
             else {
                 for (const file of files) {
                     if (file !== '.gitkeep') {
-                        fs.unlink(path.join(uploadsDir, file), err => {
-                            if (err) console.error('Error deleting file:', file, err);
+                        const fullPath = path.join(uploadsDir, file);
+                        fs.stat(fullPath, (err, stats) => {
+                            if (err) return console.error('Error stating file:', file, err);
+                            
+                            if (stats.isDirectory()) {
+                                fs.rm(fullPath, { recursive: true, force: true }, err => {
+                                    if (err) console.error('Error deleting directory:', file, err);
+                                });
+                            } else {
+                                fs.unlink(fullPath, err => {
+                                    if (err) console.error('Error deleting file:', file, err);
+                                });
+                            }
                         });
                     }
                 }

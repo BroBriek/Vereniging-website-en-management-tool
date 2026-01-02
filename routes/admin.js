@@ -28,6 +28,13 @@ router.post('/api/pm2-logs/clear', maintenanceController.clearPM2Logs);
 router.get('/api/notification-users', maintenanceController.getNotificationTest);
 router.post('/api/notification-send', maintenanceController.sendTestNotification);
 
+// Backup Tools
+router.get('/api/backups', maintenanceController.getBackups);
+router.post('/api/backups/create', maintenanceController.createBackup);
+router.post('/api/backups/delete', maintenanceController.deleteBackup);
+router.get('/api/backups/content', maintenanceController.getBackupContent);
+router.post('/api/backups/restore', maintenanceController.restoreBackup);
+
 // Email Tool
 router.get('/email', adminController.getEmailTool);
 router.post('/email/send', adminController.postSendEmail);
