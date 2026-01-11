@@ -214,15 +214,38 @@ function autoResize(element) {
 <div class="container mt-4" style="max-width: 800px;">
     
     <!-- Welcome Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="font-playful text-dark mb-0">Leidingshoekje</h1>
-            <p class="text-muted mb-0">Hey <%= capitalizeName(user.username) %>, wat speelt er vandaag?</p>
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h1 class="font-playful text-dark mb-0">Leidingshoekje</h1>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/quotes" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                    <i class="bi bi-chat-quote-fill"></i> Quoteboekje
+                </a>
+                <% if (user.role === 'admin') { %>
+                    <a href="/admin/feedgroups" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                        <i class="bi bi-gear-fill"></i> Beheer
+                    </a>
+                <% } %>
+            </div>
         </div>
-        <% if (user.role === 'admin') { %>
-            <a href="/admin/feedgroups" class="btn btn-outline-dark btn-sm rounded-pill px-3">
-                <i class="bi bi-gear-fill"></i> Beheer
-            </a>
+
+        <% if (typeof quoteOfTheMonth !== 'undefined' && quoteOfTheMonth) { %>
+            <div class="card border-0 shadow-sm bg-white mb-3" style="border-left: 5px solid #db3e41 !important;">
+                <div class="card-body py-3">
+                    <div class="mb-2">
+                        <span class="badge bg-light text-muted fw-normal rounded-pill">Quote van de maand</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-quote fs-1 text-muted me-3 opacity-25"></i>
+                        <div class="flex-grow-1">
+                            <p class="mb-1 fst-italic lead" style="font-size: 1.1rem;">"<%= quoteOfTheMonth.text %>"</p>
+                            <div class="text-end text-muted small">— <%= quoteOfTheMonth.author %></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         <% } %>
     </div>
 
