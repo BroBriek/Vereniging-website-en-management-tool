@@ -243,6 +243,7 @@ exports.verifyEmail = async (req, res) => {
     }
     user.emailVerified = true;
     user.emailVerificationToken = null;
+    user.emailNotificationsEnabled = true; // Auto-enable notifications upon verification
     await user.save();
     res.render('account/settings', { ...renderContext, user, success: 'E-mailadres geverifieerd' });
   } catch (err) {
