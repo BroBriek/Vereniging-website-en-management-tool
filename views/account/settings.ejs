@@ -115,12 +115,19 @@
 
                     <% if (user.email) { %>
                         <p class="small">Status: <span class="<%= user.emailVerified ? 'text-success' : 'text-warning' %>"><%= user.emailVerified ? 'Geverifieerd' : 'Niet geverifieerd' %></span></p>
-                        <form action="/account/email-toggle" method="POST">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="emailNotifToggle" name="enabled" <%= user.emailNotificationsEnabled ? 'checked' : '' %> <%= user.emailVerified ? '' : 'disabled' %>>
-                                <label class="form-check-label" for="emailNotifToggle">E-mailmeldingen inschakelen</label>
+                        <form action="/account/email-toggle" method="POST" id="emailToggleForm">
+                            <div class="chiro-switch-container">
+                                <label class="chiro-switch">
+                                    <input type="checkbox" id="emailNotifToggle" name="enabled" <%= user.emailNotificationsEnabled ? 'checked' : '' %> <%= user.emailVerified ? '' : 'disabled' %>>
+                                    <span class="chiro-slider"></span>
+                                </label>
+                                <div class="switch-label-container">
+                                    <span class="switch-title">E-mailmeldingen ontvangen</span>
+                                    <span id="emailToggleStatus" class="switch-status <%= user.emailNotificationsEnabled ? 'status-on' : 'status-off' %>">
+                                        <%= user.emailNotificationsEnabled ? 'AAN: Je ontvangt e-mails' : 'UIT: Geen e-mails' %>
+                                    </span>
+                                </div>
                             </div>
-                            <button type="submit" class="btn btn-secondary mt-2" <%= user.emailVerified ? '' : 'disabled' %>>Opslaan</button>
                         </form>
                     <% } %>
                 </div>
@@ -130,6 +137,18 @@
 </div>
 
 <script>
+// Email Toggle Logic
+const emailToggle = document.getElementById('emailNotifToggle');
+const emailForm = document.getElementById('emailToggleForm');
+const emailStatus = document.getElementById('emailToggleStatus');
+
+if (emailToggle) {
+    emailToggle.addEventListener('change', function() {
+        // Submit form automatically when toggled
+        emailForm.submit();
+    });
+}
+
 const VAPID_PUBLIC_KEY = '<%= vapidPublicKey %>';
 
 // Function to convert VAPID key

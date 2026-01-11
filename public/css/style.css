@@ -295,6 +295,103 @@ input:focus, textarea:focus {
     transform: translateX(5px);
 }
 
+/* Custom Toggle Switch */
+.chiro-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 15px;
+    border: 2px solid #e9ecef;
+}
+
+.chiro-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    flex-shrink: 0;
+}
+
+.chiro-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.chiro-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.chiro-slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+input:checked + .chiro-slider {
+    background-color: #2ecc71;
+}
+
+input:focus + .chiro-slider {
+    box-shadow: 0 0 1px #2ecc71;
+}
+
+input:checked + .chiro-slider:before {
+    transform: translateX(26px);
+}
+
+/* Disabled state */
+input:disabled + .chiro-slider {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+input:disabled + .chiro-slider:before {
+    background-color: #cbd3da;
+}
+
+.switch-label-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.switch-title {
+    font-weight: bold;
+    font-family: var(--font-heading);
+    color: var(--chiro-blue);
+    font-size: 1.1rem;
+}
+
+.switch-status {
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.status-on {
+    color: #2ecc71;
+}
+
+.status-off {
+    color: #e74c3c;
+}
+
 @media (max-width: 768px) {
     body { font-size: 1.1rem; }
     .hero-img { height: 50vh; }
