@@ -111,7 +111,10 @@ exports.getFeed = async (req, res) => {
         const postIds = postsData.map(p => p.id);
         const allComments = await Comment.findAll({
             where: { postId: { [Op.in]: postIds } },
-            include: [{ model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] }],
+            include: [
+                { model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] },
+                { model: Like, as: 'likes', attributes: ['userId'] }
+            ],
             order: [['createdAt', 'ASC']] // Chronological order
         });
 
@@ -436,6 +439,49 @@ exports.toggleLike = async (req, res) => {
         res.redirect((post && post.groupId && group) ? ('/feed/group/' + group.slug + '#' + 'post-' + postId) : ('/feed#' + 'post-' + postId));
     } catch (error) {
         console.error('Toggle Like Error:', error);
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({ error: 'Server Error' });
+        }
+        res.redirect('/feed');
+    }
+};
+
+exports.toggleCommentLike = async (req, res) => {
+    try {
+        const commentId = req.params.id;
+        const userId = req.user.id;
+
+        const existingLike = await Like.findOne({
+            where: { commentId, userId }
+        });
+
+        if (existingLike) {
+            await existingLike.destroy();
+        } else {
+            await Like.create({ commentId, userId });
+        }
+
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+             const likes = await Like.findAll({
+                 where: { commentId },
+                 include: [{ model: User, as: 'user', attributes: ['username', 'profilePicture'] }]
+             });
+             const likeCount = likes.length;
+             const likers = likes.map(l => l.user ? { username: l.user.username, profilePicture: l.user.profilePicture } : { username: 'Onbekend', profilePicture: null });
+             return res.json({ success: true, liked: !existingLike, count: likeCount, likers });
+        }
+
+        const comment = await Comment.findByPk(commentId);
+        if (comment) {
+            const post = await Post.findByPk(comment.postId);
+            let group = null;
+            if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
+            res.redirect((post && post.groupId && group) ? ('/feed/group/' + group.slug + '#post-' + post.id) : ('/feed#post-' + post.id));
+        } else {
+             res.redirect('/feed');
+        }
+    } catch (error) {
+        console.error('Toggle Comment Like Error:', error);
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
             return res.status(500).json({ error: 'Server Error' });
         }

@@ -2,7 +2,30 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const Like = sequelize.define('Like', {
-  // Just a join table basically, but explicit model allows timestamps if needed (createdAt = when liked)
+  postId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Posts',
+      key: 'id'
+    }
+  },
+  commentId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Comments',
+      key: 'id'
+    }
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  }
 });
 
 module.exports = Like;

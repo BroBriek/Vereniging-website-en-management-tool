@@ -54,6 +54,9 @@ PostResponse.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Post.hasMany(Like, { foreignKey: 'postId', as: 'likes', onDelete: 'CASCADE', hooks: true });
 Like.belongsTo(Post, { foreignKey: 'postId', as: 'post' });
 
+Comment.hasMany(Like, { foreignKey: 'commentId', as: 'likes', onDelete: 'CASCADE', hooks: true });
+Like.belongsTo(Comment, { foreignKey: 'commentId', as: 'comment' });
+
 User.hasMany(Like, { foreignKey: 'userId', as: 'likes', onDelete: 'CASCADE', hooks: true });
 Like.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
@@ -72,6 +75,10 @@ const syncDatabase = async () => {
     // Sync User specifically with alter: true to add profilePicture
     console.log('Syncing User model...');
     await User.sync({ alter: true });
+
+    // Sync Like with alter: true to add commentId
+    console.log('Syncing Like model...');
+    await Like.sync({ alter: true });
 
     // Sync the rest without alter (or with alter if safe, but we know UGA fails)
     // We can try to sync everything else. 
