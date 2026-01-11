@@ -26,7 +26,7 @@ function highlightMentions(text) {
         </div>
     <% } %>
     <div class="flex-grow-1">
-        <div class="comment-bubble d-inline-block">
+        <div class="comment-bubble w-100">
             <div class="d-flex justify-content-between align-items-baseline mb-1">
                 <span class="fw-bold small me-2"><%= comment.author ? capitalizeName(comment.author.username) : 'Onbekend' %></span>
                 <% if ((comment.author && user && comment.author.id === user.id) || user.role === 'admin') { %>
@@ -50,7 +50,7 @@ function highlightMentions(text) {
             
             <div id="comment-content-edit-<%= comment.id %>" class="d-none mt-2">
                 <form action="/feed/comment/<%= comment.id %>/update" method="POST">
-                    <input type="text" name="content" class="form-control form-control-sm mb-1" value="<%= comment.content %>">
+                    <textarea name="content" class="form-control form-control-sm mb-1" rows="1" style="resize: none; overflow: hidden;" oninput="autoResize(this)" onfocus="autoResize(this)"><%= comment.content %></textarea>
                     <button type="submit" class="btn btn-sm btn-success py-0">Ok</button>
                     <button type="button" class="btn btn-sm btn-light py-0" onclick="disableCommentEdit('<%= comment.id %>')">X</button>
                 </form>
@@ -63,11 +63,11 @@ function highlightMentions(text) {
 
         <!-- Reply Input -->
         <div id="reply-form-<%= comment.id %>" class="d-none mt-2">
-            <form action="/feed/comment" method="POST" class="d-flex align-items-center">
+            <form action="/feed/comment" method="POST" class="d-flex align-items-end">
                 <input type="hidden" name="postId" value="<%= post.id %>">
                 <input type="hidden" name="parentId" value="<%= comment.id %>">
-                <input type="text" name="content" class="form-control form-control-sm rounded-pill me-2" placeholder="Antwoord..." required>
-                <button type="submit" class="btn btn-sm btn-primary rounded-circle d-flex align-items-center justify-content-center p-0" style="width: 32px; height: 32px; flex-shrink: 0;"><i class="bi bi-send"></i></button>
+                <textarea name="content" class="form-control form-control-sm me-2" placeholder="Antwoord..." required rows="1" style="resize: none; overflow: hidden; border-radius: 1rem;" oninput="autoResize(this)"></textarea>
+                <button type="submit" class="btn btn-sm btn-primary rounded-circle d-flex align-items-center justify-content-center p-0 mb-1" style="width: 32px; height: 32px; flex-shrink: 0;"><i class="bi bi-send"></i></button>
             </form>
         </div>
 

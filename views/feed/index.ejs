@@ -71,6 +71,16 @@
         border-radius: 1rem;
         padding: 0.75rem 1rem;
         position: relative;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        max-width: 100%;
+    }
+
+    textarea {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
     }
     
     .btn-action {
@@ -100,6 +110,12 @@
     }
 
     /* Read More Truncation */
+    .post-text-container {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+
     .post-content-collapsed {
         max-height: 200px;
         overflow: hidden;
@@ -187,6 +203,11 @@ function showPolaroid(src, name) {
 function closePolaroid() {
     document.getElementById('polaroid-overlay').classList.add('d-none');
     document.body.style.overflow = ''; // Restore scrolling
+}
+
+function autoResize(element) {
+    element.style.height = 'auto';
+    element.style.height = element.scrollHeight + 'px';
 }
 </script>
 
@@ -400,7 +421,14 @@ function enableCommentEdit(id) {
     const viewEl = document.getElementById('comment-content-view-' + id);
     const editEl = document.getElementById('comment-content-edit-' + id);
     if(viewEl) viewEl.classList.add('d-none');
-    if(editEl) editEl.classList.remove('d-none');
+    if(editEl) {
+        editEl.classList.remove('d-none');
+        const textarea = editEl.querySelector('textarea');
+        if(textarea) {
+            textarea.focus();
+            autoResize(textarea);
+        }
+    }
 }
 
 function disableCommentEdit(id) {
