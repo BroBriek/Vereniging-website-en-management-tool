@@ -1,4 +1,4 @@
-const { Quote, User } = require('../models');
+const { Quote, User, PageContent } = require('../models');
 
 exports.getQuotes = async (req, res) => {
   try {
@@ -88,11 +88,70 @@ exports.getQuoteOfTheMonth = async () => {
         if (quotes.length === 0) return null;
         
         const date = new Date();
-        // Create a seed based on Year and Month
-        const seed = date.getFullYear() * 12 + date.getMonth();
+        const currentMonthKey = `${date.getFullYear()}-${date.getMonth()}`; // e.g. "2026-0"
+
+        // Get stored settings from PageContent
+        // We use 'system_settings' as the slug to group these technical settings
+        let indexSetting = await PageContent.findOne({ 
+            where: { slug: 'system_settings', section_key: 'quote_index' } 
+        });
+        let monthSetting = await PageContent.findOne({ 
+            where: { slug: 'system_settings', section_key: 'quote_last_month' } 
+        });
+
+        let index = indexSetting ? parseInt(indexSetting.content, 10) : 0;
+        if (isNaN(index)) index = 0;
         
-        // Select quote
-        const index = seed % quotes.length;
+        let shouldSave = false;
+
+        // Initialize or Update logic
+        if (!monthSetting) {
+            // First run ever: Initialize settings
+            index = 0;
+            shouldSave = true;
+        } else if (monthSetting.content !== currentMonthKey) {
+            // New month: Increment index
+            index++;
+            if (index >= quotes.length) {
+                index = 0;
+            }
+            shouldSave = true;
+        } else {
+            // Same month: Check if index is still valid (e.g. if quotes were deleted)
+            if (index >= quotes.length) {
+                index = 0;
+                shouldSave = true;
+            }
+        }
+
+        if (shouldSave) {
+            // Update or Create Index Setting
+            if (indexSetting) {
+                indexSetting.content = index.toString();
+                await indexSetting.save();
+            } else {
+                await PageContent.create({
+                    slug: 'system_settings',
+                    section_key: 'quote_index',
+                    content: index.toString(),
+                    type: 'text'
+                });
+            }
+
+            // Update or Create Month Setting
+            if (monthSetting) {
+                monthSetting.content = currentMonthKey;
+                await monthSetting.save();
+            } else {
+                await PageContent.create({
+                    slug: 'system_settings',
+                    section_key: 'quote_last_month',
+                    content: currentMonthKey,
+                    type: 'text'
+                });
+            }
+        }
+        
         return quotes[index];
     } catch (error) {
         console.error("Error getting quote of month:", error);
