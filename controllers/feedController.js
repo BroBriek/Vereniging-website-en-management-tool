@@ -461,16 +461,6 @@ exports.toggleCommentLike = async (req, res) => {
             await Like.create({ commentId, userId });
         }
 
-        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-             const likes = await Like.findAll({
-                 where: { commentId },
-                 include: [{ model: User, as: 'user', attributes: ['username', 'profilePicture'] }]
-             });
-             const likeCount = likes.length;
-             const likers = likes.map(l => l.user ? { username: l.user.username, profilePicture: l.user.profilePicture } : { username: 'Onbekend', profilePicture: null });
-             return res.json({ success: true, liked: !existingLike, count: likeCount, likers });
-        }
-
         const comment = await Comment.findByPk(commentId, {
             include: [{ model: User, as: 'author' }]
         });
@@ -490,11 +480,22 @@ exports.toggleCommentLike = async (req, res) => {
                 NotificationService.sendIndividualNotification(comment.author, messageData);
             }
 
-            if (!(req.xhr || req.headers.accept.indexOf('json') > -1)) {
-                 res.redirect((post && post.groupId && group) ? ('/feed/group/' + group.slug + '#post-' + post.id) : ('/feed#post-' + post.id));
+            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                 const likes = await Like.findAll({
+                     where: { commentId },
+                     include: [{ model: User, as: 'user', attributes: ['username', 'profilePicture'] }]
+                 });
+                 const likeCount = likes.length;
+                 const likers = likes.map(l => l.user ? { username: l.user.username, profilePicture: l.user.profilePicture } : { username: 'Onbekend', profilePicture: null });
+                 return res.json({ success: true, liked: !existingLike, count: likeCount, likers });
             }
+
+            res.redirect((post && post.groupId && group) ? ('/feed/group/' + group.slug + '#post-' + post.id) : ('/feed#post-' + post.id));
         } else {
-             if (!(req.xhr || req.headers.accept.indexOf('json') > -1)) res.redirect('/feed');
+             if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                 return res.json({ success: false });
+             }
+             res.redirect('/feed');
         }
     } catch (error) {
         console.error('Toggle Comment Like Error:', error);
