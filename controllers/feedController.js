@@ -471,14 +471,30 @@ exports.toggleCommentLike = async (req, res) => {
              return res.json({ success: true, liked: !existingLike, count: likeCount, likers });
         }
 
-        const comment = await Comment.findByPk(commentId);
+        const comment = await Comment.findByPk(commentId, {
+            include: [{ model: User, as: 'author' }]
+        });
+        
         if (comment) {
             const post = await Post.findByPk(comment.postId);
             let group = null;
             if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
-            res.redirect((post && post.groupId && group) ? ('/feed/group/' + group.slug + '#post-' + post.id) : ('/feed#post-' + post.id));
+
+            // Send notification if liked (not unliked) and not own comment
+            if (!existingLike && comment.author && comment.author.id !== req.user.id) {
+                 const messageData = {
+                    title: 'Nieuwe like',
+                    body: `${req.user.username} vond je reactie leuk: "${comment.content.substring(0, 30)}..."`,
+                    url: group ? `/feed/group/${group.slug}#post-${post.id}` : `/feed#post-${post.id}`
+                };
+                NotificationService.sendIndividualNotification(comment.author, messageData);
+            }
+
+            if (!(req.xhr || req.headers.accept.indexOf('json') > -1)) {
+                 res.redirect((post && post.groupId && group) ? ('/feed/group/' + group.slug + '#post-' + post.id) : ('/feed#post-' + post.id));
+            }
         } else {
-             res.redirect('/feed');
+             if (!(req.xhr || req.headers.accept.indexOf('json') > -1)) res.redirect('/feed');
         }
     } catch (error) {
         console.error('Toggle Comment Like Error:', error);
