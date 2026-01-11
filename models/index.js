@@ -11,6 +11,7 @@ const PostResponse = require('./PostResponse');
 const Like = require('./Like');
 const FeedGroup = require('./FeedGroup');
 const UserGroupAccess = require('./UserGroupAccess');
+const Quote = require('./Quote');
 
 // Associations
 
@@ -56,6 +57,10 @@ Like.belongsTo(Post, { foreignKey: 'postId', as: 'post' });
 User.hasMany(Like, { foreignKey: 'userId', as: 'likes', onDelete: 'CASCADE', hooks: true });
 Like.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// Quote Associations
+User.hasMany(Quote, { foreignKey: 'submittedBy', as: 'quotes' });
+Quote.belongsTo(User, { foreignKey: 'submittedBy', as: 'submitter' });
+
 
 const syncDatabase = async () => {
   try {
@@ -98,5 +103,6 @@ module.exports = {
   PostResponse,
   Like,
   FeedGroup,
-  UserGroupAccess
+  UserGroupAccess,
+  Quote
 };

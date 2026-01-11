@@ -1,4 +1,5 @@
 const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess } = require('../models');
+const quoteController = require('./quoteController');
 const path = require('path');
 const { Op } = require('sequelize');
 const NotificationService = require('../services/NotificationService');
@@ -77,6 +78,7 @@ exports.searchUsers = async (req, res) => {
 
 exports.getFeed = async (req, res) => {
     try {
+        const quoteOfTheMonth = await quoteController.getQuoteOfTheMonth();
         const slug = req.params.slug || null;
         const allGroups = await getAccessibleGroups(req.user);
         let activeGroup = null;
@@ -170,6 +172,7 @@ exports.getFeed = async (req, res) => {
             groups: allGroups, 
             activeGroup,
             limit, // Pass limit to view for initial button state
+            quoteOfTheMonth,
             ...viewHelpers
         });
     } catch (error) {

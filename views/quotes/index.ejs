@@ -1,0 +1,69 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Quoteboekje</h1>
+                <a href="/feed" class="btn btn-outline-secondary">Terug naar Feed</a>
+            </div>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger"><%= error %></div>
+            <% } %>
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="alert alert-success"><%= success %></div>
+            <% } %>
+
+            <% if (user && user.role === 'admin') { %>
+                <div class="mb-4 text-end">
+                    <form action="/quotes/delete-all" method="POST" onsubmit="return confirm('Weet je zeker dat je ALLE quotes wilt verwijderen? Dit kan niet ongedaan gemaakt worden.');">
+                        <button type="submit" class="btn btn-danger">Verwijder alle quotes</button>
+                    </form>
+                </div>
+            <% } %>
+
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Nieuwe Quote Toevoegen</h5>
+                    <form action="/quotes" method="POST">
+                        <div class="mb-3">
+                            <label for="text" class="form-label">Quote</label>
+                            <textarea class="form-control" id="text" name="text" rows="3" required placeholder="Wat is er gezegd?"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="author" class="form-label">Wie zei het?</label>
+                            <input type="text" class="form-control" id="author" name="author" required placeholder="Naam van de persoon">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Toevoegen</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="list-group">
+                <% if (quotes && quotes.length > 0) { %>
+                    <% quotes.forEach(quote => { %>
+                        <div class="list-group-item flex-column align-items-start p-4 mb-3 border rounded shadow-sm">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1" style="font-style: italic;">"<%= quote.text %>"</h5>
+                                <% if (user && (user.role === 'admin' || user.id === quote.submittedBy)) { %>
+                                    <form action="/quotes/<%= quote.id %>/delete" method="POST" onsubmit="return confirm('Quote verwijderen?');" class="ms-2">
+                                        <button type="submit" class="btn btn-sm btn-danger text-white">
+                                            <i class="fas fa-trash"></i> Verwijderen
+                                        </button>
+                                    </form>
+                                <% } %>
+                            </div>
+                            <p class="mb-1 text-muted text-end">- <%= quote.author %></p>
+                            <small class="text-muted">Toegevoegd door <%= quote.submitter ? quote.submitter.username : 'Onbekend' %> op <%= new Date(quote.createdAt).toLocaleDateString() %></small>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="alert alert-info">Nog geen quotes toegevoegd. Wees de eerste!</div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
