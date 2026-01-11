@@ -1,3 +1,82 @@
+<style>
+    .avatar-circle-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+    /* Polaroid Overlay */
+    .polaroid-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+    }
+    .polaroid-container {
+        background-color: white;
+        padding: 15px 15px 50px 15px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        transform: rotate(-2deg);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        max-width: 90%;
+        width: auto;
+        display: inline-block;
+    }
+    .polaroid-container:hover {
+        transform: rotate(0deg) scale(1.02);
+    }
+    .polaroid-photo img {
+        max-width: 80vw;
+        max-height: 70vh;
+        min-width: 250px;
+        display: block;
+        background-color: #eee;
+        border: 1px solid #ddd;
+    }
+    .polaroid-caption {
+        font-family: 'Patrick Hand', 'Brush Script MT', cursive;
+        font-size: 2rem;
+        text-align: center;
+        margin-top: 20px;
+        color: #2c3e50;
+        line-height: 1;
+    }
+</style>
+
+<div id="polaroid-overlay" class="polaroid-overlay d-none" onclick="closePolaroid()">
+    <div class="polaroid-container" onclick="event.stopPropagation()">
+        <div class="polaroid-photo">
+            <img id="polaroid-image" src="" alt="Profile Picture">
+        </div>
+        <div class="polaroid-caption" id="polaroid-caption"></div>
+    </div>
+</div>
+
+<script>
+function showPolaroid(src, name) {
+    document.getElementById('polaroid-image').src = src;
+    document.getElementById('polaroid-caption').textContent = name;
+    document.getElementById('polaroid-overlay').classList.remove('d-none');
+    document.body.style.overflow = 'hidden';
+}
+function closePolaroid() {
+    document.getElementById('polaroid-overlay').classList.add('d-none');
+    document.body.style.overflow = '';
+}
+</script>
+
 <%- include('../partials/header') %>
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Gebruikers Beheren</h1>
@@ -45,9 +124,10 @@
 %>
 
 <h3>Actieve Gebruikers</h3>
-<table class="table table-striped">
+<table class="table table-striped align-middle">
     <thead>
         <tr>
+            <th style="width: 45px;"></th>
             <th>Gebruikersnaam</th>
             <th>Rol</th>
             <th>Actie</th>
@@ -56,6 +136,15 @@
     <tbody>
         <% activeUsers.forEach(u => { %>
             <tr>
+                <td>
+                    <% if (u.profilePicture) { %>
+                        <img src="<%= u.profilePicture %>" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(u.username) %>" onclick="showPolaroid('<%= u.profilePicture %>', '<%= capitalizeName(u.username) %>')">
+                    <% } else { %>
+                        <div class="avatar-circle-sm" style="background-color: <%= getAvatarColor(u.username) %>;">
+                            <%= u.username.substring(0, 2).toUpperCase() %>
+                        </div>
+                    <% } %>
+                </td>
                 <td><%= capitalizeName(u.username) %></td>
                 <td>
                     <% if(u.role === 'admin') { %>
@@ -95,9 +184,10 @@
             <% if (inactiveUsers.length === 0) { %>
                 <p class="text-muted">Geen oud-leiding.</p>
             <% } else { %>
-                <table class="table table-sm text-muted">
+                <table class="table table-sm text-muted align-middle">
                     <thead>
                         <tr>
+                            <th style="width: 45px;"></th>
                             <th>Gebruikersnaam</th>
                             <th>Rol</th>
                             <th>Actie</th>
@@ -106,6 +196,15 @@
                     <tbody>
                         <% inactiveUsers.forEach(u => { %>
                             <tr>
+                                <td>
+                                    <% if (u.profilePicture) { %>
+                                        <img src="<%= u.profilePicture %>" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(u.username) %>" onclick="showPolaroid('<%= u.profilePicture %>', '<%= capitalizeName(u.username) %>')">
+                                    <% } else { %>
+                                        <div class="avatar-circle-sm" style="background-color: <%= getAvatarColor(u.username) %>;">
+                                            <%= u.username.substring(0, 2).toUpperCase() %>
+                                        </div>
+                                    <% } %>
+                                </td>
                                 <td><%= capitalizeName(u.username) %></td>
                                 <td><span class="badge bg-secondary">Oud-Leiding</span></td>
                                 <td>

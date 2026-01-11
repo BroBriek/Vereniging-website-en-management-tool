@@ -96,7 +96,7 @@ exports.getFeed = async (req, res) => {
             where: activeGroup ? { groupId: activeGroup.id } : {},
             include: [
                 { model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] },
-                { model: Like, as: 'likes', include: [{ model: User, as: 'user', attributes: ['username'] }] },
+                { model: Like, as: 'likes', include: [{ model: User, as: 'user', attributes: ['username', 'profilePicture'] }] },
                 { model: PostResponse, as: 'responses', include: [{ model: User, as: 'user', attributes: ['id', 'username'] }] }
             ],
             order: [['createdAt', 'DESC']],
@@ -420,10 +420,10 @@ exports.toggleLike = async (req, res) => {
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
              const likes = await Like.findAll({
                  where: { postId },
-                 include: [{ model: User, as: 'user', attributes: ['username'] }]
+                 include: [{ model: User, as: 'user', attributes: ['username', 'profilePicture'] }]
              });
              const likeCount = likes.length;
-             const likers = likes.map(l => l.user ? l.user.username : 'Onbekend');
+             const likers = likes.map(l => l.user ? { username: l.user.username, profilePicture: l.user.profilePicture } : { username: 'Onbekend', profilePicture: null });
              return res.json({ success: true, liked: !existingLike, count: likeCount, likers });
         }
 

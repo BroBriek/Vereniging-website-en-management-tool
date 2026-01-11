@@ -433,6 +433,7 @@ exports.getUsers = async (req, res) => {
             where: {
                 username: { [require('sequelize').Op.ne]: 'admin' } // Exclude 'admin'
             },
+            attributes: ['id', 'username', 'role', 'isActive', 'profilePicture'],
             order: [['username', 'ASC']]
         });        res.render('admin/users', { title: 'Beheer Gebruikers', users, user: req.user });
     } catch (error) {
