@@ -5,9 +5,15 @@ exports.getLogin = (req, res) => {
 };
 
 exports.postLogin = (req, res, next) => {
-  passport.authenticate('local', {
-    successRedirect: '/feed', // Redirect to feed by default
-    failureRedirect: '/auth/login',
+  passport.authenticate('local', (err, user, info) => {
+    if (err) { return next(err); }
+    if (!user) { return res.redirect('/auth/login'); }
+    req.logIn(user, (err) => {
+      if (err) { return next(err); }
+      const returnTo = req.session.returnTo;
+      delete req.session.returnTo;
+      res.redirect(returnTo || '/feed');
+    });
   })(req, res, next);
 };
 
