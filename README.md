@@ -35,11 +35,12 @@ Om de applicatie lokaal te draaien, volg je de onderstaande stappen:
     ```env
     PORT=3000
     SESSION_SECRET=uw_geheime_sessie_sleutel # VERPLICHT! Verander deze naar een unieke, sterke sleutel
+    EMAIL= Johnathan.Doe@example.com
     EMAIL_PASSWORD=uw_email_wachtwoord # Optioneel, voor contactformulier e-mails
     ```
     *   **`PORT`**: De poort waarop de server draait.
     *   **`SESSION_SECRET`**: Een willekeurige string die gebruikt wordt om sessies te versleutelen. **Essentieel voor beveiliging.**
-    *   **`EMAIL_PASSWORD`**: Het wachtwoord voor het e-mailaccount (`Chiromeeuwen@outlook.com`) dat wordt gebruikt voor het contactformulier.
+    *   **`EMAIL_PASSWORD`**: Het wachtwoord voor het e-mailaccount dat wordt gebruikt voor het contactformulier en de mail server.
 
 5.  **Start de applicatie:**
     ```bash
@@ -71,5 +72,3 @@ Via het admin-dashboard kun je statische pagina's (zoals 'Home', 'Praktisch', 'A
 In het admin-dashboard, onder 'Inschrijvingen', is er een optie om de huidige ledenlijst te exporteren naar een Excel-bestand.
 
 ---
-
-Gemaakt met ❤️ voor de vereniging.
