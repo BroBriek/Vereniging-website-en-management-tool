@@ -376,6 +376,23 @@ function autoResize(element) {
     <% } %>
 </div>
 
+<!-- Re-usable Modal for Likes -->
+<div class="modal fade" id="likesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm modal-dialog-scrollable">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title font-playful">Vind-ik-leuks</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+      </div>
+      <div class="modal-body pt-2" style="max-height: 400px;">
+        <ul id="likesModalList" class="list-unstyled mb-0">
+            <!-- Items will be injected here -->
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Re-usable Modal for Fields -->
 <div class="modal fade" id="addFieldModal" tabindex="-1">
   <div class="modal-dialog">
@@ -478,6 +495,39 @@ function saveFormSchema() {
     }
 }
 
+function showLikesModal(element) {
+    const likersData = element.getAttribute('data-likers');
+    if (!likersData) return;
+    
+    let likers = [];
+    try {
+        likers = JSON.parse(likersData);
+    } catch(e) {
+        console.error("Error parsing likers data", e);
+        return;
+    }
+
+    if (likers.length === 0) return;
+
+    const list = document.getElementById('likesModalList');
+    list.innerHTML = '';
+    
+    likers.forEach(name => {
+        const li = document.createElement('li');
+        li.className = 'py-2 border-bottom border-light text-center';
+        li.style.textTransform = 'capitalize';
+        li.textContent = name;
+        list.appendChild(li);
+    });
+    
+    // Remove last border
+    if(list.lastChild) list.lastChild.classList.remove('border-bottom');
+
+    const modalEl = document.getElementById('likesModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
 // Function to initialize post features (read more, likes) on a specific container or document
 function initPostFeatures(rootElement = document) {
     // Check for long posts
@@ -528,7 +578,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         icon.classList.remove('bi-heart-fill'); icon.classList.add('bi-heart');
                     }
                     countSpan.textContent = data.count > 0 ? data.count : '';
-                    if (likersSpan && data.likers) likersSpan.textContent = data.likers.join(', ');
+                    if (likersSpan && data.likers) {
+                        const capitalizedLikers = data.likers.map(name => name ? name.charAt(0).toUpperCase() + name.slice(1) : '');
+                        likersSpan.textContent = capitalizedLikers.join(', ');
+                        likersSpan.setAttribute('data-likers', JSON.stringify(data.likers));
+                        likersSpan.style.cursor = 'pointer';
+                        likersSpan.onclick = function() { showLikesModal(this); };
+                    }
                 }
             } catch (error) { 
                 console.error('Like failed via AJAX, falling back to form submit', error);
