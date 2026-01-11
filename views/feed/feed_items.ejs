@@ -176,6 +176,7 @@
                         const isLiked = likes.some(l => l.userId === user.id);
                         const likeCount = likes.length;
                         const likerNames = likes.map(l => l.user ? capitalizeName(l.user.username) : 'Onbekend').join(', ');
+                        const likerArray = likes.map(l => l.user ? l.user.username : 'Onbekend');
                     %>
                     <form action="/feed/post/<%= post.id %>/like" method="POST" class="like-form" data-post-id="<%= post.id %>">
                         <button type="submit" class="btn btn-action d-flex align-items-center <%= isLiked ? 'text-danger' : 'text-muted' %> bg-transparent border-0 p-0 me-3" aria-label="Vind ik leuk">
@@ -184,9 +185,12 @@
                         </button>
                     </form>
                     <% if (likeCount > 0) { %>
-                        <small class="text-muted likers-list" style="font-size: 0.8rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= likerNames %></small>
+                        <small class="text-muted likers-list" 
+                               style="font-size: 0.8rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;"
+                               data-likers='<%= JSON.stringify(likerArray).replace(/'/g, "&#39;") %>'
+                               onclick="showLikesModal(this)"><%= likerNames %></small>
                     <% } else { %>
-                        <small class="text-muted likers-list"></small>
+                        <small class="text-muted likers-list" style="cursor: pointer;" onclick="showLikesModal(this)"></small>
                     <% } %>
                 </div>
                 <div class="text-muted small">
