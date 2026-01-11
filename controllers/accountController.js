@@ -237,6 +237,7 @@ exports.verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
     const user = await User.findByPk(req.user.id);
+    
     if (!user || !user.emailVerificationToken || user.emailVerificationToken !== token) {
       return res.render('account/settings', { ...renderContext, error: 'Ongeldige verificatielink' });
     }
