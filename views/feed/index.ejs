@@ -512,11 +512,49 @@ function showLikesModal(element) {
     const list = document.getElementById('likesModalList');
     list.innerHTML = '';
     
-    likers.forEach(name => {
+    likers.forEach(liker => {
+        const username = typeof liker === 'string' ? liker : liker.username;
+        const profilePicture = typeof liker === 'string' ? null : liker.profilePicture;
+        
         const li = document.createElement('li');
-        li.className = 'py-2 border-bottom border-light text-center';
-        li.style.textTransform = 'capitalize';
-        li.textContent = name;
+        li.className = 'py-2 border-bottom border-light d-flex align-items-center justify-content-start px-3';
+        
+        if (profilePicture) {
+            const img = document.createElement('img');
+            img.src = profilePicture;
+            img.className = 'rounded-circle me-3 border shadow-sm';
+            img.style.width = '40px';
+            img.style.height = '40px';
+            img.style.objectFit = 'cover';
+            img.style.cursor = 'pointer';
+            img.onclick = function() {
+                // Ensure polaroid is visible over modal
+                document.getElementById('polaroid-overlay').style.zIndex = '10000'; 
+                showPolaroid(profilePicture, username.charAt(0).toUpperCase() + username.slice(1));
+            };
+            li.appendChild(img);
+        } else {
+            const vibrantColors = ['#f1c40f', '#2ecc71', '#e67e22', '#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#d35400'];
+            let hash = 0;
+            for (let i = 0; i < username.length; i++) {
+                hash = username.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const color = vibrantColors[Math.abs(hash) % vibrantColors.length];
+            
+            const div = document.createElement('div');
+            div.className = 'rounded-circle me-3 border shadow-sm d-flex align-items-center justify-content-center text-white fw-bold';
+            div.style.width = '40px';
+            div.style.height = '40px';
+            div.style.backgroundColor = color;
+            div.textContent = username.substring(0, 2).toUpperCase();
+            li.appendChild(div);
+        }
+
+        const span = document.createElement('span');
+        span.style.textTransform = 'capitalize';
+        span.textContent = username;
+        li.appendChild(span);
+
         list.appendChild(li);
     });
     
@@ -579,7 +617,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     countSpan.textContent = data.count > 0 ? data.count : '';
                     if (likersSpan && data.likers) {
-                        const capitalizedLikers = data.likers.map(name => name ? name.charAt(0).toUpperCase() + name.slice(1) : '');
+                        const capitalizedLikers = data.likers.map(l => l.username ? l.username.charAt(0).toUpperCase() + l.username.slice(1) : '');
                         likersSpan.textContent = capitalizedLikers.join(', ');
                         likersSpan.setAttribute('data-likers', JSON.stringify(data.likers));
                         likersSpan.style.cursor = 'pointer';

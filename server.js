@@ -118,6 +118,23 @@ app.use((req, res, next) => {
         return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     }).join(' ');
   };
+
+  // Helper for avatar colors
+  res.locals.getAvatarColor = (username) => {
+    if (!username) return '#db3e41';
+    const vibrantColors = ['#f1c40f', '#2ecc71', '#e67e22', '#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#d35400'];
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return vibrantColors[Math.abs(hash) % vibrantColors.length];
+  };
+
+  // Helper for initials
+  res.locals.getInitials = (username) => {
+    if (!username) return '?';
+    return username.substring(0, 2).toUpperCase();
+  };
   
   // SEO headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
