@@ -15,6 +15,7 @@ router.post('/post/:id/update', feedController.updatePost);
 router.post('/post/:id/delete', feedController.deletePost);
 router.post('/post/:id/like', feedController.toggleLike);
 router.post('/comment', feedController.postComment);
+router.post('/comment/:id/like', feedController.toggleCommentLike);
 router.post('/comment/:id/update', feedController.updateComment);
 router.post('/comment/:id/delete', feedController.deleteComment);
 router.post('/respond', feedController.postResponse);
