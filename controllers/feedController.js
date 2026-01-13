@@ -113,7 +113,7 @@ exports.getFeed = async (req, res) => {
             where: { postId: { [Op.in]: postIds } },
             include: [
                 { model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] },
-                { model: Like, as: 'likes', attributes: ['userId'] }
+                { model: Like, as: 'likes', include: [{ model: User, as: 'user', attributes: ['username', 'profilePicture'] }] }
             ],
             order: [['createdAt', 'ASC']] // Chronological order
         });

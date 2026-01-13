@@ -639,6 +639,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         icon.classList.remove('bi-heart-fill'); icon.classList.add('bi-heart');
                     }
                     countSpan.textContent = data.count > 0 ? data.count : '';
+
+                    // Update countSpan attributes for comments (where count triggers modal)
+                    if (data.likers) {
+                        countSpan.setAttribute('data-likers', JSON.stringify(data.likers));
+                        if (data.count > 0) {
+                            countSpan.style.cursor = 'pointer';
+                            countSpan.onclick = function(e) { 
+                                e.preventDefault(); 
+                                e.stopPropagation(); 
+                                showLikesModal(this); 
+                            };
+                        } else {
+                            countSpan.style.cursor = 'default';
+                            countSpan.onclick = null;
+                        }
+                    }
+
                     if (likersSpan && data.likers) {
                         const capitalizedLikers = data.likers.map(l => l.username ? l.username.charAt(0).toUpperCase() + l.username.slice(1) : '');
                         likersSpan.textContent = capitalizedLikers.join(', ');
