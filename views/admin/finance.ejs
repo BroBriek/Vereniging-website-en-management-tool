@@ -135,7 +135,7 @@
 
                 <!-- Input Row -->
                 <tr class="bg-light border-top border-2">
-                    <form action="/admin/finance/<%= currentFolder ? currentFolder.id : '' %>" method="POST">
+                    <form action="/admin/finance<%= currentFolder ? '/' + currentFolder.id : '' %>" method="POST">
                         <td>
                             <input type="date" class="form-control form-control-sm" name="date" value="<%= new Date().toISOString().split('T')[0] %>" required>
                         </td>
