@@ -36,6 +36,15 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  notificationPreferences: {
+    type: DataTypes.JSON,
+    defaultValue: {
+      mention: true,
+      comment: true,
+      reaction: true,
+      newPost: true
+    }
+  },
   profilePicture: {
     type: DataTypes.STRING,
     allowNull: true

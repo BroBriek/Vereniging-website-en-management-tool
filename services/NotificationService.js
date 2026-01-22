@@ -24,6 +24,26 @@ class NotificationService {
                 return;
             }
 
+            // Check Preferences
+            if (messageData.type) {
+                let prefs = user.notificationPreferences;
+                // Parse if string (SQLite/JSON issue)
+                if (typeof prefs === 'string') {
+                    try {
+                        prefs = JSON.parse(prefs);
+                    } catch (e) {
+                        prefs = {}; 
+                    }
+                }
+                
+                // If preferences exist and the specific type is explicitly false, skip
+                // Default behavior (if pref is undefined) is TRUE (send it)
+                if (prefs && prefs[messageData.type] === false) {
+                    console.log(`NotificationService: Skipping ${messageData.type} notification for ${user.username} due to preference.`);
+                    return;
+                }
+            }
+
             const promises = [];
 
             // 1. Web Push Notifications
