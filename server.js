@@ -61,7 +61,7 @@ syncDatabase();
 // Web Push VAPID configuration
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
-    'mailto:admin@chirosite.local',
+    `mailto:${process.env.IONOS_EMAIL || 'example@example.com'}`,
     process.env.VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
   );

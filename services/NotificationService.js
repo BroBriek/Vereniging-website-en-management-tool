@@ -107,9 +107,9 @@ class NotificationService {
             try {
                 await webpush.sendNotification(sub, payload);
             } catch (err) {
-                if (err.statusCode === 410 || err.statusCode === 404) {
-                    // Subscription is gone, mark for removal
-                    console.log(`NotificationService: Removing stale subscription for user ${user.username}`);
+                if (err.statusCode === 410 || err.statusCode === 404 || err.statusCode === 403) {
+                    // Subscription is gone or invalid (BadJwtToken), mark for removal
+                    console.log(`NotificationService: Removing stale/invalid subscription (${err.statusCode}) for user ${user.username}`);
                     // We set it to null in the original array copy to filter later
                     // (But index management is tricky with map, so we'll just filter `currentSubscriptions` later based on failures?)
                     // Actually, simpler to filter the user's subscriptions array directly
