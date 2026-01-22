@@ -238,7 +238,8 @@ exports.postCreatePost = async (req, res) => {
             const messageData = {
                 title: 'Nieuw Bericht in Leidingshoekje',
                 body: `${req.user.username}: ${(content || '').substring(0, 40)}${(content && content.length > 40) ? '...' : ''}`,
-                url: group ? `/feed/group/${group.slug}` : '/feed'
+                url: group ? `/feed/group/${group.slug}` : '/feed',
+                type: 'newPost'
             };
 
             // 1. Group/Global Notification
@@ -262,7 +263,8 @@ exports.postCreatePost = async (req, res) => {
                 const mentionMessage = {
                     title: 'Je bent genoemd in een bericht',
                     body: `${req.user.username} noemde je: "${(content || '').substring(0, 30)}..."`,
-                    url: group ? `/feed/group/${group.slug}#post-${newPost.id}` : `/feed#post-${newPost.id}`
+                    url: group ? `/feed/group/${group.slug}#post-${newPost.id}` : `/feed#post-${newPost.id}`,
+                    type: 'mention'
                 };
 
                 await Promise.allSettled(mentionedUsers.map(u => NotificationService.sendIndividualNotification(u, mentionMessage)));
@@ -295,6 +297,9 @@ exports.postComment = async (req, res) => {
 
         // Send Notification if it's a reply
         (async () => {
+            let notifiedUserIds = new Set();
+
+            // 1. Reply to Comment
             if (parentId) {
                 const parentComment = await Comment.findByPk(parentId, {
                     include: [{ model: User, as: 'author' }]
@@ -305,13 +310,32 @@ exports.postComment = async (req, res) => {
                     const messageData = {
                         title: 'Nieuwe reactie',
                         body: `${req.user.username} reageerde op je: "${content.substring(0, 30)}"...`,
-                        url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`
+                        url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`,
+                        type: 'comment'
                     };
-                    NotificationService.sendIndividualNotification(targetUser, messageData);
+                    await NotificationService.sendIndividualNotification(targetUser, messageData);
+                    notifiedUserIds.add(targetUser.id);
                 }
             }
 
-            // Mention Notifications
+            // 2. Comment on Post (Notify Post Author)
+            if (post && post.authorId !== req.user.id) {
+                if (!notifiedUserIds.has(post.authorId)) {
+                    const postAuthor = await User.findByPk(post.authorId);
+                    if (postAuthor) {
+                         const messageData = {
+                            title: 'Nieuwe reactie op je bericht',
+                            body: `${req.user.username} reageerde op je bericht.`,
+                            url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`,
+                            type: 'comment'
+                        };
+                        await NotificationService.sendIndividualNotification(postAuthor, messageData);
+                        notifiedUserIds.add(postAuthor.id);
+                    }
+                }
+            }
+
+            // 3. Mention Notifications
             const mentionedUsernames = extractMentions(content);
             if (mentionedUsernames.length > 0) {
                 const mentionedUsers = await User.findAll({
@@ -324,7 +348,8 @@ exports.postComment = async (req, res) => {
                 const mentionMessage = {
                     title: 'Je bent genoemd in een reactie',
                     body: `${req.user.username} noemde je: "${content.substring(0, 30)}..."`,
-                    url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`
+                    url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`,
+                    type: 'mention'
                 };
 
                 await Promise.allSettled(mentionedUsers.map(u => NotificationService.sendIndividualNotification(u, mentionMessage)));
@@ -475,7 +500,8 @@ exports.toggleCommentLike = async (req, res) => {
                  const messageData = {
                     title: 'Nieuwe like',
                     body: `${req.user.username} vond je reactie leuk: "${comment.content.substring(0, 30)}..."`,
-                    url: group ? `/feed/group/${group.slug}#post-${post.id}` : `/feed#post-${post.id}`
+                    url: group ? `/feed/group/${group.slug}#post-${post.id}` : `/feed#post-${post.id}`,
+                    type: 'reaction'
                 };
                 NotificationService.sendIndividualNotification(comment.author, messageData);
             }

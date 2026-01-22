@@ -15,5 +15,6 @@ router.get('/email/verify/:token', accountController.verifyEmail);
 router.post('/email-toggle', accountController.toggleEmailNotifications);
 router.post('/profile-picture', profileUpload.single('profilePicture'), accountController.uploadProfilePicture);
 router.post('/profile-picture/delete', accountController.deleteProfilePicture);
+router.post('/notifications/preferences', accountController.updateNotificationPreferences);
 
 module.exports = router;

@@ -274,3 +274,34 @@ exports.toggleEmailNotifications = async (req, res) => {
     res.render('account/settings', { ...renderContext, error: 'Kon voorkeur niet opslaan' });
   }
 };
+
+exports.updateNotificationPreferences = async (req, res) => {
+    const renderContext = {
+        title: 'Account Instellingen',
+        user: req.user,
+        vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+        error: null,
+        success: null
+    };
+
+    try {
+        const user = await User.findByPk(req.user.id);
+        
+        const newPrefs = {
+            newPost: req.body.newPost === 'on',
+            mention: req.body.mention === 'on',
+            comment: req.body.comment === 'on',
+            reaction: req.body.reaction === 'on'
+        };
+
+        user.notificationPreferences = newPrefs;
+        await user.save();
+        
+        renderContext.user = user;
+        res.render('account/settings', { ...renderContext, success: 'Notificatievoorkeuren bijgewerkt.' });
+
+    } catch (err) {
+        console.error('Update Prefs Error:', err);
+        res.render('account/settings', { ...renderContext, error: 'Kon voorkeuren niet opslaan.' });
+    }
+};

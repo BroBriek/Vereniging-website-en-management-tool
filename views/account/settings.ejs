@@ -132,6 +132,42 @@
                     <% } %>
                 </div>
             </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-warning text-dark">
+                    Meldingstypen
+                </div>
+                <div class="card-body">
+                    <form action="/account/notifications/preferences" method="POST">
+                        <% 
+                            const prefs = user.notificationPreferences || { newPost: true, mention: true, comment: true, reaction: true };
+                            const p = (typeof prefs === 'string') ? JSON.parse(prefs) : prefs;
+                        %>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="prefNewPost" name="newPost" <%= p.newPost ? 'checked' : '' %>>
+                            <label class="form-check-label" for="prefNewPost">Nieuwe berichten in Leidingshoekje</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="prefMention" name="mention" <%= p.mention ? 'checked' : '' %>>
+                            <label class="form-check-label" for="prefMention">Wanneer ik genoemd word (@mention)</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="prefComment" name="comment" <%= p.comment ? 'checked' : '' %>>
+                            <label class="form-check-label" for="prefComment">Reacties op mijn berichten of reacties</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="prefReaction" name="reaction" <%= p.reaction ? 'checked' : '' %>>
+                            <label class="form-check-label" for="prefReaction">Likes op mijn berichten of reacties</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning">Voorkeuren Opslaan</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
