@@ -81,90 +81,86 @@
         <!-- Notification Settings -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header bg-success text-white">
-                    Meldingen
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <span>Meldingen</span>
+                    <a href="/notificaties" class="text-white text-decoration-none" title="Hulp bij notificaties">
+                        <i class="bi bi-question-circle fs-5"></i>
+                    </a>
                 </div>
                 <div class="card-body">
-                    <p>Ontvang meldingen wanneer er een nieuw bericht in het leidingshoekje wordt geplaatst.</p>
-                    
-                    <div id="notification-ui">
+                    <!-- Push Notification Setup -->
+                    <h5 class="card-title h6 mb-3">Push Meldingen (App/Browser)</h5>
+                    <p class="small text-muted">Ontvang meldingen direct op dit toestel.</p>
+                    <div id="notification-ui" class="mb-4">
                         <button id="enable-push-btn" class="btn btn-outline-success w-100">
-                            <i class="bi bi-bell"></i> Meldingen Inschakelen (op dit toestel)
+                            <i class="bi bi-bell"></i> Meldingen Inschakelen
                         </button>
                         <p id="push-status" class="mt-2 text-muted small"></p>
                     </div>
-                </div>
-            </div>
 
-            <div class="card mt-3">
-                <div class="card-header bg-info text-white">
-                    E-mailmeldingen
-                </div>
-                <div class="card-body">
+                    <hr class="my-4">
+
+                    <!-- Email Notification Setup -->
+                    <h5 class="card-title h6 mb-3">E-mailinstellingen</h5>
+                    
                     <% if (!user.emailVerified) { %>
+                        <div class="alert alert-warning py-2 small">
+                            Je e-mailadres is nog niet geverifieerd.
+                        </div>
                         <form action="/account/email" method="POST" class="mb-3">
-                            <div class="mb-2">
-                                <label class="form-label">E-mailadres</label>
-                                <input type="email" class="form-control" name="email" value="<%= user.email || '' %>" required>
+                            <div class="input-group mb-2">
+                                <input type="email" class="form-control" name="email" value="<%= user.email || '' %>" placeholder="jouw@email.com" required>
+                                <button type="submit" class="btn btn-info text-white">Verifiëren</button>
                             </div>
-                            <button type="submit" class="btn btn-info">Opslaan en verifiëren</button>
                         </form>
                     <% } else { %>
-                        <p><strong>E-mailadres:</strong> <%= user.email %></p>
-                    <% } %>
-
-                    <% if (user.email) { %>
-                        <p class="small">Status: <span class="<%= user.emailVerified ? 'text-success' : 'text-warning' %>"><%= user.emailVerified ? 'Geverifieerd' : 'Niet geverifieerd' %></span></p>
-                        <form action="/account/email-toggle" method="POST" id="emailToggleForm">
-                            <div class="chiro-switch-container">
-                                <label class="chiro-switch">
-                                    <input type="checkbox" id="emailNotifToggle" name="enabled" <%= user.emailNotificationsEnabled ? 'checked' : '' %> <%= user.emailVerified ? '' : 'disabled' %>>
-                                    <span class="chiro-slider"></span>
-                                </label>
-                                <div class="switch-label-container">
-                                    <span class="switch-title">E-mailmeldingen ontvangen</span>
-                                    <span id="emailToggleStatus" class="switch-status <%= user.emailNotificationsEnabled ? 'status-on' : 'status-off' %>">
-                                        <%= user.emailNotificationsEnabled ? 'AAN: Je ontvangt e-mails' : 'UIT: Geen e-mails' %>
-                                    </span>
+                        <div class="mb-3">
+                            <p class="mb-2 small"><strong>Geverifieerd e-mailadres:</strong><br><%= user.email %></p>
+                            
+                            <form action="/account/email-toggle" method="POST" id="emailToggleForm">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="emailNotifToggle" name="enabled" <%= user.emailNotificationsEnabled ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="emailNotifToggle">
+                                        <span id="emailToggleStatus"><%= user.emailNotificationsEnabled ? 'E-mailmeldingen zijn AAN' : 'E-mailmeldingen zijn UIT' %></span>
+                                    </label>
                                 </div>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     <% } %>
-                </div>
-            </div>
 
-            <div class="card mt-3">
-                <div class="card-header bg-warning text-dark">
-                    Meldingstypen
-                </div>
-                <div class="card-body">
+                    <hr class="my-4">
+
+                    <!-- Preferences -->
+                    <h5 class="card-title h6 mb-3">Voorkeuren</h5>
+                    <p class="small text-muted mb-3">Kies waarover je meldingen wilt ontvangen (via push en/of e-mail).</p>
+
                     <form action="/account/notifications/preferences" method="POST">
                         <% 
                             const prefs = user.notificationPreferences || { newPost: true, mention: true, comment: true, reaction: true };
                             const p = (typeof prefs === 'string') ? JSON.parse(prefs) : prefs;
                         %>
                         
-                        <div class="form-check form-switch mb-3">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="prefNewPost" name="newPost" <%= p.newPost ? 'checked' : '' %>>
-                            <label class="form-check-label" for="prefNewPost">Nieuwe berichten in Leidingshoekje</label>
+                            <label class="form-check-label small" for="prefNewPost">Nieuwe berichten in Leidingshoekje</label>
                         </div>
                         
-                        <div class="form-check form-switch mb-3">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="prefMention" name="mention" <%= p.mention ? 'checked' : '' %>>
-                            <label class="form-check-label" for="prefMention">Wanneer ik genoemd word (@mention)</label>
+                            <label class="form-check-label small" for="prefMention">Wanneer ik genoemd word (@mention)</label>
                         </div>
                         
-                        <div class="form-check form-switch mb-3">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="prefComment" name="comment" <%= p.comment ? 'checked' : '' %>>
-                            <label class="form-check-label" for="prefComment">Reacties op mijn berichten of reacties</label>
+                            <label class="form-check-label small" for="prefComment">Reacties op mijn berichten</label>
                         </div>
                         
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" id="prefReaction" name="reaction" <%= p.reaction ? 'checked' : '' %>>
-                            <label class="form-check-label" for="prefReaction">Likes op mijn berichten of reacties</label>
+                            <label class="form-check-label small" for="prefReaction">Likes op mijn berichten</label>
                         </div>
 
-                        <button type="submit" class="btn btn-warning">Voorkeuren Opslaan</button>
+                        <button type="submit" class="btn btn-warning w-100 btn-sm">Voorkeuren Opslaan</button>
                     </form>
                 </div>
             </div>
