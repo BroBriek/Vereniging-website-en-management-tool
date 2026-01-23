@@ -58,25 +58,31 @@ function highlightMentions(text) {
         </div>
         
         <div class="ms-1 mt-1 d-flex align-items-center gap-3">
-            <% 
-                const likes = comment.likes || [];
-                const isLiked = likes.some(l => l.userId === user.id);
-                const likeCount = likes.length;
-                const likerArray = likes.map(l => l.user ? { username: l.user.username, profilePicture: l.user.profilePicture } : { username: 'Onbekend', profilePicture: null });
-            %>
-            <form action="/feed/comment/<%= comment.id %>/like" method="POST" class="like-form d-inline-block m-0" data-comment-id="<%= comment.id %>">
-                <button type="submit" class="btn btn-link p-0 text-decoration-none <%= isLiked ? 'text-danger' : 'text-muted' %> d-flex align-items-center gap-1" style="font-size: 0.75rem; border: none;" aria-label="Vind ik leuk">
-                    <i class="bi <%= isLiked ? 'bi-heart-fill' : 'bi-heart' %>"></i>
-                    <span class="fw-bold like-count" 
-                          style="<%= likeCount > 0 ? 'cursor: pointer;' : '' %>"
-                          data-likers='<%= JSON.stringify(likerArray).replace(/'/g, "&#39;") %>'
-                          onclick="if(this.innerText !== '') { event.preventDefault(); event.stopPropagation(); showLikesModal(this); }">
-                        <%= likeCount > 0 ? likeCount : '' %>
-                    </span>
-                </button>
-            </form>
-
             <a href="#" onclick="document.getElementById('reply-form-<%= comment.id %>').classList.toggle('d-none'); return false;" class="small text-muted text-decoration-none fw-bold" style="font-size: 0.75rem;">Beantwoorden</a>
+
+            <div class="d-flex align-items-center gap-2">
+                <% 
+                    const likes = comment.likes || [];
+                    const isLiked = likes.some(l => l.userId === user.id);
+                    const likeCount = likes.length;
+                    const likerArray = likes.map(l => l.user ? { username: l.user.username, profilePicture: l.user.profilePicture } : { username: 'Onbekend', profilePicture: null });
+                %>
+                
+                <form action="/feed/comment/<%= comment.id %>/like" method="POST" class="like-form d-inline-block m-0" data-comment-id="<%= comment.id %>">
+                    <button type="submit" class="btn btn-link p-0 text-decoration-none <%= isLiked ? 'text-danger' : 'text-muted' %> d-flex align-items-center" style="font-size: 0.75rem; border: none;" aria-label="Vind ik leuk">
+                        <i class="bi <%= isLiked ? 'bi-heart-fill' : 'bi-heart' %>" style="font-size: 1.1rem;"></i>
+                    </button>
+                </form>
+
+                <span id="like-count-container-<%= comment.id %>" 
+                      class="d-flex align-items-center gap-1 text-muted like-view-trigger" 
+                      style="font-size: 0.75rem; cursor: pointer; <%= likeCount > 0 ? '' : 'display: none !important;' %>"
+                      data-likers='<%= JSON.stringify(likerArray).replace(/'/g, "&#39;") %>'
+                      onclick="showLikesModal(this)">
+                    <span class="fw-bold count-text"><%= likeCount %></span>
+                    <i class="bi bi-people-fill"></i>
+                </span>
+            </div>
         </div>
 
         <!-- Reply Input -->

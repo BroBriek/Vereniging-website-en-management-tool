@@ -621,7 +621,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const form = e.target;
             const btn = form.querySelector('button');
             const icon = btn.querySelector('i');
+            
+            // Try to find count element inside button (Posts)
             const countSpan = btn.querySelector('.like-count');
+            
+            // Try to find detached count container (Comments)
+            let countContainer = null;
+            if (form.dataset.commentId) {
+                countContainer = document.getElementById('like-count-container-' + form.dataset.commentId);
+            }
+
             const likersSpan = form.parentElement.querySelector('.likers-list');
             
             try {
@@ -638,21 +647,34 @@ document.addEventListener('DOMContentLoaded', function() {
                         btn.classList.remove('text-danger'); btn.classList.add('text-muted');
                         icon.classList.remove('bi-heart-fill'); icon.classList.add('bi-heart');
                     }
-                    countSpan.textContent = data.count > 0 ? data.count : '';
+                    
+                    // Update Posts Style Count
+                    if (countSpan) {
+                        countSpan.textContent = data.count > 0 ? data.count : '';
+                        if (data.likers) {
+                            countSpan.setAttribute('data-likers', JSON.stringify(data.likers));
+                            if (data.count > 0) {
+                                countSpan.style.cursor = 'pointer';
+                                countSpan.onclick = function(e) { 
+                                    e.preventDefault(); 
+                                    e.stopPropagation(); 
+                                    showLikesModal(this); 
+                                };
+                            } else {
+                                countSpan.style.cursor = 'default';
+                                countSpan.onclick = null;
+                            }
+                        }
+                    }
 
-                    // Update countSpan attributes for comments (where count triggers modal)
-                    if (data.likers) {
-                        countSpan.setAttribute('data-likers', JSON.stringify(data.likers));
+                    // Update Comments Style Count (Detached)
+                    if (countContainer) {
                         if (data.count > 0) {
-                            countSpan.style.cursor = 'pointer';
-                            countSpan.onclick = function(e) { 
-                                e.preventDefault(); 
-                                e.stopPropagation(); 
-                                showLikesModal(this); 
-                            };
+                            countContainer.querySelector('.count-text').textContent = data.count;
+                            countContainer.style.setProperty('display', 'flex', 'important');
+                            countContainer.setAttribute('data-likers', JSON.stringify(data.likers));
                         } else {
-                            countSpan.style.cursor = 'default';
-                            countSpan.onclick = null;
+                            countContainer.style.setProperty('display', 'none', 'important');
                         }
                     }
 
