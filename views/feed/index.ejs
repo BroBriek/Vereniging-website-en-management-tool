@@ -445,7 +445,100 @@ function autoResize(element) {
   </div>
 </div>
 
+<!-- File Preview Modal -->
+<div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content rounded-4 border-0 shadow" style="height: 90vh;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title font-playful text-truncate" id="previewFileName" style="max-width: 80%;">Bestand</h5>
+        <div class="d-flex gap-2">
+            <a id="previewDownloadBtn" href="#" class="btn btn-primary btn-sm rounded-pill" download>
+                <i class="bi bi-download"></i> Download
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+        </div>
+      </div>
+      <div class="modal-body p-0 h-100 position-relative bg-light">
+        <div id="previewLoader" class="position-absolute top-50 start-50 translate-middle text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Laden...</p>
+        </div>
+        <iframe id="previewFrame" src="" class="w-100 h-100 border-0 rounded-bottom-4 d-none"></iframe>
+        <div id="previewError" class="d-none position-absolute top-50 start-50 translate-middle text-center p-4 w-100">
+            <i class="bi bi-file-earmark-x display-1 text-muted"></i>
+            <h5 class="mt-3">Voorbeeld niet beschikbaar</h5>
+            <p class="text-muted mb-3">Dit bestandstype kan niet worden weergegeven in de browser of we kunnen er niet bij.</p>
+            <a id="previewErrorDownloadBtn" href="#" class="btn btn-primary rounded-pill mt-2">
+                <i class="bi bi-download"></i> Download Bestand
+            </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+function openFilePreview(url, name) {
+    const modalEl = document.getElementById('filePreviewModal');
+    const modal = new bootstrap.Modal(modalEl);
+    const frame = document.getElementById('previewFrame');
+    const title = document.getElementById('previewFileName');
+    const downloadBtn = document.getElementById('previewDownloadBtn');
+    const errorBtn = document.getElementById('previewErrorDownloadBtn');
+    const loader = document.getElementById('previewLoader');
+    const errorDiv = document.getElementById('previewError');
+
+    // Reset state
+    title.textContent = name;
+    downloadBtn.href = url;
+    errorBtn.href = url;
+    loader.classList.remove('d-none');
+    frame.classList.add('d-none'); 
+    errorDiv.classList.add('d-none');
+    frame.src = '';
+
+    // Determine type
+    const ext = name.split('.').pop().toLowerCase();
+    const isPDF = ext === 'pdf';
+    const isOffice = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext);
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+
+    if (isPDF || isImage) {
+        frame.src = url;
+        frame.onload = function() {
+            loader.classList.add('d-none');
+            frame.classList.remove('d-none');
+        };
+        // Fallback for load errors (simple check)
+        frame.onerror = function() {
+             loader.classList.add('d-none');
+             errorDiv.classList.remove('d-none');
+        };
+    } else if (isOffice) {
+        // Check if localhost
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.')) {
+             loader.classList.add('d-none');
+             errorDiv.classList.remove('d-none');
+             errorDiv.querySelector('p').textContent = "Office bestanden kunnen niet lokaal worden bekeken (Google Docs Viewer vereist een publieke URL).";
+        } else {
+             // Use Google Docs Viewer
+             const encodedUrl = encodeURIComponent(window.location.origin + url);
+             frame.src = `https://docs.google.com/gview?url=${encodedUrl}&embedded=true`;
+             frame.onload = function() {
+                loader.classList.add('d-none');
+                frame.classList.remove('d-none');
+             };
+        }
+    } else {
+        // Unknown type
+         loader.classList.add('d-none');
+         errorDiv.classList.remove('d-none');
+    }
+
+    modal.show();
+    return false; // Prevent default link click
+}
+
 // Keep existing scripts for Edit Mode, Polls, Forms, and Like AJAX
 // Edit Mode Toggle
 function enableEditMode(id) {
