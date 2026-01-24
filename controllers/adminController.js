@@ -154,6 +154,32 @@ exports.getRegistrations = async (req, res) => {
         const selectedPeriod = req.query.period || currentPeriod;
         const searchQuery = (req.query.search || '').trim();
         
+        // Sorting
+        const sortField = req.query.sort || 'default';
+        const sortDirection = req.query.direction === 'DESC' ? 'DESC' : 'ASC';
+
+        let order = [];
+        switch (sortField) {
+            case 'name':
+                order = [['lastName', sortDirection], ['firstName', sortDirection]];
+                break;
+            case 'group':
+                order = [['group', sortDirection], ['type', 'DESC'], ['lastName', 'ASC']];
+                break;
+            case 'birthdate':
+                order = [['birthdate', sortDirection]];
+                break;
+            case 'type':
+                order = [['type', sortDirection], ['group', 'ASC'], ['lastName', 'ASC']];
+                break;
+            case 'period':
+                order = [['period', sortDirection], ['group', 'ASC']];
+                break;
+            default:
+                order = [['group', 'ASC'], ['type', 'DESC'], ['lastName', 'ASC']];
+                break;
+        }
+
         const where = {};
 
         // Filter by Period (unless 'all' is selected)
@@ -173,11 +199,7 @@ exports.getRegistrations = async (req, res) => {
 
         const registrations = await Registration.findAll({
             where,
-            order: [
-                ['group', 'ASC'],
-                ['type', 'DESC'], 
-                ['lastName', 'ASC']
-            ]
+            order
         });
 
         res.render('admin/registrations', { 
@@ -187,7 +209,9 @@ exports.getRegistrations = async (req, res) => {
             currentPeriod, // The system's active period
             selectedPeriod, // The period being viewed
             allPeriods,
-            searchQuery
+            searchQuery,
+            sortField,
+            sortDirection
         });
     } catch (error) {
         console.error('Error fetching registrations:', error);

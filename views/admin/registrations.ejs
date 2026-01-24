@@ -82,12 +82,29 @@
             <div class="table-responsive bg-white rounded shadow-sm">
                 <table class="table table-hover table-striped mb-0">
                     <thead class="table-dark">
+                        <% 
+                            const getSortLink = (field, label) => {
+                                const nextDir = (sortField === field && sortDirection === 'ASC') ? 'DESC' : 'ASC';
+                                let url = `/admin/registrations?period=${selectedPeriod}`;
+                                if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
+                                url += `&sort=${field}&direction=${nextDir}`;
+                                
+                                let icon = '';
+                                if (sortField === field) {
+                                    icon = sortDirection === 'ASC' ? '<i class="bi bi-caret-down-fill"></i>' : '<i class="bi bi-caret-up-fill"></i>';
+                                } else {
+                                    icon = '<i class="bi bi-arrow-down-up text-white-50" style="font-size: 0.8em;"></i>';
+                                }
+                                
+                                return `<a href="${url}" class="text-white text-decoration-none d-flex align-items-center gap-2">${label} ${icon}</a>`;
+                            };
+                        %>
                         <tr>
-                            <th>Groep</th>
-                            <th>Rol</th>
-                            <th>Naam</th>
-                            <% if (selectedPeriod === 'all') { %> <th>Jaar</th> <% } %>
-                            <th>Geboortedatum</th>
+                            <th><%- getSortLink('group', 'Groep') %></th>
+                            <th><%- getSortLink('type', 'Rol') %></th>
+                            <th><%- getSortLink('name', 'Naam') %></th>
+                            <% if (selectedPeriod === 'all') { %> <th><%- getSortLink('period', 'Jaar') %></th> <% } %>
+                            <th><%- getSortLink('birthdate', 'Geboortedatum') %></th>
                             <th>Contact (Email/Tel)</th>
                             <th>Ouders / Extra</th>
                             <th>Medisch</th>
