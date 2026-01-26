@@ -1,7 +1,21 @@
 <%- include('../partials/header') %>
 
 <div class="container mt-5">
-    <h1>Inschrijven</h1>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Inschrijven</h1>
+        <% if (user && user.role === 'admin') { %>
+            <a href="/admin/page/register" class="btn btn-warning btn-sm">
+                <i class="bi bi-pencil"></i> Bewerk Pagina
+            </a>
+        <% } %>
+    </div>
+
+    <!-- Top Info Text -->
+    <div class="content-area mb-4">
+        <% if (content && content.top_text) { %>
+            <%- content.top_text.content %>
+        <% } %>
+    </div>
 
     <form action="/inschrijven" method="POST" class="mt-4" id="registrationForm">
         
