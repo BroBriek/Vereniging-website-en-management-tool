@@ -211,7 +211,8 @@ exports.getRegistrations = async (req, res) => {
             allPeriods,
             searchQuery,
             sortField,
-            sortDirection
+            sortDirection,
+            canEdit: req.user.role === 'admin'
         });
     } catch (error) {
         console.error('Error fetching registrations:', error);
@@ -301,6 +302,46 @@ exports.startNewPeriod = async (req, res) => {
     } catch (error) {
         console.error('Error starting new period:', error);
         res.redirect('/admin/registrations?error=Kon nieuwe periode niet starten');
+    }
+};
+
+exports.getEditRegistration = async (req, res) => {
+    try {
+        const registration = await Registration.findByPk(req.params.id);
+        if (!registration) {
+            return res.redirect('/admin/registrations?error=Inschrijving niet gevonden');
+        }
+        res.render('admin/edit_registration', { title: 'Bewerk Inschrijving', registration, user: req.user });
+    } catch (error) {
+        console.error('Error fetching registration for edit:', error);
+        res.redirect('/admin/registrations?error=Kon inschrijving niet ophalen');
+    }
+};
+
+exports.updateRegistration = async (req, res) => {
+    try {
+        const registration = await Registration.findByPk(req.params.id);
+        if (!registration) {
+            return res.redirect('/admin/registrations?error=Inschrijving niet gevonden');
+        }
+
+        const { 
+            firstName, lastName, birthdate, type, group, email, 
+            phone, parentsPhone, memberPhone, parentsNames, medicalInfo 
+        } = req.body;
+
+        const photoPermission = req.body.photoPermission === 'on';
+
+        await registration.update({
+            firstName, lastName, birthdate, type, group, email,
+            phone, parentsPhone, memberPhone, parentsNames, medicalInfo,
+            photoPermission
+        });
+
+        res.redirect('/admin/registrations?success=Inschrijving bijgewerkt');
+    } catch (error) {
+        console.error('Error updating registration:', error);
+        res.redirect(`/admin/registrations?error=Kon inschrijving niet bijwerken: ${encodeURIComponent(error.message)}`);
     }
 };
 
