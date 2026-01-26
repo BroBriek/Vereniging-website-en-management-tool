@@ -103,6 +103,7 @@ app.use(passport.session());
 // Global Variables & Alert Middleware
 app.use((req, res, next) => {
   res.locals.user = req.user || null;
+  res.locals.enablePublicRegistrations = process.env.ENABLE_PUBLIC_REGISTRATIONS_VIEW === 'true';
   
   // Normalize currentPath for SEO (remove trailing slash unless root)
   let normalizedPath = req.path;

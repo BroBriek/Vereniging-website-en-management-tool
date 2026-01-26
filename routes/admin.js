@@ -7,6 +7,19 @@ const { ensureAuthenticated, ensureAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 router.use(ensureAuthenticated);
+
+// Conditional Access for Registrations
+const checkViewRegistrationsPermission = (req, res, next) => {
+    if (req.user.role === 'admin' || process.env.ENABLE_PUBLIC_REGISTRATIONS_VIEW === 'true') {
+        return next();
+    }
+    res.redirect('/');
+};
+
+router.get('/registrations', checkViewRegistrationsPermission, adminController.getRegistrations);
+router.get('/registrations/export', checkViewRegistrationsPermission, adminController.exportRegistrationsExcel);
+router.get('/registrations/export-pdf', checkViewRegistrationsPermission, adminController.exportRegistrationsPDF);
+
 router.use(ensureAdmin);
 
 router.get('/', adminController.getDashboard);
@@ -61,10 +74,9 @@ router.delete('/uploads/:filename', uploadController.deleteUpload);
 router.post('/api/upload-image', upload.single('image'), uploadController.uploadImageApi);
 
 // Registrations
-router.get('/registrations', adminController.getRegistrations);
-router.get('/registrations/export', adminController.exportRegistrationsExcel);
-router.get('/registrations/export-pdf', adminController.exportRegistrationsPDF);
 router.post('/registrations/new-period', adminController.startNewPeriod);
+router.get('/registrations/:id/edit', adminController.getEditRegistration);
+router.put('/registrations/:id', adminController.updateRegistration);
 router.delete('/registrations/:id', adminController.deleteRegistration);
 
 // Danger Zone

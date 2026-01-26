@@ -1,0 +1,105 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Bewerk Inschrijving</h4>
+                    <span class="badge bg-light text-dark"><%= registration.period %></span>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/registrations/<%= registration.id %>?_method=PUT" method="POST">
+                        
+                        <!-- Basic Info -->
+                        <h5 class="mb-3 text-primary">Algemene Informatie</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="firstName" class="form-label">Voornaam</label>
+                                <input type="text" class="form-control" id="firstName" name="firstName" value="<%= registration.firstName %>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="lastName" class="form-label">Achternaam</label>
+                                <input type="text" class="form-control" id="lastName" name="lastName" value="<%= registration.lastName %>" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="birthdate" class="form-label">Geboortedatum</label>
+                                <input type="date" class="form-control" id="birthdate" name="birthdate" value="<%= registration.birthdate %>" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="type" class="form-label">Rol</label>
+                                <select class="form-select" id="type" name="type">
+                                    <option value="lid" <%= registration.type === 'lid' ? 'selected' : '' %>>Lid</option>
+                                    <option value="leiding" <%= registration.type === 'leiding' ? 'selected' : '' %>>Leiding</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="group" class="form-label">Groep</label>
+                                <select class="form-select" id="group" name="group">
+                                    <% const groups = ['ribbel', 'speelclub', 'rakwi', 'tito', 'keti', 'aspi']; %>
+                                    <% groups.forEach(g => { %>
+                                        <option value="<%= g %>" <%= registration.group === g ? 'selected' : '' %>><%= g.charAt(0).toUpperCase() + g.slice(1) %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Contact Info -->
+                        <h5 class="mb-3 text-primary mt-4">Contactgegevens</h5>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Adres</label>
+                            <input type="email" class="form-control" id="email" name="email" value="<%= registration.email %>" required>
+                        </div>
+
+                        <!-- Conditional fields based on type could be handled via JS, but for admin edit we show relevant ones -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Telefoon (Leiding)</label>
+                                <input type="text" class="form-control" id="phone" name="phone" value="<%= registration.phone || '' %>">
+                                <div class="form-text">Enkel invullen indien leiding.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="parentsPhone" class="form-label">Telefoon Ouders (Lid)</label>
+                                <input type="text" class="form-control" id="parentsPhone" name="parentsPhone" value="<%= registration.parentsPhone || '' %>">
+                                <div class="form-text">Enkel invullen indien lid.</div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="memberPhone" class="form-label">GSM Lid (Optioneel)</label>
+                                <input type="text" class="form-control" id="memberPhone" name="memberPhone" value="<%= registration.memberPhone || '' %>">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="parentsNames" class="form-label">Namen Ouders/Voogd</label>
+                                <input type="text" class="form-control" id="parentsNames" name="parentsNames" value="<%= registration.parentsNames || '' %>">
+                            </div>
+                        </div>
+
+                        <!-- Extra Info -->
+                        <h5 class="mb-3 text-primary mt-4">Extra</h5>
+                        <div class="mb-3">
+                            <label for="medicalInfo" class="form-label">Medische Info / Opmerkingen</label>
+                            <textarea class="form-control" id="medicalInfo" name="medicalInfo" rows="3"><%= registration.medicalInfo || '' %></textarea>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="photoPermission" name="photoPermission" <%= registration.photoPermission ? 'checked' : '' %>>
+                            <label class="form-check-label" for="photoPermission">Toestemming voor foto's</label>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="/admin/registrations" class="btn btn-secondary">Annuleren</a>
+                            <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Opslaan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

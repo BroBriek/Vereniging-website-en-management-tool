@@ -48,11 +48,13 @@
                 </ul>
             </div>
             
+            <% if (canEdit) { %>
             <form action="/admin/registrations/new-period" method="POST" class="d-inline" onsubmit="return confirm('Ben je zeker? Dit start een nieuwe inschrijvingsperiode. De huidige lijst wordt verborgen (maar niet verwijderd).');">
                 <button type="submit" class="btn btn-warning" title="Start een nieuw werkjaar"><i class="bi bi-calendar-plus"></i> Nieuwe Periode</button>
             </form>
+            <% } %>
 
-            <a href="/admin" class="btn btn-secondary ms-2">Terug</a>
+            <a href="<%= user.role === 'admin' ? '/admin' : '/' %>" class="btn btn-secondary ms-2">Terug</a>
         </div>
     </div>
 
@@ -108,7 +110,9 @@
                             <th>Contact (Email/Tel)</th>
                             <th>Ouders / Extra</th>
                             <th>Medisch</th>
+                            <% if (canEdit) { %>
                             <th>Actie</th>
+                            <% } %>
                         </tr>
                     </thead>
                     <tbody>
@@ -147,11 +151,16 @@
                                         <span class="text-muted">-</span>
                                     <% } %>
                                 </td>
+                                <% if (canEdit) { %>
                                 <td>
-                                    <form action="/admin/registrations/<%= reg.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?');">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijder"><i class="bi bi-trash"></i></button>
-                                    </form>
+                                    <div class="d-flex gap-2">
+                                        <a href="/admin/registrations/<%= reg.id %>/edit" class="btn btn-sm btn-outline-primary" title="Bewerk"><i class="bi bi-pencil"></i></a>
+                                        <form action="/admin/registrations/<%= reg.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijder"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </div>
                                 </td>
+                                <% } %>
                             </tr>
                         <% }) %>
                         <% if (registrations.length === 0) { %>
