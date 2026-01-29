@@ -30,6 +30,10 @@ const highlightMentions = (text) => {
     });
 };
 
+const stripHtml = (text) => {
+    return (text || '').replace(/<[^>]+>/g, '');
+};
+
 const viewHelpers = { getAvatarColor, getInitials, highlightMentions };
 
 const getAccessibleGroups = async (user) => {
@@ -258,9 +262,10 @@ exports.postCreatePost = async (req, res) => {
 
         // Send Notifications via NotificationService
         (async () => {
+            const plainContent = stripHtml(content);
             const messageData = {
                 title: 'Nieuw Bericht in Leidingshoekje',
-                body: `${req.user.username}: ${(content || '').substring(0, 40)}${(content && content.length > 40) ? '...' : ''}`,
+                body: `${req.user.username}: ${plainContent.substring(0, 40)}${plainContent.length > 40 ? '...' : ''}`,
                 url: group ? `/feed/group/${group.slug}` : '/feed',
                 type: 'newPost'
             };
@@ -285,7 +290,7 @@ exports.postCreatePost = async (req, res) => {
 
                 const mentionMessage = {
                     title: 'Je bent genoemd in een bericht',
-                    body: `${req.user.username} noemde je: "${(content || '').substring(0, 30)}..."`,
+                    body: `${req.user.username} noemde je: "${stripHtml(content).substring(0, 30)}..."`,
                     url: group ? `/feed/group/${group.slug}#post-${newPost.id}` : `/feed#post-${newPost.id}`,
                     type: 'mention'
                 };
@@ -330,9 +335,10 @@ exports.postComment = async (req, res) => {
 
                 if (parentComment && parentComment.author && parentComment.author.id !== req.user.id) {
                     const targetUser = parentComment.author;
-                    const messageData = {
-                        title: 'Nieuwe reactie',
-                        body: `${req.user.username} reageerde op je: "${content.substring(0, 30)}"...`,
+                                        const messageData = {
+                                            title: 'Nieuwe reactie',
+                                            body: `${req.user.username} reageerde op je: "${stripHtml(content).substring(0, 30)}"...`,
+                    
                         url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`,
                         type: 'comment'
                     };
@@ -370,7 +376,7 @@ exports.postComment = async (req, res) => {
 
                 const mentionMessage = {
                     title: 'Je bent genoemd in een reactie',
-                    body: `${req.user.username} noemde je: "${content.substring(0, 30)}..."`,
+                    body: `${req.user.username} noemde je: "${stripHtml(content).substring(0, 30)}..."`,
                     url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`,
                     type: 'mention'
                 };
@@ -533,7 +539,7 @@ exports.toggleCommentLike = async (req, res) => {
             if (!existingLike && comment.author && comment.author.id !== req.user.id) {
                  const messageData = {
                     title: 'Nieuwe like',
-                    body: `${req.user.username} vond je reactie leuk: "${comment.content.substring(0, 30)}..."`,
+                    body: `${req.user.username} vond je reactie leuk: "${stripHtml(comment.content).substring(0, 30)}..."`,
                     url: group ? `/feed/group/${group.slug}#post-${post.id}` : `/feed#post-${post.id}`,
                     type: 'reaction'
                 };
