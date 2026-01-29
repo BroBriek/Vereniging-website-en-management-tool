@@ -99,7 +99,13 @@ class NotificationService {
      * Handles 410 Gone errors by removing stale subscriptions.
      */
     static async _sendPushNotifications(user, messageData) {
-        const payload = JSON.stringify(messageData);
+        // Clone messageData and strip HTML from body for Push Notifications
+        const pushData = { ...messageData };
+        if (pushData.body) {
+            pushData.body = pushData.body.replace(/<[^>]+>/g, '');
+        }
+
+        const payload = JSON.stringify(pushData);
         let subscriptionsChanged = false;
         const currentSubscriptions = [...user.pushSubscriptions];
 
