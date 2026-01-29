@@ -194,7 +194,7 @@ const extractMentions = (text) => {
 
 exports.postCreatePost = async (req, res) => {
     try {
-        const { content, poll_question, poll_options, poll_multiple, form_schema } = req.body;
+        const { content, form_schema } = req.body;
         const attachments = req.files ? req.files.map(f => ({
             path: `/feed_uploads/${f.filename}`,
             originalName: f.originalname,
@@ -202,15 +202,38 @@ exports.postCreatePost = async (req, res) => {
         })) : [];
 
         let poll = null;
-        if (poll_question && poll_options) {
-            // Filter empty options
-            const options = (Array.isArray(poll_options) ? poll_options : [poll_options]).filter(o => o.trim() !== "");
+        
+        // Handle Multiple Polls (New Format)
+        if (req.body.polls) {
+            // req.body.polls might be an object with numeric keys if sent as polls[0]..., or array
+            const pollsInput = typeof req.body.polls === 'object' ? Object.values(req.body.polls) : req.body.polls;
+            
+            if (Array.isArray(pollsInput)) {
+                poll = pollsInput.map(p => {
+                    const opts = (Array.isArray(p.options) ? p.options : (p.options ? [p.options] : [])).filter(o => o && o.trim() !== "");
+                    if (opts.length > 0 && p.question) {
+                        return {
+                            question: p.question,
+                            options: opts,
+                            allowMultiple: p.multiple === 'on' || p.multiple === 'true'
+                        };
+                    }
+                    return null;
+                }).filter(p => p !== null);
+                
+                if (poll.length === 0) poll = null;
+            }
+        } 
+        // Fallback for Legacy/Single Poll
+        else if (req.body.poll_question && req.body.poll_options) {
+            const options = (Array.isArray(req.body.poll_options) ? req.body.poll_options : [req.body.poll_options]).filter(o => o.trim() !== "");
             if (options.length > 0) {
-                poll = {
-                    question: poll_question,
+                // Store as array for consistency
+                poll = [{
+                    question: req.body.poll_question,
                     options: options,
-                    allowMultiple: poll_multiple === 'on' // Checkbox returns 'on' if checked
-                };
+                    allowMultiple: req.body.poll_multiple === 'on'
+                }];
             }
         }
 
@@ -388,17 +411,28 @@ exports.postResponse = async (req, res) => {
                 indices = [parseInt(data.optionIndex)];
             }
 
-            // Remove existing response for this poll/user to allow "revoting"
-            await PostResponse.destroy({
+            const pollIndex = data.pollIndex !== undefined ? parseInt(data.pollIndex) : 0;
+
+            // Remove existing response for this specific poll/user to allow "revoting"
+            // Since we store responses as individual rows, we need to find the one matching the pollIndex
+            const existingResponses = await PostResponse.findAll({
                 where: { postId, userId, type: 'poll' }
             });
+
+            for (const resp of existingResponses) {
+                // If pollIndex is missing in data (legacy), assume 0
+                const pIdx = (resp.data && resp.data.pollIndex !== undefined) ? resp.data.pollIndex : 0;
+                if (pIdx === pollIndex) {
+                    await resp.destroy();
+                }
+            }
 
             if (indices.length > 0) {
                 await PostResponse.create({
                     postId,
                     userId,
                     type: 'poll',
-                    data: { optionIndices: indices }
+                    data: { optionIndices: indices, pollIndex: pollIndex }
                 });
             }
         } else {

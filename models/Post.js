@@ -12,7 +12,7 @@ const Post = sequelize.define('Post', {
   },
   poll: {
     type: DataTypes.JSON,
-    allowNull: true // { question: String, options: [String], allowMultiple: Boolean }
+    allowNull: true // Can be a single poll object OR an array of poll objects: [{ question: String, options: [String], allowMultiple: Boolean }]
   },
   form: {
     type: DataTypes.JSON,
