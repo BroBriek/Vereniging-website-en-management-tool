@@ -67,16 +67,24 @@
             <% } %>
 
             <!-- Polls & Forms -->
-            <% if (post.poll) { %>
+            <% if (post.poll) { 
+                const polls = Array.isArray(post.poll) ? post.poll : [post.poll];
+                polls.forEach((pollItem, pollIndex) => {
+            %>
                 <div class="bg-light p-3 rounded-3 mb-3 border">
-                    <h6 class="font-playful mb-3"><i class="bi bi-bar-chart-fill text-primary me-2"></i><%= post.poll.question %></h6>
+                    <h6 class="font-playful mb-3"><i class="bi bi-bar-chart-fill text-primary me-2"></i><%= pollItem.question %></h6>
                     <% 
-                        const totalVotes = post.responses.filter(r => r.type === 'poll').length;
+                        // Filter responses for THIS poll index
+                        // Legacy responses have no pollIndex, assume 0
+                        const pollResponses = post.responses.filter(r => r.type === 'poll' && ((r.data.pollIndex === undefined && pollIndex === 0) || r.data.pollIndex === pollIndex));
+                        const totalVotes = pollResponses.length;
+                        
                         const counts = {};
                         const voters = {}; 
-                        post.poll.options.forEach((opt, idx) => { counts[idx] = 0; voters[idx] = []; });
+                        pollItem.options.forEach((opt, idx) => { counts[idx] = 0; voters[idx] = []; });
                         let myVotes = [];
-                        post.responses.filter(r => r.type === 'poll').forEach(r => {
+                        
+                        pollResponses.forEach(r => {
                             let indices = Array.isArray(r.data.optionIndices) ? r.data.optionIndices : (r.data.optionIndex !== undefined ? [parseInt(r.data.optionIndex)] : []);
                             indices.forEach(idx => {
                                 if (counts[idx] !== undefined) {
@@ -90,7 +98,9 @@
                     <form action="/feed/respond" method="POST">
                         <input type="hidden" name="postId" value="<%= post.id %>">
                         <input type="hidden" name="type" value="poll">
-                        <% post.poll.options.forEach((option, index) => { 
+                        <input type="hidden" name="data[pollIndex]" value="<%= pollIndex %>">
+                        
+                        <% pollItem.options.forEach((option, index) => { 
                             const count = counts[index] || 0;
                             const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
                             const isChecked = myVotes.includes(index) ? 'checked' : '';
@@ -102,7 +112,7 @@
                                 </div>
                                 <div class="d-flex align-items-center">
                                     <div class="me-2">
-                                        <% if (post.poll.allowMultiple) { %>
+                                        <% if (pollItem.allowMultiple) { %>
                                             <input class="form-check-input" type="checkbox" name="data[optionIndex][]" value="<%= index %>" <%= isChecked %> aria-label="<%= option %>">
                                         <% } else { %>
                                             <input class="form-check-input" type="radio" name="data[optionIndex]" value="<%= index %>" <%= isChecked %> aria-label="<%= option %>">
@@ -122,7 +132,9 @@
                         <button type="submit" class="btn btn-primary btn-sm rounded-pill mt-2">Stemmen</button>
                     </form>
                 </div>
-            <% } %>
+            <%  }); 
+               } 
+            %>
 
             <% if (post.form) { %>
                 <div class="card border-info mb-3">
