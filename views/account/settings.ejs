@@ -168,6 +168,29 @@
     </div>
 </div>
 
+<!-- iOS Install Modal -->
+<div class="modal fade" id="iosInstallModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Meldingen op iOS</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+      </div>
+      <div class="modal-body">
+        <p>Apple vereist dat je deze website eerst toevoegt aan je startscherm voordat je meldingen kunt ontvangen.</p>
+        <ol class="ps-3">
+            <li class="mb-2">Tik op de <strong>Deel</strong> knop <i class="bi bi-box-arrow-up"></i> in de menubalk van Safari.</li>
+            <li class="mb-2">Scroll omlaag en kies <strong>Zet op beginscherm</strong> <i class="bi bi-plus-square"></i>.</li>
+            <li>Open de nieuwe app op je beginscherm en zet meldingen aan bij Instellingen.</li>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Begrepen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // Email Toggle Logic
 const emailToggle = document.getElementById('emailNotifToggle');
@@ -258,6 +281,7 @@ async function subscribeUserToPush() {
 
 // Check current status
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const inStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 
 if ('serviceWorker' in navigator && 'PushManager' in window) {
     registerServiceWorker().then(async () => {
@@ -275,15 +299,25 @@ if ('serviceWorker' in navigator && 'PushManager' in window) {
 
     enableBtn.addEventListener('click', subscribeUserToPush);
 } else {
-    if (isIOS) {
-        const inStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-        statusText.innerText = inStandalone
-          ? 'Deze iOS web app ondersteunt geen push op deze browserversie.'
-          : 'Op iOS werken pushmeldingen alleen via een geïnstalleerde web app. Voeg deze site toe aan je startscherm en open ze vanuit daar.';
+    if (isIOS && !inStandalone) {
+        // iOS User in Browser - Show specific instructions
+        statusText.innerText = 'Voeg de app toe aan je beginscherm om meldingen te ontvangen.';
+        enableBtn.disabled = false;
+        
+        // Initialize Modal
+        const iosModal = new bootstrap.Modal(document.getElementById('iosInstallModal'));
+        
+        enableBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            iosModal.show();
+        });
+    } else if (isIOS && inStandalone) {
+        statusText.innerText = 'Deze iOS versie ondersteunt geen push meldingen. Update je toestel naar iOS 16.4 of nieuwer.';
+        enableBtn.disabled = true;
     } else {
         statusText.innerText = 'Push meldingen worden niet ondersteund door deze browser.';
+        enableBtn.disabled = true;
     }
-    enableBtn.disabled = true;
 }
 </script>
 
