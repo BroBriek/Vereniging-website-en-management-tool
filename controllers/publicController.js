@@ -13,6 +13,11 @@ const getContent = async (slug) => {
 };
 
 exports.getHome = async (req, res) => {
+    // If user is logged in, redirect to feed/leaders corner
+    if (req.user) {
+        return res.redirect('/feed');
+    }
+
     try {
         const content = await getContent('home');
         res.render('public/home', { 
