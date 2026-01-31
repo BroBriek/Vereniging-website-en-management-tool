@@ -72,7 +72,6 @@
                 polls.forEach((pollItem, pollIndex) => {
             %>
                 <div class="bg-light p-3 rounded-3 mb-3 border">
-                    <h6 class="font-playful mb-3"><i class="bi bi-bar-chart-fill text-primary me-2"></i><%= pollItem.question %></h6>
                     <% 
                         // Filter responses for THIS poll index
                         // Legacy responses have no pollIndex, assume 0
@@ -94,7 +93,19 @@
                             });
                             if (r.userId === user.id) myVotes = indices;
                         });
+
+                        const pollData = {
+                            question: pollItem.question,
+                            options: pollItem.options,
+                            counts: counts,
+                            voters: voters,
+                            totalVotes: totalVotes
+                        };
                     %>
+                    <h6 class="font-playful mb-3" style="cursor: pointer;" onclick="showPollResults(this)" data-poll-results='<%= JSON.stringify(pollData).replace(/'/g, "&#39;") %>'>
+                        <i class="bi bi-bar-chart-fill text-primary me-2"></i><%= pollItem.question %> <i class="bi bi-info-circle-fill text-muted ms-2" style="font-size: 0.8rem;"></i>
+                    </h6>
+
                     <form action="/feed/respond" method="POST">
                         <input type="hidden" name="postId" value="<%= post.id %>">
                         <input type="hidden" name="type" value="poll">
@@ -124,7 +135,7 @@
                                 </div>
                                 <% if(voters[index].length > 0) { %>
                                     <div class="small text-muted mt-1 ms-4" style="font-size: 0.75rem;">
-                                        <%= voters[index].join(', ') %>
+                                        <%= voters[index].slice(0, 3).join(', ') %><% if(voters[index].length > 3) { %>, ...<% } %>
                                     </div>
                                 <% } %>
                             </div>

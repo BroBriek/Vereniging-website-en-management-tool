@@ -408,6 +408,21 @@ function autoResize(element) {
   </div>
 </div>
 
+<!-- Poll Results Modal -->
+<div class="modal fade" id="pollResultsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title font-playful" id="pollResultsQuestion">Poll Resultaten</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+      </div>
+      <div class="modal-body pt-3" id="pollResultsBody">
+        <!-- Results will be injected here -->
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Re-usable Modal for Fields -->
 <div class="modal fade" id="addFieldModal" tabindex="-1">
   <div class="modal-dialog">
@@ -636,6 +651,61 @@ function saveFormSchema() {
     if(formFields.length > 0) {
         document.getElementById('formSchemaJson').value = JSON.stringify(formFields);
     }
+}
+
+function showPollResults(element) {
+    const resultsData = element.getAttribute('data-poll-results');
+    if (!resultsData) return;
+
+    let data;
+    try {
+        data = JSON.parse(resultsData);
+    } catch(e) {
+        console.error("Error parsing poll results", e);
+        return;
+    }
+
+    document.getElementById('pollResultsQuestion').textContent = data.question;
+    const body = document.getElementById('pollResultsBody');
+    body.innerHTML = '';
+
+    data.options.forEach((opt, index) => {
+        const count = data.counts[index] || 0;
+        const pct = data.totalVotes > 0 ? Math.round((count / data.totalVotes) * 100) : 0;
+        const voterNames = data.voters[index] || [];
+
+        const div = document.createElement('div');
+        div.className = 'mb-3';
+        div.innerHTML = `
+            <div class="d-flex justify-content-between font-monospace small mb-1">
+                <span class="fw-bold">${opt}</span>
+                <span>${count} stemmen (${pct}%)</span>
+            </div>
+            <div class="progress mb-2" style="height: 10px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        `;
+
+        if (voterNames.length > 0) {
+            const votersDiv = document.createElement('div');
+            votersDiv.className = 'small text-muted fst-italic ms-1';
+            votersDiv.style.fontSize = '0.85rem';
+            votersDiv.textContent = voterNames.join(', ');
+            div.appendChild(votersDiv);
+        } else {
+             const noVotersDiv = document.createElement('div');
+             noVotersDiv.className = 'small text-muted fst-italic ms-1';
+             noVotersDiv.style.fontSize = '0.85rem';
+             noVotersDiv.textContent = 'Nog geen stemmen.';
+             div.appendChild(noVotersDiv);
+        }
+
+        body.appendChild(div);
+    });
+
+    const modalEl = document.getElementById('pollResultsModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
 }
 
 function showLikesModal(element) {
