@@ -69,8 +69,14 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 2rem;
 }
 
+@keyframes card-wiggle {
+    0% { transform: translateY(0) rotate(0deg); }
+    30% { transform: translateY(-10px) rotate(1deg); }
+    100% { transform: translateY(-10px) rotate(0deg); }
+}
+
 .card:hover {
-    transform: translateY(-10px) rotate(1deg);
+    animation: card-wiggle 0.5s ease-out forwards;
     box-shadow: 0 15px 30px rgba(0,0,0,0.15);
 }
 
