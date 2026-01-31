@@ -212,6 +212,19 @@ function autoResize(element) {
 </script>
 
 <div class="container mt-4" style="max-width: 800px;">
+
+    <% if ((!user.pushSubscriptions || user.pushSubscriptions.length === 0) && !user.emailNotificationsEnabled) { %>
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0 rounded-4 mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-bell-slash-fill fs-3 me-3 text-warning"></i>
+                <div>
+                    <h6 class="alert-heading font-playful mb-1">Mis niets!</h6>
+                    <p class="mb-0 small">Je ontvangt momenteel geen meldingen. Zet ze aan via <a href="/account/settings" class="alert-link text-decoration-underline">instellingen</a> om op de hoogte te blijven.</p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
     
     <!-- Welcome Header -->
     <div class="mb-4">
