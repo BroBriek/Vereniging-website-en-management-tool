@@ -99,6 +99,12 @@
         background-color: #e9ecef;
         height: 1.5rem;
     }
+
+    @media (min-width: 576px) {
+        .w-sm-auto {
+            width: auto !important;
+        }
+    }
     
     .carousel-control-prev-icon,
     .carousel-control-next-icon {
@@ -228,16 +234,16 @@ function autoResize(element) {
     
     <!-- Welcome Header -->
     <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center align-items-start gap-3 mb-3">
             <div>
                 <h1 class="font-playful text-dark mb-0">Leidingshoekje</h1>
             </div>
-            <div class="d-flex gap-2">
-                <a href="/quotes" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+            <div class="d-flex gap-2 w-100 w-sm-auto">
+                <a href="/quotes" class="btn btn-outline-primary btn-sm rounded-pill px-3 flex-fill text-center">
                     <i class="bi bi-chat-quote-fill"></i> Quoteboekje
                 </a>
                 <% if (user.role === 'admin') { %>
-                    <a href="/admin/feedgroups" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                    <a href="/admin/feedgroups" class="btn btn-outline-dark btn-sm rounded-pill px-3 flex-fill text-center">
                         <i class="bi bi-gear-fill"></i> Beheer
                     </a>
                 <% } %>
