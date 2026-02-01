@@ -81,7 +81,8 @@
 
         <!-- Main Content -->
         <div class="col-md-10">
-            <div class="table-responsive bg-white rounded shadow-sm">
+            <!-- Desktop View: Table -->
+            <div class="table-responsive bg-white rounded shadow-sm d-none d-lg-block">
                 <table class="table table-hover table-striped mb-0">
                     <thead class="table-dark">
                         <% 
@@ -178,6 +179,96 @@
                         <% } %>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile View: Cards -->
+            <div class="d-lg-none">
+                <div class="mb-3 text-muted fst-italic text-end small">
+                    <i class="bi bi-arrow-down-up"></i> Sorteren kan via desktop weergave
+                </div>
+                <% registrations.forEach(reg => { %>
+                    <div class="card mb-3 shadow-sm border-0">
+                        <div class="card-header d-flex justify-content-between align-items-center bg-light text-dark border-bottom-0">
+                            <div>
+                                <h5 class="mb-0 text-primary"><%= reg.firstName %> <%= reg.lastName %></h5>
+                            </div>
+                            <span class="badge bg-secondary rounded-pill"><%= reg.group %></span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.75rem;">Rol</small>
+                                    <% if (reg.type === 'leiding') { %>
+                                        <span class="badge bg-danger">Leiding</span>
+                                    <% } else { %>
+                                        <span class="badge bg-success">Lid</span>
+                                    <% } %>
+                                </div>
+                                <% if (selectedPeriod === 'all') { %>
+                                <div class="col-6">
+                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.75rem;">Jaar</small>
+                                    <span class="badge bg-light text-dark border"><%= reg.period %></span>
+                                </div>
+                                <% } %>
+                                <div class="col-6">
+                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.75rem;">Geboortedatum</small>
+                                    <span class="fw-bold"><%= reg.birthdate %></span>
+                                </div>
+                                
+                                <div class="col-12 mt-3">
+                                    <div class="bg-light p-2 rounded">
+                                        <small class="text-muted d-block text-uppercase mb-1" style="font-size: 0.75rem;"><i class="bi bi-envelope"></i> Contact</small>
+                                        <div class="d-flex flex-column">
+                                            <span class="text-break"><%= reg.email %></span>
+                                            <span class="fw-bold"><i class="bi bi-telephone"></i> <%= reg.type === 'lid' ? reg.parentsPhone : reg.phone %></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <% if (reg.type === 'lid') { %>
+                                <div class="col-12 mt-2">
+                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.75rem;">Ouders / Extra</small>
+                                    <div><%= reg.parentsNames %></div>
+                                    <% if(reg.memberPhone) { %><div class="small text-muted">GSM Lid: <%= reg.memberPhone %></div><% } %>
+                                    <div class="small text-muted">Foto's: <%= reg.photoPermission ? 'Ja' : 'Nee' %></div>
+                                </div>
+                                <% } %>
+
+                                <% if (reg.medicalInfo) { %>
+                                <div class="col-12 mt-2">
+                                    <div class="alert alert-danger p-2 mb-0 d-flex gap-2 align-items-start">
+                                        <i class="bi bi-exclamation-circle-fill mt-1"></i>
+                                        <small><%= reg.medicalInfo %></small>
+                                    </div>
+                                </div>
+                                <% } %>
+                            </div>
+
+                            <% if (canEdit) { %>
+                            <div class="mt-3 pt-2 border-top d-flex justify-content-end gap-2">
+                                <a href="/admin/registrations/<%= reg.id %>/edit" class="btn btn-outline-primary btn-sm flex-grow-1">
+                                    <i class="bi bi-pencil"></i> Bewerken
+                                </a>
+                                <form action="/admin/registrations/<%= reg.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?');" class="flex-grow-1">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                        <i class="bi bi-trash"></i> Verwijderen
+                                    </button>
+                                </form>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }) %>
+
+                <% if (registrations.length === 0) { %>
+                    <div class="alert alert-secondary text-center">
+                        <% if (searchQuery) { %>
+                            Geen resultaten gevonden voor "<%= searchQuery %>".
+                        <% } else { %>
+                            Nog geen inschrijvingen.
+                        <% } %>
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>
