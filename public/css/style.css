@@ -398,6 +398,10 @@ input:disabled + .chiro-slider:before {
     color: #e74c3c;
 }
 
+/* Utility classes for responsive width */
+@media (min-width: 576px) { .w-sm-auto { width: auto !important; } }
+@media (min-width: 768px) { .w-md-auto { width: auto !important; } }
+
 @media (max-width: 768px) {
     body { font-size: 1.1rem; }
     .hero-img { height: 50vh; }
@@ -409,6 +413,7 @@ input:disabled + .chiro-slider:before {
     .leader-modal-img { height: 260px; }
     .calendar-title { font-size: 1.25rem; }
     .calendar-date-badge { width: 64px; }
+    input, textarea { padding: 0.6rem !important; }
 }
 
 @media (max-width: 576px) {
