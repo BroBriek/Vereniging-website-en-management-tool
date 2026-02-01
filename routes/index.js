@@ -3,6 +3,7 @@ const router = express.Router();
 const publicController = require('../controllers/publicController');
 
 router.get('/', publicController.getHome);
+router.get('/home', publicController.getPublicHome);
 router.get('/praktisch', publicController.getPractical);
 router.get('/leiding', publicController.getLeaders);
 router.get('/kalender', publicController.getCalendar);
