@@ -11,8 +11,8 @@
                 <div class="card-header text-white" style="background-color: #db3e41;">
                     Profielfoto
                 </div>
-                <div class="card-body d-flex align-items-center">
-                    <div class="me-4 text-center">
+                <div class="card-body d-flex flex-column flex-md-row align-items-center text-center text-md-start">
+                    <div class="me-md-4 mb-3 mb-md-0">
                         <% if (user.profilePicture) { %>
                             <img src="<%= user.profilePicture %>" alt="Profielfoto" class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover; border: 3px solid #db3e41;">
                         <% } else { %>
@@ -31,19 +31,19 @@
                                     return username.substring(0, 2).toUpperCase();
                                 };
                             %>
-                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 100px; height: 100px; font-size: 2.5rem; background-color: <%= getAvatarColor(user.username) %>;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm mx-auto mx-md-0" style="width: 100px; height: 100px; font-size: 2.5rem; background-color: <%= getAvatarColor(user.username) %>;">
                                 <%= getInitials(user.username) %>
                             </div>
                         <% } %>
                     </div>
-                    <div class="flex-grow-1">
-                        <form action="/account/profile-picture" method="POST" enctype="multipart/form-data" class="d-flex gap-2 align-items-center mb-2">
+                    <div class="flex-grow-1 w-100">
+                        <form action="/account/profile-picture" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row gap-2 align-items-center mb-2 justify-content-center justify-content-md-start">
                             <input type="file" class="form-control" name="profilePicture" accept="image/*" required>
-                            <button type="submit" class="btn btn-primary">Uploaden</button>
+                            <button type="submit" class="btn btn-primary w-100 w-sm-auto">Uploaden</button>
                         </form>
                         <% if (user.profilePicture) { %>
                             <form action="/account/profile-picture/delete" method="POST">
-                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Ben je zeker dat je je profielfoto wilt verwijderen?')">Profielfoto Verwijderen</button>
+                                <button type="submit" class="btn btn-outline-danger btn-sm w-100 w-sm-auto" onclick="return confirm('Ben je zeker dat je je profielfoto wilt verwijderen?')">Profielfoto Verwijderen</button>
                             </form>
                         <% } %>
                         <p class="text-muted small mt-2 mb-0">Upload een afbeelding (JPG, PNG, GIF). Max 5MB.</p>
@@ -72,7 +72,7 @@
                             <label class="form-label">Bevestig Nieuw Wachtwoord</label>
                             <input type="password" class="form-control" name="confirmPassword" required>
                         </div>
-                        <button type="submit" class="btn btn-primary">Wachtwoord Bijwerken</button>
+                        <button type="submit" class="btn btn-primary w-100 w-md-auto">Wachtwoord Bijwerken</button>
                     </form>
                 </div>
             </div>
