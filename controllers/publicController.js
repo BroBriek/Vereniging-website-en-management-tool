@@ -30,6 +30,19 @@ exports.getHome = async (req, res) => {
     }
 };
 
+exports.getPublicHome = async (req, res) => {
+    try {
+        const content = await getContent('home');
+        res.render('public/home', { 
+            title: 'Chiro Vreugdeland Meeuwen - Jeugdbeweging Meeuwen', 
+            description: 'Chiro Vreugdeland Meeuwen: jeugdbeweging voor kinderen in Meeuwen. Elke zondag spelen, activiteiten, vriendschap en plezier. Word lid!',
+            content 
+        });
+    } catch (error) {
+        res.status(500).send('Er ging iets mis');
+    }
+};
+
 exports.getPractical = async (req, res) => {
     try {
         const content = await getContent('practical');
