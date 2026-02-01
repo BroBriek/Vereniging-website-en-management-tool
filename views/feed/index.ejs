@@ -350,15 +350,15 @@ function autoResize(element) {
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label small text-muted text-uppercase fw-bold">Bijlagen</label>
+                        <label class="form-label small text-muted text-uppercase fw-bold">Bestanden</label>
                         <div id="file-inputs-container">
                             <div class="input-group mb-2">
                                 <input type="file" class="form-control form-control-sm" name="attachments">
-                                <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()"><i class="bi bi-trash"></i></button>
+                                <button class="btn btn-outline-danger" type="button" onclick="removeFileInput(this)"><i class="bi bi-trash"></i></button>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-1" onclick="addFileInput()">
-                            <i class="bi bi-paperclip"></i> Bijlage toevoegen
+                        <button id="add-file-btn" type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-1" onclick="addFileInput()">
+                            <i class="bi bi-paperclip"></i> Bestand toevoegen
                         </button>
                     </div>
 
@@ -612,15 +612,31 @@ function disableCommentEdit(id) {
     if(editEl) editEl.classList.add('d-none');
 }
 
+function updateAddFileButtonText() {
+    const container = document.getElementById('file-inputs-container');
+    const btn = document.getElementById('add-file-btn');
+    if (container.children.length > 1) {
+        btn.innerHTML = '<i class="bi bi-paperclip"></i> Nog een bestand toevoegen';
+    } else {
+        btn.innerHTML = '<i class="bi bi-paperclip"></i> Bestand toevoegen';
+    }
+}
+
 function addFileInput() {
     const container = document.getElementById('file-inputs-container');
     const div = document.createElement('div');
     div.className = 'input-group mb-2';
     div.innerHTML = `
         <input type="file" class="form-control form-control-sm" name="attachments">
-        <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()"><i class="bi bi-trash"></i></button>
+        <button class="btn btn-outline-danger" type="button" onclick="removeFileInput(this)"><i class="bi bi-trash"></i></button>
     `;
     container.appendChild(div);
+    updateAddFileButtonText();
+}
+
+function removeFileInput(btn) {
+    btn.parentElement.remove();
+    updateAddFileButtonText();
 }
 
 let pollCount = 0;
