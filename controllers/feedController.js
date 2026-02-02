@@ -661,7 +661,28 @@ exports.updatePost = async (req, res) => {
             currentAttachments = [...currentAttachments, ...newAttachments];
         }
 
-        await post.update({ content, attachments: currentAttachments });
+        // Handle Polls (Update/Add/Remove)
+        let poll = null;
+        if (req.body.polls) {
+            const pollsInput = typeof req.body.polls === 'object' ? Object.values(req.body.polls) : req.body.polls;
+            if (Array.isArray(pollsInput)) {
+                poll = pollsInput.map(p => {
+                    const opts = (Array.isArray(p.options) ? p.options : (p.options ? [p.options] : [])).filter(o => o && o.trim() !== "");
+                    if (opts.length > 0 && p.question) {
+                        return {
+                            question: p.question,
+                            options: opts,
+                            allowMultiple: p.multiple === 'on' || p.multiple === 'true'
+                        };
+                    }
+                    return null;
+                }).filter(p => p !== null);
+                
+                if (poll.length === 0) poll = null;
+            }
+        }
+
+        await post.update({ content, attachments: currentAttachments, poll });
         
         let group = null;
         if (post.groupId) group = await FeedGroup.findByPk(post.groupId);
