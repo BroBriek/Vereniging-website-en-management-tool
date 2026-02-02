@@ -410,13 +410,52 @@ exports.postComment = async (req, res) => {
             }
         })();
 
-        if (!post) return res.redirect('/feed');
+        if (!post) {
+             if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                 return res.json({ success: false, error: 'Post niet gevonden' });
+             }
+             return res.redirect('/feed');
+        }
         const ok = await ensureAccessToGroup(req.user, group || null);
-        if (!ok) return res.redirect('/feed');
+        if (!ok) {
+             if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                 return res.json({ success: false, error: 'Geen toegang' });
+             }
+             return res.redirect('/feed');
+        }
         
-        res.redirect(post.groupId && group ? '/feed/group/' + group.slug : '/feed');
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            const commentWithAuthor = await Comment.findByPk(comment.id, {
+                include: [
+                    { model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] },
+                    { model: Like, as: 'likes', include: [{ model: User, as: 'user', attributes: ['username', 'profilePicture'] }] },
+                    { model: Comment, as: 'replies', include: [{ model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] }] }
+                ]
+            });
+            
+            if (!commentWithAuthor.replies) commentWithAuthor.replies = [];
+            const commentCount = await Comment.count({ where: { postId } });
+            
+            return res.render('feed/comment_partial', {
+                comment: commentWithAuthor,
+                user: req.user,
+                post: post,
+                ...viewHelpers
+            }, (err, html) => {
+                if (err) {
+                    console.error('Render Partial Error:', err);
+                    return res.status(500).json({ error: 'Render Error' });
+                }
+                res.json({ success: true, html, count: commentCount });
+            });
+        }
+        
+        res.redirect(post.groupId && group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`);
     } catch (error) {
         console.error('Comment Error:', error);
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({ error: 'Server Error' });
+        }
         res.redirect('/feed');
     }
 };
@@ -730,9 +769,21 @@ exports.updateComment = async (req, res) => {
         }
 
         await comment.update({ content });
-        res.redirect('/feed?success=Reactie bijgewerkt');
+        
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+             return res.json({ success: true, content: highlightMentions(content), rawContent: content });
+        }
+        
+        const post = await Post.findByPk(comment.postId);
+        let group = null;
+        if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
+        
+        res.redirect(post.groupId && group ? `/feed/group/${group.slug}?success=Reactie bijgewerkt#post-${post.id}` : `/feed?success=Reactie bijgewerkt#post-${post.id}`);
     } catch (error) {
         console.error('Update Comment Error:', error);
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({ error: 'Server Error' });
+        }
         res.redirect('/feed?error=Kon reactie niet bijwerken');
     }
 };
@@ -746,10 +797,24 @@ exports.deleteComment = async (req, res) => {
             return res.redirect('/feed?error=Geen rechten');
         }
 
+        const postId = comment.postId; // Save postId before deletion
         await comment.destroy();
-        res.redirect('/feed?success=Reactie verwijderd');
+
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+             const count = await Comment.count({ where: { postId } });
+             return res.json({ success: true, count });
+        }
+
+        const post = await Post.findByPk(postId);
+        let group = null;
+        if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
+
+        res.redirect(post && post.groupId && group ? `/feed/group/${group.slug}?success=Reactie verwijderd#post-${postId}` : `/feed?success=Reactie verwijderd#post-${postId}`);
     } catch (error) {
         console.error('Delete Comment Error:', error);
+        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+            return res.status(500).json({ error: 'Server Error' });
+        }
         res.redirect('/feed?error=Kon reactie niet verwijderen');
     }
 };

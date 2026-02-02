@@ -35,7 +35,7 @@ function highlightMentions(text) {
                         <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" style="font-size: 0.85rem;">
                             <li><a class="dropdown-item" href="#" onclick="enableCommentEdit('<%= comment.id %>'); return false;">Bewerken</a></li>
                             <li>
-                                <form action="/feed/comment/<%= comment.id %>/delete" method="POST" onsubmit="return confirm('Verwijderen?');">
+                                <form action="/feed/comment/<%= comment.id %>/delete" method="POST" class="comment-delete-form">
                                     <button type="submit" class="dropdown-item text-danger">Verwijderen</button>
                                 </form>
                             </li>
@@ -49,7 +49,7 @@ function highlightMentions(text) {
             </div>
             
             <div id="comment-content-edit-<%= comment.id %>" class="d-none mt-2">
-                <form action="/feed/comment/<%= comment.id %>/update" method="POST">
+                <form action="/feed/comment/<%= comment.id %>/update" method="POST" class="comment-update-form">
                     <textarea name="content" class="form-control form-control-sm mb-1" rows="1" style="resize: none; overflow: hidden;" oninput="autoResize(this)" onfocus="autoResize(this)"><%= comment.content %></textarea>
                     <button type="submit" class="btn btn-sm btn-success py-0">Ok</button>
                     <button type="button" class="btn btn-sm btn-light py-0" onclick="disableCommentEdit('<%= comment.id %>')">X</button>
@@ -87,7 +87,7 @@ function highlightMentions(text) {
 
         <!-- Reply Input -->
         <div id="reply-form-<%= comment.id %>" class="d-none mt-2">
-            <form action="/feed/comment" method="POST" class="d-flex align-items-end">
+            <form action="/feed/comment" method="POST" class="d-flex align-items-end comment-form">
                 <input type="hidden" name="postId" value="<%= post.id %>">
                 <input type="hidden" name="parentId" value="<%= comment.id %>">
                 <textarea name="content" class="form-control form-control-sm me-2" placeholder="Antwoord..." required rows="1" style="resize: none; overflow: hidden; border-radius: 1rem;" oninput="autoResize(this)"></textarea>
