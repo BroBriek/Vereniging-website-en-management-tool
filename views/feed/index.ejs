@@ -351,12 +351,7 @@ function autoResize(element) {
                     
                     <div class="mb-3">
                         <label class="form-label small text-muted text-uppercase fw-bold">Bestanden</label>
-                        <div id="file-inputs-container">
-                            <div class="input-group mb-2">
-                                <input type="file" class="form-control form-control-sm" name="attachments">
-                                <button class="btn btn-outline-danger" type="button" onclick="removeFileInput(this)"><i class="bi bi-trash"></i></button>
-                            </div>
-                        </div>
+                        <div id="file-inputs-container"></div>
                         <button id="add-file-btn" type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-1" onclick="addFileInput()">
                             <i class="bi bi-paperclip"></i> Bestand toevoegen
                         </button>
@@ -615,7 +610,7 @@ function disableCommentEdit(id) {
 function updateAddFileButtonText() {
     const container = document.getElementById('file-inputs-container');
     const btn = document.getElementById('add-file-btn');
-    if (container.children.length > 1) {
+    if (container.children.length > 0) {
         btn.innerHTML = '<i class="bi bi-paperclip"></i> Nog een bestand toevoegen';
     } else {
         btn.innerHTML = '<i class="bi bi-paperclip"></i> Bestand toevoegen';
