@@ -250,6 +250,15 @@ function autoResize(element) {
             </div>
         </div>
 
+        <!-- Search Bar -->
+        <div class="input-group mb-3 shadow-sm rounded-pill overflow-hidden bg-white border">
+            <span class="input-group-text bg-white border-0 ps-3 text-muted"><i class="bi bi-search"></i></span>
+            <input type="text" id="feedSearchInput" class="form-control border-0 shadow-none" placeholder="Zoek op inhoud of persoon..." autocomplete="off">
+            <button class="btn btn-white border-0 text-muted d-none" type="button" id="clearSearchBtn">
+                <i class="bi bi-x-circle-fill"></i>
+            </button>
+        </div>
+
         <% if (typeof quoteOfTheMonth !== 'undefined' && quoteOfTheMonth) { %>
             <div class="card border-0 shadow-sm bg-white mb-3" style="border-left: 5px solid #db3e41 !important;">
                 <div class="card-body py-3">
@@ -1091,6 +1100,88 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadMoreBtn = document.getElementById('btn-load-more');
     const loader = document.getElementById('loader-spinner');
     const container = document.getElementById('load-more-container');
+    
+    // Search Functionality
+    const searchInput = document.getElementById('feedSearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    let searchDebounceTimer;
+    let currentSearchQuery = '';
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const val = e.target.value.trim();
+            
+            if (val.length > 0) {
+                clearSearchBtn.classList.remove('d-none');
+            } else {
+                clearSearchBtn.classList.add('d-none');
+            }
+
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                performSearch(val);
+            }, 500);
+        });
+
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            clearSearchBtn.classList.add('d-none');
+            performSearch('');
+        });
+    }
+
+    function performSearch(query) {
+        currentSearchQuery = query;
+        currentOffset = 0; // Reset offset for new search
+        
+        const feedTimeline = document.querySelector('.feed-timeline');
+        const spinner = document.getElementById('refresh-spinner');
+        
+        if (spinner) spinner.classList.remove('d-none');
+        feedTimeline.style.opacity = '0.5';
+
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('ajax', 'true');
+        currentUrl.searchParams.set('offset', 0);
+        
+        if (query) {
+            currentUrl.searchParams.set('search', query);
+        } else {
+            currentUrl.searchParams.delete('search');
+        }
+
+        fetch(currentUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.json())
+            .then(data => {
+                feedTimeline.innerHTML = data.html;
+                feedTimeline.style.opacity = '1';
+                if (spinner) spinner.classList.add('d-none');
+
+                // Re-init features
+                document.querySelectorAll('.feed-timeline .post-card').forEach(item => initPostFeatures(item));
+                if (window.initializeRichEditors) window.initializeRichEditors();
+
+                currentOffset = limit; // Reset offset logic
+
+                // Handle Load More Button Visibility
+                if (!data.hasMore) {
+                    if (container) container.classList.add('d-none');
+                    if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
+                } else {
+                    if (container) container.classList.remove('d-none');
+                    if (loadMoreBtn) {
+                        loadMoreBtn.classList.remove('d-none');
+                        loadMoreBtn.disabled = false;
+                    }
+                    if (loader) loader.classList.add('d-none');
+                }
+            })
+            .catch(err => {
+                console.error("Search failed", err);
+                feedTimeline.style.opacity = '1';
+                if (spinner) spinner.classList.add('d-none');
+            });
+    }
 
     // --- Infinite Scroll (Auto-load) ---
     if (loadMoreBtn) {
@@ -1111,6 +1202,10 @@ document.addEventListener('DOMContentLoaded', function() {
             currentUrl.searchParams.set('ajax', 'true');
             currentUrl.searchParams.set('offset', currentOffset);
             
+            if (currentSearchQuery) {
+                currentUrl.searchParams.set('search', currentSearchQuery);
+            }
+
             fetch(currentUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(response => response.json())
                 .then(data => {
@@ -1136,7 +1231,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentOffset += limit;
                     
                     if (!data.hasMore) {
-                        if(container) container.remove();
+                        if(container) container.classList.add('d-none');
                     } else {
                         loadMoreBtn.classList.remove('d-none');
                         loadMoreBtn.disabled = false;
@@ -1189,7 +1284,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const dy = touchY - touchStartY;
         
         if (window.scrollY === 0 && dy > p2rThreshold) {
-            refreshFeed();
+            // If search is active, we refresh the search results, not the whole feed
+            if (currentSearchQuery) {
+                performSearch(currentSearchQuery);
+            } else {
+                refreshFeed();
+            }
         } else {
             // Reset
             if (feedTimeline) feedTimeline.style.transform = '';
@@ -1207,6 +1307,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const currentUrl = new URL(window.location.href);
         currentUrl.searchParams.set('ajax', 'true');
         currentUrl.searchParams.set('offset', 0);
+        // Clear search on P2R if we want standard behavior, OR keep it.
+        // Usually P2R on a search result refreshes the search.
+        if (currentSearchQuery) {
+            currentUrl.searchParams.set('search', currentSearchQuery);
+        } else {
+            currentUrl.searchParams.delete('search');
+        }
         
         fetch(currentUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(res => res.json())
@@ -1225,12 +1332,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (spinner) spinner.classList.add('d-none');
                 
-                // Re-enable Load More if it was gone
-                if (data.hasMore && !document.getElementById('load-more-container')) {
-                     // Since recreating the button is complex, we'll just reload if they scroll down again 
-                     // or we could assume the user is happy. 
-                     // For robustness, if they really want to scroll deep again, a reload might be cleaner, 
-                     // but for now let's just accept the fresh feed.
+                // Reset Load More
+                 if (data.hasMore) {
+                    if (container) container.classList.remove('d-none');
+                    if (loadMoreBtn) {
+                        loadMoreBtn.classList.remove('d-none');
+                        loadMoreBtn.disabled = false;
+                    }
+                } else {
+                    if (container) container.classList.add('d-none');
                 }
             })
             .catch(err => {

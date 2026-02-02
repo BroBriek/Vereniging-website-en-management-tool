@@ -96,10 +96,35 @@ exports.getFeed = async (req, res) => {
 
         const limit = parseInt(process.env.FEED_PAGINATION_LIMIT) || 10;
         const offset = parseInt(req.query.offset) || 0;
+        const search = req.query.search || '';
+
+        const whereClause = activeGroup ? { groupId: activeGroup.id } : {};
+
+        if (search) {
+             const matchingUsers = await User.findAll({
+                 where: {
+                     username: { [Op.like]: `%${search}%` }
+                 },
+                 attributes: ['id']
+             });
+             const matchingUserIds = matchingUsers.map(u => u.id);
+
+             whereClause[Op.and] = [
+                 activeGroup ? { groupId: activeGroup.id } : {},
+                 {
+                     [Op.or]: [
+                         { content: { [Op.like]: `%${search}%` } },
+                         { authorId: { [Op.in]: matchingUserIds } }
+                     ]
+                 }
+             ];
+             // Cleanup base groupId as it is now in Op.and
+             delete whereClause.groupId;
+        }
 
         // 1. Fetch Posts (without nested comments to avoid limit/offset issues and messy includes)
         const postsData = await Post.findAll({
-            where: activeGroup ? { groupId: activeGroup.id } : {},
+            where: whereClause,
             include: [
                 { model: User, as: 'author', attributes: ['id', 'username', 'profilePicture'] },
                 { model: Like, as: 'likes', include: [{ model: User, as: 'user', attributes: ['username', 'profilePicture'] }] },
