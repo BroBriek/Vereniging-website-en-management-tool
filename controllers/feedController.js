@@ -592,7 +592,7 @@ exports.deletePost = async (req, res) => {
 
 exports.updatePost = async (req, res) => {
     try {
-        const { content } = req.body;
+        const { content, removed_attachments } = req.body;
         const post = await Post.findByPk(req.params.id);
         if (!post) return res.redirect('/feed?error=Post niet gevonden');
 
@@ -600,7 +600,27 @@ exports.updatePost = async (req, res) => {
             return res.redirect('/feed?error=Geen rechten');
         }
 
-        await post.update({ content });
+        // Handle Attachments
+        let currentAttachments = post.attachments || [];
+        
+        // 1. Remove selected files
+        if (removed_attachments) {
+            const toRemove = Array.isArray(removed_attachments) ? removed_attachments : [removed_attachments];
+            currentAttachments = currentAttachments.filter(att => !toRemove.includes(att.path));
+        }
+
+        // 2. Add new files
+        if (req.files && req.files.length > 0) {
+            const newAttachments = req.files.map(f => ({
+                path: `/feed_uploads/${f.filename}`,
+                originalName: f.originalname,
+                mimeType: f.mimetype
+            }));
+            currentAttachments = [...currentAttachments, ...newAttachments];
+        }
+
+        await post.update({ content, attachments: currentAttachments });
+        
         let group = null;
         if (post.groupId) group = await FeedGroup.findByPk(post.groupId);
         if (group) return res.redirect('/feed/group/' + group.slug + '?success=Post bijgewerkt');
