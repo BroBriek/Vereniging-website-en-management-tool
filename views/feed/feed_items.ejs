@@ -48,8 +48,31 @@
             </div>
 
             <div id="post-content-edit-<%= post.id %>" class="d-none mb-3">
-                <form action="/feed/post/<%= post.id %>/update" method="POST">
+                <form action="/feed/post/<%= post.id %>/update" method="POST" enctype="multipart/form-data">
                     <textarea class="form-control rich-editor mb-2" name="content" rows="3"><%= post.content %></textarea>
+                    
+                    <% if (post.attachments && post.attachments.length > 0) { %>
+                        <div class="mb-2 p-2 border rounded bg-light">
+                            <label class="small text-muted fw-bold d-block mb-2">Bestaande bestanden:</label>
+                            <% post.attachments.forEach((file, idx) => { %>
+                                <div class="d-flex justify-content-between align-items-center mb-1 p-2 bg-white border rounded">
+                                    <span class="small text-muted text-truncate me-2"><i class="bi bi-file-earmark"></i> <%= file.originalName %></span>
+                                    <div>
+                                        <input type="checkbox" class="btn-check" name="removed_attachments[]" value="<%= file.path %>" id="remove-<%= post.id %>-<%= idx %>" autocomplete="off">
+                                        <label class="btn btn-sm btn-outline-danger" for="remove-<%= post.id %>-<%= idx %>">
+                                            <i class="bi bi-trash"></i> Verwijderen
+                                        </label>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } %>
+
+                    <div class="mb-2">
+                         <label class="small text-muted fw-bold">Bestanden toevoegen:</label>
+                         <input type="file" class="form-control form-control-sm" name="attachments" multiple>
+                    </div>
+
                     <button type="submit" class="btn btn-sm btn-success rounded-pill">Opslaan</button>
                     <button type="button" class="btn btn-sm btn-light rounded-pill" onclick="disableEditMode('<%= post.id %>')">Annuleren</button>
                 </form>
