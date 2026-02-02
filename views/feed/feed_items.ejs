@@ -94,10 +94,9 @@
                 const polls = Array.isArray(post.poll) ? post.poll : [post.poll];
                 polls.forEach((pollItem, pollIndex) => {
             %>
-                <div class="bg-light p-3 rounded-3 mb-3 border">
+                <div class="bg-light p-3 rounded-3 mb-3 border poll-wrapper">
                     <% 
                         // Filter responses for THIS poll index
-                        // Legacy responses have no pollIndex, assume 0
                         const pollResponses = post.responses.filter(r => r.type === 'poll' && ((r.data.pollIndex === undefined && pollIndex === 0) || r.data.pollIndex === pollIndex));
                         const totalVotes = pollResponses.length;
                         
@@ -125,46 +124,42 @@
                             totalVotes: totalVotes
                         };
                     %>
-                    <h6 class="font-playful mb-3" style="cursor: pointer;" onclick="showPollResults(this)" data-poll-results='<%= JSON.stringify(pollData).replace(/'/g, "&#39;") %>'>
+                    <h6 class="font-playful mb-3 poll-results-header" style="cursor: pointer;" onclick="showPollResults(this)" data-poll-results='<%= JSON.stringify(pollData).replace(/'/g, "&#39;") %>'>
                         <i class="bi bi-bar-chart-fill text-primary me-2"></i><%= pollItem.question %> <i class="bi bi-info-circle-fill text-muted ms-2" style="font-size: 0.8rem;"></i>
                     </h6>
 
-                    <form action="/feed/respond" method="POST">
-                        <input type="hidden" name="postId" value="<%= post.id %>">
-                        <input type="hidden" name="type" value="poll">
-                        <input type="hidden" name="data[pollIndex]" value="<%= pollIndex %>">
-                        
+                    <div class="poll-options-container" data-allow-multiple="<%= pollItem.allowMultiple %>">
                         <% pollItem.options.forEach((option, index) => { 
                             const count = counts[index] || 0;
                             const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                            const isChecked = myVotes.includes(index) ? 'checked' : '';
+                            const isChecked = myVotes.includes(index);
                         %>
-                            <div class="mb-2">
+                            <div class="mb-2 poll-option-item p-2 rounded border <%= isChecked ? 'bg-white shadow-sm border-primary' : 'border-light' %>" 
+                                 style="cursor: pointer; transition: all 0.2s;"
+                                 onclick="togglePollVote(this, '<%= post.id %>', <%= pollIndex %>, <%= index %>, <%= pollItem.allowMultiple %>)"
+                                 data-index="<%= index %>"
+                                 data-selected="<%= isChecked %>">
+                                
                                 <div class="d-flex justify-content-between font-monospace small mb-1">
                                     <span><%= option %></span>
-                                    <span><%= count %></span>
+                                    <span class="poll-count-text"><%= count %></span>
                                 </div>
+                                
                                 <div class="d-flex align-items-center">
                                     <div class="me-2">
-                                        <% if (pollItem.allowMultiple) { %>
-                                            <input class="form-check-input" type="checkbox" name="data[optionIndex][]" value="<%= index %>" <%= isChecked %> aria-label="<%= option %>">
-                                        <% } else { %>
-                                            <input class="form-check-input" type="radio" name="data[optionIndex]" value="<%= index %>" <%= isChecked %> aria-label="<%= option %>">
-                                        <% } %>
+                                        <i class="bi <%= isChecked ? 'bi-check-circle-fill text-primary' : (pollItem.allowMultiple ? 'bi-square' : 'bi-circle') %> poll-check-icon fs-5"></i>
                                     </div>
-                                    <div class="flex-grow-1 poll-bar position-relative">
-                                        <div class="bg-primary h-100" style="width: <%= pct %>%; transition: width 0.5s;"></div>
+                                    <div class="flex-grow-1 position-relative rounded-pill bg-white border overflow-hidden" style="height: 10px;">
+                                        <div class="bg-primary h-100 poll-progress-bar" style="width: <%= pct %>%; transition: width 0.5s;"></div>
                                     </div>
                                 </div>
-                                <% if(voters[index].length > 0) { %>
-                                    <div class="small text-muted mt-1 ms-4" style="font-size: 0.75rem;">
-                                        <%= voters[index].slice(0, 3).join(', ') %><% if(voters[index].length > 3) { %>, ...<% } %>
-                                    </div>
-                                <% } %>
+                                
+                                <div class="<%= voters[index].length > 0 ? '' : 'd-none' %> small text-muted mt-1 ms-4" style="font-size: 0.75rem;">
+                                    <span class="poll-voters-list"><%= voters[index].slice(0, 3).join(', ') %><% if(voters[index].length > 3) { %>, ...<% } %></span>
+                                </div>
                             </div>
                         <% }) %>
-                        <button type="submit" class="btn btn-primary btn-sm rounded-pill mt-2">Stemmen</button>
-                    </form>
+                    </div>
                 </div>
             <%  }); 
                } 
