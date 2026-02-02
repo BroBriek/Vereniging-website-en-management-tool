@@ -1092,6 +1092,152 @@ document.addEventListener('DOMContentLoaded', function() {
                 form.submit(); 
             }
         }
+
+        // --- Comment Handling (AJAX) ---
+        if (e.target.matches('.comment-form')) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
+            const originalBtnHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+            try {
+                const formData = new URLSearchParams(new FormData(form));
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        const postId = form.querySelector('input[name="postId"]').value;
+                        const parentId = form.querySelector('input[name="parentId"]')?.value;
+                        
+                        if (parentId) {
+                            // Reply
+                            const parentContainer = document.getElementById('comment-container-' + parentId);
+                            if (parentContainer) {
+                                let repliesContainer = parentContainer.querySelector('.border-start'); 
+                                if (!repliesContainer) {
+                                    repliesContainer = document.createElement('div');
+                                    repliesContainer.className = 'mt-2 ms-3 ps-3 border-start';
+                                    // Append to the flex-grow-1 container inside parent
+                                    const flexContainer = parentContainer.querySelector('.flex-grow-1');
+                                    if(flexContainer) flexContainer.appendChild(repliesContainer);
+                                }
+                                
+                                repliesContainer.insertAdjacentHTML('beforeend', data.html);
+                                
+                                // Hide form
+                                const replyFormContainer = document.getElementById('reply-form-' + parentId);
+                                if(replyFormContainer) replyFormContainer.classList.add('d-none');
+                            }
+                        } else {
+                            // New Comment
+                            // Insert before the form itself
+                            form.insertAdjacentHTML('beforebegin', data.html);
+                        }
+
+                        // Update Post Comment Count
+                        const postCard = document.getElementById('post-' + postId);
+                        if (postCard) {
+                             // Find the comment count element (last .text-muted.small in action bar)
+                             const actionBars = postCard.querySelectorAll('.d-flex.align-items-center.justify-content-between.mt-3');
+                             if(actionBars.length > 0) {
+                                 const countEl = actionBars[actionBars.length-1].lastElementChild;
+                                 if(countEl) countEl.textContent = `${data.count} reacties`;
+                             }
+                        }
+
+                        form.reset();
+                        const textarea = form.querySelector('textarea');
+                        if(textarea) {
+                            textarea.style.height = 'auto';
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Comment failed', err);
+                form.submit();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHtml;
+            }
+        }
+
+        if (e.target.matches('.comment-update-form')) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            
+            try {
+                const formData = new URLSearchParams(new FormData(form));
+                const response = await fetch(form.action, {
+                     method: 'POST', body: formData,
+                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                });
+                if(response.ok) {
+                    const data = await response.json();
+                    if(data.success) {
+                        const actionUrlParts = form.action.split('/comment/');
+                        if(actionUrlParts.length > 1) {
+                            const commentId = actionUrlParts[1].split('/')[0];
+                            const viewEl = document.getElementById('comment-content-view-' + commentId);
+                            const editEl = document.getElementById('comment-content-edit-' + commentId);
+                            
+                            if(viewEl) {
+                                viewEl.querySelector('span').innerHTML = data.content;
+                                viewEl.classList.remove('d-none');
+                            }
+                            if(editEl) editEl.classList.add('d-none');
+                        }
+                    }
+                }
+            } catch(e) { console.error(e); form.submit(); } 
+            finally { btn.disabled = false; }
+        }
+
+        if (e.target.matches('.comment-delete-form')) {
+            e.preventDefault();
+            if(!confirm('Verwijderen?')) return;
+            
+            const form = e.target;
+             try {
+                const response = await fetch(form.action, {
+                     method: 'POST',
+                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                });
+                if(response.ok) {
+                    const data = await response.json();
+                    if(data.success) {
+                        const actionUrlParts = form.action.split('/comment/');
+                        if(actionUrlParts.length > 1) {
+                            const commentId = actionUrlParts[1].split('/')[0];
+                            const container = document.getElementById('comment-container-' + commentId);
+                            if(container) {
+                                const postCard = container.closest('.post-card');
+                                container.remove();
+                                
+                                if(postCard && data.count !== undefined) {
+                                     const actionBars = postCard.querySelectorAll('.d-flex.align-items-center.justify-content-between.mt-3');
+                                     if(actionBars.length > 0) {
+                                         const countEl = actionBars[actionBars.length-1].lastElementChild;
+                                         if(countEl) countEl.textContent = `${data.count} reacties`;
+                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch(e) { console.error(e); form.submit(); }
+        }
     });
     
     // Load More Functionality
