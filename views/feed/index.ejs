@@ -634,44 +634,44 @@ function removeFileInput(btn) {
     updateAddFileButtonText();
 }
 
-let pollCount = 0;
+let pollCounter = 0;
 
-function addPoll() {
-    const container = document.getElementById('pollsContainer');
-    const index = pollCount++;
+function addPoll(containerId = 'pollsContainer') {
+    const container = document.getElementById(containerId);
+    const uniqueId = Date.now() + '_' + (pollCounter++);
     
     const div = document.createElement('div');
     div.className = 'card border-light shadow-sm mb-3 poll-item';
-    div.id = 'poll-item-' + index;
+    div.id = 'poll-item-' + uniqueId;
     div.innerHTML = `
         <div class="card-body p-3 position-relative">
-            <button type="button" class="btn-close position-absolute top-0 end-0 m-2 small" aria-label="Verwijder poll" onclick="removePoll(${index})"></button>
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-2 small" aria-label="Verwijder poll" onclick="removePoll('${uniqueId}')"></button>
             <div class="mb-2">
-                <input type="text" class="form-control form-control-sm fw-bold" name="polls[${index}][question]" placeholder="Poll Vraag" required>
+                <input type="text" class="form-control form-control-sm fw-bold" name="polls[${uniqueId}][question]" placeholder="Poll Vraag" required>
             </div>
             <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" name="polls[${index}][multiple]" id="pollMultiple-${index}">
-                <label class="form-check-label small" for="pollMultiple-${index}">Meerdere antwoorden mogelijk</label>
+                <input class="form-check-input" type="checkbox" name="polls[${uniqueId}][multiple]" id="pollMultiple-${uniqueId}">
+                <label class="form-check-label small" for="pollMultiple-${uniqueId}">Meerdere antwoorden mogelijk</label>
             </div>
-            <div id="pollOptions-${index}">
-                <input type="text" class="form-control form-control-sm mb-2" name="polls[${index}][options][]" placeholder="Optie 1">
-                <input type="text" class="form-control form-control-sm mb-2" name="polls[${index}][options][]" placeholder="Optie 2">
+            <div id="pollOptions-${uniqueId}">
+                <input type="text" class="form-control form-control-sm mb-2" name="polls[${uniqueId}][options][]" placeholder="Optie 1">
+                <input type="text" class="form-control form-control-sm mb-2" name="polls[${uniqueId}][options][]" placeholder="Optie 2">
             </div>
-            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" onclick="addOptionToPoll(${index})">+ Optie toevoegen</button>
+            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" onclick="addOptionToPoll('${uniqueId}')">+ Optie toevoegen</button>
         </div>
     `;
     container.appendChild(div);
 }
 
-function removePoll(index) {
-    const el = document.getElementById('poll-item-' + index);
+function removePoll(uniqueId) {
+    const el = document.getElementById('poll-item-' + uniqueId);
     if(el) el.remove();
 }
 
-function addOptionToPoll(index) {
-    const container = document.getElementById('pollOptions-' + index);
+function addOptionToPoll(uniqueId) {
+    const container = document.getElementById('pollOptions-' + uniqueId);
     const div = document.createElement('div');
-    div.innerHTML = `<input type="text" class="form-control form-control-sm mb-2" name="polls[${index}][options][]" placeholder="Extra Optie">`;
+    div.innerHTML = `<input type="text" class="form-control form-control-sm mb-2" name="polls[${uniqueId}][options][]" placeholder="Extra Optie">`;
     container.appendChild(div.firstChild);
 }
 

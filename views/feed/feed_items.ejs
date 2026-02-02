@@ -73,6 +73,45 @@
                          <input type="file" class="form-control form-control-sm" name="attachments" multiple>
                     </div>
 
+                    <!-- Poll Builder for Edit -->
+                    <div class="mb-2">
+                        <button class="btn btn-outline-primary btn-sm rounded-pill mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#pollBuilder-<%= post.id %>">
+                            <i class="bi bi-bar-chart"></i> Polls Bewerken
+                        </button>
+                        <div class="collapse mb-3 p-3 rounded bg-light" id="pollBuilder-<%= post.id %>">
+                            <h6 class="font-playful">Polls</h6>
+                            <div id="pollsContainer-<%= post.id %>">
+                                <% if (post.poll) { 
+                                    const polls = Array.isArray(post.poll) ? post.poll : [post.poll];
+                                    polls.forEach((pollItem, pIdx) => { 
+                                        const uniqueId = 'edit_' + post.id + '_' + pIdx;
+                                %>
+                                    <div class="card border-light shadow-sm mb-3 poll-item" id="poll-item-<%= uniqueId %>">
+                                        <div class="card-body p-3 position-relative">
+                                            <button type="button" class="btn-close position-absolute top-0 end-0 m-2 small" aria-label="Verwijder poll" onclick="removePoll('<%= uniqueId %>')"></button>
+                                            <div class="mb-2">
+                                                <input type="text" class="form-control form-control-sm fw-bold" name="polls[<%= uniqueId %>][question]" placeholder="Poll Vraag" value="<%= pollItem.question %>" required>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="polls[<%= uniqueId %>][multiple]" id="pollMultiple-<%= uniqueId %>" <%= pollItem.allowMultiple ? 'checked' : '' %>>
+                                                <label class="form-check-label small" for="pollMultiple-<%= uniqueId %>">Meerdere antwoorden mogelijk</label>
+                                            </div>
+                                            <div id="pollOptions-<%= uniqueId %>">
+                                                <% pollItem.options.forEach(opt => { %>
+                                                    <input type="text" class="form-control form-control-sm mb-2" name="polls[<%= uniqueId %>][options][]" placeholder="Optie" value="<%= opt %>">
+                                                <% }) %>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" onclick="addOptionToPoll('<%= uniqueId %>')">+ Optie toevoegen</button>
+                                        </div>
+                                    </div>
+                                <%  }); } %>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-2" onclick="addPoll('pollsContainer-<%= post.id %>')">
+                                <i class="bi bi-plus-circle"></i> Poll Toevoegen
+                            </button>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-sm btn-success rounded-pill">Opslaan</button>
                     <button type="button" class="btn btn-sm btn-light rounded-pill" onclick="disableEditMode('<%= post.id %>')">Annuleren</button>
                 </form>
