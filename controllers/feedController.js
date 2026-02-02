@@ -441,6 +441,48 @@ exports.postResponse = async (req, res) => {
                     data: { optionIndices: indices, pollIndex: pollIndex }
                 });
             }
+
+            // Handle AJAX: Return updated poll stats
+            if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+                const allResponses = await PostResponse.findAll({
+                    where: { postId, type: 'poll' },
+                    include: [{ model: User, as: 'user', attributes: ['username'] }]
+                });
+
+                // Calculate counts for this specific pollIndex
+                const counts = {};
+                const voters = {};
+                // Initialize is hard because we don't have the poll options length here easily without fetching Post
+                // But we can just return what we have. Frontend can merge.
+                // Actually better to fetch Post to be safe or just return dynamic maps.
+                
+                allResponses.forEach(r => {
+                    // Check if this response belongs to the current pollIndex
+                    const pIdx = (r.data && r.data.pollIndex !== undefined) ? r.data.pollIndex : 0;
+                    if (pIdx === pollIndex) {
+                        let rIndices = Array.isArray(r.data.optionIndices) ? r.data.optionIndices : (r.data.optionIndex !== undefined ? [parseInt(r.data.optionIndex)] : []);
+                        rIndices.forEach(idx => {
+                            counts[idx] = (counts[idx] || 0) + 1;
+                            if (r.user) {
+                                if (!voters[idx]) voters[idx] = [];
+                                voters[idx].push(r.user.username.charAt(0).toUpperCase() + r.user.username.slice(1).toLowerCase());
+                            }
+                        });
+                    }
+                });
+                
+                // Calculate total votes for this poll
+                const totalVotes = allResponses.filter(r => {
+                     const pIdx = (r.data && r.data.pollIndex !== undefined) ? r.data.pollIndex : 0;
+                     return pIdx === pollIndex;
+                }).length;
+
+                return res.json({ 
+                    success: true, 
+                    myVotes: indices,
+                    pollStats: { counts, voters, totalVotes }
+                });
+            }
         } else {
             // Form Response
             // Check if already responded? (Optional, let's limit to 1 per user for now)

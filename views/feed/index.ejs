@@ -714,6 +714,146 @@ function saveFormSchema() {
     }
 }
 
+async function togglePollVote(element, postId, pollIndex, index, allowMultiple) {
+    const container = element.closest('.poll-options-container');
+    const allOptions = container.querySelectorAll('.poll-option-item');
+    const isSelected = element.getAttribute('data-selected') === 'true';
+    
+    let newIndices = [];
+
+    if (allowMultiple) {
+        allOptions.forEach(opt => {
+            if (opt.getAttribute('data-selected') === 'true') {
+                newIndices.push(parseInt(opt.getAttribute('data-index')));
+            }
+        });
+
+        if (isSelected) {
+            newIndices = newIndices.filter(i => i !== index);
+        } else {
+            newIndices.push(index);
+        }
+    } else {
+        if (isSelected) {
+            newIndices = [];
+        } else {
+            newIndices = [index];
+        }
+    }
+
+    // Optimistic Update
+    if (allowMultiple) {
+        element.setAttribute('data-selected', isSelected ? 'false' : 'true');
+        toggleOptionVisuals(element, !isSelected);
+    } else {
+        allOptions.forEach(opt => {
+            opt.setAttribute('data-selected', 'false');
+            toggleOptionVisuals(opt, false);
+        });
+        if (!isSelected) {
+            element.setAttribute('data-selected', 'true');
+            toggleOptionVisuals(element, true);
+        }
+    }
+
+    try {
+        const response = await fetch('/feed/respond', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                postId: postId,
+                type: 'poll',
+                data: {
+                    pollIndex: pollIndex,
+                    optionIndex: newIndices
+                }
+            })
+        });
+
+        if (response.ok) {
+            const resData = await response.json();
+            if (resData.success) {
+                updatePollStats(container, resData.pollStats, resData.myVotes);
+            }
+        }
+    } catch (e) {
+        console.error('Poll vote error', e);
+    }
+}
+
+function toggleOptionVisuals(element, isSelected) {
+    const icon = element.querySelector('.poll-check-icon');
+    const container = element.closest('.poll-options-container');
+    const isMultiple = container && container.getAttribute('data-allow-multiple') === 'true';
+    
+    if (isSelected) {
+        element.classList.add('bg-white', 'shadow-sm', 'border-primary');
+        element.classList.remove('border-light');
+        if(icon) {
+            icon.classList.remove('bi-circle', 'bi-square');
+            icon.classList.add('bi-check-circle-fill', 'text-primary');
+        }
+    } else {
+        element.classList.remove('bg-white', 'shadow-sm', 'border-primary');
+        element.classList.add('border-light');
+        if(icon) {
+            icon.classList.remove('bi-check-circle-fill', 'text-primary');
+            icon.classList.add(isMultiple ? 'bi-square' : 'bi-circle');
+        }
+    }
+}
+
+function updatePollStats(container, stats, myVotes) {
+    const options = container.querySelectorAll('.poll-option-item');
+    
+    options.forEach(opt => {
+        const idx = parseInt(opt.getAttribute('data-index'));
+        const count = stats.counts[idx] || 0;
+        const total = stats.totalVotes;
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+        
+        const countEl = opt.querySelector('.poll-count-text');
+        if(countEl) countEl.textContent = count;
+        
+        const bar = opt.querySelector('.poll-progress-bar');
+        if(bar) bar.style.width = pct + '%';
+        
+        const votersEl = opt.querySelector('.poll-voters-list');
+        if (votersEl) {
+             const voterNames = stats.voters[idx] || [];
+             if (voterNames.length > 0) {
+                 votersEl.textContent = voterNames.slice(0, 3).join(', ') + (voterNames.length > 3 ? ', ...' : '');
+                 votersEl.parentElement.classList.remove('d-none');
+             } else {
+                 votersEl.textContent = '';
+                 votersEl.parentElement.classList.add('d-none');
+             }
+        }
+        
+        const shouldBeSelected = myVotes.includes(idx);
+        opt.setAttribute('data-selected', shouldBeSelected);
+        toggleOptionVisuals(opt, shouldBeSelected);
+    });
+
+    const wrapper = container.closest('.poll-wrapper');
+    if (wrapper) {
+        const header = wrapper.querySelector('.poll-results-header');
+        if (header) {
+            try {
+                const currentData = JSON.parse(header.getAttribute('data-poll-results'));
+                currentData.counts = stats.counts;
+                currentData.voters = stats.voters;
+                currentData.totalVotes = stats.totalVotes;
+                header.setAttribute('data-poll-results', JSON.stringify(currentData));
+            } catch(e) {}
+        }
+    }
+}
+
 function showPollResults(element) {
     const resultsData = element.getAttribute('data-poll-results');
     if (!resultsData) return;
