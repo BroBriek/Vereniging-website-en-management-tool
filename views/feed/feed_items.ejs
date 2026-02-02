@@ -25,7 +25,7 @@
                         <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                        <li><a class="dropdown-item" href="#" onclick="enableEditMode('<%= post.id %>')"><i class="bi bi-pencil me-2"></i>Bewerken</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="enableEditMode('<%= post.id %>'); return false;"><i class="bi bi-pencil me-2"></i>Bewerken</a></li>
                         <li>
                             <form action="/feed/post/<%= post.id %>/delete" method="POST" onsubmit="return confirm('Post verwijderen?');">
                                 <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Verwijderen</button>
