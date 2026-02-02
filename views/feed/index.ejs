@@ -791,17 +791,18 @@ function toggleOptionVisuals(element, isSelected) {
     const isMultiple = container && container.getAttribute('data-allow-multiple') === 'true';
     
     if (isSelected) {
-        element.classList.add('bg-white', 'shadow-sm', 'border-primary');
         element.classList.remove('border-light');
+        element.classList.add('border-primary', 'border-2');
         if(icon) {
-            icon.classList.remove('bi-circle', 'bi-square');
+            icon.classList.remove('bi-circle', 'bi-square', 'text-muted');
             icon.classList.add('bi-check-circle-fill', 'text-primary');
         }
     } else {
-        element.classList.remove('bg-white', 'shadow-sm', 'border-primary');
+        element.classList.remove('border-primary', 'border-2');
         element.classList.add('border-light');
         if(icon) {
             icon.classList.remove('bi-check-circle-fill', 'text-primary');
+            icon.classList.add('text-muted');
             icon.classList.add(isMultiple ? 'bi-square' : 'bi-circle');
         }
     }
@@ -816,21 +817,26 @@ function updatePollStats(container, stats, myVotes) {
         const total = stats.totalVotes;
         const pct = total > 0 ? Math.round((count / total) * 100) : 0;
         
-        const countEl = opt.querySelector('.poll-count-text');
-        if(countEl) countEl.textContent = count;
+        // Update Percentage Text
+        const pctEl = opt.querySelector('.poll-percent-text');
+        if(pctEl) pctEl.textContent = pct + '%';
         
+        // Update Background Bar
         const bar = opt.querySelector('.poll-progress-bar');
         if(bar) bar.style.width = pct + '%';
         
+        // Update Voters List
+        const votersContainer = opt.querySelector('.poll-voters-container');
         const votersEl = opt.querySelector('.poll-voters-list');
-        if (votersEl) {
+        
+        if (votersEl && votersContainer) {
              const voterNames = stats.voters[idx] || [];
              if (voterNames.length > 0) {
                  votersEl.textContent = voterNames.slice(0, 3).join(', ') + (voterNames.length > 3 ? ', ...' : '');
-                 votersEl.parentElement.classList.remove('d-none');
+                 votersContainer.classList.remove('d-none');
              } else {
                  votersEl.textContent = '';
-                 votersEl.parentElement.classList.add('d-none');
+                 votersContainer.classList.add('d-none');
              }
         }
         
