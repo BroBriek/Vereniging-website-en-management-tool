@@ -156,6 +156,29 @@ exports.subscribePush = async (req, res) => {
   }
 };
 
+exports.unsubscribePush = async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    const user = await User.findByPk(req.user.id);
+
+    if (user.pushSubscriptions && Array.isArray(user.pushSubscriptions)) {
+      const initialLength = user.pushSubscriptions.length;
+      const newSubscriptions = user.pushSubscriptions.filter(s => s.endpoint !== endpoint);
+      
+      if (newSubscriptions.length !== initialLength) {
+        user.pushSubscriptions = newSubscriptions;
+        user.changed('pushSubscriptions', true);
+        await user.save();
+      }
+    }
+
+    res.status(200).json({ message: 'Unsubscribed successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to remove subscription' });
+  }
+};
+
 exports.updateEmail = async (req, res) => {
   const { email } = req.body;
   const renderContext = {
