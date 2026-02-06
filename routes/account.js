@@ -10,6 +10,7 @@ router.use(ensureAuthenticated);
 router.get('/settings', accountController.getSettings);
 router.post('/password', accountController.updatePassword);
 router.post('/subscribe', accountController.subscribePush);
+router.post('/unsubscribe', accountController.unsubscribePush);
 router.post('/email', accountController.updateEmail);
 router.get('/email/verify/:token', accountController.verifyEmail);
 router.post('/email-toggle', accountController.toggleEmailNotifications);
