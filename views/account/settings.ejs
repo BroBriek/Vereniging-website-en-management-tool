@@ -155,9 +155,14 @@
                             <label class="form-check-label small" for="prefComment">Reacties op mijn berichten</label>
                         </div>
                         
-                        <div class="form-check form-switch mb-3">
+                        <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" id="prefReaction" name="reaction" <%= p.reaction ? 'checked' : '' %>>
                             <label class="form-check-label small" for="prefReaction">Likes op mijn berichten</label>
+                        </div>
+                        
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="prefBirthday" name="birthday" <%= p.birthday ? 'checked' : '' %>>
+                            <label class="form-check-label small" for="prefBirthday">Verjaardagen van leiding</label>
                         </div>
 
                         <button type="submit" class="btn btn-warning w-100 btn-sm">Voorkeuren Opslaan</button>

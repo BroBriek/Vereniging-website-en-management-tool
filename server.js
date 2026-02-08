@@ -191,4 +191,6 @@ app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
     // Initialize PM2 Log Monitor
     require('./services/LogMonitorService').init();
+    // Initialize Birthday Notifications
+    require('./services/BirthdayService').init();
 });

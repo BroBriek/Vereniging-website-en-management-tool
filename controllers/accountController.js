@@ -314,7 +314,8 @@ exports.updateNotificationPreferences = async (req, res) => {
             newPost: req.body.newPost === 'on',
             mention: req.body.mention === 'on',
             comment: req.body.comment === 'on',
-            reaction: req.body.reaction === 'on'
+            reaction: req.body.reaction === 'on',
+            birthday: req.body.birthday === 'on'
         };
 
         user.notificationPreferences = newPrefs;

@@ -199,15 +199,20 @@ exports.getFeed = async (req, res) => {
 
         // Birthday logic
         const today = new Date();
-        const month = today.getMonth() + 1;
-        const day = today.getDate();
+        const monthStr = (today.getMonth() + 1).toString().padStart(2, '0');
+        const dayStr = today.getDate().toString().padStart(2, '0');
+        const todayMMDD = `${monthStr}-${dayStr}`;
+
         const leaders = await Leader.findAll({
             attributes: ['name', 'birth_date']
         });
         const birthdayLeaders = leaders.filter(l => {
             if (!l.birth_date) return false;
-            const bday = new Date(l.birth_date);
-            return (bday.getMonth() + 1) === month && bday.getDate() === day;
+            // birth_date is YYYY-MM-DD
+            const parts = l.birth_date.split('-');
+            if (parts.length < 3) return false;
+            const leaderMMDD = `${parts[1]}-${parts[2]}`;
+            return leaderMMDD === todayMMDD;
         });
 
         res.render('feed/index', { 
