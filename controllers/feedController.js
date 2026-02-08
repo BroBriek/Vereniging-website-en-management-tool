@@ -1,4 +1,4 @@
-const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess } = require('../models');
+const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess, Leader } = require('../models');
 const quoteController = require('./quoteController');
 const path = require('path');
 const { Op } = require('sequelize');
@@ -197,6 +197,19 @@ exports.getFeed = async (req, res) => {
             });
         }
 
+        // Birthday logic
+        const today = new Date();
+        const month = today.getMonth() + 1;
+        const day = today.getDate();
+        const leaders = await Leader.findAll({
+            attributes: ['name', 'birth_date']
+        });
+        const birthdayLeaders = leaders.filter(l => {
+            if (!l.birth_date) return false;
+            const bday = new Date(l.birth_date);
+            return (bday.getMonth() + 1) === month && bday.getDate() === day;
+        });
+
         res.render('feed/index', { 
             title: 'Leidingshoekje', 
             posts, 
@@ -205,6 +218,7 @@ exports.getFeed = async (req, res) => {
             activeGroup,
             limit, // Pass limit to view for initial button state
             quoteOfTheMonth,
+            birthdayLeaders,
             ...viewHelpers
         });
     } catch (error) {
