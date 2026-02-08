@@ -448,3 +448,36 @@ input:disabled + .chiro-slider:before {
     white-space: nowrap !important;
     width: 1%; /* Shrink to fit content */
 }
+
+/* Birthday Alert Card */
+.birthday-alert {
+    background: linear-gradient(135deg, #fff5f5 0%, #fff 100%);
+    border: 2px solid #ffccd5 !important;
+    border-radius: 1rem !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.birthday-alert::before {
+    content: "🥳";
+    position: absolute;
+    right: 10px;
+    bottom: -10px;
+    font-size: 4rem;
+    opacity: 0.1;
+    transform: rotate(-15deg);
+}
+
+.birthday-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background-color: #ffccd5;
+    color: #d63384;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+
