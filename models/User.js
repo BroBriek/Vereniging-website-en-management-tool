@@ -42,7 +42,8 @@ const User = sequelize.define('User', {
       mention: true,
       comment: true,
       reaction: true,
-      newPost: true
+      newPost: true,
+      birthday: true
     }
   },
   profilePicture: {
