@@ -60,7 +60,7 @@ exports.getLeaders = async (req, res) => {
     try {
         const leaders = await Leader.findAll({ order: [['group', 'ASC'], ['name', 'ASC']] });
         const groups = {};
-        const groupOrder = ['Ribbels', 'Speelclub', 'Rakwi\'s', 'Tito\'s', 'Keti\'s', 'Aspi\'s'];
+        const groupOrder = ['Hoofdleiding', 'Ribbels', 'Speelclub', 'Rakwi\'s', 'Tito\'s', 'Keti\'s', 'Aspi\'s'];
         groupOrder.forEach(g => groups[g] = []);
         leaders.forEach(l => {
             if (!groups[l.group]) groups[l.group] = [];
@@ -146,10 +146,10 @@ exports.postRegister = async (req, res) => {
             email: (req.body.email || '').trim(),
             photoPermission: req.body.photoPermission === 'on' || req.body.photoPermission === 'true',
             medicalInfo: req.body.medicalInfo || null,
-            group: (req.body.group || '').toLowerCase(),
+            group: (req.body.group || '').trim().toLowerCase(),
             privacyAccepted: req.body.privacyAccepted === 'on' || req.body.privacyAccepted === 'true'
         };
-        const validGroups = ['ribbel','speelclub','rakwi','tito','keti','aspi'];
+        const validGroups = ['ribbel','speelclub','rakwi','tito','keti','aspi', 'leiding'];
         if (!validGroups.includes(payload.group)) {
             throw new Error('invalid group');
         }

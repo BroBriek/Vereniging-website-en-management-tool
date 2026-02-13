@@ -21,7 +21,7 @@
                 <div class="col-md-6 mb-3">
                     <label>Groep</label>
                     <select class="form-select" name="group">
-                        <% const groups = ["Ribbels", "Speelclub", "Rakwi's", "Tito's", "Keti's", "Aspi's"]; %>
+                        <% const groups = ["Ribbels", "Speelclub", "Rakwi's", "Tito's", "Keti's", "Aspi's", "Hoofdleiding"]; %>
                         <% groups.forEach(g => { %>
                             <option value="<%= g %>" <%= leader.group === g ? 'selected' : '' %>><%= g %></option>
                         <% }) %>
