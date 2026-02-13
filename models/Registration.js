@@ -54,7 +54,7 @@ const Registration = sequelize.define('Registration', {
     allowNull: true
   },
   group: {
-    type: DataTypes.ENUM('ribbel', 'speelclub', 'rakwi', 'tito', 'keti', 'aspi'),
+    type: DataTypes.ENUM('ribbel', 'speelclub', 'rakwi', 'tito', 'keti', 'aspi', 'leiding'),
     allowNull: false
   },
   privacyAccepted: {

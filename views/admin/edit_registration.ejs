@@ -39,7 +39,7 @@
                             <div class="col-md-4">
                                 <label for="group" class="form-label">Groep</label>
                                 <select class="form-select" id="group" name="group">
-                                    <% const groups = ['ribbel', 'speelclub', 'rakwi', 'tito', 'keti', 'aspi']; %>
+                                    <% const groups = ['ribbel', 'speelclub', 'rakwi', 'tito', 'keti', 'aspi', 'leiding']; %>
                                     <% groups.forEach(g => { %>
                                         <option value="<%= g %>" <%= registration.group === g ? 'selected' : '' %>><%= g.charAt(0).toUpperCase() + g.slice(1) %></option>
                                     <% }) %>
