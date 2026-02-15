@@ -1,116 +1,122 @@
 <%- include('../partials/header') %>
 
-<h1>Onze Leiding</h1>
-<hr>
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-4 fw-bold mb-0">Onze Leiding</h1>
+    </div>
+    <hr class="mb-5 opacity-10">
 
-<% Object.keys(groups).forEach(groupName => { %>
-    <% if(groups[groupName].length > 0) { %>
-        <h3 class="mt-4 mb-3 group-header group-<%= groupName.toLowerCase().replace(/[^a-z]/g, '') %>"><%= groupName %></h3>
-        
-        <% if (groups[groupName].length > 4) { %>
-            <!-- Carousel Layout for many items -->
-            <div class="leader-carousel mb-4">
-                <% groups[groupName].forEach(leader => { %>
-                    <div class="leader-card-wrapper" 
-                         data-leader="<%= JSON.stringify(leader) %>"
-                         onclick="openLeaderModal(this)">
-                        <div class="card h-100 leader-card">
-                            <% if(leader.image) { %>
-                                <img src="<%= leader.image %>" class="card-img-top <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" alt="<%= leader.name %>" 
-                                     style="height: 250px; object-fit: cover;" draggable="false" ondragstart="return false;">
-                            <% } else { %>
-                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" style="height: 250px;">Geen foto</div>
-                            <% } %>
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <%= leader.name %>
-                                    <% if(leader.is_head_leader) { %>
-                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;">Hoofdleiding</span>
+    <% Object.keys(groups).forEach(groupName => { %>
+        <% if(groups[groupName].length > 0) { %>
+            <div class="mb-5">
+                <h3 class="group-header group-<%= groupName.toLowerCase().replace(/[^a-z]/g, '') %> px-4 py-2 rounded-pill shadow-sm">
+                    <%= groupName %>
+                </h3>
+                
+                <% if (groups[groupName].length > 4) { %>
+                    <!-- Carousel Layout for many items -->
+                    <div class="leader-carousel mb-4">
+                        <% groups[groupName].forEach(leader => { %>
+                            <div class="leader-card-wrapper" 
+                                 data-leader="<%= JSON.stringify(leader) %>"
+                                 onclick="openLeaderModal(this)">
+                                <div class="card h-100 leader-card border-0 shadow-sm">
+                                    <% if(leader.image) { %>
+                                        <div class="position-relative">
+                                            <img src="<%= leader.image %>" class="card-img-top" alt="<%= leader.name %>" 
+                                                 style="height: 280px; object-fit: cover;" draggable="false">
+                                            <% if(leader.is_head_leader) { %>
+                                                <div class="position-absolute top-0 end-0 m-2">
+                                                    <span class="badge bg-warning text-dark shadow-sm">Hoofdleiding</span>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% } else { %>
+                                        <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="height: 280px;">
+                                            <i class="bi bi-person-circle display-4"></i>
+                                        </div>
                                     <% } %>
-                                </h5>
-                                <p class="card-text">
-                                    <small class="text-muted"><%= leader.years_active %> jaar leiding</small><br>
-                                    <strong>Studie/Werk:</strong> <%= leader.study %>
-                                    <% if(leader.extra_info) { %>
-                                        <br>
-                                        <span class="fst-italic text-muted small"><%= leader.extra_info %></span>
-                                    <% } %>
-                                </p>
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title fw-bold mb-1 text-primary"><%= leader.name %></h5>
+                                        <p class="card-text small text-muted mb-0">
+                                            <%= leader.years_active %> jaar leiding
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        <% }) %>
                     </div>
-                <% }) %>
-            </div>
-        <% } else { %>
-            <!-- Mobile: Carousel Layout for few items -->
-            <div class="leader-carousel mb-4 d-flex d-md-none">
-                <% groups[groupName].forEach(leader => { %>
-                    <div class="leader-card-wrapper" 
-                         data-leader="<%= JSON.stringify(leader) %>"
-                         onclick="openLeaderModal(this)">
-                        <div class="card h-100 leader-card">
-                            <% if(leader.image) { %>
-                                <img src="<%= leader.image %>" class="card-img-top <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" alt="<%= leader.name %>" 
-                                     style="height: 250px; object-fit: cover;" draggable="false" ondragstart="return false;">
-                            <% } else { %>
-                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" style="height: 250px;">Geen foto</div>
-                            <% } %>
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <%= leader.name %>
-                                    <% if(leader.is_head_leader) { %>
-                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;">Hoofdleiding</span>
+                <% } else { %>
+                    <!-- Mobile: Carousel Layout for few items -->
+                    <div class="leader-carousel mb-4 d-flex d-md-none">
+                        <% groups[groupName].forEach(leader => { %>
+                            <div class="leader-card-wrapper" 
+                                 data-leader="<%= JSON.stringify(leader) %>"
+                                 onclick="openLeaderModal(this)">
+                                <div class="card h-100 leader-card border-0 shadow-sm">
+                                    <% if(leader.image) { %>
+                                        <div class="position-relative">
+                                            <img src="<%= leader.image %>" class="card-img-top" alt="<%= leader.name %>" 
+                                                 style="height: 280px; object-fit: cover;" draggable="false">
+                                            <% if(leader.is_head_leader) { %>
+                                                <div class="position-absolute top-0 end-0 m-2">
+                                                    <span class="badge bg-warning text-dark shadow-sm">Hoofdleiding</span>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% } else { %>
+                                        <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="height: 280px;">
+                                            <i class="bi bi-person-circle display-4"></i>
+                                        </div>
                                     <% } %>
-                                </h5>
-                                <p class="card-text">
-                                    <small class="text-muted"><%= leader.years_active %> jaar leiding</small><br>
-                                    <strong>Studie/Werk:</strong> <%= leader.study %>
-                                    <% if(leader.extra_info) { %>
-                                        <br>
-                                        <span class="fst-italic text-muted small"><%= leader.extra_info %></span>
-                                    <% } %>
-                                </p>
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title fw-bold mb-1 text-primary"><%= leader.name %></h5>
+                                        <p class="card-text small text-muted mb-0">
+                                            <%= leader.years_active %> jaar leiding
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        <% }) %>
                     </div>
-                <% }) %>
-            </div>
 
-            <!-- Desktop: Standard Grid Layout for few items -->
-            <div class="row d-none d-md-flex">
-                <% groups[groupName].forEach(leader => { %>
-                    <div class="col-md-6 col-lg-3 mb-4" style="cursor: pointer;" 
-                         data-leader="<%= JSON.stringify(leader) %>"
-                         onclick="openLeaderModal(this)">
-                        <div class="card h-100 leader-card">
-                            <% if(leader.image) { %>
-                                <img src="<%= leader.image %>" class="card-img-top <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" alt="<%= leader.name %>" style="height: 250px; object-fit: cover;">
-                            <% } else { %>
-                                <div class="bg-secondary text-white d-flex align-items-center justify-content-center <%= leader.is_head_leader ? 'border border-5 border-warning' : '' %>" style="height: 250px;">Geen foto</div>
-                            <% } %>
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <%= leader.name %>
-                                    <% if(leader.is_head_leader) { %>
-                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.7rem;">Hoofdleiding</span>
+                    <!-- Desktop: Standard Grid Layout for few items -->
+                    <div class="row d-none d-md-flex g-4">
+                        <% groups[groupName].forEach(leader => { %>
+                            <div class="col-md-6 col-lg-3 mb-4" style="cursor: pointer;" 
+                                 data-leader="<%= JSON.stringify(leader) %>"
+                                 onclick="openLeaderModal(this)">
+                                <div class="card h-100 leader-card border-0 shadow-sm">
+                                    <% if(leader.image) { %>
+                                        <div class="position-relative">
+                                            <img src="<%= leader.image %>" class="card-img-top" alt="<%= leader.name %>" 
+                                                 style="height: 280px; object-fit: cover;">
+                                            <% if(leader.is_head_leader) { %>
+                                                <div class="position-absolute top-0 end-0 m-2">
+                                                    <span class="badge bg-warning text-dark shadow-sm">Hoofdleiding</span>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% } else { %>
+                                        <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="height: 280px;">
+                                            <i class="bi bi-person-circle display-4"></i>
+                                        </div>
                                     <% } %>
-                                </h5>
-                                <p class="card-text">
-                                    <small class="text-muted"><%= leader.years_active %> jaar leiding</small><br>
-                                    <strong>Studie/Werk:</strong> <%= leader.study %>
-                                    <% if(leader.extra_info) { %>
-                                        <br>
-                                        <span class="fst-italic text-muted small"><%= leader.extra_info %></span>
-                                    <% } %>
-                                </p>
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title fw-bold mb-1 text-primary"><%= leader.name %></h5>
+                                        <p class="card-text small text-muted mb-0">
+                                            <%= leader.years_active %> jaar leiding
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        <% }) %>
                     </div>
-                <% }) %>
+                <% } %>
             </div>
         <% } %>
-    <% } %>
-<% }) %>
+    <% }) %>
+</div>
 
 <!-- Zwoele Modal -->
 <div class="modal fade" id="leaderModal" tabindex="-1" aria-hidden="true">

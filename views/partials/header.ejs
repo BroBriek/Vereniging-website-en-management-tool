@@ -67,14 +67,14 @@
     <link rel="apple-touch-icon" href="/favicon.png">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container">
             <a class="navbar-brand" href="/home">CHIRO VREUGDELAND</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Navigatie wisselen">
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto py-3 py-lg-0">
                     <li class="nav-item"><a class="nav-link" href="/home">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="/praktisch">Praktisch</a></li>
                     <li class="nav-item"><a class="nav-link" href="/afdelingen">Afdelingen</a></li>
@@ -84,57 +84,89 @@
                     <li class="nav-item"><a class="nav-link" href="/inschrijven">Inschrijven</a></li>
                     <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
                     <% if (user) { %>
-                        <% if (user.role === 'admin') { %>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Admin</a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="/admin">Dashboard</a></li>
-                                    <li><a class="dropdown-item" href="/feed">Leidingshoekje</a></li>
-                                    <li><a class="dropdown-item" href="/account/settings">Instellingen</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="/auth/logout">Uitloggen</a></li>
-                                </ul>
-                            </li>
-                        <% } else { %>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"><%= capitalizeName(user.username) %></a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <% if (typeof enablePublicRegistrations !== 'undefined' && enablePublicRegistrations) { %>
-                                        <li><a class="dropdown-item" href="/admin/registrations">Ledenlijst</a></li>
-                                    <% } %>
-                                    <li><a class="dropdown-item" href="/feed">Leidingshoekje</a></li>
-                                    <li><a class="dropdown-item" href="/account/settings">Instellingen</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="/auth/logout">Uitloggen</a></li>
-                                </ul>
-                            </li>
-                        <% } %>
+                        <li class="nav-item dropdown ms-lg-3 mt-3 mt-lg-0">
+                            <a class="nav-link dropdown-toggle btn-chiro text-white px-4 d-inline-block d-lg-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="box-shadow: none; transform: none; font-size: 1.1rem;">
+                                <i class="bi bi-person-circle me-2"></i>
+                                <%= capitalizeName(user.username) %>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-2 mt-2" aria-labelledby="userDropdown">
+                                <% if (user.role === 'admin') { %>
+                                    <li><h6 class="dropdown-header text-uppercase small fw-bold opacity-50">Beheer</h6></li>
+                                    <li><a class="dropdown-item rounded-3 py-2" href="/admin"><i class="bi bi-speedometer2 me-2 text-primary"></i> Dashboard</a></li>
+                                    <li><hr class="dropdown-divider opacity-10"></li>
+                                <% } %>
+                                
+                                <li><h6 class="dropdown-header text-uppercase small fw-bold opacity-50">Persoonlijk</h6></li>
+                                <% if (typeof enablePublicRegistrations !== 'undefined' && enablePublicRegistrations) { %>
+                                    <li><a class="dropdown-item rounded-3 py-2" href="/admin/registrations"><i class="bi bi-people me-2 text-success"></i> Ledenlijst</a></li>
+                                <% } %>
+                                <li><a class="dropdown-item rounded-3 py-2" href="/feed"><i class="bi bi-chat-left-text me-2 text-warning"></i> Leidingshoekje</a></li>
+                                <li><a class="dropdown-item rounded-3 py-2" href="/account/settings"><i class="bi bi-gear me-2 text-secondary"></i> Instellingen</a></li>
+                                <li><hr class="dropdown-divider opacity-10"></li>
+                                <li><a class="dropdown-item rounded-3 py-2 text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i> Uitloggen</a></li>
+                            </ul>
+                        </li>
                     <% } %>
                 </ul>
             </div>
         </div>
     </nav>
-    <div class="container mt-4">
+
+    <% if (typeof fullWidth === 'undefined' || !fullWidth) { %>
+        <div class="container mt-4">
+    <% } %>
         
     <!-- Global Alert System -->
-    <% if (typeof error !== 'undefined' && error) { %>
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <%= error %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
+    <div class="<%= (typeof fullWidth !== 'undefined' && fullWidth) ? 'container mt-4' : '' %>">
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
 
-    <% if (typeof success !== 'undefined' && success) { %>
-        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <%= success %>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <% } %>
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <%= success %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+    </div>
 
     <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(function(){});
     }
+
+    // Lock background scroll when mobile menu is open
+    document.addEventListener('DOMContentLoaded', function() {
+        var navbarCollapse = document.getElementById('navbarNav');
+        var scrollPos = 0;
+
+        if (navbarCollapse) {
+            navbarCollapse.addEventListener('show.bs.collapse', function () {
+                scrollPos = window.pageYOffset;
+                document.body.style.top = '-' + scrollPos + 'px';
+                document.body.classList.add('navbar-open');
+            });
+            navbarCollapse.addEventListener('hidden.bs.collapse', function () {
+                document.body.classList.remove('navbar-open');
+                document.body.style.top = '';
+                window.scrollTo(0, scrollPos);
+            });
+            
+            // Also close menu when clicking on a link (useful for hash links if any)
+            var navLinks = navbarCollapse.querySelectorAll('.nav-link:not(.dropdown-toggle)');
+            navLinks.forEach(function(link) {
+                link.addEventListener('click', function() {
+                    var bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+                    if (bsCollapse) {
+                        bsCollapse.hide();
+                    }
+                });
+            });
+        }
+    });
     </script>
