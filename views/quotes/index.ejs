@@ -55,7 +55,7 @@
                                 <% } %>
                             </div>
                             <p class="mb-1 text-muted text-end">- <%= quote.author %></p>
-                            <small class="text-muted">Toegevoegd door <%= quote.submitter ? quote.submitter.username : 'Onbekend' %> op <%= new Date(quote.createdAt).toLocaleDateString() %></small>
+                            <small class="text-muted">Toegevoegd door <%= quote.submitter ? quote.submitter.username : 'Onbekend' %> op <%= new Date(quote.createdAt).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' }) %></small>
                         </div>
                     <% }); %>
                 <% } else { %>
