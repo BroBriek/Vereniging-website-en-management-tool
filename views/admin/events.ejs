@@ -19,8 +19,13 @@
                     <input type="text" class="form-control" name="title" required>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label>Datum</label>
+                    <label>Begindatum</label>
                     <input type="date" class="form-control" name="date" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label>Einddatum (optioneel)</label>
+                    <input type="date" class="form-control" name="endDate">
+                    <small class="text-muted">Laat leeg voor eendaagse activiteiten.</small>
                 </div>
                 <div class="col-md-12 mb-3">
                     <label>Beschrijving</label>
@@ -44,7 +49,12 @@
     <tbody>
         <% events.forEach(event => { %>
             <tr>
-                <td><%= event.date %></td>
+                <td>
+                    <%= event.date %>
+                    <% if (event.endDate && event.endDate !== event.date) { %>
+                        t/m <%= event.endDate %>
+                    <% } %>
+                </td>
                 <td><%= event.title %></td>
                 <td>
                     <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');">

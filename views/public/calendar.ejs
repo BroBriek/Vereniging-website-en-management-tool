@@ -20,6 +20,15 @@
                 const day = dateObj.getDate();
                 const monthNames = ["JAN", "FEB", "MRT", "APR", "MEI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
                 const month = monthNames[dateObj.getMonth()];
+
+                let dateDisplay = '';
+                const hasEndDate = event.endDate && event.endDate !== event.date;
+                if (hasEndDate) {
+                    const endDateObj = new Date(event.endDate);
+                    const endDay = endDateObj.getDate();
+                    const endMonth = monthNames[endDateObj.getMonth()];
+                    dateDisplay = `${day} ${month} t/m ${endDay} ${endMonth}`;
+                }
             %>
                 <button type="button" class="list-group-item list-group-item-action d-flex align-items-center p-3 border-0 border-bottom" 
                          data-event="<%= JSON.stringify(event) %>"
@@ -32,6 +41,11 @@
                     
                     <div class="flex-grow-1">
                         <h4 class="mb-0 text-primary fw-bold"><%= event.title %></h4>
+                        <% if (hasEndDate) { %>
+                            <small class="text-muted d-block mt-1">
+                                <i class="bi bi-calendar-range me-1"></i> <%= dateDisplay %>
+                            </small>
+                        <% } %>
                     </div>
                     
                     <i class="bi bi-chevron-right fs-4 text-muted"></i>
@@ -73,9 +87,17 @@
         // Format date for modal
         const dateObj = new Date(event.date);
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const formattedDate = dateObj.toLocaleDateString('nl-NL', options);
+        let formattedDate = dateObj.toLocaleDateString('nl-NL', options);
+
+        if (event.endDate && event.endDate !== event.date) {
+            const endDateObj = new Date(event.endDate);
+            const endFormatted = endDateObj.toLocaleDateString('nl-NL', options);
+            formattedDate = `Van ${formattedDate} <br> tot en met ${endFormatted}`;
+            document.getElementById('modalEventDate').innerHTML = formattedDate;
+        } else {
+            document.getElementById('modalEventDate').textContent = formattedDate;
+        }
         
-        document.getElementById('modalEventDate').textContent = formattedDate;
         document.getElementById('modalEventTitle').textContent = event.title;
         // Use innerHTML to render HTML tags from the description
         document.getElementById('modalEventDesc').innerHTML = event.description || '<span class="text-muted fst-italic">Geen beschrijving beschikbaar.</span>';

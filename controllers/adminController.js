@@ -109,8 +109,10 @@ exports.getEvents = async (req, res) => {
 
 exports.postEvent = async (req, res) => {
     try {
-        const { title, date, description } = req.body;
-        await Event.create({ title, date, description });
+        const { title, date, endDate, description } = req.body;
+        // If endDate is empty string, set it to null
+        const finalEndDate = endDate && endDate.trim() !== '' ? endDate : null;
+        await Event.create({ title, date, endDate: finalEndDate, description });
         res.redirect('/admin/events');
     } catch (error) {
         console.error('Error creating event:', error);
