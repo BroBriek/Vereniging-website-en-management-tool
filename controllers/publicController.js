@@ -78,8 +78,21 @@ exports.getLeaders = async (req, res) => {
 
 exports.getCalendar = async (req, res) => {
     try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         const events = await Event.findAll({ 
-            where: { date: { [Op.gte]: new Date() } },
+            where: {
+                [Op.or]: [
+                    { date: { [Op.gte]: today } },
+                    { 
+                        [Op.and]: [
+                            { endDate: { [Op.ne]: null } },
+                            { endDate: { [Op.gte]: today } }
+                        ]
+                    }
+                ]
+            },
             order: [['date', 'ASC']]
         });
         res.render('public/calendar', { 
@@ -88,6 +101,7 @@ exports.getCalendar = async (req, res) => {
             events 
         });
     } catch (error) {
+        console.error('Error in getCalendar:', error);
         res.status(500).send('Er ging iets mis');
     }
 };

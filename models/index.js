@@ -80,6 +80,10 @@ const syncDatabase = async () => {
     console.log('Syncing Like model...');
     await Like.sync({ alter: true });
 
+    // Sync Event specifically with alter: true to add endDate
+    console.log('Syncing Event model...');
+    await Event.sync({ alter: true });
+
     // Sync the rest without alter (or with alter if safe, but we know UGA fails)
     // We can try to sync everything else. 
     // If we run sequelize.sync() now, it will check everything.

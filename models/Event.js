@@ -4,6 +4,7 @@ const sequelize = require('../config/database');
 const Event = sequelize.define('Event', {
   title: { type: DataTypes.STRING, allowNull: false },
   date: { type: DataTypes.DATEONLY, allowNull: false },
+  endDate: { type: DataTypes.DATEONLY, allowNull: true },
   description: { type: DataTypes.TEXT }
 });
 
