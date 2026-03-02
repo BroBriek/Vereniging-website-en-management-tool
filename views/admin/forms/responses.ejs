@@ -1,0 +1,288 @@
+<%- include('../../partials/header') %>
+
+<style>
+    .editable-cell {
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+        transition: background 0.2s;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+    }
+    .editable-cell:hover {
+        background-color: #f8f9fa;
+        border: 1px dashed #dee2e6;
+    }
+    .edit-input {
+        width: 100%;
+        padding: 5px 10px !important;
+        border: 2px solid #db3e41 !important;
+        border-radius: 4px !important;
+        outline: none;
+        min-height: auto !important;
+    }
+    .saving-indicator {
+        font-size: 0.8rem;
+        color: #6c757d;
+        display: none;
+    }
+    .response-row {
+        transition: all 0.3s;
+    }
+    .response-row.deleting {
+        opacity: 0.5;
+        transform: scale(0.98);
+    }
+    /* Fix for global input styles interfering with bootstrap input groups */
+    .input-group .form-control {
+        padding: 0.4rem 0.75rem !important;
+        border-radius: 8px !important;
+        font-size: 0.95rem !important;
+        min-height: auto !important;
+        border: 1px solid #dee2e6 !important;
+    }
+    .input-group-text {
+        border-radius: 8px 0 0 8px !important;
+        border: 1px solid #dee2e6 !important;
+        border-right: none !important;
+    }
+    .input-group .form-control.border-start-0 {
+        border-left: none !important;
+        border-radius: 0 8px 8px 0 !important;
+    }
+</style>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/admin/forms">Formulieren</a></li>
+                <li class="breadcrumb-item active">Antwoorden</li>
+            </ol>
+        </nav>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <h1 class="mb-0">Antwoorden: <%= form.title %></h1>
+                <p class="text-muted mb-0"><%= responses.length %> antwoorden ontvangen. <span class="text-primary small"><i class="bi bi-info-circle"></i> Klik op een cel om deze aan te passen.</span></p>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="input-group" style="width: 250px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="tableSearch" class="form-control border-start-0" placeholder="Zoek in antwoorden...">
+                </div>
+                <a href="/admin/forms/<%= form.id %>/responses/export" class="btn btn-success">
+                    <i class="bi bi-file-earmark-excel me-1"></i> Exporteer
+                </a>
+                <a href="/forms/<%= form.slug %>" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-eye"></i> Bekijk
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4" style="width: 150px;">Datum</th>
+                                <% 
+                                    const questionFields = form.fields.filter(f => ['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi'].includes(f.type));
+                                    questionFields.forEach(f => { 
+                                %>
+                                    <th><%= f.label %></th>
+                                <% }) %>
+                                <th class="text-end pe-4" style="width: 50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (responses && responses.length > 0) { %>
+                                <% responses.forEach(resp => { %>
+                                    <tr id="response-row-<%= resp.id %>" class="response-row">
+                                        <td class="ps-4">
+                                            <div class="small fw-bold"><%= new Date(resp.submittedAt).toLocaleDateString('nl-BE') %></div>
+                                            <div class="small text-muted"><%= new Date(resp.submittedAt).toLocaleTimeString('nl-BE', {hour: '2-digit', minute:'2-digit'}) %></div>
+                                        </td>
+                                        <% questionFields.forEach(f => { 
+                                            let answer = resp.data[f.id];
+                                            const isArray = Array.isArray(answer);
+                                            const displayValue = isArray ? answer.join(', ') : (answer || '');
+                                        %>
+                                            <td>
+                                                <div class="editable-cell" 
+                                                     onclick="startEdit(this, '<%= resp.id %>', '<%= f.id %>', '<%= f.type %>', <%= JSON.stringify(f.options || []) %>)"
+                                                     data-raw-value="<%= isArray ? JSON.stringify(answer) : answer %>">
+                                                    <span><%= displayValue || '-' %></span>
+                                                </div>
+                                            </td>
+                                        <% }) %>
+                                        <td class="text-end pe-4">
+                                            <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="deleteResponse('<%= resp.id %>')" title="Verwijder dit antwoord">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="<%= questionFields.length + 2 %>" class="text-center py-5 text-muted">
+                                        <i class="bi bi-chat-left-dots display-4 d-block mb-3 opacity-25"></i>
+                                        Nog geen antwoorden ontvangen.
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="saveToast" class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Aanpassing opgeslagen!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('tableSearch').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('.response-row');
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+
+    function startEdit(container, responseId, fieldId, type, options) {
+        if (container.querySelector('input') || container.querySelector('select') || container.querySelector('textarea')) return;
+
+        const currentSpan = container.querySelector('span');
+        const rawValue = container.getAttribute('data-raw-value');
+        const originalHtml = container.innerHTML;
+
+        let input;
+        if (type === 'long_text') {
+            input = document.createElement('textarea');
+            input.className = 'edit-input';
+            input.rows = 3;
+            input.value = rawValue;
+        } else if (type === 'multiple_choice') {
+            input = document.createElement('select');
+            input.className = 'form-select form-select-sm edit-input';
+            options.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt;
+                o.text = opt;
+                if (opt === rawValue) o.selected = true;
+                input.appendChild(o);
+            });
+            const empty = document.createElement('option');
+            empty.value = '';
+            empty.text = '- Geen -';
+            if (!rawValue) empty.selected = true;
+            input.prepend(empty);
+        } else if (type === 'multiple_choice_multi') {
+            // For multi-select, it's harder inline. Let's use a multi-select or comma separated text for now.
+            // A simple way is a text input for multi too, or a special modal.
+            // For "polishing", let's use a text input but remind them it's comma separated or just let them edit.
+            input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'edit-input';
+            try {
+                const arr = JSON.parse(rawValue);
+                input.value = Array.isArray(arr) ? arr.join(', ') : rawValue;
+            } catch(e) {
+                input.value = rawValue;
+            }
+        } else {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'edit-input';
+            input.value = rawValue;
+        }
+
+        container.innerHTML = '';
+        container.appendChild(input);
+        input.focus();
+
+        const finishEdit = async () => {
+            let newValue = input.value;
+            
+            // Handle multi-choice-multi array conversion if needed
+            if (type === 'multiple_choice_multi') {
+                newValue = newValue.split(',').map(v => v.trim()).filter(v => v !== '');
+            }
+
+            if (newValue == rawValue) {
+                container.innerHTML = originalHtml;
+                return;
+            }
+
+            try {
+                const response = await fetch(`/admin/forms/responses/${responseId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fieldId, value: newValue })
+                });
+
+                if (response.ok) {
+                    const displayValue = Array.isArray(newValue) ? newValue.join(', ') : newValue;
+                    container.innerHTML = `<span>${displayValue || '-'}</span>`;
+                    container.setAttribute('data-raw-value', Array.isArray(newValue) ? JSON.stringify(newValue) : newValue);
+                    
+                    const toast = new bootstrap.Toast(document.querySelector('#saveToast .toast'));
+                    toast.show();
+                } else {
+                    alert('Fout bij opslaan');
+                    container.innerHTML = originalHtml;
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = originalHtml;
+            }
+        };
+
+        input.onblur = finishEdit;
+        input.onkeydown = (e) => {
+            if (e.key === 'Enter' && type !== 'long_text') finishEdit();
+            if (e.key === 'Escape') container.innerHTML = originalHtml;
+        };
+    }
+
+    async function deleteResponse(id) {
+        if (!confirm('Weet je zeker dat je dit antwoord wilt verwijderen?')) return;
+
+        const row = document.getElementById(`response-row-${id}`);
+        row.classList.add('deleting');
+
+        try {
+            const response = await fetch(`/admin/forms/responses/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                row.style.transform = 'translateX(100px)';
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 300);
+            } else {
+                row.classList.remove('deleting');
+                alert('Fout bij verwijderen');
+            }
+        } catch (err) {
+            console.error(err);
+            row.classList.remove('deleting');
+        }
+    }
+</script>
+
+<%- include('../../partials/footer') %>

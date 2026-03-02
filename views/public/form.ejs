@@ -1,0 +1,125 @@
+<%- include('../partials/header') %>
+
+<style>
+    .form-public-container {
+        max-width: 800px;
+        margin: 40px auto;
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .form-field-item {
+        margin-bottom: 25px;
+    }
+    .form-field-label {
+        font-weight: 600;
+        margin-bottom: 10px;
+        display: block;
+        font-size: 1.1rem;
+    }
+    .rich-text-content {
+        line-height: 1.6;
+        color: #444;
+    }
+    .rich-text-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+</style>
+
+<<div class="container">
+    <% if (typeof isAdmin !== 'undefined' && isAdmin && form.status !== 'visible') { %>
+        <div class="alert alert-warning border-0 shadow-sm mb-4 mt-2 d-flex align-items-center">
+            <i class="bi bi-shield-lock-fill fs-3 me-3"></i>
+            <div>
+                <strong>Admin Preview:</strong> Dit formulier is momenteel 
+                <span class="badge bg-<%= form.status === 'closed' ? 'danger' : 'secondary' %>">
+                    <%= form.status === 'closed' ? 'Gesloten' : 'Onzichtbaar' %>
+                </span>. 
+                Alleen admins kunnen dit nu zien.
+            </div>
+        </div>
+    <% } %>
+
+    <div class="form-public-container mt-0">
+        <h1 class="font-playful mb-2"><%= form.title %></h1>
+        <% if (form.description) { %>
+            <p class="text-muted lead mb-4"><%= form.description %></p>
+        <% } %>
+        <hr class="mb-4">
+
+        <% if (form.status === 'closed' && (!user || user.role !== 'admin')) { %>
+            <div class="alert alert-danger text-center p-4">
+                <i class="bi bi-lock-fill display-4 d-block mb-3"></i>
+                <h5>Dit formulier is gesloten.</h5>
+                <p class="mb-0">Het is niet meer mogelijk om antwoorden in te sturen.</p>
+            </div>
+        <% } else { %>
+            <form action="/forms/<%= form.slug %>/submit" method="POST">
+                <% form.fields.forEach(field => { %>
+                    <div class="form-field-item">
+                        <% if (field.type === 'text') { %>
+                            <div class="rich-text-content">
+                                <%- field.content %>
+                            </div>
+                        <% } else if (field.type === 'image') { %>
+                            <% if (field.url) { %>
+                                <div class="text-center">
+                                    <img src="<%= field.url %>" class="img-fluid rounded shadow-sm" alt="Form afbeelding">
+                                </div>
+                            <% } %>
+                        <% } else if (field.type === 'short_text') { %>
+                            <label class="form-field-label" for="<%= field.id %>">
+                                <%= field.label %>
+                                <% if (field.required) { %> <span class="text-danger">*</span> <% } %>
+                            </label>
+                            <input type="text" name="<%= field.id %>" id="<%= field.id %>" class="form-control form-control-lg" placeholder="<%= field.placeholder || '' %>" <%= field.required ? 'required' : '' %>>
+                        <% } else if (field.type === 'long_text') { %>
+                            <label class="form-field-label" for="<%= field.id %>">
+                                <%= field.label %>
+                                <% if (field.required) { %> <span class="text-danger">*</span> <% } %>
+                            </label>
+                            <textarea name="<%= field.id %>" id="<%= field.id %>" class="form-control form-control-lg" rows="4" placeholder="<%= field.placeholder || '' %>" <%= field.required ? 'required' : '' %>></textarea>
+                        <% } else if (field.type === 'multiple_choice') { %>
+                            <label class="form-field-label">
+                                <%= field.label %>
+                                <% if (field.required) { %> <span class="text-danger">*</span> <% } %>
+                            </label>
+                            <% (field.options || []).forEach((opt, i) => { %>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="<%= field.id %>" id="<%= field.id %>_<%= i %>" value="<%= opt %>" <%= field.required && i === 0 ? 'required' : '' %>>
+                                    <label class="form-check-label" for="<%= field.id %>_<%= i %>">
+                                        <%= opt %>
+                                    </label>
+                                </div>
+                            <% }) %>
+                        <% } else if (field.type === 'multiple_choice_multi') { %>
+                            <label class="form-field-label">
+                                <%= field.label %>
+                                <% if (field.required) { %> <span class="text-danger">*</span> <% } %>
+                            </label>
+                            <% (field.options || []).forEach((opt, i) => { %>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="<%= field.id %>[]" id="<%= field.id %>_<%= i %>" value="<%= opt %>">
+                                    <label class="form-check-label" for="<%= field.id %>_<%= i %>">
+                                        <%= opt %>
+                                    </label>
+                                </div>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                <% }) %>
+
+                <div class="mt-5 pt-3 border-top text-center">
+                    <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm">
+                        Verzenden <i class="bi bi-send ms-2"></i>
+                    </button>
+                </div>
+            </form>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

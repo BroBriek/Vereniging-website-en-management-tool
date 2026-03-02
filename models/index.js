@@ -12,8 +12,17 @@ const Like = require('./Like');
 const FeedGroup = require('./FeedGroup');
 const UserGroupAccess = require('./UserGroupAccess');
 const Quote = require('./Quote');
+const Form = require('./Form');
+const FormResponse = require('./FormResponse');
 
 // Associations
+
+// Form Associations
+User.hasMany(Form, { foreignKey: 'creatorId', as: 'forms' });
+Form.belongsTo(User, { foreignKey: 'creatorId', as: 'creator' });
+
+Form.hasMany(FormResponse, { foreignKey: 'formId', as: 'responses', onDelete: 'CASCADE' });
+FormResponse.belongsTo(Form, { foreignKey: 'formId', as: 'form' });
 
 // Finance Hierarchy
 FinanceItem.hasMany(FinanceItem, { as: 'children', foreignKey: 'parentId', onDelete: 'CASCADE' });
@@ -115,5 +124,7 @@ module.exports = {
   Like,
   FeedGroup,
   UserGroupAccess,
-  Quote
+  Quote,
+  Form,
+  FormResponse
 };
