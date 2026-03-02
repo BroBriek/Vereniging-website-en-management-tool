@@ -3,6 +3,7 @@ const router = express.Router();
 const adminController = require('../controllers/adminController');
 const uploadController = require('../controllers/uploadController');
 const maintenanceController = require('../controllers/maintenanceController');
+const formController = require('../controllers/formController');
 const { ensureAuthenticated, ensureAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
@@ -120,5 +121,17 @@ router.get('/feedgroups', adminController.getFeedGroups);
 router.post('/feedgroups', adminController.postFeedGroup);
 router.put('/feedgroups/:id', adminController.updateFeedGroup);
 router.delete('/feedgroups/:id', adminController.deleteFeedGroup);
+
+// Form Builder
+router.get('/forms', formController.getForms);
+router.get('/forms/create', formController.getCreateForm);
+router.post('/forms', formController.postCreateForm);
+router.get('/forms/:id/edit', formController.getEditForm);
+router.post('/forms/:id/edit', formController.postEditForm);
+router.post('/forms/:id/delete', formController.postDeleteForm);
+router.get('/forms/:id/responses', formController.getResponses);
+router.get('/forms/:id/responses/export', formController.exportResponses);
+router.put('/forms/responses/:id', formController.updateResponse);
+router.delete('/forms/responses/:id', formController.deleteResponse);
 
 module.exports = router;

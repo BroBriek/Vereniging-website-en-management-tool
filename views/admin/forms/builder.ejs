@@ -1,0 +1,494 @@
+<%- include('../../partials/header') %>
+
+<style>
+    .builder-container {
+        display: flex;
+        gap: 20px;
+        min-height: 70vh;
+    }
+    .builder-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        height: fit-content;
+        position: sticky;
+        top: 20px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .builder-main {
+        flex-grow: 1;
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        border: 2px dashed #dee2e6;
+        min-height: 500px;
+    }
+    .draggable-item {
+        background: white;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #dee2e6;
+        cursor: grab;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        user-select: none;
+    }
+    .draggable-item:hover {
+        border-color: #db3e41;
+        color: #db3e41;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .draggable-item i {
+        font-size: 1.2rem;
+    }
+    .form-item-preview {
+        position: relative;
+        padding: 20px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        transition: all 0.2s;
+        background: #fff;
+    }
+    .form-item-preview:hover {
+        border-color: #db3e41;
+        background: #fffcfc;
+    }
+    .form-item-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: none;
+        gap: 5px;
+    }
+    .form-item-preview:hover .form-item-actions {
+        display: flex;
+    }
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #adb5bd;
+        text-align: center;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 15px;
+    }
+</style>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/admin/forms">Formulieren</a></li>
+                <li class="breadcrumb-item active"><%= form ? 'Bewerken' : 'Nieuw Formulier' %></li>
+            </ol>
+        </nav>
+        <h1><%= form ? 'Bewerk Formulier' : 'Nieuw Formulier' %></h1>
+    </div>
+</div>
+
+<form id="formBuilderSubmit" action="<%= form ? '/admin/forms/' + form.id + '/edit' : '/admin/forms' %>" method="POST">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Titel van het formulier</label>
+                        <input type="text" name="title" class="form-control form-control-lg" placeholder="bv. Inschrijving Kamp" value="<%= form ? form.title : '' %>" required>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold">Korte beschrijving (optioneel)</label>
+                        <textarea name="description" class="form-control" rows="2" placeholder="Wat is het doel van dit formulier?"><%= form ? form.description : '' %></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="invisible" <%= form && form.status === 'invisible' ? 'selected' : '' %>>Onzichtbaar (Concept)</option>
+                            <option value="visible" <%= form && form.status === 'visible' ? 'selected' : '' %>>Zichtbaar (Open voor antwoorden)</option>
+                            <option value="closed" <%= form && form.status === 'closed' ? 'selected' : '' %>>Gesloten (Niet meer invullen)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-save me-1"></i> Formulier Opslaan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" name="fields" id="fieldsJsonInput">
+
+    <div class="builder-container">
+        <!-- Sidebar -->
+        <div class="builder-sidebar shadow-sm">
+            <h5 class="font-playful mb-3">Items toevoegen</h5>
+            <p class="small text-muted mb-3">Klik of sleep items naar het formulier.</p>
+            
+            <div class="draggable-item" onclick="addField('text')" draggable="true" ondragstart="handleDragStart(event, 'text')">
+                <i class="bi bi-fonts text-primary"></i> Tekstblok
+            </div>
+            <div class="draggable-item" onclick="addField('image')" draggable="true" ondragstart="handleDragStart(event, 'image')">
+                <i class="bi bi-image text-success"></i> Afbeelding
+            </div>
+            <hr>
+            <div class="draggable-item" onclick="addField('short_text')" draggable="true" ondragstart="handleDragStart(event, 'short_text')">
+                <i class="bi bi-input-cursor-text text-info"></i> Korte Vraag
+            </div>
+            <div class="draggable-item" onclick="addField('long_text')" draggable="true" ondragstart="handleDragStart(event, 'long_text')">
+                <i class="bi bi-textarea-t text-info"></i> Lange Vraag
+            </div>
+            <div class="draggable-item" onclick="addField('multiple_choice')" draggable="true" ondragstart="handleDragStart(event, 'multiple_choice')">
+                <i class="bi bi-ui-checks-grid text-warning"></i> Meerkeuze (1 antwoord)
+            </div>
+            <div class="draggable-item" onclick="addField('multiple_choice_multi')" draggable="true" ondragstart="handleDragStart(event, 'multiple_choice_multi')">
+                <i class="bi bi-list-check text-warning"></i> Meerkeuze (Meerdere)
+            </div>
+        </div>
+
+        <!-- Main Area -->
+        <div class="builder-main shadow-sm" id="builderPreviewArea" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+            <div id="emptyState" class="empty-state">
+                <i class="bi bi-plus-square-dotted"></i>
+                <h4>Begin met bouwen</h4>
+                <p>Sleep items van de linkerkant hierheen om je formulier samen te stellen.</p>
+            </div>
+            <div id="formPreviewList"></div>
+        </div>
+    </div>
+</form>
+
+<!-- Modals for editing fields -->
+<div class="modal fade" id="editFieldModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title font-playful" id="editModalTitle">Veld Bewerken</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="editModalBody">
+                <!-- Content dynamic based on type -->
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" class="btn btn-primary rounded-pill" id="saveFieldChangesBtn">Opslaan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let fields = <%- form && form.fields ? JSON.stringify(form.fields) : '[]' %>;
+    let editingIndex = -1;
+
+    function renderFields() {
+        const list = document.getElementById('formPreviewList');
+        const emptyState = document.getElementById('emptyState');
+        list.innerHTML = '';
+
+        if (fields.length === 0) {
+            emptyState.style.display = 'flex';
+        } else {
+            emptyState.style.display = 'none';
+        }
+
+        fields.forEach((field, index) => {
+            const div = document.createElement('div');
+            div.className = 'form-item-preview border-bottom mb-3 pb-3';
+            div.setAttribute('draggable', 'true');
+            div.setAttribute('ondragstart', `handleInternalDragStart(event, ${index})`);
+            div.setAttribute('ondragover', `handleInternalDragOver(event, ${index})`);
+            div.setAttribute('ondrop', `handleInternalDrop(event, ${index})`);
+            
+            let content = '';
+            switch(field.type) {
+                case 'text':
+                    content = `<div class="rich-text-content">${field.content || '<p class="text-muted fst-italic">Geen tekst ingevuld</p>'}</div>`;
+                    break;
+                case 'image':
+                    content = field.url ? `<img src="${field.url}" class="img-fluid rounded mb-2" style="max-height: 200px;">` : '<p class="text-muted fst-italic">Geen afbeelding geüpload</p>';
+                    break;
+                case 'short_text':
+                    content = `<label class="form-label fw-bold">${field.label || 'Korte vraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label><input type="text" class="form-control" disabled placeholder="${field.placeholder || ''}">`;
+                    break;
+                case 'long_text':
+                    content = `<label class="form-label fw-bold">${field.label || 'Lange vraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label><textarea class="form-control" disabled rows="2" placeholder="${field.placeholder || ''}"></textarea>`;
+                    break;
+                case 'multiple_choice':
+                case 'multiple_choice_multi':
+                    content = `<label class="form-label fw-bold">${field.label || 'Meerkeuzevraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>`;
+                    const options = field.options || ['Optie 1', 'Optie 2'];
+                    options.forEach(opt => {
+                        content += `<div class="form-check"><input class="form-check-input" type="${field.type === 'multiple_choice' ? 'radio' : 'checkbox'}" disabled><label class="form-check-label">${opt}</label></div>`;
+                    });
+                    break;
+            }
+
+            div.innerHTML = `
+                ${content}
+                <div class="form-item-actions">
+                    <button type="button" class="btn btn-sm btn-light shadow-sm" onclick="moveField(${index}, -1)" ${index === 0 ? 'disabled' : ''}><i class="bi bi-arrow-up"></i></button>
+                    <button type="button" class="btn btn-sm btn-light shadow-sm" onclick="moveField(${index}, 1)" ${index === fields.length - 1 ? 'disabled' : ''}><i class="bi bi-arrow-down"></i></button>
+                    <button type="button" class="btn btn-sm btn-primary shadow-sm" onclick="editField(${index})"><i class="bi bi-pencil"></i></button>
+                    <button type="button" class="btn btn-sm btn-danger shadow-sm" onclick="deleteField(${index})"><i class="bi bi-trash"></i></button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+
+        document.getElementById('fieldsJsonInput').value = JSON.stringify(fields);
+    }
+
+    function addField(type) {
+        const id = 'field_' + Math.random().toString(36).substring(2, 11);
+        let newField = { id, type, label: '', required: false };
+
+        if (type === 'text') newField.content = '';
+        if (type === 'image') newField.url = '';
+        if (type === 'multiple_choice' || type === 'multiple_choice_multi') newField.options = ['Optie 1', 'Optie 2'];
+        
+        fields.push(newField);
+        renderFields();
+        
+        // Automatically open edit modal for certain types
+        if (type !== 'text') {
+            editField(fields.length - 1);
+        } else {
+            // For text, we might want to initialize Quill directly if possible, or use the modal
+            editField(fields.length - 1);
+        }
+    }
+
+    function deleteField(index) {
+        if (confirm('Weet je zeker dat je dit item wilt verwijderen?')) {
+            fields.splice(index, 1);
+            renderFields();
+        }
+    }
+
+    function moveField(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= fields.length) return;
+        const temp = fields[index];
+        fields[index] = fields[newIndex];
+        fields[newIndex] = temp;
+        renderFields();
+    }
+
+    function editField(index) {
+        editingIndex = index;
+        const field = fields[index];
+        const modalBody = document.getElementById('editModalBody');
+        modalBody.innerHTML = '';
+
+        let html = '';
+        switch(field.type) {
+            case 'text':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tekstinhoud</label>
+                        <textarea id="edit_text_content" class="form-control rich-editor">${field.content || ''}</textarea>
+                    </div>
+                `;
+                break;
+            case 'image':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Afbeelding URL</label>
+                        <div class="input-group">
+                            <input type="text" id="edit_image_url" class="form-control" value="${field.url || ''}" placeholder="/uploads/afbeelding.jpg">
+                            <button class="btn btn-outline-secondary" type="button" onclick="openFilePicker()">Kies bestand</button>
+                        </div>
+                        <small class="text-muted">Tip: Gebruik de "Bestanden & Foto's" tool om afbeeldingen te uploaden en kopieer de link hierheen.</small>
+                    </div>
+                `;
+                break;
+            case 'short_text':
+            case 'long_text':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Vraag / Label</label>
+                        <input type="text" id="edit_label" class="form-control" value="${field.label || ''}" placeholder="bv. Jouw voornaam">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Placeholder (Hulptekst in veld)</label>
+                        <input type="text" id="edit_placeholder" class="form-control" value="${field.placeholder || ''}" placeholder="bv. Vul hier in...">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="edit_required" ${field.required ? 'checked' : ''}>
+                        <label class="form-check-label" for="edit_required">Verplicht veld</label>
+                    </div>
+                `;
+                break;
+            case 'multiple_choice':
+            case 'multiple_choice_multi':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Vraag / Label</label>
+                        <input type="text" id="edit_label" class="form-control" value="${field.label || ''}" placeholder="bv. Welke maat heb je?">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Opties</label>
+                        <div id="options_container">
+                            ${(field.options || []).map((opt, i) => `
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control edit-option" value="${opt}">
+                                    <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()"><i class="bi bi-trash"></i></button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="addEditOption()">+ Optie toevoegen</button>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="edit_required" ${field.required ? 'checked' : ''}>
+                        <label class="form-check-label" for="edit_required">Verplicht veld</label>
+                    </div>
+                `;
+                break;
+        }
+
+        modalBody.innerHTML = html;
+        const modal = new bootstrap.Modal(document.getElementById('editFieldModal'));
+        modal.show();
+
+        // Initialize Rich Editor if needed
+        if (field.type === 'text') {
+            setTimeout(() => {
+                if (window.initializeRichEditors) {
+                    window.initializeRichEditors(document.getElementById('edit_text_content'));
+                }
+            }, 500);
+        }
+    }
+
+    function addEditOption() {
+        const container = document.getElementById('options_container');
+        const div = document.createElement('div');
+        div.className = 'input-group mb-2';
+        div.innerHTML = `
+            <input type="text" class="form-control edit-option" value="Nieuwe optie">
+            <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove()"><i class="bi bi-trash"></i></button>
+        `;
+        container.appendChild(div);
+    }
+
+    document.getElementById('saveFieldChangesBtn').addEventListener('click', function() {
+        if (editingIndex === -1) return;
+        const field = fields[editingIndex];
+
+        switch(field.type) {
+            case 'text':
+                field.content = document.getElementById('edit_text_content').value;
+                break;
+            case 'image':
+                field.url = document.getElementById('edit_image_url').value;
+                break;
+            case 'short_text':
+            case 'long_text':
+                field.label = document.getElementById('edit_label').value;
+                field.placeholder = document.getElementById('edit_placeholder').value;
+                field.required = document.getElementById('edit_required').checked;
+                break;
+            case 'multiple_choice':
+            case 'multiple_choice_multi':
+                field.label = document.getElementById('edit_label').value;
+                field.required = document.getElementById('edit_required').checked;
+                const optionInputs = document.querySelectorAll('.edit-option');
+                field.options = Array.from(optionInputs).map(input => input.value).filter(v => v.trim() !== '');
+                break;
+        }
+
+        renderFields();
+        bootstrap.Modal.getInstance(document.getElementById('editFieldModal')).hide();
+    });
+
+    // Drag and Drop Handlers (Sidebar to Main)
+    function handleDragStart(e, type) {
+        e.dataTransfer.setData('text/plain', type);
+        e.dataTransfer.effectAllowed = 'copy';
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        const type = e.dataTransfer.getData('text/plain');
+        if (type) {
+            addField(type);
+        }
+    }
+
+    // Internal Drag and Drop (Reordering)
+    let draggedIndex = -1;
+
+    function handleInternalDragStart(e, index) {
+        draggedIndex = index;
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => {
+            e.target.style.opacity = '0.5';
+        }, 0);
+    }
+
+    function handleInternalDragOver(e, index) {
+        e.preventDefault();
+        if (index === draggedIndex) return;
+        const items = document.querySelectorAll('.form-item-preview');
+        items.forEach(item => item.style.borderTop = '');
+        items[index].style.borderTop = '2px solid #db3e41';
+    }
+
+    function handleInternalDrop(e, index) {
+        e.preventDefault();
+        if (draggedIndex === -1 || draggedIndex === index) return;
+        
+        const item = fields.splice(draggedIndex, 1)[0];
+        fields.splice(index, 0, item);
+        
+        draggedIndex = -1;
+        renderFields();
+    }
+
+    // File Picker helper (opens the existing uploads page in a new window)
+    function openFilePicker() {
+        const win = window.open('/admin/uploads?picker=true', 'Picker', 'width=1000,height=600');
+        window.onmessage = function(e) {
+            if (e.data && e.data.url) {
+                document.getElementById('edit_image_url').value = e.data.url;
+                win.close();
+            }
+        };
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', function() {
+        renderFields();
+    });
+
+    // Prevent form submission if no fields
+    document.getElementById('formBuilderSubmit').addEventListener('submit', function(e) {
+        if (fields.length === 0) {
+            alert('Voeg minstens één item toe aan je formulier!');
+            e.preventDefault();
+        }
+    });
+</script>
+
+<%- include('../../partials/footer') %>

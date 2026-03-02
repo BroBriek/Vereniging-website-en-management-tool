@@ -1,0 +1,98 @@
+<%- include('../../partials/header') %>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>Formulier Beheer</h1>
+            <a href="/admin/forms/create" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Nieuw Formulier
+            </a>
+        </div>
+        <p class="text-muted">Beheer formulieren voor inschrijvingen, enquêtes of andere doeleinden.</p>
+    </div>
+
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4">Titel</th>
+                                <th>Status</th>
+                                <th>Gemaakt door</th>
+                                <th>Datum</th>
+                                <th class="text-end pe-4">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (forms && forms.length > 0) { %>
+                                <% forms.forEach(form => { %>
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-bold"><%= form.title %></div>
+                                            <small class="text-muted">/forms/<%= form.slug %></small>
+                                        </td>
+                                        <td>
+                                            <% if (form.status === 'visible') { %>
+                                                <span class="badge bg-success">Zichtbaar</span>
+                                            <% } else if (form.status === 'closed') { %>
+                                                <span class="badge bg-danger">Gesloten</span>
+                                            <% } else { %>
+                                                <span class="badge bg-secondary">Onzichtbaar</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= form.creator ? capitalizeName(form.creator.username) : 'Onbekend' %></td>
+                                        <td><%= new Date(form.createdAt).toLocaleDateString('nl-BE') %></td>
+                                        <td class="text-end pe-4">
+                                            <div class="btn-group btn-group-sm">
+                                                <button type="button" class="btn btn-outline-secondary" title="Kopieer Link" onclick="copyFormLink('<%= form.slug %>')">
+                                                    <i class="bi bi-link-45deg"></i>
+                                                </button>
+                                                <a href="/forms/<%= form.slug %>" target="_blank" class="btn btn-outline-info" title="Bekijk publieke pagina">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                <a href="/admin/forms/<%= form.id %>/responses" class="btn btn-outline-success" title="Antwoorden">
+                                                    <i class="bi bi-chat-left-dots"></i>
+                                                </a>
+                                                <a href="/admin/forms/<%= form.id %>/edit" class="btn btn-outline-primary" title="Bewerken">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <form action="/admin/forms/<%= form.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Weet je zeker dat je dit formulier wilt verwijderen? Alle antwoorden gaan ook verloren!');">
+                                                    <button type="submit" class="btn btn-outline-danger" title="Verwijderen">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <i class="bi bi-file-earmark-text display-4 d-block mb-3"></i>
+                                        Nog geen formulieren aangemaakt.
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyFormLink(slug) {
+        const url = window.location.origin + '/forms/' + slug;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link gekopieerd naar klembord!');
+        }).catch(err => {
+            console.error('Copy failed', err);
+            alert('Kon niet kopiëren naar klembord.');
+        });
+    }
+</script>
+
+<%- include('../../partials/footer') %>

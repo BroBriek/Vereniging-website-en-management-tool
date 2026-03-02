@@ -70,6 +70,9 @@
                                 <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('<%= htmlTag.replace(/'/g, "\\'") %>')">
                                     Kopieer HTML
                                 </button>
+                                <button class="btn btn-sm btn-success d-none picker-select-btn" onclick="selectForPicker('<%= fileUrl %>')">
+                                    Selecteer
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -94,6 +97,20 @@
 </div>
 
 <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPicker = urlParams.get('picker') === 'true';
+    
+    if (isPicker) {
+        document.querySelectorAll('.picker-select-btn').forEach(btn => btn.classList.remove('d-none'));
+    }
+
+    function selectForPicker(url) {
+        if (window.opener) {
+            window.opener.postMessage({ url: url }, '*');
+            window.close();
+        }
+    }
+
     function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
             const toastEl = document.getElementById('copyToast');

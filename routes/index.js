@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const publicController = require('../controllers/publicController');
+const formController = require('../controllers/formController');
 
 router.get('/', publicController.getHome);
 router.get('/home', publicController.getPublicHome);
@@ -16,5 +17,9 @@ router.post('/contact', publicController.postContact);
 router.get('/notificaties', publicController.getNotificationsHelp);
 router.get('/robots.txt', publicController.getRobotsTxt);
 router.get('/sitemap.xml', publicController.getSitemapXml);
+
+// Public Forms
+router.get('/forms/:slug', formController.getPublicForm);
+router.post('/forms/:slug/submit', formController.postSubmitForm);
 
 module.exports = router;
