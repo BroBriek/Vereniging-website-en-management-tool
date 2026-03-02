@@ -61,22 +61,24 @@
                 <li class="breadcrumb-item active">Antwoorden</li>
             </ol>
         </nav>
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
             <div>
                 <h1 class="mb-0">Antwoorden: <%= form.title %></h1>
-                <p class="text-muted mb-0"><%= responses.length %> antwoorden ontvangen. <span class="text-primary small"><i class="bi bi-info-circle"></i> Klik op een cel om deze aan te passen.</span></p>
+                <p class="text-muted mb-0"><%= responses.length %> antwoorden ontvangen. <span class="text-primary small d-none d-md-inline"><i class="bi bi-info-circle"></i> Klik op een cel om deze aan te passen.</span></p>
             </div>
-            <div class="d-flex gap-2 align-items-center">
-                <div class="input-group" style="width: 250px;">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <div class="input-group" style="width: 100%; max-width: 250px;">
                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                    <input type="text" id="tableSearch" class="form-control border-start-0" placeholder="Zoek in antwoorden...">
+                    <input type="text" id="tableSearch" class="form-control border-start-0" placeholder="Zoek...">
                 </div>
-                <a href="/admin/forms/<%= form.id %>/responses/export" class="btn btn-success">
-                    <i class="bi bi-file-earmark-excel me-1"></i> Exporteer
-                </a>
-                <a href="/forms/<%= form.slug %>" target="_blank" class="btn btn-outline-primary">
-                    <i class="bi bi-eye"></i> Bekijk
-                </a>
+                <div class="d-flex gap-2 w-100 w-sm-auto">
+                    <a href="/admin/forms/<%= form.id %>/responses/export" class="btn btn-success flex-grow-1 flex-sm-grow-0">
+                        <i class="bi bi-file-earmark-excel"></i> <span class="d-none d-sm-inline">Exporteer</span>
+                    </a>
+                    <a href="/forms/<%= form.slug %>" target="_blank" class="btn btn-outline-primary flex-grow-1 flex-sm-grow-0">
+                        <i class="bi bi-eye"></i> <span class="d-none d-sm-inline">Bekijk</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -90,7 +92,7 @@
                             <tr>
                                 <th class="ps-4" style="width: 150px;">Datum</th>
                                 <% 
-                                    const questionFields = form.fields.filter(f => ['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi'].includes(f.type));
+                                    const questionFields = form.fields.filter(f => ['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi', 'pricing'].includes(f.type));
                                     questionFields.forEach(f => { 
                                 %>
                                     <th><%= f.label %></th>
@@ -108,14 +110,24 @@
                                         </td>
                                         <% questionFields.forEach(f => { 
                                             let answer = resp.data[f.id];
+                                            let displayValue = '';
                                             const isArray = Array.isArray(answer);
-                                            const displayValue = isArray ? answer.join(', ') : (answer || '');
+                                            
+                                            if (f.type === 'pricing' && typeof answer === 'object' && answer !== null) {
+                                                const items = Object.entries(answer)
+                                                    .filter(([key, val]) => key !== 'total' && parseInt(val) > 0)
+                                                    .map(([key, val]) => `<span class="badge bg-light text-dark border me-1">${key}: ${val}</span>`);
+                                                const total = parseFloat(answer.total) || 0;
+                                                displayValue = items.join('') + (items.length > 0 ? `<div class="mt-1 small fw-bold text-primary">Totaal: €${total.toLocaleString('nl-BE', { minimumFractionDigits: 2 })}</div>` : '<span class="text-muted fst-italic">Geen selectie</span>');
+                                            } else {
+                                                displayValue = isArray ? answer.join(', ') : (answer || '-');
+                                            }
                                         %>
                                             <td>
                                                 <div class="editable-cell" 
                                                      onclick="startEdit(this, '<%= resp.id %>', '<%= f.id %>', '<%= f.type %>', <%= JSON.stringify(f.options || []) %>)"
-                                                     data-raw-value="<%= isArray ? JSON.stringify(answer) : answer %>">
-                                                    <span><%= displayValue || '-' %></span>
+                                                     data-raw-value="<%= typeof answer === 'object' ? JSON.stringify(answer) : answer %>">
+                                                    <span><%- displayValue %></span>
                                                 </div>
                                             </td>
                                         <% }) %>
@@ -153,6 +165,29 @@
     </div>
 </div>
 
+<!-- Modal for editing pricing fields -->
+<div class="modal fade" id="editPricingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title font-playful" id="pricingModalTitle">Bestelling Aanpassen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="pricingModalFields"></div>
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 font-playful">Nieuw Totaal</h5>
+                    <h4 class="mb-0 text-primary fw-bold" id="pricingModalTotal">€0,00</h4>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="savePricingModalBtn">Opslaan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.getElementById('tableSearch').addEventListener('input', function(e) {
         const query = e.target.value.toLowerCase();
@@ -166,9 +201,57 @@
     function startEdit(container, responseId, fieldId, type, options) {
         if (container.querySelector('input') || container.querySelector('select') || container.querySelector('textarea')) return;
 
-        const currentSpan = container.querySelector('span');
         const rawValue = container.getAttribute('data-raw-value');
         const originalHtml = container.innerHTML;
+
+        if (type === 'pricing') {
+            const data = JSON.parse(rawValue || '{}');
+            const modalBody = document.getElementById('pricingModalFields');
+            modalBody.innerHTML = '';
+            
+            options.forEach(opt => {
+                const qty = data[opt.label] || 0;
+                const div = document.createElement('div');
+                div.className = 'mb-3 pb-3 border-bottom border-light d-flex align-items-center gap-3';
+                div.innerHTML = `
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">${opt.label}</div>
+                        <div class="small text-muted">€${opt.price.toLocaleString('nl-BE', {minimumFractionDigits: 2})} per stuk</div>
+                    </div>
+                    <div style="width: 100px;">
+                        <input type="number" class="form-control pricing-modal-qty" 
+                               data-label="${opt.label}" data-price="${opt.price}" 
+                               value="${qty}" min="0">
+                    </div>
+                `;
+                modalBody.appendChild(div);
+            });
+
+            const updateModalTotal = () => {
+                let total = 0;
+                modalBody.querySelectorAll('.pricing-modal-qty').forEach(q => {
+                    total += (parseInt(q.value) || 0) * parseFloat(q.getAttribute('data-price'));
+                });
+                document.getElementById('pricingModalTotal').innerText = '€' + total.toLocaleString('nl-BE', {minimumFractionDigits: 2});
+                return total;
+            };
+
+            modalBody.querySelectorAll('.pricing-modal-qty').forEach(q => q.oninput = updateModalTotal);
+            updateModalTotal();
+
+            const modal = new bootstrap.Modal(document.getElementById('editPricingModal'));
+            modal.show();
+
+            document.getElementById('savePricingModalBtn').onclick = () => {
+                const newData = { total: updateModalTotal() };
+                modalBody.querySelectorAll('.pricing-modal-qty').forEach(q => {
+                    newData[q.getAttribute('data-label')] = parseInt(q.value) || 0;
+                });
+                finishEdit(newData);
+                modal.hide();
+            };
+            return;
+        }
 
         let input;
         if (type === 'long_text') {
@@ -192,9 +275,6 @@
             if (!rawValue) empty.selected = true;
             input.prepend(empty);
         } else if (type === 'multiple_choice_multi') {
-            // For multi-select, it's harder inline. Let's use a multi-select or comma separated text for now.
-            // A simple way is a text input for multi too, or a special modal.
-            // For "polishing", let's use a text input but remind them it's comma separated or just let them edit.
             input = document.createElement('input');
             input.type = 'text';
             input.className = 'edit-input';
@@ -211,19 +291,24 @@
             input.value = rawValue;
         }
 
-        container.innerHTML = '';
-        container.appendChild(input);
-        input.focus();
+        if (input) {
+            container.innerHTML = '';
+            container.appendChild(input);
+            input.focus();
+            input.onblur = () => finishEdit(input.value);
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter' && type !== 'long_text') finishEdit(input.value);
+                if (e.key === 'Escape') container.innerHTML = originalHtml;
+            };
+        }
 
-        const finishEdit = async () => {
-            let newValue = input.value;
-            
+        async function finishEdit(newValue) {
             // Handle multi-choice-multi array conversion if needed
-            if (type === 'multiple_choice_multi') {
+            if (type === 'multiple_choice_multi' && typeof newValue === 'string') {
                 newValue = newValue.split(',').map(v => v.trim()).filter(v => v !== '');
             }
 
-            if (newValue == rawValue) {
+            if (JSON.stringify(newValue) === JSON.stringify(rawValue)) {
                 container.innerHTML = originalHtml;
                 return;
             }
@@ -236,9 +321,19 @@
                 });
 
                 if (response.ok) {
-                    const displayValue = Array.isArray(newValue) ? newValue.join(', ') : newValue;
-                    container.innerHTML = `<span>${displayValue || '-'}</span>`;
-                    container.setAttribute('data-raw-value', Array.isArray(newValue) ? JSON.stringify(newValue) : newValue);
+                    let displayValue = '';
+                    if (type === 'pricing' && typeof newValue === 'object') {
+                        const items = Object.entries(newValue)
+                            .filter(([key, val]) => key !== 'total' && parseInt(val) > 0)
+                            .map(([key, val]) => `<span class="badge bg-light text-dark border me-1">${key}: ${val}</span>`);
+                        const total = parseFloat(newValue.total) || 0;
+                        displayValue = items.join('') + (items.length > 0 ? `<div class="mt-1 small fw-bold text-primary">Totaal: €${total.toLocaleString('nl-BE', { minimumFractionDigits: 2 })}</div>` : '<span class="text-muted fst-italic">Geen selectie</span>');
+                    } else {
+                        displayValue = Array.isArray(newValue) ? newValue.join(', ') : (newValue || '-');
+                    }
+                    
+                    container.innerHTML = `<span>${displayValue}</span>`;
+                    container.setAttribute('data-raw-value', typeof newValue === 'object' ? JSON.stringify(newValue) : newValue);
                     
                     const toast = new bootstrap.Toast(document.querySelector('#saveToast .toast'));
                     toast.show();
@@ -250,13 +345,7 @@
                 console.error(err);
                 container.innerHTML = originalHtml;
             }
-        };
-
-        input.onblur = finishEdit;
-        input.onkeydown = (e) => {
-            if (e.key === 'Enter' && type !== 'long_text') finishEdit();
-            if (e.key === 'Escape') container.innerHTML = originalHtml;
-        };
+        }
     }
 
     async function deleteResponse(id) {
