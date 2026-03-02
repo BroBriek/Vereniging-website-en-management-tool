@@ -95,7 +95,8 @@
                                 <%= field.label %>
                                 <% if (field.required) { %> <span class="text-danger">*</span> <% } %>
                             </label>
-                            <input type="text" name="<%= field.id %>" id="<%= field.id %>" class="form-control form-control-lg" placeholder="<%= field.placeholder || '' %>" <%= field.required ? 'required' : '' %>>
+                            <% const isEmailField = typeof form !== 'undefined' && form.emailFieldId === field.id; %>
+                            <input type="<%= isEmailField ? 'email' : 'text' %>" name="<%= field.id %>" id="<%= field.id %>" class="form-control form-control-lg" placeholder="<%= field.placeholder || '' %>" <%= field.required ? 'required' : '' %>>
                         <% } else if (field.type === 'long_text') { %>
                             <label class="form-field-label" for="<%= field.id %>">
                                 <%= field.label %>
