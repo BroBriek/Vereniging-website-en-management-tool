@@ -287,25 +287,27 @@
 
         <!-- Comments Section -->
         <div class="bg-light bg-opacity-50 p-3 rounded-bottom-4">
-            <% 
-                const visibleComments = post.comments.slice(0, 3);
-                const hiddenComments = post.comments.slice(3);
-            %>
+            <div class="comments-section-wrapper">
+                <% 
+                    const visibleComments = post.comments.slice(0, 3);
+                    const hiddenComments = post.comments.slice(3);
+                %>
 
-            <% visibleComments.forEach(comment => { %>
-                <%- include('comment_partial', { comment: comment, user: user, post: post }) %>
-            <% }) %>
+                <% visibleComments.forEach(comment => { %>
+                    <%- include('comment_partial', { comment: comment, user: user, post: post, depth: 0 }) %>
+                <% }) %>
 
-            <% if (hiddenComments.length > 0) { %>
-                <div class="collapse" id="hidden-comments-<%= post.id %>">
-                    <% hiddenComments.forEach(comment => { %>
-                        <%- include('comment_partial', { comment: comment, user: user, post: post }) %>
-                    <% }) %>
-                </div>
-                <button class="btn btn-link btn-sm text-decoration-none text-muted ps-0" type="button" data-bs-toggle="collapse" data-bs-target="#hidden-comments-<%= post.id %>" onclick="this.textContent = this.textContent.includes('Toon') ? 'Verberg reacties' : 'Toon meer reacties...'">
-                    Toon meer reacties...
-                </button>
-            <% } %>
+                <% if (hiddenComments.length > 0) { %>
+                    <div class="collapse" id="hidden-comments-<%= post.id %>">
+                        <% hiddenComments.forEach(comment => { %>
+                            <%- include('comment_partial', { comment: comment, user: user, post: post, depth: 0 }) %>
+                        <% }) %>
+                    </div>
+                    <button class="btn btn-link btn-sm text-decoration-none text-muted ps-0" type="button" data-bs-toggle="collapse" data-bs-target="#hidden-comments-<%= post.id %>" onclick="this.textContent = this.textContent.includes('Toon') ? 'Verberg reacties' : 'Toon meer reacties...'">
+                        Toon meer reacties...
+                    </button>
+                <% } %>
+            </div>
 
             <!-- New Comment Input -->
             <form action="/feed/comment" method="POST" class="mt-3 d-flex align-items-end comment-form">

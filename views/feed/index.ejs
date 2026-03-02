@@ -75,6 +75,36 @@
         overflow-wrap: break-word;
         word-break: break-word;
         max-width: 100%;
+        min-width: 200px; /* Ensure readable width even when deeply nested */
+    }
+
+    .comments-section-wrapper {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        padding-bottom: 0.5rem; /* Space for potential scrollbar */
+    }
+
+    .reply-container {
+        margin-left: 1.25rem;
+        padding-left: 0.75rem;
+        border-left: 2px solid #e9ecef;
+        transition: all 0.2s ease;
+    }
+
+    @media (max-width: 576px) {
+        .reply-container {
+            margin-left: 0.6rem;
+            padding-left: 0.4rem;
+            border-left-width: 1px;
+        }
+        
+        /* Reduce indentation even more for deep levels but keep them scrollable */
+        .reply-container .reply-container .reply-container {
+            margin-left: 0.4rem;
+            padding-left: 0.3rem;
+        }
     }
 
     textarea {
@@ -1144,10 +1174,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Reply
                             const parentContainer = document.getElementById('comment-container-' + parentId);
                             if (parentContainer) {
-                                let repliesContainer = parentContainer.querySelector('.border-start'); 
+                                let repliesContainer = parentContainer.querySelector('.reply-container'); 
                                 if (!repliesContainer) {
                                     repliesContainer = document.createElement('div');
-                                    repliesContainer.className = 'mt-2 ms-3 ps-3 border-start';
+                                    
+                                    // Calculate depth for the new container
+                                    let currentDepth = 0;
+                                    const parentReplyContainer = parentContainer.closest('.reply-container');
+                                    if (parentReplyContainer) {
+                                        const match = parentReplyContainer.className.match(/depth-(\d+)/);
+                                        if (match) {
+                                            currentDepth = parseInt(match[1]) + 1;
+                                        }
+                                    }
+                                    
+                                    repliesContainer.className = 'mt-2 reply-container depth-' + currentDepth;
                                     // Append to the flex-grow-1 container inside parent
                                     const flexContainer = parentContainer.querySelector('.flex-grow-1');
                                     if(flexContainer) flexContainer.appendChild(repliesContainer);
