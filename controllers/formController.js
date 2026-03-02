@@ -160,10 +160,17 @@ exports.exportResponses = async (req, res) => {
         ];
 
         // Only include questions in columns
-        const questionFields = form.fields.filter(f => ['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi'].includes(f.type));
+        const questionFields = form.fields.filter(f => ['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi', 'pricing'].includes(f.type));
         
         questionFields.forEach(f => {
-            columns.push({ header: f.label, key: f.id, width: 30 });
+            if (f.type === 'pricing') {
+                (f.options || []).forEach(opt => {
+                    columns.push({ header: `${f.label}: ${opt.label}`, key: `${f.id}_${opt.label}`, width: 20 });
+                });
+                columns.push({ header: `${f.label}: Totaal`, key: `${f.id}_total`, width: 15 });
+            } else {
+                columns.push({ header: f.label, key: f.id, width: 30 });
+            }
         });
 
         worksheet.columns = columns;
@@ -175,10 +182,17 @@ exports.exportResponses = async (req, res) => {
             
             questionFields.forEach(f => {
                 let answer = resp.data[f.id];
-                if (Array.isArray(answer)) {
-                    answer = answer.join(', ');
+                if (f.type === 'pricing') {
+                    (f.options || []).forEach(opt => {
+                        row[`${f.id}_${opt.label}`] = (answer && answer[opt.label]) ? parseInt(answer[opt.label]) : 0;
+                    });
+                    row[`${f.id}_total`] = (answer && answer.total) ? parseFloat(answer.total) : 0;
+                } else {
+                    if (Array.isArray(answer)) {
+                        answer = answer.join(', ');
+                    }
+                    row[f.id] = answer;
                 }
-                row[f.id] = answer;
             });
 
             worksheet.addRow(row);
@@ -228,7 +242,7 @@ exports.postSubmitForm = async (req, res) => {
         // Validate and extract answers
         const answers = {};
         form.fields.forEach(f => {
-            if (['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi'].includes(f.type)) {
+            if (['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi', 'pricing'].includes(f.type)) {
                 answers[f.id] = req.body[f.id];
             }
         });

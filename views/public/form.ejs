@@ -9,6 +9,26 @@
         border-radius: 15px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
+    @media (max-width: 768px) {
+        .form-public-container {
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 0;
+        }
+        .pricing-module {
+            padding: 15px !important;
+        }
+        .pricing-item {
+            flex-wrap: wrap;
+        }
+        .pricing-item > .col-6 {
+            width: 100% !important;
+            margin-bottom: 10px;
+        }
+        .pricing-item > .col-3 {
+            width: 50% !important;
+        }
+    }
     .form-field-item {
         margin-bottom: 25px;
     }
@@ -108,6 +128,53 @@
                                     </label>
                                 </div>
                             <% }) %>
+                        <% } else if (field.type === 'pricing') { %>
+                            <div class="d-flex align-items-center mb-2">
+                                <label class="form-field-label mb-0 me-2">
+                                    <%= field.label %>
+                                    <% if (field.required) { %> <span class="text-danger">*</span> <% } %>
+                                </label>
+                                <span class="text-muted cursor-pointer" data-bs-toggle="tooltip" data-bs-placement="top" title="Selecteer de gewenste aantallen. Het totaalbedrag wordt automatisch onderaan berekend op basis van de ingevulde hoeveelheden.">
+                                    <i class="bi bi-info-circle"></i>
+                                </span>
+                            </div>
+                            <div class="pricing-module p-4 bg-light rounded-4 border">
+                                <div class="pricing-items">
+                                    <% (field.options || []).forEach((opt, i) => { %>
+                                        <div class="pricing-item row align-items-center mb-3 pb-3 border-bottom border-white">
+                                            <div class="col-6 col-md-7">
+                                                <div class="fw-bold"><%= opt.label %></div>
+                                                <% if (opt.showPrice) { %>
+                                                    <div class="small text-muted">€<%= opt.price.toLocaleString('nl-BE', { minimumFractionDigits: 2 }) %> per stuk</div>
+                                                <% } %>
+                                            </div>
+                                            <div class="col-3 col-md-2">
+                                                <input type="number" 
+                                                       name="<%= field.id %>[<%= opt.label %>]" 
+                                                       class="form-control pricing-qty" 
+                                                       value="0" 
+                                                       min="0" 
+                                                       data-price="<%= opt.price %>"
+                                                       oninput="calculatePricingTotal('<%= field.id %>')">
+                                            </div>
+                                            <div class="col-3 col-md-3 text-end">
+                                                <span class="subtotal-display fw-bold">€0,00</span>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                                <div class="pricing-footer d-flex justify-content-between align-items-center mt-3 pt-2">
+                                    <h5 class="mb-0 font-playful">Totaal</h5>
+                                    <div class="d-flex align-items-center">
+                                        <h4 class="mb-0 text-primary fw-bold me-2" id="total-display-<%= field.id %>">€0,00</h4>
+                                        <input type="hidden" name="<%= field.id %>[total]" id="total-input-<%= field.id %>" value="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <% if (field.required) { %>
+                                <input type="checkbox" style="opacity: 0; position: absolute; pointer-events: none;" class="pricing-required-check" id="req-<%= field.id %>" required>
+                                <div class="invalid-feedback">Selecteer minstens één item.</div>
+                            <% } %>
                         <% } %>
                     </div>
                 <% }) %>
@@ -121,5 +188,40 @@
         <% } %>
     </div>
 </div>
+
+<script>
+    function calculatePricingTotal(fieldId) {
+        const container = document.querySelector(`[name^="${fieldId}"][class*="pricing-qty"]`).closest('.pricing-module');
+        const qtyInputs = container.querySelectorAll('.pricing-qty');
+        let total = 0;
+
+        qtyInputs.forEach(input => {
+            const qty = parseInt(input.value) || 0;
+            const price = parseFloat(input.getAttribute('data-price')) || 0;
+            const subtotal = qty * price;
+            total += subtotal;
+
+            const subtotalDisplay = input.closest('.pricing-item').querySelector('.subtotal-display');
+            subtotalDisplay.innerText = '€' + subtotal.toLocaleString('nl-BE', { minimumFractionDigits: 2 });
+        });
+
+        document.getElementById(`total-display-${fieldId}`).innerText = '€' + total.toLocaleString('nl-BE', { minimumFractionDigits: 2 });
+        document.getElementById(`total-input-${fieldId}`).value = total;
+
+        // Update hidden required checkbox
+        const reqCheck = document.getElementById(`req-${fieldId}`);
+        if (reqCheck) {
+            reqCheck.checked = total > 0;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
 
 <%- include('../partials/footer') %>

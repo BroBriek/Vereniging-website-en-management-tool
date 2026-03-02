@@ -18,6 +18,21 @@
         max-height: 90vh;
         overflow-y: auto;
     }
+    @media (max-width: 992px) {
+        .builder-container {
+            flex-direction: column;
+        }
+        .builder-sidebar {
+            width: 100%;
+            position: relative;
+            top: 0;
+            max-height: none;
+            order: 2;
+        }
+        .builder-main {
+            order: 1;
+        }
+    }
     .builder-main {
         flex-grow: 1;
         background: white;
@@ -25,6 +40,11 @@
         border-radius: 10px;
         border: 2px dashed #dee2e6;
         min-height: 500px;
+    }
+    @media (max-width: 576px) {
+        .builder-main {
+            padding: 15px;
+        }
     }
     .draggable-item {
         background: white;
@@ -159,6 +179,9 @@
             <div class="draggable-item" onclick="addField('multiple_choice_multi')" draggable="true" ondragstart="handleDragStart(event, 'multiple_choice_multi')">
                 <i class="bi bi-list-check text-warning"></i> Meerkeuze (Meerdere)
             </div>
+            <div class="draggable-item" onclick="addField('pricing')" draggable="true" ondragstart="handleDragStart(event, 'pricing')">
+                <i class="bi bi-calculator text-danger"></i> Slimme Prijsmodule
+            </div>
         </div>
 
         <!-- Main Area -->
@@ -175,7 +198,7 @@
 
 <!-- Modals for editing fields -->
 <div class="modal fade" id="editFieldModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0">
                 <h5 class="modal-title font-playful" id="editModalTitle">Veld Bewerken</h5>
@@ -237,6 +260,23 @@
                         content += `<div class="form-check"><input class="form-check-input" type="${field.type === 'multiple_choice' ? 'radio' : 'checkbox'}" disabled><label class="form-check-label">${opt}</label></div>`;
                     });
                     break;
+                case 'pricing':
+                    content = `
+                        <label class="form-label fw-bold">${field.label || 'Slimme Prijsmodule'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                        <div class="border rounded p-3 bg-light">
+                            ${(field.options || []).map(opt => `
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span>${opt.label} ${opt.showPrice ? `<small class="text-muted">(€${opt.price})</small>` : ''}</span>
+                                    <div style="width: 60px;"><input type="number" class="form-control form-control-sm" value="0" disabled></div>
+                                </div>
+                            `).join('')}
+                            <div class="mt-2 pt-2 border-top fw-bold d-flex justify-content-between">
+                                <span>Totaal:</span>
+                                <span>€0,00</span>
+                            </div>
+                        </div>
+                    `;
+                    break;
             }
 
             div.innerHTML = `
@@ -261,6 +301,10 @@
         if (type === 'text') newField.content = '';
         if (type === 'image') newField.url = '';
         if (type === 'multiple_choice' || type === 'multiple_choice_multi') newField.options = ['Optie 1', 'Optie 2'];
+        if (type === 'pricing') {
+            newField.label = 'Bestelling';
+            newField.options = [{ label: 'Item 1', price: 0, showPrice: true }];
+        }
         
         fields.push(newField);
         renderFields();
@@ -360,6 +404,49 @@
                     </div>
                 `;
                 break;
+            case 'pricing':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Titel van de module</label>
+                        <input type="text" id="edit_label" class="form-control" value="${field.label || ''}" placeholder="bv. Bestelling">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Producten / Opties</label>
+                        <div id="pricing_options_container">
+                            ${(field.options || []).map((opt, i) => `
+                                <div class="card mb-3 pricing-option-item shadow-sm border-light">
+                                    <div class="card-body">
+                                        <div class="row g-3">
+                                            <div class="col-md-5">
+                                                <label class="small text-muted mb-1">Naam</label>
+                                                <input type="text" class="form-control form-control-sm edit-pricing-label" value="${opt.label}" placeholder="bv. Spaghetti Groot">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="small text-muted mb-1">Prijs (€)</label>
+                                                <input type="number" step="0.01" class="form-control form-control-sm edit-pricing-price" value="${opt.price}" placeholder="0.00">
+                                            </div>
+                                            <div class="col-md-3 d-flex align-items-end pb-1">
+                                                <div class="form-check form-switch mb-1">
+                                                    <input class="form-check-input edit-pricing-show" type="checkbox" ${opt.showPrice ? 'checked' : ''}>
+                                                    <label class="form-check-label small">Toon prijs</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-1 d-flex align-items-end justify-content-end pb-1">
+                                                <button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('.pricing-option-item').remove()"><i class="bi bi-trash"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPricingOption()">+ Optie toevoegen</button>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="edit_required" ${field.required ? 'checked' : ''}>
+                        <label class="form-check-label" for="edit_required">Verplicht veld (Totaal > 0)</label>
+                    </div>
+                `;
+                break;
         }
 
         modalBody.innerHTML = html;
@@ -387,6 +474,36 @@
         container.appendChild(div);
     }
 
+    function addPricingOption() {
+        const container = document.getElementById('pricing_options_container');
+        const div = document.createElement('div');
+        div.className = 'card mb-3 pricing-option-item shadow-sm border-light';
+        div.innerHTML = `
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="small text-muted mb-1">Naam</label>
+                        <input type="text" class="form-control form-control-sm edit-pricing-label" value="Nieuw Item" placeholder="bv. Spaghetti Groot">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small text-muted mb-1">Prijs (€)</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm edit-pricing-price" value="0.00" placeholder="0.00">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end pb-1">
+                        <div class="form-check form-switch mb-1">
+                            <input class="form-check-input edit-pricing-show" type="checkbox" checked>
+                            <label class="form-check-label small">Toon prijs</label>
+                        </div>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end justify-content-end pb-1">
+                        <button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('.pricing-option-item').remove()"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+
     document.getElementById('saveFieldChangesBtn').addEventListener('click', function() {
         if (editingIndex === -1) return;
         const field = fields[editingIndex];
@@ -410,6 +527,18 @@
                 field.required = document.getElementById('edit_required').checked;
                 const optionInputs = document.querySelectorAll('.edit-option');
                 field.options = Array.from(optionInputs).map(input => input.value).filter(v => v.trim() !== '');
+                break;
+            case 'pricing':
+                field.label = document.getElementById('edit_label').value;
+                field.required = document.getElementById('edit_required').checked;
+                const items = document.querySelectorAll('.pricing-option-item');
+                field.options = Array.from(items).map(item => {
+                    return {
+                        label: item.querySelector('.edit-pricing-label').value,
+                        price: parseFloat(item.querySelector('.edit-pricing-price').value) || 0,
+                        showPrice: item.querySelector('.edit-pricing-show').checked
+                    };
+                }).filter(v => v.label.trim() !== '');
                 break;
         }
 
