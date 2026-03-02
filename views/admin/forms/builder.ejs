@@ -70,15 +70,23 @@
     .form-item-preview {
         position: relative;
         padding: 20px;
-        border: 1px solid transparent;
+        border: 2px solid transparent;
         border-radius: 8px;
         margin-bottom: 15px;
         transition: all 0.2s;
         background: #fff;
     }
     .form-item-preview:hover {
-        border-color: #db3e41;
+        border-color: #dee2e6;
         background: #fffcfc;
+    }
+    .form-item-preview.dragging {
+        opacity: 0.4;
+        border: 2px dashed #db3e41;
+        cursor: grabbing;
+    }
+    .form-item-preview.drag-over {
+        border-top: 3px solid #db3e41 !important;
     }
     .form-item-actions {
         position: absolute;
@@ -86,9 +94,23 @@
         right: 10px;
         display: none;
         gap: 5px;
+        z-index: 10;
     }
     .form-item-preview:hover .form-item-actions {
         display: flex;
+    }
+    .drag-handle {
+        position: absolute;
+        left: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+        cursor: grab;
+        padding: 10px;
+        display: none;
+    }
+    .form-item-preview:hover .drag-handle {
+        display: block;
     }
     .empty-state {
         display: flex;
@@ -240,9 +262,14 @@
             const div = document.createElement('div');
             div.className = 'form-item-preview border-bottom mb-3 pb-3';
             div.setAttribute('draggable', 'true');
-            div.setAttribute('ondragstart', `handleInternalDragStart(event, ${index})`);
-            div.setAttribute('ondragover', `handleInternalDragOver(event, ${index})`);
-            div.setAttribute('ondrop', `handleInternalDrop(event, ${index})`);
+            div.setAttribute('data-index', index);
+            
+            // Re-ordering event listeners
+            div.addEventListener('dragstart', (e) => handleInternalDragStart(e, index));
+            div.addEventListener('dragover', (e) => handleInternalDragOver(e, index));
+            div.addEventListener('dragleave', (e) => handleInternalDragLeave(e, index));
+            div.addEventListener('drop', (e) => handleInternalDrop(e, index));
+            div.addEventListener('dragend', (e) => handleInternalDragEnd(e));
             
             let content = '';
             const isEmailField = field.id === document.getElementById('emailFieldIdInput').value;
@@ -288,6 +315,7 @@
             }
 
             div.innerHTML = `
+                <div class="drag-handle"><i class="bi bi-grip-vertical"></i></div>
                 ${content}
                 <div class="form-item-actions">
                     <button type="button" class="btn btn-sm btn-light shadow-sm" onclick="moveField(${index}, -1)" ${index === 0 ? 'disabled' : ''}><i class="bi bi-arrow-up"></i></button>
@@ -607,11 +635,25 @@
 
     function handleDragOver(e) {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
+        if (draggedIndex !== -1) {
+            e.dataTransfer.dropEffect = 'move';
+        } else {
+            e.dataTransfer.dropEffect = 'copy';
+        }
     }
 
     function handleDrop(e) {
         e.preventDefault();
+        
+        // Handle internal reordering drop on container background (move to end)
+        if (draggedIndex !== -1) {
+            const item = fields.splice(draggedIndex, 1)[0];
+            fields.push(item);
+            draggedIndex = -1;
+            renderFields();
+            return;
+        }
+
         const type = e.dataTransfer.getData('text/plain');
         if (type) {
             addField(type);
@@ -624,28 +666,52 @@
     function handleInternalDragStart(e, index) {
         draggedIndex = index;
         e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('reorder-index', index);
+        
+        // Use a small delay to allow the drag image to be created
         setTimeout(() => {
-            e.target.style.opacity = '0.5';
+            e.target.classList.add('dragging');
         }, 0);
     }
 
     function handleInternalDragOver(e, index) {
         e.preventDefault();
-        if (index === draggedIndex) return;
-        const items = document.querySelectorAll('.form-item-preview');
-        items.forEach(item => item.style.borderTop = '');
-        items[index].style.borderTop = '2px solid #db3e41';
+        e.stopPropagation();
+        
+        if (draggedIndex === -1 || draggedIndex === index) return;
+        
+        // Clear other highlights
+        document.querySelectorAll('.form-item-preview').forEach(el => el.classList.remove('drag-over'));
+        
+        // Add highlight to current target
+        e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleInternalDragLeave(e, index) {
+        e.currentTarget.classList.remove('drag-over');
     }
 
     function handleInternalDrop(e, index) {
         e.preventDefault();
-        if (draggedIndex === -1 || draggedIndex === index) return;
+        e.stopPropagation();
+        
+        if (draggedIndex === -1 || draggedIndex === index) {
+            handleInternalDragEnd();
+            return;
+        }
         
         const item = fields.splice(draggedIndex, 1)[0];
         fields.splice(index, 0, item);
         
         draggedIndex = -1;
         renderFields();
+    }
+
+    function handleInternalDragEnd(e) {
+        draggedIndex = -1;
+        document.querySelectorAll('.form-item-preview').forEach(el => {
+            el.classList.remove('dragging', 'drag-over');
+        });
     }
 
     // File Picker helper (opens the existing uploads page in a new window)
