@@ -1,6 +1,7 @@
 const { Form, FormResponse, User } = require('../models');
 const ExcelJS = require('exceljs');
 const { Op } = require('sequelize');
+const { sendMail } = require('../config/mailer');
 
 exports.getForms = async (req, res) => {
     try {
@@ -21,7 +22,7 @@ exports.getCreateForm = (req, res) => {
 
 exports.postCreateForm = async (req, res) => {
     try {
-        const { title, description, status, fields } = req.body;
+        const { title, description, status, fields, sendEmailOverview, emailFieldId } = req.body;
         
         // Generate slug from title
         let slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -40,6 +41,8 @@ exports.postCreateForm = async (req, res) => {
             slug,
             status,
             fields: parsedFields,
+            sendEmailOverview: sendEmailOverview === 'true',
+            emailFieldId: emailFieldId || null,
             creatorId: req.user.id
         });
 
@@ -64,7 +67,7 @@ exports.getEditForm = async (req, res) => {
 
 exports.postEditForm = async (req, res) => {
     try {
-        const { title, description, status, fields } = req.body;
+        const { title, description, status, fields, sendEmailOverview, emailFieldId } = req.body;
         const form = await Form.findByPk(req.params.id);
         if (!form) return res.redirect('/admin/forms?error=Formulier niet gevonden');
 
@@ -74,7 +77,9 @@ exports.postEditForm = async (req, res) => {
             title,
             description,
             status,
-            fields: parsedFields
+            fields: parsedFields,
+            sendEmailOverview: sendEmailOverview === 'true',
+            emailFieldId: emailFieldId || null
         });
 
         res.redirect('/admin/forms?success=Formulier bijgewerkt');
@@ -252,7 +257,82 @@ exports.postSubmitForm = async (req, res) => {
             data: answers
         });
 
-        res.render('public/form_success', { title: 'Bedankt!', form, user: req.user || null });
+        // Send email overview if enabled
+        if (form.sendEmailOverview && form.emailFieldId && answers[form.emailFieldId]) {
+            const recipientEmail = answers[form.emailFieldId];
+            
+            // Simple email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailRegex.test(recipientEmail)) {
+                // Build summary HTML
+                let summaryTableRows = '';
+                form.fields.forEach(f => {
+                    if (['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi', 'pricing'].includes(f.type)) {
+                        const answer = answers[f.id];
+                        let displayAnswer = answer || '-';
+
+                        if (f.type === 'pricing') {
+                            if (answer && typeof answer === 'object') {
+                                displayAnswer = '<ul style="padding-left: 20px; margin: 0; list-style-type: none;">';
+                                for (const [key, val] of Object.entries(answer)) {
+                                    if (key !== 'total' && parseInt(val) > 0) {
+                                        displayAnswer += `<li>- ${key}: <strong>${val}x</strong></li>`;
+                                    }
+                                }
+                                displayAnswer += `<li style="margin-top: 5px; border-top: 1px dashed #ccc; padding-top: 5px;">Totaal: <strong>€${answer.total || 0}</strong></li>`;
+                                displayAnswer += '</ul>';
+                            }
+                        } else if (Array.isArray(answer)) {
+                            displayAnswer = answer.join(', ');
+                        }
+
+                        summaryTableRows += `
+                            <tr>
+                                <td style="padding: 12px 10px; border-bottom: 1px solid #f0f0f0; font-weight: bold; width: 40%; vertical-align: top; color: #555; font-size: 14px;">${f.label}</td>
+                                <td style="padding: 12px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: top; color: #333; font-size: 14px;">${displayAnswer}</td>
+                            </tr>
+                        `;
+                    }
+                });
+
+                const summaryHtml = `
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; max-width: 600px; margin: 20px auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <div style="background-color: #db3e41; padding: 30px 20px; text-align: center; color: white;">
+                        <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Overzicht van je inschrijving</h1>
+                        <p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 16px;">${form.title}</p>
+                    </div>
+                    <div style="padding: 30px 25px; background-color: #ffffff;">
+                        <p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">Beste,</p>
+                        <p style="font-size: 16px; line-height: 1.5; margin-bottom: 25px;">Bedankt voor je invulling. Hieronder vind je een overzicht van je antwoorden voor <strong>${form.title}</strong>:</p>
+                        
+                        <table style="width: 100%; border-collapse: collapse;">
+                            ${summaryTableRows}
+                        </table>
+                        
+                        <div style="margin-top: 35px; padding-top: 20px; border-top: 2px solid #f8f9fa;">
+                            <p style="margin: 0; font-size: 16px; color: #555;">Met vriendelijke groeten,</p>
+                            <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #db3e41;">Chiro</p>
+                        </div>
+                    </div>
+                    <div style="background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 13px; color: #888; border-top: 1px solid #eeeeee;">
+                        Dit is een automatisch verzonden bericht van de Chiro website. Je kunt niet antwoorden op deze e-mail.
+                    </div>
+                </div>
+            `;
+
+            try {
+                await sendMail({
+                    to: recipientEmail,
+                    subject: `Overzicht: ${form.title}`,
+                    html: summaryHtml
+                });
+            } catch (mailError) {
+                console.error('Error sending form overview email:', mailError);
+            }
+        }
+    }
+
+    res.render('public/form_success', { title: 'Bedankt!', form, user: req.user || null });
     } catch (error) {
         console.error('Error submitting form:', error);
         res.status(500).send('Fout bij verzenden van formulier');

@@ -182,10 +182,16 @@
             <div class="draggable-item" onclick="addField('pricing')" draggable="true" ondragstart="handleDragStart(event, 'pricing')">
                 <i class="bi bi-calculator text-danger"></i> Slimme Prijsmodule
             </div>
+            <hr>
+            <div class="draggable-item" onclick="enableEmailOverview()">
+                <i class="bi bi-envelope-check text-primary"></i> Verplicht E-mail Veld
+            </div>
         </div>
 
         <!-- Main Area -->
         <div class="builder-main shadow-sm" id="builderPreviewArea" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+            <input type="hidden" name="sendEmailOverview" id="sendEmailOverviewInput" value="<%= form ? (form.sendEmailOverview ? 'true' : 'false') : 'false' %>">
+            <input type="hidden" name="emailFieldId" id="emailFieldIdInput" value="<%= form ? form.emailFieldId : '' %>">
             <div id="emptyState" class="empty-state">
                 <i class="bi bi-plus-square-dotted"></i>
                 <h4>Begin met bouwen</h4>
@@ -239,6 +245,8 @@
             div.setAttribute('ondrop', `handleInternalDrop(event, ${index})`);
             
             let content = '';
+            const isEmailField = field.id === document.getElementById('emailFieldIdInput').value;
+
             switch(field.type) {
                 case 'text':
                     content = `<div class="rich-text-content">${field.content || '<p class="text-muted fst-italic">Geen tekst ingevuld</p>'}</div>`;
@@ -247,7 +255,7 @@
                     content = field.url ? `<img src="${field.url}" class="img-fluid rounded mb-2" style="max-height: 200px;">` : '<p class="text-muted fst-italic">Geen afbeelding geüpload</p>';
                     break;
                 case 'short_text':
-                    content = `<label class="form-label fw-bold">${field.label || 'Korte vraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label><input type="text" class="form-control" disabled placeholder="${field.placeholder || ''}">`;
+                    content = `<label class="form-label fw-bold">${field.label || 'Korte vraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}${isEmailField ? ' <span class="badge bg-primary ms-2"><i class="bi bi-envelope me-1"></i> E-mail Overzicht</span>' : ''}</label><input type="text" class="form-control" disabled placeholder="${field.placeholder || ''}">`;
                     break;
                 case 'long_text':
                     content = `<label class="form-label fw-bold">${field.label || 'Lange vraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label><textarea class="form-control" disabled rows="2" placeholder="${field.placeholder || ''}"></textarea>`;
@@ -318,8 +326,53 @@
         }
     }
 
+    function enableEmailOverview() {
+        // Check if email field already exists
+        const emailFieldIdInput = document.getElementById('emailFieldIdInput');
+        const sendEmailOverviewInput = document.getElementById('sendEmailOverviewInput');
+        
+        const existingId = emailFieldIdInput.value;
+        const fieldExists = existingId && fields.some(f => f.id === existingId);
+
+        if (fieldExists) {
+            alert('Het verplichte e-mail veld is al geactiveerd!');
+            return;
+        }
+
+        // Create new field
+        const id = 'field_email_' + Math.random().toString(36).substring(2, 11);
+        let newField = { 
+            id, 
+            type: 'short_text', 
+            label: 'E-mailadres', 
+            placeholder: 'bv. jan@voorbeeld.be',
+            required: true,
+            isEmailField: true // Helper flag
+        };
+        
+        fields.push(newField);
+        emailFieldIdInput.value = id;
+        sendEmailOverviewInput.value = 'true';
+        
+        renderFields();
+        alert('Verplicht e-mail veld toegevoegd! De invuller krijgt nu ook een overzicht van de antwoorden per mail.');
+    }
+
     function deleteField(index) {
         if (confirm('Weet je zeker dat je dit item wilt verwijderen?')) {
+            const field = fields[index];
+            const emailFieldIdInput = document.getElementById('emailFieldIdInput');
+            const sendEmailOverviewInput = document.getElementById('sendEmailOverviewInput');
+
+            if (field.id === emailFieldIdInput.value) {
+                if (confirm('Dit is het veld dat gebruikt wordt voor het verzenden van het overzicht per e-mail. Als je dit verwijdert, wordt deze functie uitgeschakeld. Doorgaan?')) {
+                    emailFieldIdInput.value = '';
+                    sendEmailOverviewInput.value = 'false';
+                } else {
+                    return;
+                }
+            }
+            
             fields.splice(index, 1);
             renderFields();
         }

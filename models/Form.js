@@ -23,6 +23,14 @@ const Form = sequelize.define('Form', {
     type: DataTypes.STRING,
     defaultValue: 'invisible' // 'visible', 'invisible', 'closed'
   },
+  sendEmailOverview: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  emailFieldId: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   creatorId: {
     type: DataTypes.INTEGER,
     allowNull: false
