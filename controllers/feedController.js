@@ -459,6 +459,7 @@ exports.postComment = async (req, res) => {
                 comment: commentWithAuthor,
                 user: req.user,
                 post: post,
+                depth: 0,
                 ...viewHelpers
             }, (err, html) => {
                 if (err) {
