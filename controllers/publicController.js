@@ -419,10 +419,10 @@ exports.postContact = async (req, res) => {
     }
 };
 
-exports.getNotificationsHelp = (req, res) => {
+exports.getHelp = (req, res) => {
     res.render('public/notifications_help', { 
-        title: 'Notificaties Instellen - Chiro Vreugdeland Meeuwen', 
-        description: 'Hulp bij het instellen van e-mail en push notificaties voor de Chiro app.'
+        title: 'Hulp & Informatie - Chiro Vreugdeland Meeuwen', 
+        description: 'Alles wat je moet weten over het gebruik van de Chiro website, van kalender-sync tot meldingen.'
     });
 };
 
@@ -466,7 +466,7 @@ exports.getSitemapXml = (req, res) => {
         { loc: '/t-shirts', changefreq: 'monthly', priority: '0.7', lastmod },
         { loc: '/inschrijven', changefreq: 'yearly', priority: '0.9', lastmod },
         { loc: '/contact', changefreq: 'yearly', priority: '0.7', lastmod },
-        { loc: '/notificaties', changefreq: 'monthly', priority: '0.6', lastmod }
+        { loc: '/help', changefreq: 'monthly', priority: '0.6', lastmod }
     ];
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

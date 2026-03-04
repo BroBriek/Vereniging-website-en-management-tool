@@ -1,145 +1,366 @@
-<%- include('../partials/header') %>
+<%- include('../partials/header', { fullWidth: true }) %>
 
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Handleiding & Hulp</h1>
-        <a href="/admin" class="btn btn-secondary">Terug naar Dashboard</a>
-    </div>
+<!-- Admin Wiki Hero -->
+<style>
+    :root {
+        --wiki-sidebar-width: 280px;
+    }
+    .admin-hero {
+        background: linear-gradient(135deg, var(--chiro-blue) 0%, #2c5da0 50%, var(--chiro-red) 100%);
+        padding: 50px 0;
+        border-radius: 0 0 50px 50px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        margin-bottom: 3rem;
+        position: relative;
+    }
+    .admin-hero-text h1 {
+        font-size: 3.5rem;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    .wiki-container {
+        display: flex;
+        gap: 30px;
+    }
+    .wiki-sidebar {
+        width: var(--wiki-sidebar-width);
+        position: sticky;
+        top: 110px;
+        height: calc(100vh - 140px);
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    .wiki-content {
+        flex: 1;
+        max-width: 900px;
+    }
+    .wiki-nav-link {
+        display: block;
+        padding: 10px 15px;
+        color: var(--text-color);
+        text-decoration: none;
+        border-radius: 12px;
+        margin-bottom: 5px;
+        transition: all 0.2s;
+        font-family: var(--font-heading);
+    }
+    .wiki-nav-link:hover {
+        background-color: rgba(29, 78, 137, 0.1);
+        color: var(--chiro-blue);
+        transform: translateX(5px);
+    }
+    .wiki-nav-link.active {
+        background-color: var(--chiro-blue);
+        color: white;
+    }
+    .wiki-section {
+        background: white;
+        border-radius: 30px;
+        padding: 40px;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .wiki-section h2 {
+        font-size: 2.2rem;
+        border-bottom: 3px solid var(--chiro-red);
+        display: inline-block;
+        padding-bottom: 5px;
+        margin-bottom: 30px;
+    }
+    .wiki-section h3 {
+        color: var(--chiro-blue);
+        margin-top: 2rem;
+        font-weight: 700;
+    }
+    .pro-tip {
+        background-color: #fff9db;
+        border-left: 5px solid #fcc419;
+        padding: 20px;
+        border-radius: 15px;
+        margin: 20px 0;
+    }
+    .warning-box {
+        background-color: #fff5f5;
+        border-left: 5px solid #ff6b6b;
+        padding: 20px;
+        border-radius: 15px;
+        margin: 20px 0;
+    }
+    .feature-tag {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: bold;
+        padding: 4px 10px;
+        border-radius: 50px;
+        margin-bottom: 10px;
+        display: inline-block;
+    }
+    @media (max-width: 991px) {
+        .wiki-container { flex-direction: column; }
+        .wiki-sidebar { width: 100%; position: static; height: auto; }
+    }
+</style>
 
-    <div class="row">
-        <!-- Left Column: CMS Manual -->
-        <div class="col-lg-7 mb-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Hoe werkt de website?</h4>
-                </div>
-                <div class="card-body">
-                    <h5 class="text-primary">1. Pagina's Bewerken</h5>
-                    <p>
-                        De meeste pagina's (Home, Praktisch, Afdelingen, T-Shirts) hebben een vaste layout. 
-                        Je kunt de tekst en titels aanpassen.
-                    </p>
-                    <ul>
-                        <li>Ga naar het <strong>Dashboard</strong> of klik op de <strong>"Bewerk Pagina"</strong> knop die bovenaan verschijnt als je ingelogd bent.</li>
-                        <li>Vul de tekstvakken in en klik op <strong>Opslaan</strong>.</li>
-                    </ul>
-
-                    <h5 class="text-primary mt-4">2. Leiding Beheren</h5>
-                    <p>
-                        Bij het tabblad <strong>Leiding</strong> kun je nieuwe leiding toevoegen.
-                    </p>
-                    <ul>
-                        <li>Selecteer de juiste <strong>Groep</strong> (Ribbels, Speelclub, etc.).</li>
-                        <li>De website zet ze automatisch in de juiste kleur en volgorde.</li>
-                        <li>Als een groep meer dan 4 leiding heeft, wordt het automatisch een horizontale schuiflijst (carousel).</li>
-                    </ul>
-
-                    <h5 class="text-primary mt-4">3. Inschrijvingen Beheren (Ledenlijst en Archief)</h5>
-                    <p>
-                        Op de inschrijvingenpagina kun je de ledenlijst gedetailleerd bekijken en beheren.
-                    </p>
-                    <ul>
-                        <li><strong>Filteren op Periode:</strong> Aan de linkerkant vind je een overzicht van alle beschikbare inschrijvingsperiodes (bijv. '24-25'). Selecteer een periode om de bijbehorende inschrijvingen te zien. 'Alles Tonen' toont de volledige historie.</li>
-                        <li><strong>Zoeken:</strong> Gebruik de zoekbalk bovenaan om snel te filteren op naam, e-mailadres of andere contactgegevens binnen de geselecteerde periode.</li>
-                        <li><strong>Exporteren:</strong> Rechts bovenaan kun je de inschrijvingen exporteren naar een <strong>Excel-bestand</strong> of een <strong>PDF-lijst</strong>. Je kunt kiezen om alleen de huidige geselecteerde periode te exporteren, of alle inschrijvingen.</li>
-                        <li><strong>Werkjaar Starten:</strong> Met de knop <strong>'Werkjaar Starten'</strong> kun je een nieuw werkjaar starten. De inschrijvingen van de vorige periode worden dan gearchiveerd en zijn nog steeds te bekijken via de archieffunctie.</li>
-                    </ul>
-
-                    <h5 class="text-primary mt-4">4. Kalender</h5>
-                    <p>
-                        Activiteiten worden automatisch gesorteerd op datum.
-                    </p>
-                    <ul>
-                        <li>Oude evenementen verdwijnen vanzelf van de site (maar blijven in de database).</li>
-                        <li>Klik op een evenement in de kalender om te zien hoe het eruit ziet voor bezoekers.</li>
-                    </ul>
-
-                    <h5 class="text-primary mt-4">5. Foto's & Bestanden</h5>
-                    <p>
-                        Via <strong>"Bestanden & Foto's"</strong> kun je alle bestanden zien die op de server staan.
-                    </p>
-                    <ul>
-                        <li>Dit is handig om oude bestanden op te ruimen.</li>
-                        <li>Het uploaden van foto's voor pagina's doe je nu makkelijker direct in de teksteditor!</li>
-                    </ul>
-
-                    <h5 class="text-primary mt-4">6. Leidingshoekje (Feed)</h5>
-                    <p>
-                        Hier beheer je de interne pagina's voor leiding.
-                    </p>
-                    <ul>
-                        <li><strong>Nieuwe groep maken:</strong> Ga naar <strong>"Leidingshoekjes"</strong> op het dashboard. Vul een naam in (bv. "Leiding 2024-2025") en klik op toevoegen.</li>
-                        <li><strong>Leiding toegang geven:</strong> Ga naar <strong>"Gebruikers"</strong> op het dashboard en klik op <strong>"Bewerk"</strong> naast een leiding. Onderaan vink je de groepen aan die ze mogen zien.</li>
-                        <li><em>Let op: Admins hebben automatisch toegang tot alle groepen.</em></li>
-                    </ul>
-
-                    <h5 class="text-primary mt-4">7. E-mails Versturen</h5>
-                    <p>
-                        Via de <strong>Email Tool</strong> kun je professioneel opgemaakte e-mails versturen naar leden, ouders of leiding.
-                    </p>
-                    <ul>
-                        <li><strong>Individueel:</strong> Vul één specifiek e-mailadres in om een persoonlijk bericht te sturen.</li>
-                        <li><strong>Groepen:</strong> Stuur een e-mail naar een hele groep tegelijk:
-                            <ul>
-                                <li><em>Doelgroep:</em> Kies uit 'Leiding', 'Leden & Ouders' of 'Iedereen'.</li>
-                                <li><em>Periode:</em> Selecteer uit welk werkjaar (bv. '24-25') je de inschrijvingen wilt gebruiken.</li>
-                            </ul>
-                        </li>
-                        <li><strong>Privacy:</strong> Bij groepsmails worden alle ontvangers automatisch in <strong>BCC</strong> gezet. Niemand kan dus de e-mailadressen van anderen zien.</li>
-                        <li><strong>Opmaak:</strong> Je gebruikt dezelfde editor als voor de webpagina's, dus je kunt eenvoudig vetgedrukte tekst, lijsten, links en afbeeldingen toevoegen.</li>
-                    </ul>
-
-                    <h5 class="text-danger mt-4"><i class="bi bi-exclamation-triangle-fill me-2"></i>8. Danger Zone (Onderaan Dashboard)</h5>
-                    <p>
-                        Hier vind je functies die grote gevolgen hebben. Gebruik ze voorzichtig!
-                    </p>
-                    <ul>
-                        <li><strong>Maak Backup:</strong> Maakt direct een kopie van alles. Doe dit voor je iets reset!</li>
-                        <li><strong>Reset Inschrijvingen:</strong> Wist alle inschrijvingen. Handig na een kamp of bij start van een nieuw jaar.</li>
-                        <li><strong>Reset Website:</strong> Wist <strong>alles</strong>: teksten, kalender, leiding, inschrijvingen én alle geüploade foto's. Alleen je admin account blijft bestaan. Dit vereist je wachtwoord.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column: Rich Text Editor Manual -->
-        <div class="col-lg-5 mb-4">
-            <div class="card shadow-sm border-info">
-                <div class="card-header bg-info text-white">
-                    <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Tekst Bewerken & Foto's</h4>
-                </div>
-                <div class="card-body">
-                    <p>
-                        We hebben een nieuwe, slimme editor toegevoegd aan de website! Je hoeft niet meer zelf met HTML te puzzelen (maar het mag nog wel).
-                    </p>
-
-                    <h5 class="text-primary">Tekst Opmaken</h5>
-                    <p>
-                        Gebruik de werkbalk boven de tekstvakken om je tekst <strong>vet</strong>, <em>schuin</em> of <u>onderstreept</u> te maken. Je kunt ook koppen, lijsten en kleuren kiezen, net als in Word.
-                    </p>
-
-                    <h5 class="text-primary mt-3">Foto's Toevoegen (Nieuw!)</h5>
-                    <p>Er zijn nu twee manieren om foto's in je tekst te zetten:</p>
-                    <ol>
-                        <li>
-                            <strong>Kopiëren & Plakken:</strong> Kopieer een afbeelding (bv. van je computer of een andere website) en druk op <code>Ctrl + V</code> in het tekstvak. De editor uploadt hem automatisch voor je.
-                        </li>
-                        <li>
-                            <strong>Upload Knop:</strong> Klik in de werkbalk op het <i class="bi bi-image"></i> icoontje om een bestand van je computer te kiezen.
-                        </li>
-                    </ol>
-                    <div class="alert alert-success py-2">
-                        <i class="bi bi-check-circle-fill me-1"></i> Foto's worden automatisch op de server opgeslagen. Je hoeft niet meer apart naar "Bestanden & Foto's" te gaan!
-                    </div>
-
-                    <h5 class="text-secondary mt-4">Geavanceerd: HTML</h5>
-                    <p class="small text-muted">
-                        Voor de echte pro's: de editor maakt op de achtergrond nog steeds HTML. Als je specifieke dingen wilt doen die niet in de werkbalk staan, kun je nog steeds HTML-code gebruiken, maar wees voorzichtig dat je de opmaak niet breekt.
-                    </p>
-                </div>
-            </div>
+<div class="admin-hero">
+    <div class="container">
+        <div class="admin-hero-text text-center text-white">
+            <h1>Hoofdleiding Wiki</h1>
+            <p class="lead">De ultieme handleiding voor het beheer van Chiro Vreugdeland Meeuwen.</p>
+            <a href="/admin" class="btn btn-light rounded-pill px-4 mt-3 fw-bold">
+                <i class="bi bi-arrow-left me-2"></i>Terug naar Dashboard
+            </a>
         </div>
     </div>
 </div>
 
-<%- include('../partials/footer') %>
+<div class="container pb-6">
+    <div class="wiki-container">
+        <!-- Sidebar Navigation -->
+        <aside class="wiki-sidebar d-none d-lg-block">
+            <h5 class="fw-bold mb-3 px-3">Onderwerpen</h5>
+            <nav>
+                <a href="#cms" class="wiki-nav-link"><i class="bi bi-pencil-square me-2"></i>Content & Pagina's</a>
+                <a href="#inschrijvingen" class="wiki-nav-link"><i class="bi bi-people me-2"></i>Inschrijvingen</a>
+                <a href="#leiding" class="wiki-nav-link"><i class="bi bi-person-badge me-2"></i>Leidingsploeg</a>
+                <a href="#kalender" class="wiki-nav-link"><i class="bi bi-calendar3 me-2"></i>Kalender</a>
+                <a href="#feed" class="wiki-nav-link"><i class="bi bi-chat-dots me-2"></i>Leidingshoek & Events</a>
+                <a href="#boekhouding" class="wiki-nav-link"><i class="bi bi-piggy-bank me-2"></i>Boekhouding</a>
+                <a href="#email" class="wiki-nav-link"><i class="bi bi-envelope me-2"></i>Email Tool</a>
+                <a href="#gebruikers" class="wiki-nav-link"><i class="bi bi-shield-lock me-2"></i>Toegang & Rollen</a>
+                <a href="#systeem" class="wiki-nav-link text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Systeem & Danger Zone</a>
+            </nav>
+        </aside>
+
+        <!-- Wiki Content -->
+        <main class="wiki-content">
+
+            <!-- SECTION: CMS -->
+            <section id="cms" class="wiki-section">
+                <span class="feature-tag bg-primary text-white">Basis Beheer</span>
+                <h2>Inhoud & Pagina's</h2>
+                <p>De website is opgedeeld in vaste pagina's die je via de interface kunt bewerken zonder technische kennis.</p>
+                
+                <h3>Pagina's Aanpassen</h3>
+                <p>Navigeer op de publieke site naar een pagina (bv. Home of Praktisch). Als je bent ingelogd als admin, zie je bovenaan een knop <strong>"Bewerk Pagina"</strong>. Hiermee open je de editor voor die specifieke pagina.</p>
+                
+                <h3>De Slimme Editor</h3>
+                <p>Onze editor werkt vergelijkbaar met Word of Google Docs:</p>
+                <ul>
+                    <li><strong>Tekststijlen:</strong> Gebruik "Kop 1" voor hoofdtitels en "Kop 2" voor tussentitels. Dit is belangrijk voor de zoekmachines (SEO).</li>
+                    <li><strong>Afbeeldingen:</strong> Je hoeft geen afbeeldingen meer apart te uploaden. Je kunt ze simpelweg <strong>plakken (Ctrl+V)</strong> in het tekstvak of erheen slepen.</li>
+                    <li><strong>Links:</strong> Selecteer een tekst en gebruik de link-knop om te verwijzen naar andere websites of PDF-bestanden.</li>
+                </ul>
+
+                <div class="pro-tip">
+                    <i class="bi bi-lightbulb-fill text-warning me-2"></i>
+                    <strong>Pro-tip:</strong> Gebruik de editor ook om knoppen te maken! Maak een link en de website zorgt automatisch voor de juiste styling.
+                </div>
+            </section>
+
+            <!-- SECTION: INSCHRIJVINGEN -->
+            <section id="inschrijvingen" class="wiki-section">
+                <span class="feature-tag bg-success text-white">Ledenbeheer</span>
+                <h2>Inschrijvingen & Ledenlijst</h2>
+                <p>Dit is het kloppend hart van de ledenadministratie.</p>
+
+                <h3>Werkjaren & Periodes</h3>
+                <p>Het systeem werkt met <strong>Periodes</strong> (bv. '24-25'). Elke inschrijving is gekoppeld aan een periode.</p>
+                <ul>
+                    <li><strong>Filteren:</strong> In het overzicht kun je per werkjaar filteren. Oude inschrijvingen worden nooit gewist, maar gearchiveerd.</li>
+                    <li><strong>Zoeken:</strong> De zoekbalk doorzoekt namen, e-mails, en telefoonnummers van zowel leden als ouders.</li>
+                </ul>
+
+                <h3>Exporteren</h3>
+                <p>Je kunt de lijst op twee manieren exporteren:</p>
+                <ol>
+                    <li><strong>Excel (.xlsx):</strong> Volledige export met alle kolommen, inclusief medische info, voor verdere verwerking in Excel.</li>
+                    <li><strong>PDF Lijst:</strong> Een compacte, print-vriendelijke versie, ideaal voor tijdens activiteiten of op kamp.</li>
+                </ol>
+
+                <div class="warning-box">
+                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                    <strong>Let op:</strong> Gebruik de knop <strong>"Werkjaar Starten"</strong> alleen aan het begin van een nieuw Chiro-jaar (september). Dit maakt de actieve lijst leeg voor nieuwe registraties en archiveert de huidige leden onder de huidige periode.
+                </div>
+            </section>
+
+            <!-- SECTION: LEIDING -->
+            <section id="leiding" class="wiki-section">
+                <span class="feature-tag bg-info text-white">Team</span>
+                <h2>Leidingsploeg</h2>
+                <p>Hier beheer je wie er op de "Leiding" pagina verschijnt.</p>
+                
+                <h3>Leiding Toevoegen</h3>
+                <p>Kies een afdeling (bv. Keti's) en vul de naam in. De website sorteert leiding automatisch alfabetisch binnen hun afdeling.</p>
+                
+                <h3>Groepsfoto's & Carousel</h3>
+                <p>Als een afdeling veel leiding heeft (meer dan 4), verandert de weergave op de site automatisch in een handige schuiflijst (carousel) om te voorkomen dat de pagina te lang wordt.</p>
+            </section>
+
+            <!-- SECTION: KALENDER -->
+            <section id="kalender" class="wiki-section">
+                <span class="feature-tag bg-danger text-white">Planning</span>
+                <h2>Kalender & Synchronisatie</h2>
+                <p>De kalender ondersteunt zowel publieke als interne events.</p>
+
+                <h3>Publiek vs. Privé (Leiding Only)</h3>
+                <ul>
+                    <li><strong>Publiek (Rood):</strong> Zichtbaar voor iedereen. Voorbeelden: Startdag, Christus Koning, Kamp.</li>
+                    <li><strong>Privé (Blauw):</strong> Alleen zichtbaar voor ingelogde leiding. Voorbeelden: Leidingsvergadering, Weekend-voorbereiding.</li>
+                </ul>
+
+                <h3>Automatische Agenda Sync</h3>
+                <p>Elke leiding kan hun persoonlijke Chiro-kalender koppelen aan hun telefoon (Google/Apple Calendar). 
+                Omdat dit via een unieke <strong>Calendar Token</strong> werkt, krijgen zij hun privé-events automatisch te zien in hun eigen agenda app, terwijl ouders alleen de publieke rode items zien.</p>
+            </section>
+
+            <!-- SECTION: FEED -->
+            <section id="feed" class="wiki-section">
+                <span class="feature-tag bg-warning text-dark">Intern</span>
+                <h2>Leidingshoek & Event Pagina's</h2>
+                <p>De Leidingshoek is het sociale intranet van de Chiro.</p>
+
+                <h3>Groepen vs. Events</h3>
+                <ul>
+                    <li><strong>Groepen:</strong> Voor langdurige groepen (bv. "Leidingsploeg 24-25" of "Kookploeg").</li>
+                    <li><strong>Events:</strong> Voor tijdelijke, grote projecten (bv. "Leidingsweekend" of "Lotto-actie"). Een event krijgt een eigen grote banner en duidelijke datums.</li>
+                </ul>
+
+                <h3>Interactieve Posts</h3>
+                <p>Je kunt meer dan alleen tekst posten:</p>
+                <ul>
+                    <li><strong>Polls:</strong> Vraag snel wie er komt eten of welke kleur de nieuwe truien moeten worden.</li>
+                    <li><strong>Formulieren:</strong> Je kunt een formulier-schema (JSON) toevoegen aan een post om gestructureerd data te verzamelen (bv. dieetwensen voor een weekend).</li>
+                    <li><strong>Mentions:</strong> Gebruik <code>@naam</code> om iemand een directe notificatie te sturen.</li>
+                </ul>
+
+                <div class="pro-tip">
+                    <i class="bi bi-shield-lock-fill me-2 text-primary"></i>
+                    <strong>Toegangsbeheer:</strong> Je kunt per groep/event instellen wie toegang heeft. Admins hebben altijd overal toegang, maar voor gewone leiding moet je de toegang vinken bij hun gebruikersprofiel.
+                </div>
+            </section>
+
+            <!-- SECTION: BOEKHOUDING -->
+            <section id="boekhouding" class="wiki-section">
+                <span class="feature-tag bg-success text-white">Financiën</span>
+                <h2>Boekhouding (Financieel Tool)</h2>
+                <p>Een krachtig systeem om de kas van de Chiro en de afdelingen te beheren.</p>
+
+                <h3>Mappenstructuur</h3>
+                <p>Werk met mappen om alles georganiseerd te houden. Maak bijvoorbeeld een map "Werkjaar 24-25" met daarin submappen "Kamp", "Activiteiten" en "Inschrijvingsgeld".</p>
+
+                <h3>Transacties & De "Betaald" Toggle</h3>
+                <p>Elk item kan een transactie zijn (met een bedrag) of een map (zonder bedrag).</p>
+                <ul>
+                    <li><strong>Niet Betaald:</strong> Als je het vinkje "Betaald" uitzet, wordt de regel geel gemarkeerd.</li>
+                    <li><strong>Logica:</strong> Onbetaalde items worden <strong>niet</strong> meegeteld in het totaal van de map. Dit is essentieel voor het bijhouden van wat er <em>daadwerkelijk</em> op de bankrekening staat vs. wat er nog moet komen.</li>
+                </ul>
+
+                <h3>Totaalberekening</h3>
+                <p>Het saldo dat je bovenaan een map ziet, is de som van alle betaalde transacties in die map PLUS de totalen van alle submappen.</p>
+
+                <div class="pro-tip">
+                    <i class="bi bi-file-earmark-excel-fill text-success me-2"></i>
+                    <strong>Export:</strong> Gebruik de <strong>"Export Niet Betaald"</strong> knop om een lijst te genereren van alle mensen die nog geld verschuldigd zijn.
+                </div>
+            </section>
+
+            <!-- SECTION: EMAIL -->
+            <section id="email" class="wiki-section">
+                <span class="feature-tag bg-info text-white">Communicatie</span>
+                <h2>Email Tool</h2>
+                <p>Veilig en professioneel mailen naar grote groepen.</p>
+                
+                <h3>Doelgroepen</h3>
+                <p>Je kunt mailen naar:</p>
+                <ul>
+                    <li><strong>Leiding:</strong> Alle actieve leiding op de site.</li>
+                    <li><strong>Leden & Ouders:</strong> Alle inschrijvingen van een geselecteerde periode.</li>
+                    <li><strong>Individueel:</strong> Een handmatige invoer van een adres.</li>
+                </ul>
+
+                <h3>BCC & Privacy</h3>
+                <p>Het systeem zet automatisch alle ontvangers in <strong>BCC</strong>. Dit is wettelijk verplicht (GDPR) zodat ouders elkaars e-mailadres niet kunnen zien.</p>
+            </section>
+
+            <!-- SECTION: GEBRUIKERS -->
+            <section id="gebruikers" class="wiki-section">
+                <span class="feature-tag bg-secondary text-white">Beveiliging</span>
+                <h2>Toegang & Rollen</h2>
+                
+                <h3>Admin vs. Leiding</h3>
+                <ul>
+                    <li><strong>Admin:</strong> Heeft toegang tot alles: instellingen, financiën, ledenlijst, backups en alle leidingshoekjes.</li>
+                    <li><strong>Leiding:</strong> Kan alleen de Leidingshoek zien (voor de groepen waar ze toegang toe hebben) en hun eigen instellingen beheren.</li>
+                </ul>
+
+                <h3>Wachtwoord Vergeten?</h3>
+                <p>Als een leiding zijn wachtwoord vergeet, kan een admin bij "Gebruikers" op "Bewerk" klikken en handmatig een nieuw tijdelijk wachtwoord instellen.</p>
+            </section>
+
+            <!-- SECTION: SYSTEEM -->
+            <section id="systeem" class="wiki-section border-danger">
+                <span class="feature-tag bg-danger text-white">Systeem</span>
+                <h2>Systeem & Danger Zone</h2>
+                <p>Deze functies staan onderaan het dashboard en zijn alleen voor noodgevallen of groot onderhoud.</p>
+                
+                <h3>Backups</h3>
+                <p>Maak regelmatig een backup. Een backup bevat de volledige database (teksten, gebruikers, inschrijvingen) en alle geüploade bestanden.</p>
+                
+                <h3>Reset Functies</h3>
+                <ul>
+                    <li><strong>Reset Inschrijvingen:</strong> Wist alle leden uit de database. Gebruik dit alleen als je zeker weet dat je de oude lijst niet meer nodig hebt (of na een volledige backup).</li>
+                    <li><strong>Reset Website:</strong> Brengt de site terug naar de "fabrieksinstellingen". Alles wordt gewist behalve je eigen admin account.</li>
+                </ul>
+            </section>
+
+        </main>
+    </div>
+</div>
+
+<script>
+    // Smooth scrolling for wiki navigation
+    document.querySelectorAll('.wiki-nav-link').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            const offset = 100;
+            const elementPosition = targetElement.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+
+            // Update active state
+            document.querySelectorAll('.wiki-nav-link').forEach(link => link.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // Highlight active section on scroll
+    window.addEventListener('scroll', () => {
+        let current = "";
+        const sections = document.querySelectorAll('.wiki-section');
+        const navLinks = document.querySelectorAll('.wiki-nav-link');
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - 150) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href').includes(current)) {
+                link.classList.add('active');
+            }
+        });
+    });
+</script>
+
+<%- include('../partials/footer', { fullWidth: true }) %>
