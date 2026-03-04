@@ -34,6 +34,12 @@
                     <label>Einduur (optioneel)</label>
                     <input type="time" class="form-control" name="endTime">
                 </div>
+                <div class="col-md-3 mb-3 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="isPrivate" id="isPrivate">
+                        <label class="form-check-label" for="isPrivate">Alleen voor leiding</label>
+                    </div>
+                </div>
                 <div class="col-md-12 mb-3">
                     <label>Beschrijving</label>
                     <textarea class="form-control rich-editor" name="description" rows="2"></textarea>
@@ -50,6 +56,7 @@
         <tr>
             <th>Datum</th>
             <th>Titel</th>
+            <th>Type</th>
             <th>Actie</th>
         </tr>
     </thead>
@@ -63,6 +70,13 @@
                     <% } %>
                 </td>
                 <td><%= event.title %></td>
+                <td>
+                    <% if (event.isPrivate) { %>
+                        <span class="badge bg-warning text-dark">Leiding</span>
+                    <% } else { %>
+                        <span class="badge bg-info">Publiek</span>
+                    <% } %>
+                </td>
                 <td>
                     <div class="btn-group">
                         <button type="button" class="btn btn-sm btn-primary me-1" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
@@ -109,6 +123,12 @@
                             <label>Einduur (optioneel)</label>
                             <input type="time" class="form-control" name="endTime" id="editEndTime">
                         </div>
+                        <div class="col-md-3 mb-3 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="isPrivate" id="editIsPrivate">
+                                <label class="form-check-label" for="editIsPrivate">Alleen voor leiding</label>
+                            </div>
+                        </div>
                         <div class="col-md-12 mb-3">
                             <label>Beschrijving</label>
                             <textarea class="form-control rich-editor" name="description" id="editDescription" rows="2"></textarea>
@@ -134,6 +154,7 @@
         document.getElementById('editEndDate').value = event.endDate || '';
         document.getElementById('editStartTime').value = event.startTime || '';
         document.getElementById('editEndTime').value = event.endTime || '';
+        document.getElementById('editIsPrivate').checked = event.isPrivate || false;
         
         const descField = document.getElementById('editDescription');
         descField.value = event.description || '';

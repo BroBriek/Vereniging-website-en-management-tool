@@ -1,4 +1,4 @@
-const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess, Leader } = require('../models');
+const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess, Leader, Event } = require('../models');
 const quoteController = require('./quoteController');
 const path = require('path');
 const fs = require('fs');
@@ -45,6 +45,38 @@ const slugify = (text) => {
 };
 
 const viewHelpers = { getAvatarColor, getInitials, highlightMentions };
+
+exports.getCalendar = async (req, res) => {
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const events = await Event.findAll({ 
+            where: {
+                [Op.or]: [
+                    { date: { [Op.gte]: today } },
+                    { 
+                        [Op.and]: [
+                            { endDate: { [Op.ne]: null } },
+                            { endDate: { [Op.gte]: today } }
+                        ]
+                    }
+                ]
+            },
+            order: [['date', 'ASC']]
+        });
+        res.render('feed/calendar', { 
+            title: 'Leidingskalender', 
+            user: req.user,
+            events,
+            capitalizeName: (name) => name.charAt(0).toUpperCase() + name.slice(1),
+            ...viewHelpers
+        });
+    } catch (error) {
+        console.error('Error in getCalendar:', error);
+        res.status(500).send('Er ging iets mis');
+    }
+};
 
 const getAccessibleGroups = async (user) => {
     const today = new Date().toISOString().split('T')[0];

@@ -7,7 +7,8 @@ const Event = sequelize.define('Event', {
   endDate: { type: DataTypes.DATEONLY, allowNull: true },
   startTime: { type: DataTypes.STRING, allowNull: true }, // Format "HH:mm"
   endTime: { type: DataTypes.STRING, allowNull: true },   // Format "HH:mm"
-  description: { type: DataTypes.TEXT }
+  description: { type: DataTypes.TEXT },
+  isPrivate: { type: DataTypes.BOOLEAN, defaultValue: false }
 });
 
 module.exports = Event;
