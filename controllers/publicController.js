@@ -1,5 +1,6 @@
 const { PageContent, Leader, Event, Registration } = require('../models');
 const { Op } = require('sequelize');
+const ics = require('ics');
 
 const getContent = async (slug) => {
     try {
@@ -9,6 +10,95 @@ const getContent = async (slug) => {
         return map;
     } catch (e) {
         return {};
+    }
+};
+
+exports.getCalendarICS = async (req, res) => {
+    try {
+        const events = await Event.findAll({
+            order: [['date', 'ASC']]
+        });
+
+        const icsEvents = events.map(event => {
+            const startDate = new Date(event.date);
+            const start = [
+                startDate.getFullYear(),
+                startDate.getMonth() + 1,
+                startDate.getDate()
+            ];
+
+            let end;
+            if (event.endDate) {
+                const endDate = new Date(event.endDate);
+                // ICS end date is exclusive for all-day events
+                const inclusiveEndDate = new Date(endDate);
+                inclusiveEndDate.setDate(inclusiveEndDate.getDate() + 1);
+                end = [
+                    inclusiveEndDate.getFullYear(),
+                    inclusiveEndDate.getMonth() + 1,
+                    inclusiveEndDate.getDate()
+                ];
+            } else {
+                const endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + 1);
+                end = [
+                    endDate.getFullYear(),
+                    endDate.getMonth() + 1,
+                    endDate.getDate()
+                ];
+            }
+
+            // Strip HTML tags for calendar description
+            const plainDescription = (event.description || '')
+                .replace(/<[^>]*>?/gm, '') // Remove HTML tags
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .trim();
+
+            return {
+                start,
+                end,
+                title: event.title,
+                description: plainDescription,
+                categories: ['Chiro Vreugdeland'],
+                productId: 'chiromeeuwen/ics'
+            };
+        });
+
+        if (icsEvents.length === 0) {
+            // Provide a dummy event if no events found to avoid empty calendar errors in some clients
+            const now = new Date();
+            icsEvents.push({
+                start: [now.getFullYear(), now.getMonth() + 1, now.getDate()],
+                end: [now.getFullYear(), now.getMonth() + 1, now.getDate() + 1],
+                title: 'Geen evenementen gepland',
+                description: 'Er zijn momenteel geen evenementen gepland op de website.',
+                productId: 'chiromeeuwen/ics'
+            });
+        }
+
+        const { error, value } = ics.createEvents(icsEvents);
+
+        if (error) {
+            console.error('ICS creation error:', error);
+            return res.status(500).send('Er ging iets mis bij het genereren van de kalender');
+        }
+
+        // Add X-WR-CALNAME for better identification in some apps
+        const icsWithHeaders = value.replace('PRODID:', 'X-WR-CALNAME:Chiro Vreugdeland\r\nPRODID:');
+
+        res.set({
+            'Content-Type': 'text/calendar; charset=utf-8',
+            'Content-Disposition': 'attachment; filename="chiromeeuwen_kalender.ics"',
+            'Cache-Control': 'no-cache'
+        });
+
+        res.send(icsWithHeaders);
+    } catch (error) {
+        console.error('Error in getCalendarICS:', error);
+        res.status(500).send('Er ging iets mis');
     }
 };
 
