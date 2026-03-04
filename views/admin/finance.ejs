@@ -6,7 +6,7 @@
     </h1>
     <div>
         <a href="/admin/info" class="btn btn-info text-white me-2" title="Algemene Hulp & Info">
-            <i class="bi bi-info-circle"></i> Hulp Nodig?
+            <i class="bi bi-info-circle"></i> 
         </a>
         <% if (currentFolder) { %>
             <a href="/admin/finance/<%= currentFolder.id %>/export" class="btn btn-success">
@@ -92,7 +92,13 @@
                             </td>
                             <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-outline-primary border-0 me-1" 
-                                        onclick="event.stopPropagation(); openEditModal('<%= item.id %>', '<%= item.name %>', '<%= item.amount %>', '<%= item.date %>', <%= item.paid %>)">
+                                        data-bs-toggle="modal" data-bs-target="#editModal"
+                                        data-item-id="<%= item.id %>"
+                                        data-item-name="<%= item.name %>"
+                                        data-item-amount="<%= item.amount %>"
+                                        data-item-date="<%= item.date %>"
+                                        data-item-paid="<%= item.paid %>"
+                                        onclick="event.stopPropagation(); fillEditModal(this)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <form action="/admin/finance/item/<%= item.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Map verwijderen? Alle inhoud gaat verloren!');" class="d-inline" onclick="event.stopPropagation();">
@@ -131,7 +137,13 @@
                             </td>
                             <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-outline-primary border-0 me-1" 
-                                        onclick="openEditModal('<%= item.id %>', '<%= item.name %>', '<%= item.amount %>', '<%= item.date %>', <%= item.paid %>)">
+                                        data-bs-toggle="modal" data-bs-target="#editModal"
+                                        data-item-id="<%= item.id %>"
+                                        data-item-name="<%= item.name %>"
+                                        data-item-amount="<%= item.amount %>"
+                                        data-item-date="<%= item.date %>"
+                                        data-item-paid="<%= item.paid %>"
+                                        onclick="fillEditModal(this)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <form action="/admin/finance/item/<%= item.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Transactie verwijderen?');" class="d-inline">
@@ -144,32 +156,32 @@
 
                 <!-- Input Row -->
                 <tr class="bg-light border-top border-2">
-                    <form action="/admin/finance<%= currentFolder ? '/' + currentFolder.id : '' %>" method="POST">
-                        <td>
-                            <input type="date" class="form-control form-control-sm" name="date" value="<%= new Date().toISOString().split('T')[0] %>" required>
-                        </td>
-                        <td>
-                            <input type="text" class="form-control form-control-sm" name="name" placeholder="Nieuwe map of transactie naam..." required>
-                        </td>
-                        <td class="text-center">
-                            <div class="form-check d-inline-block">
-                                <input class="form-check-input" type="checkbox" name="paid" checked>
-                            </div>
-                        </td>
-                        <td>
-                            <input type="number" step="0.01" class="form-control form-control-sm text-end" name="amount" placeholder="Leeg = Map">
-                        </td>
-                        <td class="text-end">
-                            <button type="submit" class="btn btn-sm btn-primary">
-                                <i class="bi bi-plus-lg"></i>
-                            </button>
-                        </td>
-                    </form>
+                    <td>
+                        <input type="date" form="addForm" class="form-control form-control-sm" name="date" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                    </td>
+                    <td>
+                        <input type="text" form="addForm" class="form-control form-control-sm" name="name" placeholder="Nieuwe map of transactie naam..." required>
+                    </td>
+                    <td class="text-center">
+                        <div class="form-check d-inline-block">
+                            <input class="form-check-input" form="addForm" type="checkbox" name="paid" checked>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="number" form="addForm" step="0.01" class="form-control form-control-sm text-end" name="amount" placeholder="Leeg = Map">
+                    </td>
+                    <td class="text-end">
+                        <button type="submit" form="addForm" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </td>
                 </tr>
             </tbody>
         </table>
     </div>
 </div>
+<!-- Add Form (outside table to avoid invalid nesting) -->
+<form id="addForm" action="/admin/finance<%= currentFolder ? '/' + currentFolder.id : '' %>" method="POST" class="d-none"></form>
 <div class="form-text mt-2 text-end small">Laat bedrag leeg om een map te maken. "Betaald" uitvinken sluit het item uit van het totaal.</div>
 
 <!-- Unpaid Items Section -->
@@ -213,7 +225,13 @@
                                     <i class="bi bi-folder2-open"></i> Ga naar map
                                 </a>
                                 <button type="button" class="btn btn-sm btn-outline-primary border-0" 
-                                        onclick="openEditModal('<%= item.id %>', '<%= item.name %>', '<%= item.amount %>', '<%= item.date %>', <%= item.paid %>)">
+                                        data-bs-toggle="modal" data-bs-target="#editModal"
+                                        data-item-id="<%= item.id %>"
+                                        data-item-name="<%= item.name %>"
+                                        data-item-amount="<%= item.amount %>"
+                                        data-item-date="<%= item.date %>"
+                                        data-item-paid="<%= item.paid %>"
+                                        onclick="fillEditModal(this)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                             </td>
@@ -304,7 +322,7 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                       </div>
                       <div class="modal-body">
-                        <p class="fw-bold">\${errorMsg}</p>
+                        <p class="fw-bold">${errorMsg}</p>
                       </div>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
@@ -322,7 +340,13 @@
         }
     });
 
-    function openEditModal(id, name, amount, date, paid) {
+    function fillEditModal(btn) {
+        const id = btn.getAttribute('data-item-id');
+        const name = btn.getAttribute('data-item-name');
+        const amount = btn.getAttribute('data-item-amount');
+        const date = btn.getAttribute('data-item-date');
+        const paid = btn.getAttribute('data-item-paid');
+
         // Set form action
         const form = document.getElementById('editForm');
         form.action = `/admin/finance/item/${id}?_method=PUT`;
@@ -338,12 +362,10 @@
         }
 
         // Handle paid status
-        document.getElementById('editPaid').checked = paid === true || paid === 1;
+        document.getElementById('editPaid').checked = paid === 'true' || paid === '1';
         
         // Handle date formatting (YYYY-MM-DD) for input[type=date]
         if (date && date !== 'null') {
-             // Date string from EJS might be ISO or just Date string. 
-             // We need YYYY-MM-DD
              const d = new Date(date);
              const yyyy = d.getFullYear();
              const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -352,9 +374,6 @@
         } else {
              document.getElementById('editDate').value = new Date().toISOString().split('T')[0];
         }
-
-        const modal = new bootstrap.Modal(document.getElementById('editModal'));
-        modal.show();
     }
 </script>
 
