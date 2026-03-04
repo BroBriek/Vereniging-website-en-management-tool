@@ -108,14 +108,14 @@ router.delete('/events/:id', adminController.deleteEvent);
 // --- Finance Tool ---
 router.get('/finance', financeController.getIndex); // Root
 router.get('/finance/info', financeController.getInfo); // Info/Help Page
+router.get('/finance/export/unpaid', financeController.exportUnpaid);
+router.get('/finance/export/root', financeController.exportFolder);
 router.get('/finance/:folderId', financeController.getIndex); // Subfolder
 router.post('/finance', financeController.postItem); // Create in Root
 router.post('/finance/:folderId', financeController.postItem); // Create in Subfolder
 router.put('/finance/item/:id', financeController.updateItem); // Update Item
 router.delete('/finance/item/:id', financeController.deleteItem);
 router.get('/finance/:folderId/export', financeController.exportFolder);
-// Route to export root? (Optional, let's map it to '0' or handle in controller)
-router.get('/finance/export/root', financeController.exportFolder);
 
 // Leidingshoekjes beheer
 router.get('/feedgroups', adminController.getFeedGroups);

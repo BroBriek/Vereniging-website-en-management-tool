@@ -9,7 +9,9 @@ const calculateFolderTotal = async (folderId) => {
     for (const child of children) {
         if (child.amount !== null) {
             // It's a transaction
-            total += parseFloat(child.amount);
+            if (child.paid) {
+                total += parseFloat(child.amount);
+            }
         } else {
             // It's a folder, recurse
             total += await calculateFolderTotal(child.id);
@@ -70,19 +72,23 @@ exports.getIndex = async (req, res) => {
     // Calculate total of CURRENT view/folder
     const currentTotal = parentId ? await calculateFolderTotal(parentId) : await calculateFolderTotal(null);
 
+    // Get all unpaid items globally for the separate table
+    const unpaidItems = await getFlatTransactions(null, 'Totaal', true);
+
     res.render('admin/finance', { 
         title: 'Financieel Overzicht', 
         user: req.user,
         items: itemsWithTotals,
         currentFolder,
         breadcrumbs,
-        currentTotal
+        currentTotal,
+        unpaidItems
     });
 };
 
 exports.postItem = async (req, res) => {
     const parentId = req.params.folderId || null;
-    const { name, amount, date } = req.body;
+    const { name, amount, date, paid } = req.body;
     
     // If amount is empty string or undefined, treat as folder (null). 
     // If amount is '0', it's a transaction of 0.
@@ -95,7 +101,8 @@ exports.postItem = async (req, res) => {
         name,
         amount: finalAmount,
         date: date || new Date(),
-        parentId
+        parentId,
+        paid: paid === 'on' || paid === true
     });
 
     res.redirect(parentId ? `/admin/finance/${parentId}` : '/admin/finance');
@@ -103,33 +110,23 @@ exports.postItem = async (req, res) => {
 
 exports.updateItem = async (req, res) => {
     const { id } = req.params;
-    const { name, amount, date } = req.body;
+    const { name, amount, date, paid } = req.body;
     
     const item = await FinanceItem.findByPk(id);
     
     if (item) {
-        // If amount is empty string, keep it as is or handle based on logic?
-        // Usually, editing implies we keep the type (folder vs transaction).
-        // But user might want to change amount.
-        
-        let finalAmount = item.amount; // Default to old amount
-        
-        // Check if it was a folder (amount is null) or transaction
-        // If we submit an empty amount string for a transaction, what happens?
-        // Let's assume the edit form sends the value.
-        
+        let finalAmount = item.amount;
         if (amount !== undefined && amount !== '') {
             finalAmount = parseFloat(amount);
         } else if (amount === '') {
-             // If explicitly cleared, maybe they want to turn it into a folder? 
-             // Or maybe just keep it null if it was a folder.
              finalAmount = null;
         }
 
         await item.update({
             name,
             amount: finalAmount,
-            date: date || item.date
+            date: date || item.date,
+            paid: paid === 'on' || paid === true
         });
     }
     
@@ -158,21 +155,32 @@ exports.deleteItem = async (req, res) => {
 };
 
 // Helper for Export: Flatten tree
-const getFlatTransactions = async (folderId, currentPath = '') => {
-    const items = await FinanceItem.findAll({ where: { parentId: folderId } });
+const getFlatTransactions = async (folderId, currentPath = '', onlyUnpaid = false) => {
+    const where = { parentId: folderId };
+    if (onlyUnpaid) {
+        // If we want only unpaid, we can't easily filter by 'paid' here for folders
+        // because we need to traverse folders to find unpaid items inside them.
+    }
+    
+    const items = await FinanceItem.findAll({ where });
     let transactions = [];
 
     for (const item of items) {
         if (item.amount !== null) {
-            transactions.push({
-                path: currentPath,
-                name: item.name,
-                amount: parseFloat(item.amount),
-                date: item.date
-            });
+            if (!onlyUnpaid || !item.paid) {
+                transactions.push({
+                    id: item.id,
+                    parentId: item.parentId,
+                    path: currentPath,
+                    name: item.name,
+                    amount: parseFloat(item.amount),
+                    date: item.date,
+                    paid: item.paid
+                });
+            }
         } else {
             const subPath = currentPath ? `${currentPath} > ${item.name}` : item.name;
-            const subTrans = await getFlatTransactions(item.id, subPath);
+            const subTrans = await getFlatTransactions(item.id, subPath, onlyUnpaid);
             transactions = transactions.concat(subTrans);
         }
     }
@@ -180,14 +188,57 @@ const getFlatTransactions = async (folderId, currentPath = '') => {
 };
 
 exports.exportFolder = async (req, res) => {
-    const folderId = req.params.folderId;
-    const folder = await FinanceItem.findByPk(folderId);
+    const folderId = req.params.folderId === 'all' ? null : req.params.folderId;
+    const folder = folderId ? await FinanceItem.findByPk(folderId) : null;
     const folderName = folder ? folder.name : 'Hoofdmap';
 
     const transactions = await getFlatTransactions(folderId || null, folderName);
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Financieel Overzicht');
+
+    worksheet.columns = [
+        { header: 'Pad', key: 'path', width: 40 },
+        { header: 'Omschrijving', key: 'name', width: 30 },
+        { header: 'Bedrag', key: 'amount', width: 15 },
+        { header: 'Datum', key: 'date', width: 20 },
+        { header: 'Betaald', key: 'paid', width: 10 }
+    ];
+
+    let total = 0;
+    transactions.forEach(t => {
+        worksheet.addRow({
+            path: t.path,
+            name: t.name,
+            amount: t.amount,
+            date: t.date ? new Date(t.date).toLocaleDateString('nl-BE') : '',
+            paid: t.paid ? 'Ja' : 'Nee'
+        });
+        if (t.paid) {
+            total += t.amount;
+        }
+    });
+
+    // Add Total Row
+    worksheet.addRow({});
+    const totalRow = worksheet.addRow({
+        path: 'TOTAAL (BETAALD)',
+        amount: total
+    });
+    totalRow.font = { bold: true };
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=finance_${folderName}.xlsx`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+};
+
+exports.exportUnpaid = async (req, res) => {
+    const transactions = await getFlatTransactions(null, 'Totaal', true);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Niet Betaalde Items');
 
     worksheet.columns = [
         { header: 'Pad', key: 'path', width: 40 },
@@ -210,13 +261,13 @@ exports.exportFolder = async (req, res) => {
     // Add Total Row
     worksheet.addRow({});
     const totalRow = worksheet.addRow({
-        path: 'TOTAAL',
+        path: 'TOTAAL NIET BETAALD',
         amount: total
     });
     totalRow.font = { bold: true };
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=finance_${folderName}.xlsx`);
+    res.setHeader('Content-Disposition', `attachment; filename=niet_betaalde_items.xlsx`);
 
     await workbook.xlsx.write(res);
     res.end();

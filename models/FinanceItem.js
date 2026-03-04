@@ -23,6 +23,11 @@ const FinanceItem = sequelize.define('FinanceItem', {
       model: 'FinanceItems',
       key: 'id'
     }
+  },
+  paid: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    allowNull: false
   }
 });
 
