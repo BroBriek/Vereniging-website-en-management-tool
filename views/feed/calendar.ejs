@@ -10,9 +10,6 @@
             <a href="/kalender/subscribe.ics<%= user.calendarToken ? '?token=' + user.calendarToken : '' %>" class="btn btn-chiro btn-sm shadow-sm" title="Abonneer op de Leidingskalender (Google Calendar, iCal, Outlook)">
                 <i class="bi bi-calendar-plus me-1"></i> Abonneer op Kalender
             </a>
-            <a href="/feed" class="btn btn-chiro btn-sm shadow-sm">
-                <i class="bi bi-arrow-left me-1"></i> Terug naar Feed
-            </a>
             <% if (user && user.role === 'admin') { %>
                 <a href="/admin/events" class="btn btn-chiro btn-sm shadow-sm">
                     <i class="bi bi-pencil-square me-1"></i> Beheer Kalender
