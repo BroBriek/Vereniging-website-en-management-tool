@@ -1,6 +1,7 @@
-const { PageContent, Leader, Event, Registration } = require('../models');
+const { PageContent, Leader, Event, Registration, User } = require('../models');
 const { Op } = require('sequelize');
 const ics = require('ics');
+const crypto = require('crypto');
 
 const getContent = async (slug) => {
     try {
@@ -15,8 +16,20 @@ const getContent = async (slug) => {
 
 exports.getCalendarICS = async (req, res) => {
     try {
+        const { token } = req.query;
+        let whereClause = { isPrivate: false };
+        let calName = 'Chiro Vreugdeland';
+
+        if (token) {
+            const user = await User.findOne({ where: { calendarToken: token, isActive: true } });
+            if (user) {
+                whereClause = {}; // All events
+                calName = `Chiro Leidingskalender (${user.username})`;
+            }
+        }
+
         const events = await Event.findAll({
-            where: { isPrivate: false },
+            where: whereClause,
             order: [['date', 'ASC']]
         });
 
@@ -119,7 +132,7 @@ exports.getCalendarICS = async (req, res) => {
         }
 
         // Add X-WR-CALNAME for better identification in some apps
-        const icsWithHeaders = value.replace('PRODID:', 'X-WR-CALNAME:Chiro Vreugdeland\r\nPRODID:');
+        const icsWithHeaders = value.replace('PRODID:', `X-WR-CALNAME:${calName}\r\nPRODID:`);
 
         res.set({
             'Content-Type': 'text/calendar; charset=utf-8',
@@ -199,6 +212,9 @@ exports.getLeaders = async (req, res) => {
 };
 
 exports.getCalendar = async (req, res) => {
+    if (req.user) {
+        return res.redirect('/feed/calendar');
+    }
     try {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
