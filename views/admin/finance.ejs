@@ -1,68 +1,313 @@
 <%- include('../partials/header') %>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>
-        <i class="bi bi-piggy-bank me-2"></i>Financieel Overzicht
-    </h1>
+<style>
+    :root {
+        --finance-pos: #2e7d32;
+        --finance-neg: #d32f2f;
+        --finance-folder: var(--chiro-blue);
+    }
+
+    .finance-header h1 {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        color: var(--chiro-blue);
+        transform: rotate(-1deg);
+        display: inline-block;
+    }
+
+    /* Piggy Bank Stats Card */
+    .piggy-card {
+        background: linear-gradient(135deg, var(--chiro-blue) 0%, #2c5ea0 100%);
+        color: white;
+        border-radius: 30px;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+        border: none;
+        box-shadow: 0 10px 25px rgba(29, 78, 137, 0.2);
+        margin-bottom: 2.5rem;
+    }
+
+    .piggy-card::after {
+        content: "🐷";
+        position: absolute;
+        right: -10px;
+        bottom: -20px;
+        font-size: 8rem;
+        opacity: 0.15;
+        transform: rotate(-15deg);
+    }
+
+    .piggy-label {
+        font-family: var(--font-heading);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .piggy-amount {
+        font-family: var(--font-heading);
+        font-size: 3.5rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-top: 0.5rem;
+    }
+
+    /* Breadcrumbs - Pill Style */
+    .breadcrumb-chiro {
+        background: white;
+        padding: 8px 20px;
+        border-radius: 50px;
+        display: inline-flex;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+        list-style: none;
+    }
+
+    .breadcrumb-chiro .breadcrumb-item + .breadcrumb-item::before {
+        content: "•";
+        color: var(--chiro-yellow);
+        font-weight: bold;
+        padding: 0 10px;
+    }
+
+    .breadcrumb-chiro a {
+        color: var(--chiro-blue);
+        text-decoration: none;
+        font-family: var(--font-heading);
+        font-weight: 500;
+    }
+
+    .breadcrumb-chiro .active {
+        color: var(--chiro-red);
+        font-weight: 700;
+    }
+
+    /* Finance Table Styles */
+    .finance-container {
+        background: white;
+        border-radius: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .table-finance {
+        margin-bottom: 0;
+    }
+
+    .table-finance thead th {
+        background-color: #fcfcfc;
+        border-bottom: 2px solid #f0f0f0;
+        color: #888;
+        font-family: var(--font-heading);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 1.2rem 1.5rem;
+    }
+
+    .row-item {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f8f8f8;
+    }
+
+    .row-item:hover {
+        background-color: #fffbf0;
+    }
+
+    .row-folder {
+        background-color: #fdfdfd;
+    }
+
+    .item-name {
+        font-family: var(--font-body);
+        font-size: 1.3rem;
+        color: var(--text-color);
+    }
+
+    .item-date {
+        font-family: var(--font-heading);
+        font-size: 0.9rem;
+        color: #aaa;
+    }
+
+    .finance-amount {
+        font-family: var(--font-heading);
+        font-size: 1.4rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .amount-pos { color: var(--finance-pos); }
+    .amount-neg { color: var(--finance-neg); }
+    .amount-unpaid { 
+        color: #ccc;
+        text-decoration: line-through;
+        font-size: 1.1rem;
+    }
+
+    .icon-box {
+        width: 45px;
+        height: 45px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        margin-right: 1rem;
+    }
+
+    .icon-folder { background-color: #fff3cd; color: var(--chiro-yellow); }
+    .icon-receipt { background-color: #e3f2fd; color: var(--chiro-blue); }
+
+    /* Add Form Section */
+    .add-section {
+        background-color: #f8f9fa;
+        padding: 2rem;
+        border-top: 4px solid var(--chiro-yellow);
+    }
+
+    .add-title {
+        font-family: var(--font-heading);
+        font-size: 1.1rem;
+        color: var(--chiro-blue);
+        margin-bottom: 1.2rem;
+    }
+
+    .form-control-chiro {
+        border: 2px solid #eee !important;
+        border-radius: 15px !important;
+        font-family: var(--font-body);
+        padding: 0.6rem 1rem !important;
+    }
+
+    .form-control-chiro:focus {
+        border-color: var(--chiro-blue) !important;
+        box-shadow: 0 0 0 4px rgba(29, 78, 137, 0.1) !important;
+    }
+
+    /* Unpaid Items Card */
+    .unpaid-card {
+        background-color: #fff5f5;
+        border: 3px dashed #ffccd5;
+        border-radius: 25px;
+        padding: 2rem;
+        margin-top: 3rem;
+    }
+
+    .unpaid-title {
+        font-family: var(--font-heading);
+        color: var(--chiro-red);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .unpaid-badge {
+        background-color: var(--chiro-red);
+        color: white;
+        padding: 2px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    .btn-action {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: #f0f0f0;
+        color: #777;
+        transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+        background: var(--chiro-blue);
+        color: white;
+        transform: scale(1.1);
+    }
+</style>
+
+<div class="finance-header d-flex justify-content-between align-items-end mb-4">
     <div>
-        <a href="/admin/info" class="btn btn-info text-white me-2" title="Algemene Hulp & Info">
-            <i class="bi bi-info-circle"></i> 
+        <h1>Financiën</h1>
+        <p class="text-muted m-0 ps-1">Beheer de centjes van de Chiro</p>
+    </div>
+    <div class="d-flex gap-2 mb-1">
+        <a href="/admin/info" class="btn btn-light border-0 shadow-sm rounded-pill px-3" title="Hulp">
+            <i class="bi bi-info-circle text-muted"></i> 
         </a>
-        <% if (currentFolder) { %>
-            <a href="/admin/finance/<%= currentFolder.id %>/export" class="btn btn-success">
-                <i class="bi bi-file-earmark-excel"></i> Export Map
-            </a>
-        <% } else { %>
-            <a href="/admin/finance/export/root" class="btn btn-success">
-                <i class="bi bi-file-earmark-excel"></i> Export Alles
-            </a>
-        <% } %>
-        <a href="/admin" class="btn btn-secondary">Terug naar Dashboard</a>
+        <div class="dropdown">
+            <button class="btn btn-light border-0 shadow-sm rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-cloud-download me-2 text-primary"></i> Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2">
+                <% if (currentFolder) { %>
+                    <li><a class="dropdown-item rounded-3" href="/admin/finance/<%= currentFolder.id %>/export">Huidige map</a></li>
+                <% } %>
+                <li><a class="dropdown-item rounded-3" href="/admin/finance/export/root">Volledig archief</a></li>
+                <li><hr class="dropdown-divider opacity-10"></li>
+                <li><a class="dropdown-item text-danger rounded-3" href="/admin/finance/export/unpaid">Niet betaalde items</a></li>
+            </ul>
+        </div>
+        <a href="/admin" class="btn btn-chiro py-2">Sluiten</a>
     </div>
 </div>
 
 <!-- Breadcrumbs -->
 <nav aria-label="breadcrumb">
-    <ol class="breadcrumb bg-light p-3 rounded">
+    <ol class="breadcrumb-chiro">
         <li class="breadcrumb-item">
-            <a href="/admin/finance"><i class="bi bi-house-door"></i> Hoofdmap</a>
+            <a href="/admin/finance">Archief</a>
         </li>
-        <% breadcrumbs.forEach(crumb => { %>
-            <li class="breadcrumb-item active" aria-current="page">
-                <a href="/admin/finance/<%= crumb.id %>"><%= crumb.name %></a>
+        <% breadcrumbs.forEach((crumb, index) => { %>
+            <li class="breadcrumb-item <%= index === breadcrumbs.length - 1 ? 'active' : '' %>">
+                <% if (index === breadcrumbs.length - 1) { %>
+                    <span><%= crumb.name %></span>
+                <% } else { %>
+                    <a href="/admin/finance/<%= crumb.id %>"><%= crumb.name %></a>
+                <% } %>
             </li>
         <% }) %>
     </ol>
 </nav>
 
 <!-- Stats Card -->
-<div class="card mb-4 border-primary">
-    <div class="card-body d-flex justify-content-between align-items-center">
-        <h5 class="card-title m-0">Totaal Saldo (Huidige Map + Submappen)</h5>
-        <h3 class="m-0 <%= currentTotal >= 0 ? 'text-success' : 'text-danger' %>">
-            € <%= parseFloat(currentTotal).toFixed(2) %>
-        </h3>
+<div class="piggy-card">
+    <div class="piggy-label">Huidig Saldo</div>
+    <div class="piggy-amount">
+        € <%= parseFloat(currentTotal).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+    </div>
+    <div class="mt-3 opacity-75 small">
+        <i class="bi bi-info-circle me-1"></i> 
+        <%= items.filter(i => i.amount !== null).length %> transacties en <%= items.filter(i => i.amount === null).length %> mappen in deze sectie
     </div>
 </div>
 
-<!-- Table Layout -->
-<div class="card shadow-sm">
+<!-- Finance Container -->
+<div class="finance-container">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+        <table class="table align-middle table-finance">
+            <thead>
                 <tr>
-                    <th style="width: 15%;">Datum</th>
-                    <th style="width: 45%;">Omschrijving</th>
-                    <th style="width: 5%; text-align: center;">Betaald</th>
-                    <th style="width: 25%; text-align: right;">Bedrag / Saldo</th>
-                    <th style="width: 10%; text-align: right;">Acties</th>
+                    <th style="width: 120px;">Datum</th>
+                    <th>Omschrijving</th>
+                    <th class="text-center" style="width: 120px;">Status</th>
+                    <th class="text-end" style="width: 200px;">Bedrag</th>
+                    <th style="width: 60px;"></th>
                 </tr>
             </thead>
             <tbody>
                 <% if (items.length === 0) { %>
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-3">
-                            Deze map is nog leeg.
+                        <td colspan="5" class="text-center py-5">
+                            <img src="/favicon.png" alt="Empty" style="width: 60px; opacity: 0.2; filter: grayscale(1);" class="mb-3 d-block mx-auto">
+                            <span class="text-muted fs-5">Nog niets te zien hier...</span>
                         </td>
                     </tr>
                 <% } %>
@@ -71,27 +316,33 @@
                     <% 
                         let itemDate = '-';
                         if (item.date) {
-                            itemDate = new Date(item.date).toLocaleDateString('nl-BE');
+                            itemDate = new Date(item.date).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit' });
                         } else if (item.createdAt) {
-                            itemDate = new Date(item.createdAt).toLocaleDateString('nl-BE');
+                            itemDate = new Date(item.createdAt).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit' });
                         }
                     %>
                     <% if (item.amount === null) { %>
-                        <!-- Folder Item -->
-                        <tr style="cursor: pointer;" onclick="window.location='/admin/finance/<%= item.id %>'">
-                            <td><%= itemDate %></td>
+                        <!-- Folder Row -->
+                        <tr class="row-item row-folder" style="cursor: pointer;" onclick="window.location='/admin/finance/<%= item.id %>'">
+                            <td><span class="item-date"><%= itemDate %></span></td>
                             <td>
-                                <i class="bi bi-folder-fill text-warning me-2 fs-5"></i>
-                                <span class="fw-bold"><%= item.name %></span>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-box icon-folder">
+                                        <i class="bi bi-folder2-open"></i>
+                                    </div>
+                                    <span class="item-name fw-bold"><%= item.name %></span>
+                                </div>
                             </td>
-                            <td class="text-center">-</td>
-                            <td class="text-end">
-                                <span class="badge bg-light text-dark border">
-                                    Tot: € <%= parseFloat(item.total).toFixed(2) %>
-                                </span>
+                            <td class="text-center">
+                                <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning px-3 py-2 fw-bold small uppercase">MAP</span>
                             </td>
                             <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-primary border-0 me-1" 
+                                <div class="finance-amount text-muted" style="font-size: 1.1rem;">
+                                    € <%= parseFloat(item.total).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn-action" 
                                         data-bs-toggle="modal" data-bs-target="#editModal"
                                         data-item-id="<%= item.id %>"
                                         data-item-name="<%= item.name %>"
@@ -99,44 +350,36 @@
                                         data-item-date="<%= item.date %>"
                                         data-item-paid="<%= item.paid %>"
                                         onclick="event.stopPropagation(); fillEditModal(this)">
-                                    <i class="bi bi-pencil"></i>
+                                    <i class="bi bi-pencil-fill"></i>
                                 </button>
-                                <form action="/admin/finance/item/<%= item.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Map verwijderen? Alle inhoud gaat verloren!');" class="d-inline" onclick="event.stopPropagation();">
-                                    <% if (item.childrenCount > 0) { %>
-                                        <span class="d-inline-block" tabindex="0" data-bs-toggle="tooltip" data-bs-placement="top" title="Maak de map eerst leeg voor dat je deze kan verwijderen!">
-                                            <button type="button" class="btn btn-sm btn-outline-danger border-0" disabled style="pointer-events: none;"><i class="bi bi-trash"></i></button>
-                                        </span>
-                                    <% } else { %>
-                                        <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
-                                    <% } %>
-                                </form>
                             </td>
                         </tr>
                     <% } else { %>
-                        <!-- Transaction Item -->
-                        <tr class="<%= !item.paid ? 'table-warning' : '' %>">
-                            <td><%= itemDate %></td>
+                        <!-- Transaction Row -->
+                        <tr class="row-item">
+                            <td><span class="item-date"><%= itemDate %></span></td>
                             <td>
-                                <i class="bi bi-receipt text-secondary me-2 fs-5"></i>
-                                <%= item.name %>
-                                <% if (!item.paid) { %>
-                                    <span class="badge bg-warning text-dark ms-2">Niet Betaald</span>
-                                <% } %>
+                                <div class="d-flex align-items-center">
+                                    <div class="icon-box icon-receipt">
+                                        <i class="bi <%= item.amount >= 0 ? 'bi-plus-circle' : 'bi-dash-circle' %>"></i>
+                                    </div>
+                                    <span class="item-name <%= !item.paid ? 'text-muted opacity-50' : '' %>"><%= item.name %></span>
+                                </div>
                             </td>
                             <td class="text-center">
                                 <% if (item.paid) { %>
-                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                    <span class="badge rounded-pill bg-success bg-opacity-10 text-success px-3 py-2 fw-normal">Betaald</span>
                                 <% } else { %>
-                                    <i class="bi bi-x-circle-fill text-danger"></i>
+                                    <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger px-3 py-2 fw-normal">Open</span>
                                 <% } %>
                             </td>
                             <td class="text-end">
-                                <span class="<%= item.amount >= 0 ? 'text-success' : 'text-danger' %> fw-bold <%= !item.paid ? 'text-decoration-line-through text-muted' : '' %>">
-                                    € <%= parseFloat(item.amount).toFixed(2) %>
+                                <span class="finance-amount <%= item.amount >= 0 ? 'amount-pos' : 'amount-neg' %> <%= !item.paid ? 'amount-unpaid' : '' %>">
+                                    <%= item.amount >= 0 ? '+' : '' %> € <%= parseFloat(item.amount).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                                 </span>
                             </td>
                             <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-primary border-0 me-1" 
+                                <button type="button" class="btn-action" 
                                         data-bs-toggle="modal" data-bs-target="#editModal"
                                         data-item-id="<%= item.id %>"
                                         data-item-name="<%= item.name %>"
@@ -144,144 +387,126 @@
                                         data-item-date="<%= item.date %>"
                                         data-item-paid="<%= item.paid %>"
                                         onclick="fillEditModal(this)">
-                                    <i class="bi bi-pencil"></i>
+                                    <i class="bi bi-pencil-fill"></i>
                                 </button>
-                                <form action="/admin/finance/item/<%= item.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Transactie verwijderen?');" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash"></i></button>
-                                </form>
                             </td>
                         </tr>
                     <% } %>
                 <% }) %>
-
-                <!-- Input Row -->
-                <tr class="bg-light border-top border-2">
-                    <td>
-                        <input type="date" form="addForm" class="form-control form-control-sm" name="date" value="<%= new Date().toISOString().split('T')[0] %>" required>
-                    </td>
-                    <td>
-                        <input type="text" form="addForm" class="form-control form-control-sm" name="name" placeholder="Nieuwe map of transactie naam..." required>
-                    </td>
-                    <td class="text-center">
-                        <div class="form-check d-inline-block">
-                            <input class="form-check-input" form="addForm" type="checkbox" name="paid" checked>
-                        </div>
-                    </td>
-                    <td>
-                        <input type="number" form="addForm" step="0.01" class="form-control form-control-sm text-end" name="amount" placeholder="Leeg = Map">
-                    </td>
-                    <td class="text-end">
-                        <button type="submit" form="addForm" class="btn btn-sm btn-primary">
-                            <i class="bi bi-plus-lg"></i>
-                        </button>
-                    </td>
-                </tr>
             </tbody>
         </table>
     </div>
+
+    <!-- Add Section -->
+    <div class="add-section">
+        <div class="add-title"><i class="bi bi-plus-circle-fill me-2"></i>Nieuw item toevoegen</div>
+        <form id="addForm" action="/admin/finance<%= currentFolder ? '/' + currentFolder.id : '' %>" method="POST">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="small text-muted mb-1 ps-2">Datum</label>
+                    <input type="date" class="form-control form-control-chiro" name="date" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                </div>
+                <div class="col-md-5">
+                    <label class="small text-muted mb-1 ps-2">Omschrijving / Naam</label>
+                    <input type="text" class="form-control form-control-chiro" name="name" placeholder="Bv. Inschrijvingen, Factuur drank..." required>
+                </div>
+                <div class="col-md-3">
+                    <label class="small text-muted mb-1 ps-2">Bedrag (Leeg = Map)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 border-2 rounded-start-4">€</span>
+                        <input type="number" step="0.01" class="form-control form-control-chiro border-start-0 rounded-start-0" name="amount" placeholder="0,00">
+                    </div>
+                </div>
+                <div class="col-md-1 text-center">
+                    <label class="small text-muted mb-1 d-block">Betaald</label>
+                    <div class="form-check d-inline-block p-0">
+                        <input class="form-check-input ms-0" type="checkbox" name="paid" checked style="width: 24px; height: 24px; cursor: pointer;">
+                    </div>
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="submit" class="btn btn-chiro w-100 py-2 d-flex align-items-center justify-content-center" style="height: 48px;">
+                        <i class="bi bi-plus-lg fs-4"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="form-text mt-3 text-muted">
+                <i class="bi bi-lightbulb me-1"></i> Tip: Laat het bedrag leeg om een nieuwe map te maken.
+            </div>
+        </form>
+    </div>
 </div>
-<!-- Add Form (outside table to avoid invalid nesting) -->
-<form id="addForm" action="/admin/finance<%= currentFolder ? '/' + currentFolder.id : '' %>" method="POST" class="d-none"></form>
-<div class="form-text mt-2 text-end small">Laat bedrag leeg om een map te maken. "Betaald" uitvinken sluit het item uit van het totaal.</div>
 
 <!-- Unpaid Items Section -->
-<div class="mt-5 mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Niet Betaalde Items</h3>
-        <a href="/admin/finance/export/unpaid" class="btn btn-warning">
-            <i class="bi bi-file-earmark-excel"></i> Export Niet Betaald
-        </a>
-    </div>
-    <div class="card shadow-sm border-warning">
+<% if (unpaidItems.length > 0) { %>
+    <div class="unpaid-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="unpaid-title m-0">
+                <i class="bi bi-exclamation-circle-fill"></i> 
+                Openstaande posten
+                <span class="unpaid-badge"><%= unpaidItems.length %></span>
+            </h3>
+        </div>
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width: 30%;">Pad</th>
-                        <th style="width: 30%;">Omschrijving</th>
-                        <th style="width: 15%;">Datum</th>
-                        <th style="width: 15%; text-align: right;">Bedrag</th>
-                        <th style="width: 10%; text-align: right;">Acties</th>
-                    </tr>
-                </thead>
+            <table class="table table-borderless align-middle mb-0">
                 <tbody>
-                    <% if (unpaidItems.length === 0) { %>
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-3">
-                                Er zijn geen onbetaalde items.
-                            </td>
-                        </tr>
-                    <% } %>
                     <% let totalUnpaid = 0; %>
                     <% unpaidItems.forEach(item => { %>
                         <% totalUnpaid += item.amount; %>
                         <tr>
-                            <td class="small text-muted"><%= item.path %></td>
-                            <td><%= item.name %></td>
-                            <td><%= item.date ? new Date(item.date).toLocaleDateString('nl-BE') : '-' %></td>
-                            <td class="text-end fw-bold text-danger">€ <%= parseFloat(item.amount).toFixed(2) %></td>
+                            <td class="ps-0"><span class="badge bg-light text-muted fw-normal rounded-pill px-3"><%= item.path %></span></td>
+                            <td class="item-name fs-5"><%= item.name %></td>
                             <td class="text-end">
-                                <a href="/admin/finance/<%= item.parentId || '' %>" class="btn btn-sm btn-outline-primary border-0">
-                                    <i class="bi bi-folder2-open"></i> Ga naar map
-                                </a>
-                                <button type="button" class="btn btn-sm btn-outline-primary border-0" 
-                                        data-bs-toggle="modal" data-bs-target="#editModal"
-                                        data-item-id="<%= item.id %>"
-                                        data-item-name="<%= item.name %>"
-                                        data-item-amount="<%= item.amount %>"
-                                        data-item-date="<%= item.date %>"
-                                        data-item-paid="<%= item.paid %>"
-                                        onclick="fillEditModal(this)">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
+                                <span class="text-danger fw-bold fs-4" style="font-family: var(--font-heading);">
+                                    € <%= parseFloat(item.amount).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+                                </span>
+                            </td>
+                            <td class="text-end pe-0" style="width: 60px;">
+                                <a href="/admin/finance/<%= item.parentId || '' %>" class="btn-action mx-auto"><i class="bi bi-arrow-right"></i></a>
                             </td>
                         </tr>
                     <% }) %>
                 </tbody>
-                <% if (unpaidItems.length > 0) { %>
-                    <tfoot class="table-light">
-                        <tr>
-                            <td colspan="3" class="text-end fw-bold">Totaal Openstaand:</td>
-                            <td class="text-end fw-bold text-danger">€ <%= totalUnpaid.toFixed(2) %></td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                <% } %>
             </table>
         </div>
+        <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+            <span class="text-muted fw-bold">TOTAAL OPENSTAAND:</span>
+            <span class="text-danger fw-bold fs-2" style="font-family: var(--font-heading);">
+                € <%= totalUnpaid.toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
+            </span>
+        </div>
     </div>
-</div>
+<% } %>
 
 <!-- Edit Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Item Bewerken</h5>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-5">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <h5 class="modal-title fw-bold fs-4" style="font-family: var(--font-heading); color: var(--chiro-blue);">Item Bewerken</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <form id="editForm" method="POST">
                     <div class="mb-3">
-                        <label class="form-label">Datum</label>
-                        <input type="date" class="form-control" name="date" id="editDate" required>
+                        <label class="form-label small text-muted">Datum</label>
+                        <input type="date" class="form-control form-control-chiro" name="date" id="editDate" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Omschrijving</label>
-                        <input type="text" class="form-control" name="name" id="editName" required>
+                        <label class="form-label small text-muted">Omschrijving</label>
+                        <input type="text" class="form-control form-control-chiro" name="name" id="editName" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Bedrag (€)</label>
-                        <input type="number" step="0.01" class="form-control" name="amount" id="editAmount">
+                        <label class="form-label small text-muted">Bedrag (€)</label>
+                        <input type="number" step="0.01" class="form-control form-control-chiro" name="amount" id="editAmount">
                         <div class="form-text">Laat leeg om dit item als map in te stellen.</div>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" name="paid" id="editPaid">
-                        <label class="form-check-label" for="editPaid">Betaald</label>
+                    <div class="mb-4 form-check d-flex align-items-center gap-2">
+                        <input type="checkbox" class="form-check-input mt-0" name="paid" id="editPaid" style="width: 22px; height: 22px;">
+                        <label class="form-check-label" for="editPaid">Gemarkeerd als betaald</label>
                     </div>
-                    <div class="text-end">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
-                        <button type="submit" class="btn btn-primary">Opslaan</button>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-chiro py-3">Wijzigingen Opslaan</button>
+                        <button type="button" class="btn btn-light border-0 py-2 rounded-pill text-muted" data-bs-dismiss="modal">Annuleren</button>
                     </div>
                 </form>
             </div>
@@ -297,35 +522,34 @@
           return new bootstrap.Tooltip(tooltipTriggerEl)
         })
 
-        // Check for URL params for alerts
+        // Check for URL params for alerts (fallback for direct redirects)
         const urlParams = new URLSearchParams(window.location.search);
         const successMsg = urlParams.get('success');
         const errorMsg = urlParams.get('error');
         
         if (successMsg) {
             const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-success fixed-top m-3';
+            alertDiv.className = 'alert alert-success fixed-top m-3 shadow-lg rounded-4';
             alertDiv.style.zIndex = '2000';
-            alertDiv.innerText = successMsg;
+            alertDiv.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i> ${successMsg}`;
             document.body.prepend(alertDiv);
             setTimeout(() => alertDiv.remove(), 5000);
         }
         
         if (errorMsg) {
-            // Create a modal for error to ensure it's seen as a popup
             const errorModalHtml = `
                 <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
-                  <div class="modal-dialog">
-                    <div class="modal-content border-danger">
-                      <div class="modal-header bg-danger text-white">
-                        <h5 class="modal-title">Fout</h5>
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg rounded-5">
+                      <div class="modal-header bg-danger text-white border-0 rounded-top-5">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-octagon me-2"></i>Oeps!</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                       </div>
-                      <div class="modal-body">
-                        <p class="fw-bold">${errorMsg}</p>
+                      <div class="modal-body p-4 text-center">
+                        <p class="fs-5 mb-0">${errorMsg}</p>
                       </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
+                      <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Begrepen</button>
                       </div>
                     </div>
                   </div>
@@ -334,8 +558,6 @@
             document.body.insertAdjacentHTML('beforeend', errorModalHtml);
             const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
             errorModal.show();
-            
-            // Also clear the URL param so refresh doesn't show it again
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     });
@@ -347,24 +569,19 @@
         const date = btn.getAttribute('data-item-date');
         const paid = btn.getAttribute('data-item-paid');
 
-        // Set form action
         const form = document.getElementById('editForm');
         form.action = `/admin/finance/item/${id}?_method=PUT`;
         
-        // Fill inputs
         document.getElementById('editName').value = name;
         
-        // Handle amount (if null/empty string, leave blank)
         if (amount && amount !== 'null') {
             document.getElementById('editAmount').value = amount;
         } else {
             document.getElementById('editAmount').value = '';
         }
 
-        // Handle paid status
         document.getElementById('editPaid').checked = paid === 'true' || paid === '1';
         
-        // Handle date formatting (YYYY-MM-DD) for input[type=date]
         if (date && date !== 'null') {
              const d = new Date(date);
              const yyyy = d.getFullYear();
