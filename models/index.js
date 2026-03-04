@@ -105,6 +105,13 @@ const syncDatabase = async () => {
     console.log('Syncing FinanceItem model...');
     await FinanceItem.sync({ alter: true });
 
+    // Update existing items to have paid = true if it was null (newly added column)
+    console.log('Ensuring all finance items have a "paid" status...');
+    await FinanceItem.update(
+      { paid: true },
+      { where: { paid: null } }
+    );
+
     // Sync the rest without alter (or with alter if safe, but we know UGA fails)
     // We can try to sync everything else. 
     // If we run sequelize.sync() now, it will check everything.
