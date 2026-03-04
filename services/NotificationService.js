@@ -70,25 +70,37 @@ class NotificationService {
      */
     static async sendGroupNotification(groupId, messageData) {
         try {
-            // Find if this is an event
+            // Find the group
             const group = await FeedGroup.findByPk(groupId);
             if (!group) return;
 
-            let users = [];
+            // 1. Get explicit members (users in UserGroupAccess for this group)
+            const members = await User.findAll({
+                include: [{
+                    model: FeedGroup,
+                    as: 'accessibleGroups',
+                    where: { id: groupId },
+                    required: true,
+                    attributes: []
+                }],
+                where: { isActive: true }
+            });
+
+            let users = members;
+
+            // 2. For events, we also notify all admins as they have implicit access 
+            // and were previously receiving these notifications.
+            // For normal groups, we stick to explicit members to maintain current behavior.
             if (group.isEvent) {
-                // If it's an event, notify all active users
-                users = await User.findAll({ where: { isActive: true } });
-            } else {
-                // Find all users who are members of this group
-                users = await User.findAll({
-                    include: [{
-                        model: FeedGroup,
-                        as: 'accessibleGroups',
-                        where: { id: groupId },
-                        required: true,
-                        attributes: []
-                    }]
+                const admins = await User.findAll({
+                    where: { role: 'admin', isActive: true }
                 });
+                
+                // Combine and unique by ID
+                const userMap = new Map();
+                members.forEach(u => userMap.set(u.id, u));
+                admins.forEach(u => userMap.set(u.id, u));
+                users = Array.from(userMap.values());
             }
 
             console.log(`NotificationService: Sending ${group.isEvent ? 'event' : 'group'} notification to ${users.length} users for group ${groupId}`);
