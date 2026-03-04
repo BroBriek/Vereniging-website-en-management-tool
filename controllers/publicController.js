@@ -16,6 +16,7 @@ const getContent = async (slug) => {
 exports.getCalendarICS = async (req, res) => {
     try {
         const events = await Event.findAll({
+            where: { isPrivate: false },
             order: [['date', 'ASC']]
         });
 
@@ -204,6 +205,7 @@ exports.getCalendar = async (req, res) => {
 
         const events = await Event.findAll({ 
             where: {
+                isPrivate: false,
                 [Op.or]: [
                     { date: { [Op.gte]: today } },
                     { 

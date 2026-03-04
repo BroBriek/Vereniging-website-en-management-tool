@@ -1,0 +1,164 @@
+<%- include('../partials/header') %>
+
+<div class="mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h1 class="display-4 fw-bold mb-0">Leidingskalender</h1>
+            <p class="text-muted lead mb-0">Alle publieke activiteiten (rood) en exclusieve leiding-events (blauw).</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/feed" class="btn btn-outline-secondary btn-sm shadow-sm">
+                <i class="bi bi-arrow-left me-1"></i> Terug naar Feed
+            </a>
+            <% if (user && user.role === 'admin') { %>
+                <a href="/admin/events" class="btn btn-chiro btn-sm shadow-sm">
+                    <i class="bi bi-pencil-square me-1"></i> Beheer Kalender
+                </a>
+            <% } %>
+        </div>
+    </div>
+
+    <% if (events.length === 0) { %>
+        <div class="card p-5 text-center border-0 shadow-sm rounded-4">
+            <div class="card-body py-5">
+                <i class="bi bi-calendar-x display-1 text-muted mb-4 d-block"></i>
+                <h3 class="fw-bold text-muted">Geen activiteiten gepland</h3>
+                <p class="text-muted lead">Houd deze pagina in de gaten voor komende evenementen!</p>
+            </div>
+        </div>
+    <% } else { %>
+        <div class="row g-3">
+            <% events.forEach(event => { 
+                const [y, m, d] = event.date.split('-').map(Number);
+                const dateObj = new Date(y, m - 1, d);
+                const day = dateObj.getDate();
+                const monthNames = ["JAN", "FEB", "MRT", "APR", "MEI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
+                const month = monthNames[dateObj.getMonth()];
+
+                let dateDisplay = '';
+                const hasEndDate = event.endDate && event.endDate !== event.date;
+                if (hasEndDate) {
+                    const [ey, em, ed] = event.endDate.split('-').map(Number);
+                    const endDateObj = new Date(ey, em - 1, ed);
+                    const endDay = endDateObj.getDate();
+                    const endMonth = monthNames[endDateObj.getMonth()];
+                    dateDisplay = `${day} ${month} t/m ${endDay} ${endMonth}`;
+                }
+
+                // Color coding: Public = Red, Private = Blue
+                const badgeColor = event.isPrivate ? 'var(--chiro-blue)' : 'var(--chiro-red)';
+                const shadowColor = event.isPrivate ? '#143862' : '#a82b2e';
+            %>
+                <div class="col-12">
+                    <div class="calendar-card" 
+                         data-event="<%= JSON.stringify(event) %>"
+                         onclick="openEventModal(this)">
+                            
+                        <div class="calendar-date-badge me-4 shadow-sm" style="background-color: <%= badgeColor %>; box-shadow: 0 4px 0 <%= shadowColor %>;">
+                            <span class="calendar-day"><%= day %></span>
+                            <span class="calendar-month"><%= month %></span>
+                        </div>
+                        
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h4 class="mb-0 fw-bold" style="color: <%= badgeColor %>;"><%= event.title %></h4>
+                                <% if (event.isPrivate) { %>
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem; font-family: var(--font-heading);">LEIDING ONLY</span>
+                                <% } %>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                <% if (hasEndDate) { %>
+                                    <small class="text-muted d-flex align-items-center">
+                                        <i class="bi bi-calendar-range me-2 text-warning"></i> <%= dateDisplay %>
+                                    </small>
+                                <% } %>
+                                <% if (event.startTime) { %>
+                                    <small class="text-muted d-flex align-items-center">
+                                        <i class="bi bi-clock me-2 text-info"></i> <%= event.startTime %><% if (event.endTime) { %> - <%= event.endTime %><% } %>
+                                    </small>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <div class="ms-3 d-none d-sm-block">
+                            <i class="bi bi-chevron-right fs-4 text-muted opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } %>
+</div>
+
+<!-- Event Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title text-uppercase fw-bold text-danger" id="modalEventDate"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 pb-5 pt-2">
+                <div id="modalPrivateBadge" class="mb-2 d-none">
+                    <span class="badge bg-info text-white rounded-pill">EXCLUSIEF VOOR LEIDING</span>
+                </div>
+                <h2 class="mb-4 text-primary" id="modalEventTitle"></h2>
+                <div class="p-4 bg-light rounded-3 border-start border-4 border-warning fs-5">
+                    <!-- Content will be injected as HTML -->
+                    <div id="modalEventDesc"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-chiro" data-bs-dismiss="modal">Sluiten</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEventModal(element) {
+        const eventJson = element.getAttribute('data-event');
+        if (!eventJson) return;
+        
+        const event = JSON.parse(eventJson);
+        
+        // Format date for modal
+        const [y, m, d] = event.date.split('-').map(Number);
+        const dateObj = new Date(y, m - 1, d);
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        let formattedDate = dateObj.toLocaleDateString('nl-BE', options);
+
+        if (event.endDate && event.endDate !== event.date) {
+            const [ey, em, ed] = event.endDate.split('-').map(Number);
+            const endDateObj = new Date(ey, em - 1, ed);
+            const endFormatted = endDateObj.toLocaleDateString('nl-BE', options);
+            formattedDate = `Van ${formattedDate} <br> tot en met ${endFormatted}`;
+        }
+
+        if (event.startTime) {
+            formattedDate += `<br><span class="text-muted"><i class="bi bi-clock me-1"></i> ${event.startTime}`;
+            if (event.endTime) {
+                formattedDate += ` - ${event.endTime}`;
+            }
+            formattedDate += `</span>`;
+        }
+        
+        document.getElementById('modalEventDate').innerHTML = formattedDate;
+        document.getElementById('modalEventTitle').textContent = event.title;
+        
+        const privateBadge = document.getElementById('modalPrivateBadge');
+        if (event.isPrivate) {
+            privateBadge.classList.remove('d-none');
+        } else {
+            privateBadge.classList.add('d-none');
+        }
+
+        // Use innerHTML to render HTML tags from the description
+        document.getElementById('modalEventDesc').innerHTML = event.description || '<span class="text-muted fst-italic">Geen beschrijving beschikbaar.</span>';
+        
+        const myModal = new bootstrap.Modal(document.getElementById('eventModal'));
+        myModal.show();
+    }
+</script>
+
+<%- include('../partials/footer') %>

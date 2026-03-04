@@ -110,11 +110,12 @@ exports.getEvents = async (req, res) => {
 exports.postEvent = async (req, res) => {
     try {
         const { title, date, endDate, startTime, endTime, description } = req.body;
+        const isPrivate = req.body.isPrivate === 'on';
         // If endDate is empty string, set it to null
         const finalEndDate = endDate && endDate.trim() !== '' ? endDate : null;
         const finalStartTime = startTime && startTime.trim() !== '' ? startTime : null;
         const finalEndTime = endTime && endTime.trim() !== '' ? endTime : null;
-        await Event.create({ title, date, endDate: finalEndDate, startTime: finalStartTime, endTime: finalEndTime, description });
+        await Event.create({ title, date, endDate: finalEndDate, startTime: finalStartTime, endTime: finalEndTime, description, isPrivate });
         res.redirect('/admin/events');
     } catch (error) {
         console.error('Error creating event:', error);
@@ -125,12 +126,13 @@ exports.postEvent = async (req, res) => {
 exports.updateEvent = async (req, res) => {
     try {
         const { title, date, endDate, startTime, endTime, description } = req.body;
+        const isPrivate = req.body.isPrivate === 'on';
         const finalEndDate = endDate && endDate.trim() !== '' ? endDate : null;
         const finalStartTime = startTime && startTime.trim() !== '' ? startTime : null;
         const finalEndTime = endTime && endTime.trim() !== '' ? endTime : null;
         const event = await Event.findByPk(req.params.id);
         if (event) {
-            await event.update({ title, date, endDate: finalEndDate, startTime: finalStartTime, endTime: finalEndTime, description });
+            await event.update({ title, date, endDate: finalEndDate, startTime: finalStartTime, endTime: finalEndTime, description, isPrivate });
         }
         res.redirect('/admin/events');
     } catch (error) {
