@@ -474,4 +474,15 @@ body.navbar-open {
     font-size: 1.5rem;
 }
 
+/* Responsive images in user-generated content (posts, comments, events, etc) */
+.card-text img, .comment-text img, #modalEventDesc img, .rich-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.8rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+
 

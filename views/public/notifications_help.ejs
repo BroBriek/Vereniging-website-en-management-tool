@@ -1,94 +1,274 @@
 <%- include('../partials/header', { fullWidth: true }) %>
 
-<div class="hero-section">
-    <div class="hero-img-container">
-        <img src="/favicon.png" alt="Chiro Hero" class="hero-img">
-        <div class="hero-overlay"></div>
-    </div>
-    <div class="hero-text">
-        <h1>Notificaties Instellen</h1>
-        <p>Blijf op de hoogte van het laatste nieuws!</p>
+<!-- New Hero Section with Gradient -->
+<style>
+    .info-hero {
+        background: linear-gradient(135deg, var(--chiro-blue) 0%, #2c5da0 50%, var(--chiro-red) 100%);
+        padding: 80px 0;
+        border-radius: 0 0 50px 50px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .info-hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0);
+        background-size: 30px 30px;
+        pointer-events: none;
+    }
+    .info-hero-text {
+        color: white;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+    }
+    .info-hero-text h1 {
+        font-size: 3.5rem;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        margin-bottom: 1rem;
+    }
+    .info-hero-text p {
+        font-size: 1.4rem;
+        opacity: 0.9;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    .info-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        border-radius: 25px;
+    }
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+    }
+    .step-badge {
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+</style>
+
+<div class="info-hero">
+    <div class="container">
+        <div class="info-hero-text">
+            <h1>Hulp & Informatie</h1>
+            <p>Alles wat je moet weten over het gebruik van deze website!</p>
+        </div>
     </div>
 </div>
 
 <div class="container pb-6">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-                <div class="card-header py-3">
-                    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-envelope-check me-2"></i>E-mail Verificatie</h2>
-                </div>
-                <div class="card-body p-4 p-md-5">
-                    <p class="lead">Om updates via e-mail te ontvangen, moeten we zeker weten dat je e-mailadres correct is.</p>
-                    <ol class="list-group list-group-flush mb-3">
-                        <li class="list-group-item px-0 py-3 bg-transparent"><span class="badge bg-primary rounded-pill me-2">1</span> Registreer of log in op de website.</li>
-                        <li class="list-group-item px-0 py-3 bg-transparent"><span class="badge bg-primary rounded-pill me-2">2</span> Zoek de verificatiemail van Chiro Vreugdeland in je mailbox.</li>
-                        <li class="list-group-item px-0 py-3 bg-transparent"><span class="badge bg-primary rounded-pill me-2">3</span> Klik op de link in de e-mail om je adres te bevestigen.</li>
-                        <li class="list-group-item px-0 py-3 bg-transparent border-0"><span class="badge bg-danger rounded-pill me-2">!</span> Geen mail ontvangen? Check zeker je <strong>spam</strong> folder!</li>
-                    </ol>
-                </div>
+    <!-- Quick Links Navigation -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <a href="#notificaties" class="btn btn-outline-primary rounded-pill px-4"><i class="bi bi-bell me-2"></i>Meldingen</a>
+                <a href="#kalender" class="btn btn-outline-danger rounded-pill px-4"><i class="bi bi-calendar-event me-2"></i>Kalender</a>
+                <a href="#feed" class="btn btn-outline-warning rounded-pill px-4"><i class="bi bi-chat-dots me-2"></i>De Feed</a>
+                <a href="#account" class="btn btn-outline-info rounded-pill px-4"><i class="bi bi-person-circle me-2"></i>Account</a>
             </div>
+        </div>
+    </div>
 
-            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-                <div class="card-header py-3 bg-info text-white">
-                    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-phone me-2"></i>Mobiele Meldingen (App)</h2>
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <!-- SECTION 1: NOTIFICATIES -->
+            <div id="notificaties" class="mb-5 pt-3">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-primary rounded-circle p-3 me-3 text-white shadow-sm">
+                        <i class="bi bi-bell fs-2"></i>
+                    </div>
+                    <h2 class="h1 mb-0 fw-bold">Meldingen Instellen</h2>
                 </div>
-                <div class="card-body p-4 p-md-5">
-                    <p class="lead">Wil je meldingen direct op je telefoon ontvangen? Volg dan deze stappen.</p>
-                    
-                    <div class="alert alert-warning border-0 shadow-sm rounded-4 p-4 mb-5">
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-info-circle-fill display-6 me-3"></i>
-                            <div>
-                                <strong class="d-block mb-1">Let op:</strong> 
-                                Meldingen werken het beste als je onze website installeert als app op je telefoon.
+
+                <div class="row g-4">
+                    <!-- Email Verification -->
+                    <div class="col-md-6">
+                        <div class="card info-card shadow-sm h-100 overflow-hidden">
+                            <div class="card-header py-3 bg-primary text-white border-0">
+                                <h3 class="h5 mb-0 fw-bold"><i class="bi bi-envelope-check me-2"></i>E-mail Verificatie</h3>
+                            </div>
+                            <div class="card-body p-4">
+                                <p>Om belangrijke updates via e-mail te ontvangen, moet je adres geverifieerd zijn.</p>
+                                <ul class="list-unstyled">
+                                    <li class="mb-3"><span class="step-badge bg-primary text-white">1</span> Registreer of log in op de site.</li>
+                                    <li class="mb-3"><span class="step-badge bg-primary text-white">2</span> Klik op de link in de verificatiemail.</li>
+                                    <li class="mb-3"><span class="step-badge bg-danger text-white">!</span> Geen mail? Check je <strong>spam</strong> folder!</li>
+                                </ul>
+                                <div class="text-center mt-4">
+                                    <a href="/account/settings" class="btn btn-sm btn-outline-primary rounded-pill">Naar instellingen</a>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mb-5">
-                        <h3 class="h4 fw-bold text-primary mb-3"><i class="bi bi-android me-2"></i>Android (Chrome)</h3>
-                        <p>Meestal vraagt je telefoon automatisch of je de app wilt installeren. Zo niet:</p>
-                        <ul class="list-unstyled">
-                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Klik op de 3 puntjes rechtsboven in je browser.</li>
-                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Kies "App installeren" of "Toevoegen aan startscherm".</li>
-                            <li><i class="bi bi-check2-circle text-success me-2"></i>Open de app en sta meldingen toe.</li>
+                    <!-- Push Notifications -->
+                    <div class="col-md-6">
+                        <div class="card info-card shadow-sm h-100 overflow-hidden">
+                            <div class="card-header py-3 bg-info text-white border-0">
+                                <h3 class="h5 mb-0 fw-bold"><i class="bi bi-phone me-2"></i>Mobiele Meldingen</h3>
+                            </div>
+                            <div class="card-body p-4">
+                                <p>Ontvang meldingen direct op je telefoon! Dit werkt het beste als je onze site als "App" installeert.</p>
+                                
+                                <div class="bg-light p-3 rounded-4 mb-3 border">
+                                    <h4 class="h6 fw-bold mb-2 text-primary">Android (Chrome)</h4>
+                                    <small class="d-block mb-1">Klik op de 3 puntjes en kies <strong>"App installeren"</strong>.</small>
+                                </div>
+
+                                <div class="bg-light p-3 rounded-4 border">
+                                    <h4 class="h6 fw-bold mb-2 text-primary">iPhone (Safari)</h4>
+                                    <small class="d-block mb-1">Tik op 'Delen' en kies <strong>"Zet op beginscherm"</strong>.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-5 opacity-10">
+
+            <!-- SECTION 2: KALENDER SYNC -->
+            <div id="kalender" class="mb-5 pt-3">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-danger rounded-circle p-3 me-3 text-white shadow-sm">
+                        <i class="bi bi-calendar-check fs-2"></i>
+                    </div>
+                    <h2 class="h1 mb-0 fw-bold">Kalender Synchroniseren</h2>
+                </div>
+
+                <div class="card info-card shadow-sm overflow-hidden border-start border-danger border-5">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="row align-items-center">
+                            <div class="col-md-7">
+                                <p class="lead">Mis nooit meer een activiteit! Je kunt onze Chiro-kalender rechtstreeks toevoegen aan je eigen Google Calendar, Apple Calendar of Outlook.</p>
+                                <p>Alle evenementen verschijnen dan automatisch in je eigen agenda op je telefoon of computer.</p>
+                                
+                                <div class="alert alert-warning border-0 rounded-4 py-3 mb-0">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <strong>Leiding-tip:</strong> Als je bent ingelogd, synchroniseer je ook automatisch alle private leiding-events!
+                                </div>
+                            </div>
+                            <div class="col-md-5 text-center mt-4 mt-md-0">
+                                <div class="p-4 bg-light rounded-4 border">
+                                    <i class="bi bi-calendar-plus display-4 text-danger mb-3 d-block"></i>
+                                    <% if (user) { %>
+                                        <a href="/kalender/subscribe.ics<%= user.calendarToken ? '?token=' + user.calendarToken : '' %>" class="btn btn-danger btn-lg w-100 rounded-pill shadow-sm">
+                                            Nu Toevoegen
+                                        </a>
+                                        <small class="text-muted d-block mt-2">Gekoppeld aan jouw account</small>
+                                    <% } else { %>
+                                        <a href="/kalender/subscribe.ics" class="btn btn-danger btn-lg w-100 rounded-pill shadow-sm mb-2">
+                                            Publieke Kalender Sync
+                                        </a>
+                                        <p class="small text-muted mb-0"><a href="/login" class="text-danger">Log in</a> voor de volledige leiding-sync.</p>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-5">
+                            <div class="col-md-6">
+                                <h4 class="h5 fw-bold mb-3"><i class="bi bi-google me-2"></i>Google Calendar</h4>
+                                <ol class="small">
+                                    <li class="mb-2">Open Google Calendar op je computer.</li>
+                                    <li class="mb-2">Klik links op het <strong>plusje (+)</strong> naast "Andere agenda's".</li>
+                                    <li>Kies <strong>"Via URL"</strong> en plak de link van de knop hierboven.</li>
+                                </ol>
+                            </div>
+                            <div class="col-md-6">
+                                <h4 class="h5 fw-bold mb-3"><i class="bi bi-apple me-2"></i>Apple (iPhone/Mac)</h4>
+                                <small>Klik simpelweg op de knop hierboven. Je iPhone vraagt dan automatisch of je je wilt abonneren op de agenda.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-5 opacity-10">
+
+            <!-- SECTION 3: DE FEED & INTERACTIE -->
+            <div id="feed" class="mb-5 pt-3">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-warning rounded-circle p-3 me-3 text-white shadow-sm">
+                        <i class="bi bi-chat-quote fs-2"></i>
+                    </div>
+                    <h2 class="h1 mb-0 fw-bold">De Leidingshoek</h2>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-7">
+                        <p class="lead">De feed op de startpagina is onze centrale plek voor communicatie. Hier vind je alles van wekelijkse updates tot belangrijke documenten.</p>
+                        <ul class="list-group list-group-flush mb-4">
+                            <li class="list-group-item bg-transparent border-0 px-0 py-2">
+                                <i class="bi bi-heart-fill text-danger me-2"></i> <strong>Liken:</strong> Laat weten dat je een bericht hebt gezien.
+                            </li>
+                            <li class="list-group-item bg-transparent border-0 px-0 py-2">
+                                <i class="bi bi-chat-fill text-primary me-2"></i> <strong>Reageren:</strong> Stel vragen of reageer op anderen.
+                            </li>
+                            <li class="list-group-item bg-transparent border-0 px-0 py-2">
+                                <i class="bi bi-at text-info me-2 fs-5"></i> <strong>Mentions:</strong> Gebruik @naam om iemand specifiek te noemen.
+                            </li>
                         </ul>
                     </div>
+                    <div class="col-md-5">
+                        <div class="p-4 bg-white border shadow-sm rounded-4 text-center">
+                            <i class="bi bi-chat-left-text display-1 text-warning opacity-50 mb-3 d-block"></i>
+                            <p class="mb-0 fw-bold">Blijf Verbonden</p>
+                            <p class="small text-muted">Deel updates, stel vragen en blijf op de hoogte van alle Chiro-avonturen.</p>
+                            <a href="/feed" class="btn btn-sm btn-warning text-white rounded-pill px-4">Naar de Feed</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    <hr class="my-5 opacity-10">
+            <hr class="my-5 opacity-10">
 
-                    <div>
-                        <h3 class="h4 fw-bold text-primary mb-3"><i class="bi bi-apple me-2"></i>iOS (iPhone/iPad)</h3>
-                        <p>Op een iPhone moet je de website <strong>eerst toevoegen aan je beginscherm</strong> voordat je meldingen kunt aanzetten.</p>
-                        
-                        <div class="bg-light p-4 rounded-4 mt-4 border border-2">
-                            <h4 class="h5 fw-bold mb-3">Stap 1: Zet op beginscherm</h4>
-                            <ol class="mb-4">
-                                <li class="mb-2">Open deze website in <strong>Safari</strong>.</li>
-                                <li class="mb-2">Tik onderaan op de <strong>Deel-knop</strong> (vierkantje met pijl omhoog).</li>
-                                <li class="mb-2">Scroll naar beneden en kies <strong>"Zet op beginscherm"</strong>.</li>
-                                <li>Tik op "Voeg toe" rechtsboven.</li>
-                            </ol>
+            <!-- SECTION 4: ACCOUNT -->
+            <div id="account" class="mb-5 pt-3 pb-4">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-info rounded-circle p-3 me-3 text-white shadow-sm">
+                        <i class="bi bi-person-circle fs-2"></i>
+                    </div>
+                    <h2 class="h1 mb-0 fw-bold">Jouw Account</h2>
+                </div>
 
-                            <h4 class="h5 fw-bold mb-3">Stap 2: Meldingen aanzetten</h4>
-                            <ol class="mb-0">
-                                <li class="mb-2">Open de nieuwe <strong>Chiro app</strong> op je beginscherm.</li>
-                                <li class="mb-2">Wacht tot de app vraagt om meldingen toe te staan en kies "Sta toe".</li>
-                                <li>Indien nodig: Ga naar <strong>Instellingen</strong> > <strong>Meldingen</strong> > "Chiro" > Zet "Sta meldingen toe" aan.</li>
-                            </ol>
+                <div class="card info-card shadow-sm border-0 bg-light">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4 class="fw-bold mb-3">Personaliseer je profiel</h4>
+                                <p>Upload een leuke profielfoto via de instellingen. Zo herkent iedereen direct wie er reageert op de feed!</p>
+                                <a href="/account/settings" class="btn btn-info text-white rounded-pill px-4 shadow-sm">Profielfoto instellen</a>
+                            </div>
+                            <div class="col-md-6 mt-4 mt-md-0">
+                                <h4 class="fw-bold mb-3">Wachtwoord vergeten?</h4>
+                                <p>Je kunt op elk moment je wachtwoord wijzigen via je accountinstellingen. Ben je het echt vergeten? Neem dan contact op met je lieftallige hoofdleiding, zij kunnen je wachtwoord resetten.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             
             <div class="text-center mt-5">
-                <a href="/home" class="btn btn-chiro btn-lg shadow-sm">Terug naar Home</a>
+                <a href="/home" class="btn btn-chiro btn-lg shadow-sm rounded-pill px-5">Terug naar Home</a>
             </div>
         </div>
     </div>
 </div>
 
 <%- include('../partials/footer', { fullWidth: true }) %>
-
-<%- include('../partials/footer') %>
