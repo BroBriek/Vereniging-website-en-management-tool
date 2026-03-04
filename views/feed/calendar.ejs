@@ -7,7 +7,7 @@
             <p class="text-muted lead mb-0">Alle publieke activiteiten (rood) en exclusieve leiding-events (blauw).</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a href="/kalender/subscribe.ics<%= user.calendarToken ? '?token=' + user.calendarToken : '' %>" class="btn btn-chiro btn-sm shadow-sm" title="Abonneer op de Leidingskalender (Google Calendar, iCal, Outlook)">
+            <a href="/kalender/hulp" class="btn btn-chiro btn-sm shadow-sm" title="Abonneer op de Leidingskalender (Google Calendar, iCal, Outlook)">
                 <i class="bi bi-calendar-plus me-1"></i> Abonneer op Kalender
             </a>
             <% if (user && user.role === 'admin') { %>

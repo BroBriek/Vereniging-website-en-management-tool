@@ -166,17 +166,10 @@
                             <div class="col-md-5 text-center mt-4 mt-md-0">
                                 <div class="p-4 bg-light rounded-4 border">
                                     <i class="bi bi-calendar-plus display-4 text-danger mb-3 d-block"></i>
-                                    <% if (user) { %>
-                                        <a href="/kalender/subscribe.ics<%= user.calendarToken ? '?token=' + user.calendarToken : '' %>" class="btn btn-danger btn-lg w-100 rounded-pill shadow-sm">
-                                            Nu Toevoegen
-                                        </a>
-                                        <small class="text-muted d-block mt-2">Gekoppeld aan jouw account</small>
-                                    <% } else { %>
-                                        <a href="/kalender/subscribe.ics" class="btn btn-danger btn-lg w-100 rounded-pill shadow-sm mb-2">
-                                            Publieke Kalender Sync
-                                        </a>
-                                        <p class="small text-muted mb-0"><a href="/login" class="text-danger">Log in</a> voor de volledige leiding-sync.</p>
-                                    <% } %>
+                                    <a href="/kalender/hulp" class="btn btn-danger btn-lg w-100 rounded-pill shadow-sm mb-2">
+                                        Kalender Koppelen
+                                    </a>
+                                    <p class="small text-muted mb-0">Bekijk de stappen voor iOS en Android.</p>
                                 </div>
                             </div>
                         </div>

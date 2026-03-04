@@ -426,6 +426,15 @@ exports.getHelp = (req, res) => {
     });
 };
 
+exports.getCalendarHelp = (req, res) => {
+    const calendarUrl = `${req.protocol}://${req.get('host')}/kalender/subscribe.ics${req.user && req.user.calendarToken ? '?token=' + req.user.calendarToken : ''}`;
+    res.render('public/calendar_help', {
+        title: 'Kalender Koppelen - Chiro Vreugdeland Meeuwen',
+        description: 'Stappenplan om de Chiro-kalender toe te voegen aan je iPhone, Android of Google Calendar.',
+        calendarUrl
+    });
+};
+
 exports.getRobotsTxt = (req, res) => {
     const content = `# Robots.txt for Chiro Vreugdeland Meeuwen
 # Allow search engines to crawl public content
