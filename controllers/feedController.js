@@ -1,6 +1,7 @@
 const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess, Leader } = require('../models');
 const quoteController = require('./quoteController');
 const path = require('path');
+const fs = require('fs');
 const { Op } = require('sequelize');
 const NotificationService = require('../services/NotificationService');
 
@@ -34,15 +35,69 @@ const stripHtml = (text) => {
     return (text || '').replace(/<[^>]+>/g, '');
 };
 
+const slugify = (text) => {
+    return text.toString().toLowerCase()
+        .replace(/\s+/g, '-')           // Replace spaces with -
+        .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+        .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+        .replace(/^-+/, '')             // Trim - from start of text
+        .replace(/-+$/, '');            // Trim - from end of text
+};
+
 const viewHelpers = { getAvatarColor, getInitials, highlightMentions };
 
 const getAccessibleGroups = async (user) => {
+    const today = new Date().toISOString().split('T')[0];
+
+    // Admins see everything
     if (user.role === 'admin') {
-        return await FeedGroup.findAll({ order: [['year', 'DESC'], ['name', 'ASC']] });
+        return await FeedGroup.findAll({ 
+            order: [['isEvent', 'ASC'], ['year', 'DESC'], ['name', 'ASC']] 
+        });
     }
+
+    // Regular users see:
+    // 1. Events they created OR are a member of, IF today is between startDate and endDate
+    //    If startDate/endDate are null, they are considered "always active"
+    // 2. Normal groups they are a member of
     const groups = await FeedGroup.findAll({
-        include: [{ model: User, as: 'members', where: { id: user.id }, required: true }],
-        order: [['year', 'DESC'], ['name', 'ASC']]
+        where: {
+            [Op.or]: [
+                {
+                    [Op.and]: [
+                        { isEvent: true },
+                        {
+                            [Op.or]: [
+                                { creatorId: user.id },
+                                { '$members.id$': user.id }
+                            ]
+                        },
+                        {
+                            [Op.or]: [
+                                { startDate: { [Op.lte]: today }, endDate: { [Op.gte]: today } },
+                                { startDate: null, endDate: { [Op.gte]: today } },
+                                { startDate: { [Op.lte]: today }, endDate: null },
+                                { startDate: null, endDate: null }
+                            ]
+                        }
+                    ]
+                },
+                { 
+                    [Op.and]: [
+                        { isEvent: false },
+                        { '$members.id$': user.id }
+                    ]
+                }
+            ]
+        },
+        include: [{ 
+            model: User, 
+            as: 'members', 
+            attributes: ['id'],
+            through: { attributes: [] },
+            required: false 
+        }],
+        order: [['isEvent', 'ASC'], ['year', 'DESC'], ['name', 'ASC']]
     });
     return groups;
 };
@@ -50,6 +105,7 @@ const getAccessibleGroups = async (user) => {
 const ensureAccessToGroup = async (user, group) => {
     if (!group) return false;
     if (user.role === 'admin') return true;
+    if (group.isEvent && group.creatorId === user.id) return true;
     const count = await UserGroupAccess.count({ where: { userId: user.id, feedGroupId: group.id } });
     return count > 0;
 };
@@ -91,12 +147,27 @@ exports.getFeed = async (req, res) => {
             const allowed = await ensureAccessToGroup(req.user, activeGroup);
             if (!allowed) return res.status(403).send('Geen toegang');
         } else {
-            activeGroup = allGroups[0] || null;
+            activeGroup = allGroups.find(g => !g.isEvent) || allGroups[0] || null;
         }
 
         const limit = parseInt(process.env.FEED_PAGINATION_LIMIT) || 10;
         const offset = parseInt(req.query.offset) || 0;
         const search = req.query.search || '';
+
+        // For Access Management (Modal)
+        const allUsers = await User.findAll({ 
+            where: { 
+                isActive: true,
+                username: { [Op.ne]: 'admin' }
+            }, 
+            attributes: ['id', 'username'], 
+            order: [['username', 'ASC']] 
+        });
+        const allNormalGroups = await FeedGroup.findAll({ 
+            where: { isEvent: false }, 
+            include: [{ model: User, as: 'members', attributes: ['id'] }],
+            order: [['year', 'DESC'], ['name', 'ASC']] 
+        });
 
         const whereClause = activeGroup ? { groupId: activeGroup.id } : {};
 
@@ -216,14 +287,17 @@ exports.getFeed = async (req, res) => {
         });
 
         res.render('feed/index', { 
-            title: 'Leidingshoekje', 
+            title: activeGroup ? activeGroup.name : 'Leidingshoekje', 
             posts, 
             user: req.user, 
             groups: allGroups, 
             activeGroup,
-            limit, // Pass limit to view for initial button state
+            limit,
             quoteOfTheMonth,
             birthdayLeaders,
+            allUsers,
+            allNormalGroups,
+            capitalizeName: (name) => name.charAt(0).toUpperCase() + name.slice(1),
             ...viewHelpers
         });
     } catch (error) {
@@ -856,5 +930,171 @@ exports.getGroupFiles = async (req, res) => {
     } catch (error) {
         console.error('Files Error:', error);
         res.status(500).send('Server Error');
+    }
+};
+
+exports.postCreateEvent = async (req, res) => {
+    try {
+        const { name, description, eventDate, startDate, endDate, userIds, groupIds } = req.body;
+        if (!name) return res.status(400).send('Naam is verplicht');
+
+        let bannerImage = null;
+        if (req.file) {
+            bannerImage = `/feed_uploads/${req.file.filename}`;
+        }
+
+        let baseSlug = slugify(name);
+        let slug = baseSlug;
+        // Ensure unique slug
+        let existing = await FeedGroup.findOne({ where: { slug } });
+        let counter = 1;
+        while (existing) {
+            slug = `${baseSlug}-${counter}`;
+            existing = await FeedGroup.findOne({ where: { slug } });
+            counter++;
+        }
+
+        const newEvent = await FeedGroup.create({
+            name,
+            slug,
+            description,
+            eventDate,
+            startDate: startDate || null,
+            endDate: endDate || null,
+            bannerImage,
+            isEvent: true,
+            creatorId: req.user.id
+        });
+
+        // Manage Access
+        const targetUserIds = new Set();
+        
+        // Add individual users
+        if (userIds) {
+            const ids = Array.isArray(userIds) ? userIds : [userIds];
+            ids.forEach(id => targetUserIds.add(parseInt(id)));
+        }
+
+        // Add users from selected groups
+        if (groupIds) {
+            const gIds = Array.isArray(groupIds) ? groupIds : [groupIds];
+            const groupMembers = await UserGroupAccess.findAll({
+                where: { feedGroupId: { [Op.in]: gIds } },
+                attributes: ['userId']
+            });
+            groupMembers.forEach(m => targetUserIds.add(m.userId));
+        }
+
+        // Always add the creator
+        targetUserIds.add(req.user.id);
+
+        if (targetUserIds.size > 0) {
+            await UserGroupAccess.bulkCreate(
+                Array.from(targetUserIds).map(uid => ({
+                    userId: uid,
+                    feedGroupId: newEvent.id,
+                    role: 'member'
+                }))
+            );
+        }
+
+        // Redirect to the newly created event feed
+        res.redirect(`/feed/group/${newEvent.slug}?success=Event aangemaakt`);
+    } catch (error) {
+        console.error('Create Event Error:', error);
+        res.status(500).send('Kon event niet aanmaken');
+    }
+};
+
+exports.postUpdateEvent = async (req, res) => {
+    try {
+        const { name, description, eventDate, startDate, endDate, userIds, groupIds } = req.body;
+        const group = await FeedGroup.findByPk(req.params.id);
+        if (!group || !group.isEvent) return res.status(404).send('Event niet gevonden');
+
+        if (group.creatorId !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).send('Geen rechten');
+        }
+
+        const updateData = {
+            name,
+            description,
+            eventDate,
+            startDate: startDate || null,
+            endDate: endDate || null
+        };
+
+        if (req.file) {
+            // Delete old banner if it exists
+            if (group.bannerImage) {
+                const oldPath = path.join(__dirname, '..', 'public', group.bannerImage);
+                if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+            }
+            updateData.bannerImage = `/feed_uploads/${req.file.filename}`;
+        }
+
+        await group.update(updateData);
+
+        // Sync Membership
+        const targetUserIds = new Set();
+        
+        // Add individual users
+        if (userIds) {
+            const ids = Array.isArray(userIds) ? userIds : [userIds];
+            ids.forEach(id => targetUserIds.add(parseInt(id)));
+        }
+
+        // Add users from selected groups
+        if (groupIds) {
+            const gIds = Array.isArray(groupIds) ? groupIds : [groupIds];
+            const groupMembers = await UserGroupAccess.findAll({
+                where: { feedGroupId: { [Op.in]: gIds } },
+                attributes: ['userId']
+            });
+            groupMembers.forEach(m => targetUserIds.add(m.userId));
+        }
+
+        // Always add the creator
+        targetUserIds.add(group.creatorId);
+
+        // Replace all memberships for this group
+        await UserGroupAccess.destroy({ where: { feedGroupId: group.id } });
+        if (targetUserIds.size > 0) {
+            await UserGroupAccess.bulkCreate(
+                Array.from(targetUserIds).map(uid => ({
+                    userId: uid,
+                    feedGroupId: group.id,
+                    role: 'member'
+                }))
+            );
+        }
+
+        res.redirect(`/feed/group/${group.slug}?success=Event bijgewerkt`);
+    } catch (error) {
+        console.error('Update Event Error:', error);
+        res.status(500).send('Kon event niet bijwerken');
+    }
+};
+
+exports.postDeleteEvent = async (req, res) => {
+    try {
+        const group = await FeedGroup.findByPk(req.params.id);
+        if (!group || !group.isEvent) return res.status(404).send('Event niet gevonden');
+
+        if (group.creatorId !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).send('Geen rechten');
+        }
+
+        // Delete banner
+        if (group.bannerImage) {
+            const bannerPath = path.join(__dirname, '..', 'public', group.bannerImage);
+            if (fs.existsSync(bannerPath)) fs.unlinkSync(bannerPath);
+        }
+
+        await group.destroy();
+        res.redirect('/feed?success=Event verwijderd');
+    } catch (error) {
+        console.error('Delete Event Error:', error);
+        res.status(500).send('Kon event niet verwijderen');
     }
 };

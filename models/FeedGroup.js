@@ -19,6 +19,30 @@ const FeedGroup = sequelize.define('FeedGroup', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  isEvent: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  creatorId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  eventDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
+  startDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
+  endDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
+  bannerImage: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 });
 
 module.exports = FeedGroup;

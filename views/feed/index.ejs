@@ -215,6 +215,24 @@
         color: #2c3e50;
         line-height: 1;
     }
+    .user-list-item:hover {
+        background-color: #f8f9fa !important;
+        border-color: #3498db !important;
+    }
+    .user-list-item.selected {
+        background-color: #e3f2fd;
+    }
+    .transition-all {
+        transition: all 0.2s ease;
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    .group-shortcut-btn.active {
+        background-color: #3498db;
+        color: white;
+        border-color: #3498db;
+    }
 </style>
 
 <div id="polaroid-overlay" class="polaroid-overlay d-none" onclick="closePolaroid()">
@@ -293,6 +311,9 @@ function autoResize(element) {
                 <a href="/quotes" class="btn btn-outline-primary btn-sm rounded-pill px-3 flex-fill text-center">
                     <i class="bi bi-chat-quote-fill"></i> Quoteboekje
                 </a>
+                <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3 flex-fill text-center" data-bs-toggle="modal" data-bs-target="#createEventModal">
+                    <i class="bi bi-calendar-plus-fill"></i> Nieuw Event
+                </button>
                 <% if (user.role === 'admin') { %>
                     <a href="/admin/feedgroups" class="btn btn-outline-dark btn-sm rounded-pill px-3 flex-fill text-center">
                         <i class="bi bi-gear-fill"></i> Beheer
@@ -339,35 +360,75 @@ function autoResize(element) {
     <!-- Groups Navigation (Modern Carousel) -->
     <% if (typeof groups !== 'undefined' && groups && groups.length > 0) { %>
         <%
-            const chunkSize = 3;
-            const chunks = [];
-            for (let i = 0; i < groups.length; i += chunkSize) {
-                chunks.push(groups.slice(i, i + chunkSize));
-            }
+            const normalGroups = groups.filter(g => !g.isEvent);
+            const eventGroups = groups.filter(g => g.isEvent);
+            
+            const chunkArray = (arr, size) => {
+                const chunks = [];
+                for (let i = 0; i < arr.length; i += size) {
+                    chunks.push(arr.slice(i, i + size));
+                }
+                return chunks;
+            };
+
+            const normalChunks = chunkArray(normalGroups, 3);
+            const eventChunks = chunkArray(eventGroups, 3);
         %>
-        <div id="feedGroupsCarousel" class="carousel slide mb-4" data-bs-ride="false" data-bs-interval="false">
-            <div class="carousel-inner">
-                <% chunks.forEach((chunk, index) => { %>
-                    <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                        <div class="d-flex justify-content-center gap-2 py-2 px-4">
-                            <% chunk.forEach(g => { %>
-                                <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>">
-                                    <%= g.name %> <small class="opacity-75"><%= g.year ? g.year : '' %></small>
-                                </a>
-                            <% }) %>
+
+        <% if (normalGroups.length > 0) { %>
+            <div id="feedGroupsCarousel" class="carousel slide mb-3" data-bs-ride="false" data-bs-interval="false">
+                <div class="carousel-inner">
+                    <% normalChunks.forEach((chunk, index) => { %>
+                        <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                            <div class="d-flex justify-content-center gap-2 py-2 px-4">
+                                <% chunk.forEach(g => { %>
+                                    <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>">
+                                        <%= g.name %> <small class="opacity-75"><%= g.year ? g.year : '' %></small>
+                                    </a>
+                                <% }) %>
+                            </div>
                         </div>
-                    </div>
-                <% }) %>
+                    <% }) %>
+                </div>
+                <% if (normalChunks.length > 1) { %>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#feedGroupsCarousel" data-bs-slide="prev" style="width: 5%; left: -10px;" aria-label="Vorige groep">
+                        <span class="carousel-control-prev-icon shadow-sm" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#feedGroupsCarousel" data-bs-slide="next" style="width: 5%; right: -10px;" aria-label="Volgende groep">
+                        <span class="carousel-control-next-icon shadow-sm" aria-hidden="true"></span>
+                    </button>
+                <% } %>
             </div>
-            <% if (chunks.length > 1) { %>
-                <button class="carousel-control-prev" type="button" data-bs-target="#feedGroupsCarousel" data-bs-slide="prev" style="width: 5%; left: -10px;" aria-label="Vorige groep">
-                    <span class="carousel-control-prev-icon shadow-sm" aria-hidden="true"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#feedGroupsCarousel" data-bs-slide="next" style="width: 5%; right: -10px;" aria-label="Volgende groep">
-                    <span class="carousel-control-next-icon shadow-sm" aria-hidden="true"></span>
-                </button>
-            <% } %>
-        </div>
+        <% } %>
+
+        <% if (eventGroups.length > 0) { %>
+            <div class="text-center mb-2">
+                <span class="badge bg-light text-muted fw-normal rounded-pill">Events</span>
+            </div>
+            <div id="eventGroupsCarousel" class="carousel slide mb-4" data-bs-ride="false" data-bs-interval="false">
+                <div class="carousel-inner">
+                    <% eventChunks.forEach((chunk, index) => { %>
+                        <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                            <div class="d-flex justify-content-center gap-2 py-2 px-4">
+                                <% chunk.forEach(g => { %>
+                                    <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>" style="<%= (activeGroup && g.id === activeGroup.id) ? 'background-color: #3498db; box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); border-color: #3498db;' : 'border-color: #3498db; color: #2980b9;' %>">
+                                        <i class="bi bi-calendar-event me-1"></i> <%= g.name %>
+                                    </a>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+                <% if (eventChunks.length > 1) { %>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#eventGroupsCarousel" data-bs-slide="prev" style="width: 5%; left: -10px;" aria-label="Vorig event">
+                        <span class="carousel-control-prev-icon shadow-sm" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#eventGroupsCarousel" data-bs-slide="next" style="width: 5%; right: -10px;" aria-label="Volgend event">
+                        <span class="carousel-control-next-icon shadow-sm" aria-hidden="true"></span>
+                    </button>
+                <% } %>
+            </div>
+        <% } %>
 
         <% if (activeGroup) { %>
             <div class="text-center mb-4">
@@ -376,6 +437,43 @@ function autoResize(element) {
                 </a>
             </div>
         <% } %>
+    <% } %>
+
+    <% if (activeGroup && activeGroup.isEvent) { %>
+        <div class="card border-0 shadow-sm mb-4 overflow-hidden" style="border-radius: 1rem; position: relative; min-height: 180px;">
+            <% if (activeGroup.bannerImage) { %>
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('<%= activeGroup.bannerImage %>'); background-size: cover; background-position: center; z-index: 1;"></div>
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6)); z-index: 2;"></div>
+            <% } else { %>
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #7f8c8d 0%, #2c3e50 100%); z-index: 1;"></div>
+            <% } %>
+            
+            <div class="card-body p-4" style="position: relative; z-index: 3; color: white;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div style="text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                        <span class="badge bg-white text-dark rounded-pill mb-2">EVENT</span>
+                        <h2 class="font-playful mb-1"><%= activeGroup.name %></h2>
+                        <% if (activeGroup.eventDate) { %>
+                            <p class="mb-2 opacity-90 fw-bold"><i class="bi bi-calendar-event me-1"></i> <%= activeGroup.eventDate %></p>
+                        <% } %>
+                        <div class="lead" style="font-size: 1rem; opacity: 0.95;"><%= activeGroup.description %></div>
+                    </div>
+                    <div class="d-flex flex-column gap-2 align-items-end">
+                        <i class="bi bi-calendar-check-fill fs-1 opacity-25"></i>
+                        <% if (activeGroup.creatorId === user.id || user.role === 'admin') { %>
+                            <div class="d-flex gap-2 mt-2">
+                                <button class="btn btn-sm btn-light rounded-pill opacity-90" onclick="openEditEventModal()">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger rounded-pill opacity-90" onclick="deleteEvent('<%= activeGroup.id %>')">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
     <% } %>
 
     <!-- Create Post Trigger -->
@@ -572,6 +670,206 @@ function autoResize(element) {
     </div>
   </div>
 </div>
+
+<!-- Create Event Modal -->
+<div class="modal fade" id="createEventModal" tabindex="-1" aria-labelledby="createEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-info text-white border-0 py-3">
+                <h5 class="modal-title font-playful" id="createEventModalLabel"><i class="bi bi-calendar-plus-fill me-2"></i> Nieuw Event Aanmaken</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/feed/group/create-event" method="POST" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="eventName" class="form-label fw-bold">Naam van het event</label>
+                            <input type="text" class="form-control rounded-pill border-2" id="eventName" name="name" placeholder="bv. Weekendje Ardennen" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="eventDate" class="form-label fw-bold">Datum van event</label>
+                            <input type="date" class="form-control rounded-pill border-2" id="eventDate" name="eventDate">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="startDate" class="form-label fw-bold small">Zichtbaar vanaf</label>
+                            <input type="date" class="form-control rounded-pill border-2" id="startDate" name="startDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="endDate" class="form-label fw-bold small">Zichtbaar tot</label>
+                            <input type="date" class="form-control rounded-pill border-2" id="endDate" name="endDate">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="bannerImage" class="form-label fw-bold">Banner Afbeelding</label>
+                        <input type="file" class="form-control rounded-pill border-2" id="bannerImage" name="bannerImage" accept="image/*">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="eventDescription" class="form-label fw-bold">Beschrijving</label>
+                        <textarea class="form-control rounded-4 border-2" id="eventDescription" name="description" rows="2" placeholder="Wat gaan we doen?"></textarea>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="fw-bold mb-3"><i class="bi bi-people-fill me-2"></i> Wie heeft toegang?</h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Klik op een groep om alle leden te selecteren</label>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <% 
+                                const groupMap = {};
+                                allNormalGroups.forEach(g => { 
+                                    groupMap[g.id] = (g.members || []).map(m => m.id);
+                            %>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill group-shortcut-btn" 
+                                        data-group-id="<%= g.id %>" 
+                                        onclick="toggleGroupUsers('create', <%= g.id %>)">
+                                    + <%= g.name %>
+                                </button>
+                            <% }) %>
+                        </div>
+                        <script>
+                            const eventGroupMembers = <%- JSON.stringify(groupMap) %>;
+                        </script>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted d-flex justify-content-between">
+                            Selecteer individuele gebruikers
+                            <span class="text-primary cursor-pointer" onclick="clearUserSelection('create')">Wis alles</span>
+                        </label>
+                        <div class="input-group input-group-sm mb-2">
+                            <span class="input-group-text bg-white border-2 border-end-0 rounded-start-pill"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-2 border-start-0 rounded-end-pill user-search-input" 
+                                   data-target="create-user-list" placeholder="Zoek gebruiker..." onkeyup="filterUserList(this)">
+                        </div>
+                        <div id="create-user-list" class="border rounded-4 p-1 bg-white overflow-auto" style="max-height: 250px; border-color: #dee2e6 !important;">
+                            <% allUsers.forEach(u => { %>
+                                <div class="user-list-item d-flex align-items-center justify-content-between p-2 mb-1 rounded cursor-pointer transition-all" 
+                                     onclick="toggleUserCheckbox(this)" data-username="<%= u.username.toLowerCase() %>" style="border: 1px solid transparent;">
+                                    <label class="form-check-label mb-0 ms-2 fw-medium cursor-pointer" for="create_user_<%= u.id %>">
+                                        <%= capitalizeName(u.username) %>
+                                    </label>
+                                    <input class="form-check-input me-2" type="checkbox" name="userIds[]" value="<%= u.id %>" 
+                                           id="create_user_<%= u.id %>" onclick="event.stopPropagation(); updateGroupButtonStates('create')">
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info py-2 small border-0 rounded-3 mb-0">
+                        <i class="bi bi-info-circle-fill me-1"></i> De maker van het event heeft altijd toegang.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuleren</button>
+                    <button type="submit" class="btn btn-info text-white rounded-pill px-4">Event Aanmaken</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Event Modal -->
+<% if (activeGroup && activeGroup.isEvent) { %>
+<div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-primary text-white border-0 py-3">
+                <h5 class="modal-title font-playful" id="editEventModalLabel"><i class="bi bi-pencil-fill me-2"></i> Event Bewerken</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/feed/group/<%= activeGroup.id %>/update" method="POST" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_eventName" class="form-label fw-bold">Naam van het event</label>
+                            <input type="text" class="form-control rounded-pill border-2" id="edit_eventName" name="name" value="<%= activeGroup.name %>" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_eventDate" class="form-label fw-bold">Datum van event</label>
+                            <input type="date" class="form-control rounded-pill border-2" id="edit_eventDate" name="eventDate" value="<%= activeGroup.eventDate %>">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_startDate" class="form-label fw-bold small">Zichtbaar vanaf</label>
+                            <input type="date" class="form-control rounded-pill border-2" id="edit_startDate" name="startDate" value="<%= activeGroup.startDate %>">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_endDate" class="form-label fw-bold small">Zichtbaar tot</label>
+                            <input type="date" class="form-control rounded-pill border-2" id="edit_endDate" name="endDate" value="<%= activeGroup.endDate %>">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_bannerImage" class="form-label fw-bold">Banner Afbeelding (laat leeg om te behouden)</label>
+                        <input type="file" class="form-control rounded-pill border-2" id="edit_bannerImage" name="bannerImage" accept="image/*">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_eventDescription" class="form-label fw-bold">Beschrijving</label>
+                        <textarea class="form-control rounded-4 border-2" id="edit_eventDescription" name="description" rows="2"><%= activeGroup.description %></textarea>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="fw-bold mb-3"><i class="bi bi-people-fill me-2"></i> Toegang Beheren</h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Klik op een groep om alle leden te selecteren</label>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <% allNormalGroups.forEach(g => { %>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill group-shortcut-btn" 
+                                        data-group-id="<%= g.id %>" 
+                                        onclick="toggleGroupUsers('edit', <%= g.id %>)">
+                                    + <%= g.name %>
+                                </button>
+                            <% }) %>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted d-flex justify-content-between">
+                            Individuele gebruikers
+                            <span class="text-primary cursor-pointer" onclick="clearUserSelection('edit')">Wis alles</span>
+                        </label>
+                        <div class="input-group input-group-sm mb-2">
+                            <span class="input-group-text bg-white border-2 border-end-0 rounded-start-pill"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-2 border-start-0 rounded-end-pill user-search-input" 
+                                   data-target="edit-user-list" placeholder="Zoek gebruiker..." onkeyup="filterUserList(this)">
+                        </div>
+                        <div id="edit-user-list" class="border rounded-4 p-1 bg-white overflow-auto" style="max-height: 250px; border-color: #dee2e6 !important;">
+                            <% 
+                                const memberIds = (activeGroup.members || []).map(m => m.id);
+                            %>
+                            <% allUsers.forEach(u => { %>
+                                <div class="user-list-item d-flex align-items-center justify-content-between p-2 mb-1 rounded cursor-pointer transition-all" 
+                                     onclick="toggleUserCheckbox(this)" data-username="<%= u.username.toLowerCase() %>" style="border: 1px solid transparent;">
+                                    <label class="form-check-label mb-0 ms-2 fw-medium cursor-pointer" for="edit_user_<%= u.id %>">
+                                        <%= capitalizeName(u.username) %>
+                                    </label>
+                                    <input class="form-check-input me-2" type="checkbox" name="userIds[]" value="<%= u.id %>" 
+                                           id="edit_user_<%= u.id %>" <%= memberIds.includes(u.id) ? 'checked' : '' %> onclick="event.stopPropagation(); updateGroupButtonStates('edit')">
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuleren</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Wijzigingen Opslaan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<% } %>
 
 <script>
 function openFilePreview(url, name) {
@@ -1556,6 +1854,117 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.reload();
             });
     }
+
+    window.openEditEventModal = function() {
+        const modalEl = document.getElementById('editEventModal');
+        if (modalEl) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+    };
+
+    window.deleteEvent = function(id) {
+        if (confirm('Weet je zeker dat je dit event wilt verwijderen? Alle posts in dit event gaan ook verloren.')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/feed/group/${id}/delete`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    };
+
+    window.toggleGroupUsers = function(modalType, groupId) {
+        const userIds = eventGroupMembers[groupId] || [];
+        const container = document.getElementById(`${modalType}-user-list`);
+        if (!container) return;
+
+        // Determine if we should select or deselect
+        let allSelected = true;
+        userIds.forEach(uid => {
+            const cb = document.getElementById(`${modalType}_user_${uid}`);
+            if (cb && !cb.checked) allSelected = false;
+        });
+
+        userIds.forEach(uid => {
+            const cb = document.getElementById(`${modalType}_user_${uid}`);
+            if (cb) cb.checked = !allSelected;
+        });
+
+        updateGroupButtonStates(modalType);
+    };
+
+    window.updateGroupButtonStates = function(modalType) {
+        const modal = document.querySelector(modalType === 'create' ? '#createEventModal' : '#editEventModal');
+        if (!modal) return;
+
+        const btns = modal.querySelectorAll('.group-shortcut-btn');
+        btns.forEach(btn => {
+            const gid = btn.getAttribute('data-group-id');
+            const uids = eventGroupMembers[gid] || [];
+            
+            if (uids.length === 0) return;
+
+            let allChecked = true;
+            uids.forEach(uid => {
+                const cb = document.getElementById(`${modalType}_user_${uid}`);
+                if (!cb || !cb.checked) allChecked = false;
+            });
+
+            if (allChecked) {
+                btn.classList.add('active');
+                btn.innerHTML = `<i class="bi bi-check-lg"></i> ${btn.innerText.replace('+ ', '').replace('✓ ', '')}`;
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = `+ ${btn.innerText.replace('+ ', '').replace('✓ ', '')}`;
+            }
+        });
+    };
+
+    window.toggleUserCheckbox = function(row) {
+        const cb = row.querySelector('input[type="checkbox"]');
+        if (cb) {
+            cb.checked = !cb.checked;
+            const modalType = cb.id.startsWith('create') ? 'create' : 'edit';
+            updateGroupButtonStates(modalType);
+        }
+    };
+
+    window.filterUserList = function(input) {
+        const query = input.value.toLowerCase();
+        const targetId = input.getAttribute('data-target');
+        const container = document.getElementById(targetId);
+        if (!container) return;
+
+        const items = container.querySelectorAll('.user-list-item');
+        items.forEach(item => {
+            const username = item.getAttribute('data-username');
+            if (username.includes(query)) {
+                item.classList.remove('d-none');
+            } else {
+                item.classList.add('d-none');
+            }
+        });
+    };
+
+    window.clearUserSelection = function(modalType) {
+        const container = document.getElementById(`${modalType}-user-list`);
+        if (!container) return;
+        const cbs = container.querySelectorAll('input[type="checkbox"]');
+        cbs.forEach(cb => cb.checked = false);
+        updateGroupButtonStates(modalType);
+    };
+
+    // Initialize button states when modals open
+    ['createEventModal', 'editEventModal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('show.bs.modal', function () {
+                const type = id.startsWith('create') ? 'create' : 'edit';
+                // Small timeout to ensure DOM is ready if needed, though usually fine
+                setTimeout(() => updateGroupButtonStates(type), 10);
+            });
+        }
+    });
 });
 </script>
 
