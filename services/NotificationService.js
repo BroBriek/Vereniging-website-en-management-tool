@@ -70,22 +70,30 @@ class NotificationService {
      */
     static async sendGroupNotification(groupId, messageData) {
         try {
-            // Find all users who are members of this group
-            // We use the association defined in models/index.js
-            const users = await User.findAll({
-                include: [{
-                    model: FeedGroup,
-                    as: 'accessibleGroups',
-                    where: { id: groupId },
-                    required: true, // Only users who have this group
-                    attributes: [] // We don't need group data, just the filtering
-                }]
-            });
+            // Find if this is an event
+            const group = await FeedGroup.findByPk(groupId);
+            if (!group) return;
 
-            console.log(`NotificationService: Sending group notification to ${users.length} users for group ${groupId}`);
+            let users = [];
+            if (group.isEvent) {
+                // If it's an event, notify all active users
+                users = await User.findAll({ where: { isActive: true } });
+            } else {
+                // Find all users who are members of this group
+                users = await User.findAll({
+                    include: [{
+                        model: FeedGroup,
+                        as: 'accessibleGroups',
+                        where: { id: groupId },
+                        required: true,
+                        attributes: []
+                    }]
+                });
+            }
+
+            console.log(`NotificationService: Sending ${group.isEvent ? 'event' : 'group'} notification to ${users.length} users for group ${groupId}`);
 
             // Send to each user
-            // using Promise.all to run in parallel, but catch errors individually
             const notifications = users.map(user => this.sendIndividualNotification(user, messageData));
             await Promise.allSettled(notifications);
 

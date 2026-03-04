@@ -40,6 +40,9 @@ Post.belongsTo(FeedGroup, { foreignKey: 'groupId', as: 'group' });
 User.belongsToMany(FeedGroup, { through: UserGroupAccess, as: 'accessibleGroups', foreignKey: 'userId' });
 FeedGroup.belongsToMany(User, { through: UserGroupAccess, as: 'members', foreignKey: 'feedGroupId' });
 
+FeedGroup.belongsTo(User, { as: 'creator', foreignKey: 'creatorId' });
+User.hasMany(FeedGroup, { as: 'createdEvents', foreignKey: 'creatorId' });
+
 // Explicit relationships for cascading deletes on junction table
 User.hasMany(UserGroupAccess, { foreignKey: 'userId', onDelete: 'CASCADE', hooks: true });
 UserGroupAccess.belongsTo(User, { foreignKey: 'userId' });
@@ -93,6 +96,10 @@ const syncDatabase = async () => {
     // Sync Event specifically with alter: true to add endDate
     console.log('Syncing Event model...');
     await Event.sync({ alter: true });
+
+    // Sync FeedGroup specifically with alter: true to add isEvent, creatorId, eventDate
+    console.log('Syncing FeedGroup model...');
+    await FeedGroup.sync({ alter: true });
 
     // Sync the rest without alter (or with alter if safe, but we know UGA fails)
     // We can try to sync everything else. 
