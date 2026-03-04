@@ -1,4 +1,4 @@
-const { User, Leader } = require('../models');
+const { User, Leader, SystemState } = require('../models');
 const NotificationService = require('./NotificationService');
 
 class BirthdayService {
@@ -19,13 +19,24 @@ class BirthdayService {
         const today = new Date();
         const dateString = today.toISOString().split('T')[0]; // YYYY-MM-DD
         
+        // Try to load from memory first
         if (this.lastCheckDate === dateString) {
             return;
         }
 
-        console.log(`BirthdayService: Checking birthdays for ${dateString}...`);
-        
         try {
+            // Then check from DB if memory is null (on startup)
+            if (this.lastCheckDate === null) {
+                const state = await SystemState.findOne({ where: { key: 'last_birthday_check' } });
+                if (state && state.value === dateString) {
+                    this.lastCheckDate = dateString;
+                    console.log(`BirthdayService: Already sent notifications today (${dateString}) according to DB. Skipping.`);
+                    return;
+                }
+            }
+
+            console.log(`BirthdayService: Checking birthdays for ${dateString}...`);
+            
             const month = (today.getMonth() + 1).toString().padStart(2, '0');
             const day = today.getDate().toString().padStart(2, '0');
             const todayMMDD = `${month}-${day}`;
@@ -71,7 +82,13 @@ class BirthdayService {
                 console.log('BirthdayService: No birthdays today.');
             }
 
+            // Update memory and database
             this.lastCheckDate = dateString;
+            await SystemState.upsert({
+                key: 'last_birthday_check',
+                value: dateString
+            });
+            
         } catch (error) {
             console.error('BirthdayService: Error checking birthdays:', error);
         }

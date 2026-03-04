@@ -14,6 +14,7 @@ const UserGroupAccess = require('./UserGroupAccess');
 const Quote = require('./Quote');
 const Form = require('./Form');
 const FormResponse = require('./FormResponse');
+const SystemState = require('./SystemState');
 
 // Associations
 
@@ -126,5 +127,6 @@ module.exports = {
   UserGroupAccess,
   Quote,
   Form,
-  FormResponse
+  FormResponse,
+  SystemState
 };
