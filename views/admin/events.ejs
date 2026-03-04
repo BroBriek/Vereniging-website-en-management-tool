@@ -122,11 +122,17 @@
         descField.value = event.description || '';
         
         // Handle Quill editor update if it exists
-        // Wait a bit for the modal to be shown so Quill is definitely there if initialized
         const modalEl = document.getElementById('editModal');
         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         
         modalEl.addEventListener('shown.bs.modal', function () {
+            // If the editor isn't initialized yet, do it now
+            if (!descField.classList.contains('rich-editor-initialized')) {
+                if (window.initializeRichEditors) {
+                    window.initializeRichEditors(descField);
+                }
+            }
+            
             const quillContainer = descField.parentElement.querySelector('.ql-container');
             if (quillContainer) {
                 const quill = Quill.find(quillContainer);
