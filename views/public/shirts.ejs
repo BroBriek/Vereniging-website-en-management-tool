@@ -1,20 +1,255 @@
 <%- include('../partials/header') %>
 
-<div class="mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="display-4 fw-bold mb-0">T-Shirts</h1>
-        <% if (user && user.role === 'admin') { %>
-            <a href="/admin/page/shirts" class="btn btn-chiro btn-sm shadow-sm">
-                <i class="bi bi-pencil-square me-1"></i> Bewerk Pagina
-            </a>
-        <% } %>
-    </div>
+<div class="container my-5 pt-4">
+    <div class="row g-5">
+        <!-- Product Image Section -->
+        <div class="col-lg-6">
+            <div class="product-gallery position-sticky" style="top: 110px;">
+                <div class="product-main-image shadow-sm bg-white rounded-5 p-4 text-center border-3 border-chiro-blue border">
+                    <!-- Placeholder for Light Blue T-shirt -->
+                    <div class="position-relative py-5">
+                        <div class="bg-light-blue rounded-circle mx-auto d-flex align-items-center justify-content-center shadow-inner" style="width: 300px; height: 300px; background-color: #e3f2fd;">
+                            <span style="font-size: 10rem; line-height: 1;">👕</span>
+                        </div>
+                        <div class="badge-price position-absolute top-0 end-0 bg-chiro-yellow text-dark fs-4 fw-bold px-4 py-2 rounded-pill shadow-sm">
+                            €15
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-4 bg-white rounded-5 shadow-sm border border-light">
+                    <h5 class="fw-bold text-chiro-blue mb-3"><i class="bi bi-info-circle me-2"></i>Product details</h5>
+                    <ul class="list-unstyled mb-0 text-muted">
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 100% Kwaliteitskatoen</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Kleur: Chiro-blauw</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Duurzame bedrukking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
-    <div class="card p-4 p-md-5">
-        <div class="card-body fs-5">
-            <%- (content.main && content.main.content) ? content.main.content : '<div class="text-center py-5 text-muted"><i class="bi bi-bag display-1 mb-3 d-block"></i><p>Onze T-shirts en uniform.</p></div>' %>
+        <!-- Product Info & Order Form Section -->
+        <div class="col-lg-6">
+            <div class="ps-lg-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h1 class="display-4 fw-bold text-chiro-blue mb-0">Chiro Meeuwen T-shirt</h1>
+                    <% if (user && user.role === 'admin') { %>
+                        <a href="/admin/page/shirts" class="btn btn-sm btn-outline-secondary rounded-pill">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                    <% } %>
+                </div>
+
+                <!-- Editable Content Area (Price/Description) -->
+                <div class="mb-5 page-content-editable fs-5 text-muted">
+                    <%- (content.main && content.main.content) ? content.main.content : `
+                    <p>Het officiële T-shirt van Chiro Meeuwen! Perfect voor op zondagen, uitstappen en kamp. Zo zijn we in één oogopslag herkenbaar als één grote Chiro-familie.</p>
+                    ` %>
+                </div>
+
+                <hr class="my-5 opacity-10">
+
+                <!-- Step 1: Size -->
+                <div class="mb-5">
+                    <label class="h5 fw-bold text-chiro-blue mb-4 d-flex align-items-center">
+                        <span class="step-number me-3">1</span> Kies je maat
+                    </label>
+                    
+                    <div class="mb-4">
+                        <small class="text-uppercase fw-bold text-muted ls-1 mb-2 d-block">Kinderen</small>
+                        <div class="d-flex flex-wrap gap-2">
+                            <% ['4/6 jaar', '6/8 jaar', '8/10 jaar', '10/12 jaar', '12/14 jaar'].forEach(size => { %>
+                                <input type="radio" class="btn-check" name="size" id="size-<%= size.replace(/[^a-zA-Z0-9]/g, '') %>" value="<%= size %>" autocomplete="off" onchange="updateUI()">
+                                <label class="btn btn-size-select" for="size-<%= size.replace(/[^a-zA-Z0-9]/g, '') %>"><%= size %></label>
+                            <% }) %>
+                        </div>
+                    </div>
+
+                    <div>
+                        <small class="text-uppercase fw-bold text-muted ls-1 mb-2 d-block">Volwassenen</small>
+                        <div class="d-flex flex-wrap gap-2">
+                            <% ['S', 'M', 'L', 'XL', 'XXL'].forEach(size => { %>
+                                <input type="radio" class="btn-check" name="size" id="size-<%= size %>" value="<%= size %>" autocomplete="off" onchange="updateUI()">
+                                <label class="btn btn-size-select" for="size-<%= size %>"><%= size %></label>
+                            <% }) %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Name -->
+                <div class="mb-5">
+                    <label for="memberName" class="h5 fw-bold text-chiro-blue mb-4 d-flex align-items-center">
+                        <span class="step-number me-3">2</span> Voor wie is het?
+                    </label>
+                    <div class="input-group input-group-lg shadow-sm border rounded-pill overflow-hidden bg-white">
+                        <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-person text-chiro-red"></i></span>
+                        <input type="text" id="memberName" class="form-control border-0 py-3" placeholder="Naam + Voornaam lid" oninput="updateUI()">
+                    </div>
+                </div>
+
+                <!-- Step 3: Payment (Dynamically shown) -->
+                <div id="paymentBox" class="payment-instructions rounded-5 p-4 p-md-5 border-0 d-none">
+                    <label class="h5 fw-bold text-chiro-blue mb-4 d-flex align-items-center">
+                        <span class="step-number me-3">3</span> Bestellen maar!
+                    </label>
+                    
+                    <p class="mb-4">Top! Stort <span class="fw-bold text-chiro-red">€15</span> op het onderstaande rekeningnummer om je bestelling te bevestigen.</p>
+                    
+                    <div class="order-summary-card p-4 rounded-4 mb-4 bg-white shadow-sm border-start border-4 border-chiro-yellow">
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Rekeningnummer (IBAN)</small>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="fw-bold fs-5">BE71 7845 4208 8869</span>
+                                <button class="btn btn-sm btn-light rounded-circle" onclick="copyText('BE71 7845 4208 8869', this)">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <small class="text-muted d-block mb-1">Vermelding (Omschrijving)</small>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span id="summaryRef" class="fw-bold fs-5 text-chiro-red" style="white-space: pre-line;">...</span>
+                                <button class="btn btn-sm btn-light rounded-circle" onclick="copyRef(this)">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info border-0 rounded-4 bg-light-blue d-flex align-items-start gap-3 p-4">
+                        <i class="bi bi-truck fs-3 mt-n1 text-primary"></i>
+                        <p class="mb-0 small text-muted">
+                            Wanneer de betaling ontvangen is, zorgen wij dat het T-shirt zo snel mogelijk bij jullie terechtkomt. Meestal kan je het ophalen op de eerstvolgende Chiro-zondag!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Prompt -->
+                <div id="formPrompt" class="text-center p-5 rounded-5 border-2 border-dashed border-light bg-light mt-4">
+                    <p class="mb-0 text-muted">Maak een keuze uit de maten en vul de naam in om de betaalgegevens te zien.</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    :root {
+        --light-blue-bg: #f0f7ff;
+    }
+
+    .bg-light-blue { background-color: var(--light-blue-bg); }
+
+    .step-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background-color: var(--chiro-red);
+        color: white;
+        border-radius: 50%;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 10px rgba(219, 62, 65, 0.2);
+    }
+
+    .btn-size-select {
+        border: 2px solid #edf2f7;
+        background: white;
+        color: #4a5568;
+        padding: 10px 20px;
+        border-radius: 15px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-size-select:hover {
+        border-color: var(--chiro-blue);
+        color: var(--chiro-blue);
+        transform: translateY(-2px);
+    }
+
+    .btn-check:checked + .btn-size-select {
+        background-color: var(--chiro-blue);
+        border-color: var(--chiro-blue);
+        color: white;
+        box-shadow: 0 4px 12px rgba(29, 78, 137, 0.2);
+    }
+
+    .payment-instructions {
+        background-color: #f8faff;
+        border: 1px solid #e2e8f0 !important;
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .product-main-image {
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-image: radial-gradient(circle at 50% 50%, #fff 0%, #f9fafb 100%);
+    }
+
+    .shadow-inner {
+        box-shadow: inset 0 2px 15px rgba(0,0,0,0.05);
+    }
+
+    .ls-1 { letter-spacing: 0.5px; }
+    
+    .ls-2 { letter-spacing: 1.5px; }
+
+    .btn-light {
+        background-color: #f1f5f9;
+        border: none;
+    }
+
+    .btn-light:hover {
+        background-color: #e2e8f0;
+    }
+
+    @media (max-width: 991px) {
+        .product-gallery { position: static !important; margin-bottom: 3rem; }
+    }
+</style>
+
+<script>
+    function updateUI() {
+        const nameInput = document.getElementById('memberName');
+        const name = nameInput.value.trim();
+        const sizeElement = document.querySelector('input[name="size"]:checked');
+        const size = sizeElement ? sizeElement.value : null;
+        
+        const paymentBox = document.getElementById('paymentBox');
+        const prompt = document.getElementById('formPrompt');
+        const refText = document.getElementById('summaryRef');
+        
+        if (name && size) {
+            paymentBox.classList.remove('d-none');
+            prompt.classList.add('d-none');
+            refText.innerText = 'T-shirt — ' + name + ' — ' + size;
+        } else {
+            paymentBox.classList.add('d-none');
+            prompt.classList.remove('d-none');
+        }
+    }
+
+    function copyText(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+            const icon = btn.querySelector('i');
+            icon.className = 'bi bi-check2 text-success';
+            setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
+        });
+    }
+
+    function copyRef(btn) {
+        const text = document.getElementById('summaryRef').innerText;
+        copyText(text, btn);
+    }
+</script>
 
 <%- include('../partials/footer') %>
