@@ -85,9 +85,13 @@
                     <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
                     <% if (user) { %>
                         <li class="nav-item dropdown ms-lg-3 mt-3 mt-lg-0">
-                            <a class="nav-link dropdown-toggle btn-chiro text-white px-4 d-inline-block d-lg-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="box-shadow: none; transform: none; font-size: 1.1rem;">
-                                <i class="bi bi-person-circle me-2"></i>
-                                <%= capitalizeName(user.username) %>
+                            <a class="nav-user-pill dropdown-toggle d-inline-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <% if (user.profilePicture) { %>
+                                    <img src="<%= user.profilePicture %>" class="rounded-circle me-2 border border-2 border-white" style="width: 28px; height: 28px; object-fit: cover;" alt="<%= user.username %>">
+                                <% } else { %>
+                                    <i class="bi bi-person-circle me-2"></i>
+                                <% } %>
+                                <%= capitalizeName(user.username.split(' ')[0]) %>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-2 mt-2" aria-labelledby="userDropdown">
                                 <% if (user.role === 'admin') { %>
