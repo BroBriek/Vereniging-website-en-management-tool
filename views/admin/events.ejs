@@ -124,11 +124,11 @@
         // Handle Quill editor update if it exists
         // Wait a bit for the modal to be shown so Quill is definitely there if initialized
         const modalEl = document.getElementById('editModal');
-        const modal = new bootstrap.Modal(modalEl);
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         
         modalEl.addEventListener('shown.bs.modal', function () {
-            const quillContainer = descField.nextSibling;
-            if (quillContainer && quillContainer.classList.contains('ql-container')) {
+            const quillContainer = descField.parentElement.querySelector('.ql-container');
+            if (quillContainer) {
                 const quill = Quill.find(quillContainer);
                 if (quill) {
                     quill.root.innerHTML = event.description || '';
