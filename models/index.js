@@ -85,7 +85,7 @@ const syncDatabase = async () => {
       await sequelize.query('PRAGMA foreign_keys = OFF');
     }
 
-    // Sync User specifically with alter: true to add profilePicture
+    // Sync User specifically with alter: true to add profilePicture, calendarToken
     console.log('Syncing User model...');
     await User.sync({ alter: true });
 

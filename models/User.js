@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 const User = sequelize.define('User', {
   username: {
@@ -53,6 +54,11 @@ const User = sequelize.define('User', {
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  calendarToken: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true
   }
 });
 
@@ -65,6 +71,9 @@ User.beforeValidate((user) => {
 User.beforeCreate(async (user) => {
   if (user.password) {
     user.password = await bcrypt.hash(user.password, 10);
+  }
+  if (!user.calendarToken) {
+    user.calendarToken = crypto.randomBytes(24).toString('hex');
   }
 });
 
