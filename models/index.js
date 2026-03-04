@@ -101,6 +101,10 @@ const syncDatabase = async () => {
     console.log('Syncing FeedGroup model...');
     await FeedGroup.sync({ alter: true });
 
+    // Sync FinanceItem specifically with alter: true to add paid
+    console.log('Syncing FinanceItem model...');
+    await FinanceItem.sync({ alter: true });
+
     // Sync the rest without alter (or with alter if safe, but we know UGA fails)
     // We can try to sync everything else. 
     // If we run sequelize.sync() now, it will check everything.
