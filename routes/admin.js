@@ -102,6 +102,7 @@ const financeController = require('../controllers/financeController');
 // Existing Event CRUD
 router.get('/events', adminController.getEvents);
 router.post('/events', adminController.postEvent);
+router.put('/events/:id', adminController.updateEvent);
 router.delete('/events/:id', adminController.deleteEvent);
 
 // --- Finance Tool ---

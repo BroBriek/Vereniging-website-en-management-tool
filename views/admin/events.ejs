@@ -57,12 +57,86 @@
                 </td>
                 <td><%= event.title %></td>
                 <td>
-                    <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');">
-                        <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
-                    </form>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-primary me-1" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
+                            Bewerk
+                        </button>
+                        <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
         <% }) %>
     </tbody>
 </table>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Activiteit Bewerken</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Titel</label>
+                            <input type="text" class="form-control" name="title" id="editTitle" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label>Begindatum</label>
+                            <input type="date" class="form-control" name="date" id="editDate" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label>Einddatum (optioneel)</label>
+                            <input type="date" class="form-control" name="endDate" id="editEndDate">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label>Beschrijving</label>
+                            <textarea class="form-control rich-editor" name="description" id="editDescription" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                        <button type="submit" class="btn btn-primary">Opslaan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEditModal(event) {
+        const form = document.getElementById('editForm');
+        form.action = `/admin/events/${event.id}?_method=PUT`;
+        
+        document.getElementById('editTitle').value = event.title;
+        document.getElementById('editDate').value = event.date;
+        document.getElementById('editEndDate').value = event.endDate || '';
+        
+        const descField = document.getElementById('editDescription');
+        descField.value = event.description || '';
+        
+        // Handle Quill editor update if it exists
+        // Wait a bit for the modal to be shown so Quill is definitely there if initialized
+        const modalEl = document.getElementById('editModal');
+        const modal = new bootstrap.Modal(modalEl);
+        
+        modalEl.addEventListener('shown.bs.modal', function () {
+            const quillContainer = descField.nextSibling;
+            if (quillContainer && quillContainer.classList.contains('ql-container')) {
+                const quill = Quill.find(quillContainer);
+                if (quill) {
+                    quill.root.innerHTML = event.description || '';
+                }
+            }
+        }, { once: true });
+
+        modal.show();
+    }
+</script>
 <%- include('../partials/footer') %>
