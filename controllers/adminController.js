@@ -120,6 +120,21 @@ exports.postEvent = async (req, res) => {
     }
 };
 
+exports.updateEvent = async (req, res) => {
+    try {
+        const { title, date, endDate, description } = req.body;
+        const finalEndDate = endDate && endDate.trim() !== '' ? endDate : null;
+        const event = await Event.findByPk(req.params.id);
+        if (event) {
+            await event.update({ title, date, endDate: finalEndDate, description });
+        }
+        res.redirect('/admin/events');
+    } catch (error) {
+        console.error('Error updating event:', error);
+        res.redirect('/admin/events?error=Kon evenement niet bijwerken');
+    }
+};
+
 exports.deleteEvent = async (req, res) => {
     try {
         await Event.destroy({ where: { id: req.params.id } });
