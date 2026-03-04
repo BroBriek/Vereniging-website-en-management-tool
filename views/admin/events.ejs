@@ -14,18 +14,25 @@
     <div class="card-body">
         <form action="/admin/events" method="POST">
             <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label>Titel</label>
                     <input type="text" class="form-control" name="title" required>
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label>Begindatum</label>
                     <input type="date" class="form-control" name="date" required>
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label>Einddatum (optioneel)</label>
                     <input type="date" class="form-control" name="endDate">
-                    <small class="text-muted">Laat leeg voor eendaagse activiteiten.</small>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label>Startuur (optioneel)</label>
+                    <input type="time" class="form-control" name="startTime">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label>Einduur (optioneel)</label>
+                    <input type="time" class="form-control" name="endTime">
                 </div>
                 <div class="col-md-12 mb-3">
                     <label>Beschrijving</label>
@@ -94,6 +101,14 @@
                             <label>Einddatum (optioneel)</label>
                             <input type="date" class="form-control" name="endDate" id="editEndDate">
                         </div>
+                        <div class="col-md-3 mb-3">
+                            <label>Startuur (optioneel)</label>
+                            <input type="time" class="form-control" name="startTime" id="editStartTime">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label>Einduur (optioneel)</label>
+                            <input type="time" class="form-control" name="endTime" id="editEndTime">
+                        </div>
                         <div class="col-md-12 mb-3">
                             <label>Beschrijving</label>
                             <textarea class="form-control rich-editor" name="description" id="editDescription" rows="2"></textarea>
@@ -117,6 +132,8 @@
         document.getElementById('editTitle').value = event.title;
         document.getElementById('editDate').value = event.date;
         document.getElementById('editEndDate').value = event.endDate || '';
+        document.getElementById('editStartTime').value = event.startTime || '';
+        document.getElementById('editEndTime').value = event.endTime || '';
         
         const descField = document.getElementById('editDescription');
         descField.value = event.description || '';

@@ -20,31 +20,49 @@ exports.getCalendarICS = async (req, res) => {
         });
 
         const icsEvents = events.map(event => {
-            const startDate = new Date(event.date);
-            const start = [
-                startDate.getFullYear(),
-                startDate.getMonth() + 1,
-                startDate.getDate()
-            ];
+            const [y, m, d] = event.date.split('-').map(Number);
+            
+            let start, end;
+            let startInputType = 'utc';
+            let endInputType = 'utc';
 
-            let end;
-            if (event.endDate) {
-                const endDate = new Date(event.endDate);
-                // ICS end date is exclusive for all-day events
-                const inclusiveEndDate = new Date(endDate);
-                inclusiveEndDate.setDate(inclusiveEndDate.getDate() + 1);
-                end = [
-                    inclusiveEndDate.getFullYear(),
-                    inclusiveEndDate.getMonth() + 1,
-                    inclusiveEndDate.getDate()
-                ];
+            if (event.startTime) {
+                const [h, min] = event.startTime.split(':').map(Number);
+                start = [y, m, d, h, min];
+                startInputType = 'local';
+
+                const [ey, em, ed] = (event.endDate || event.date).split('-').map(Number);
+                if (event.endTime) {
+                    const [eh, emin] = event.endTime.split(':').map(Number);
+                    end = [ey, em, ed, eh, emin];
+                } else {
+                    // Default to same time on endDate if multi-day, or 1 hour later if same day
+                    if (event.endDate && event.endDate !== event.date) {
+                        end = [ey, em, ed, h, min];
+                    } else {
+                        const startDateObj = new Date(y, m - 1, d, h, min);
+                        startDateObj.setHours(startDateObj.getHours() + 1);
+                        end = [
+                            startDateObj.getFullYear(),
+                            startDateObj.getMonth() + 1,
+                            startDateObj.getDate(),
+                            startDateObj.getHours(),
+                            startDateObj.getMinutes()
+                        ];
+                    }
+                }
+                endInputType = 'local';
             } else {
-                const endDate = new Date(startDate);
-                endDate.setDate(endDate.getDate() + 1);
+                // All-day event
+                start = [y, m, d];
+                const [ey, em, ed] = (event.endDate || event.date).split('-').map(Number);
+                const endDateObj = new Date(Date.UTC(ey, em - 1, ed));
+                endDateObj.setUTCDate(endDateObj.getUTCDate() + 1);
+                
                 end = [
-                    endDate.getFullYear(),
-                    endDate.getMonth() + 1,
-                    endDate.getDate()
+                    endDateObj.getUTCFullYear(),
+                    endDateObj.getUTCMonth() + 1,
+                    endDateObj.getUTCDate()
                 ];
             }
 
@@ -60,6 +78,10 @@ exports.getCalendarICS = async (req, res) => {
             return {
                 start,
                 end,
+                startInputType,
+                startOutputType: startInputType,
+                endInputType,
+                endOutputType: endInputType,
                 title: event.title,
                 description: plainDescription,
                 categories: ['Chiro Vreugdeland'],
@@ -70,9 +92,18 @@ exports.getCalendarICS = async (req, res) => {
         if (icsEvents.length === 0) {
             // Provide a dummy event if no events found to avoid empty calendar errors in some clients
             const now = new Date();
+            const start = [now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate()];
+            const endDateObj = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+            endDateObj.setUTCDate(endDateObj.getUTCDate() + 1);
+            const end = [
+                endDateObj.getUTCFullYear(),
+                endDateObj.getUTCMonth() + 1,
+                endDateObj.getUTCDate()
+            ];
+
             icsEvents.push({
-                start: [now.getFullYear(), now.getMonth() + 1, now.getDate()],
-                end: [now.getFullYear(), now.getMonth() + 1, now.getDate() + 1],
+                start,
+                end,
                 title: 'Geen evenementen gepland',
                 description: 'Er zijn momenteel geen evenementen gepland op de website.',
                 productId: 'chiromeeuwen/ics'
