@@ -8,6 +8,7 @@ router.get('/home', publicController.getPublicHome);
 router.get('/praktisch', publicController.getPractical);
 router.get('/leiding', publicController.getLeaders);
 router.get('/kalender', publicController.getCalendar);
+router.get('/kalender/subscribe.ics', publicController.getCalendarICS);
 router.get('/afdelingen', publicController.getDepartments);
 router.get('/t-shirts', publicController.getShirts);
 router.get('/inschrijven', publicController.getRegister);
