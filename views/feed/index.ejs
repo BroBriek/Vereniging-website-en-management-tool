@@ -19,24 +19,91 @@
 
     .nav-chip {
         border-radius: 50rem;
-        padding: 0.5rem 1rem;
+        padding: 0.5rem 1.25rem;
         font-weight: 500;
         transition: all 0.2s;
-        border: 2px solid transparent;
+        border: 2px solid #eee;
         background-color: white;
         color: #555;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        outline: none !important;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 576px) {
+        .nav-chip {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
     }
     
-    .nav-chip:hover {
-        transform: translateY(-2px);
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        overflow-x: auto;
+        /* Center if fits, start if overflows */
+        justify-content: safe center; 
+    }
+
+    .carousel, .carousel-inner, .carousel-item {
+        overflow: visible !important;
+    }
+
+    .carousel-nav-container {
+        display: flex;
+        justify-content: center;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        padding: 0.5rem 0.25rem;
+    }
+
+    .carousel-control-prev, .carousel-control-next {
+        width: 30px;
+        height: 30px;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 50%;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.3;
+        border: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333;
+    }
+
+    .carousel-control-prev:hover, .carousel-control-next:hover {
+        opacity: 1;
+        background: rgba(0, 0, 0, 0.1);
+        transform: translateY(-50%) scale(1.1);
+        color: #000;
+    }
+
+    .carousel-control-prev { left: -5px; }
+    .carousel-control-next { right: -5px; }
+
+    .nav-chip:hover, .nav-chip:focus {
+...        transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         color: #db3e41;
+        border-color: #db3e41;
+        outline: none !important;
+        text-decoration: none;
     }
     
     .nav-chip.active {
         background-color: #db3e41;
         color: white;
+        border-color: #db3e41;
         box-shadow: 0 4px 8px rgba(219, 62, 65, 0.3);
     }
 
@@ -64,6 +131,7 @@
         font-weight: bold;
         font-size: 1.1rem;
         box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        flex-shrink: 0;
     }
 
     .comment-bubble {
@@ -303,22 +371,22 @@ function autoResize(element) {
     
     <!-- Welcome Header -->
     <div class="mb-4">
-        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center align-items-start gap-3 mb-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center align-items-start gap-3 mb-3">
             <div>
                 <h1 class="font-playful text-dark mb-0">Leidingshoekje</h1>
             </div>
-            <div class="d-flex gap-2 w-100 w-sm-auto">
-                <a href="/feed/calendar" class="btn btn-outline-danger btn-sm rounded-pill px-3 flex-fill text-center">
-                    <i class="bi bi-calendar3"></i> Leidingskalender
+            <div class="d-flex flex-wrap gap-2 w-100 w-md-auto">
+                <a href="/feed/calendar" class="btn btn-outline-danger btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center">
+                    <i class="bi bi-calendar3"></i> <span class="d-inline d-sm-none d-lg-inline">Kalender</span><span class="d-none d-sm-inline d-lg-none">Leidingskalender</span>
                 </a>
-                <a href="/quotes" class="btn btn-outline-primary btn-sm rounded-pill px-3 flex-fill text-center">
+                <a href="/quotes" class="btn btn-outline-primary btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center">
                     <i class="bi bi-chat-quote-fill"></i> Quoteboekje
                 </a>
-                <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3 flex-fill text-center" data-bs-toggle="modal" data-bs-target="#createEventModal">
+                <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center" data-bs-toggle="modal" data-bs-target="#createEventModal">
                     <i class="bi bi-calendar-plus-fill"></i> Nieuw Event
                 </button>
                 <% if (user.role === 'admin') { %>
-                    <a href="/admin/feedgroups" class="btn btn-outline-dark btn-sm rounded-pill px-3 flex-fill text-center">
+                    <a href="/admin/feedgroups" class="btn btn-outline-dark btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center">
                         <i class="bi bi-gear-fill"></i> Beheer
                     </a>
                 <% } %>
@@ -366,6 +434,13 @@ function autoResize(element) {
             const normalGroups = groups.filter(g => !g.isEvent);
             const eventGroups = groups.filter(g => g.isEvent);
             
+            // Sort normal groups by year (descending)
+            normalGroups.sort((a, b) => {
+                if (!a.year) return 1;
+                if (!b.year) return -1;
+                return b.year.localeCompare(a.year);
+            });
+
             const chunkArray = (arr, size) => {
                 const chunks = [];
                 for (let i = 0; i < arr.length; i += size) {
@@ -376,61 +451,101 @@ function autoResize(element) {
 
             const normalChunks = chunkArray(normalGroups, 3);
             const eventChunks = chunkArray(eventGroups, 3);
+
+            // Determine which chunk should be active
+            let activeNormalChunkIndex = 0;
+            if (activeGroup && !activeGroup.isEvent) {
+                activeNormalChunkIndex = normalChunks.findIndex(chunk => chunk.some(g => g.id === activeGroup.id));
+                if (activeNormalChunkIndex === -1) activeNormalChunkIndex = 0;
+            }
         %>
 
         <% if (normalGroups.length > 0) { %>
-            <div id="feedGroupsCarousel" class="carousel slide mb-3" data-bs-ride="false" data-bs-interval="false">
-                <div class="carousel-inner">
-                    <% normalChunks.forEach((chunk, index) => { %>
-                        <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                            <div class="d-flex justify-content-center gap-2 py-2 px-4">
-                                <% chunk.forEach(g => { %>
-                                    <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>">
-                                        <%= g.name %> <small class="opacity-75"><%= g.year ? g.year : '' %></small>
-                                    </a>
-                                <% }) %>
+            <% if (normalGroups.length > 3) { %>
+                <div id="feedGroupsCarousel" class="carousel slide mb-3" data-bs-ride="false" data-bs-interval="false">
+                    <div class="carousel-inner">
+                        <% normalChunks.forEach((chunk, index) => { %>
+                            <div class="carousel-item <%= index === activeNormalChunkIndex ? 'active' : '' %>">
+                                <div class="carousel-nav-container">
+                                    <% chunk.forEach(g => { %>
+                                        <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>">
+                                            <span><%= g.name %></span>
+                                            <% if (g.year) { %>
+                                                <small class="opacity-75" style="margin-top: 2px;"><%= g.year %></small>
+                                            <% } %>
+                                        </a>
+                                    <% }) %>
+                                </div>
                             </div>
-                        </div>
+                        <% }) %>
+                    </div>
+                    <% if (normalChunks.length > 1) { %>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#feedGroupsCarousel" data-bs-slide="prev" aria-label="Vorige groep">
+                            <i class="bi bi-chevron-left" style="font-size: 1.1rem; -webkit-text-stroke: 1px;"></i>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#feedGroupsCarousel" data-bs-slide="next" aria-label="Volgende groep">
+                            <i class="bi bi-chevron-right" style="font-size: 1.1rem; -webkit-text-stroke: 1px;"></i>
+                        </button>
+                    <% } %>
+                </div>
+            <% } else { %>
+                <div class="carousel-nav-container no-scrollbar">
+                    <% normalGroups.forEach(g => { %>
+                        <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>">
+                            <span><%= g.name %></span>
+                            <% if (g.year) { %>
+                                <small class="opacity-75" style="margin-top: 2px;"><%= g.year %></small>
+                            <% } %>
+                        </a>
                     <% }) %>
                 </div>
-                <% if (normalChunks.length > 1) { %>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#feedGroupsCarousel" data-bs-slide="prev" style="width: 5%; left: -10px;" aria-label="Vorige groep">
-                        <span class="carousel-control-prev-icon shadow-sm" aria-hidden="true"></span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#feedGroupsCarousel" data-bs-slide="next" style="width: 5%; right: -10px;" aria-label="Volgende groep">
-                        <span class="carousel-control-next-icon shadow-sm" aria-hidden="true"></span>
-                    </button>
-                <% } %>
-            </div>
+            <% } %>
         <% } %>
 
         <% if (eventGroups.length > 0) { %>
             <div class="text-center mb-2">
                 <span class="badge bg-light text-muted fw-normal rounded-pill">Events</span>
             </div>
-            <div id="eventGroupsCarousel" class="carousel slide mb-4" data-bs-ride="false" data-bs-interval="false">
-                <div class="carousel-inner">
-                    <% eventChunks.forEach((chunk, index) => { %>
-                        <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                            <div class="d-flex justify-content-center gap-2 py-2 px-4">
-                                <% chunk.forEach(g => { %>
-                                    <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>" style="<%= (activeGroup && g.id === activeGroup.id) ? 'background-color: #3498db; box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); border-color: #3498db;' : 'border-color: #3498db; color: #2980b9;' %>">
-                                        <i class="bi bi-calendar-event me-1"></i> <%= g.name %>
-                                    </a>
-                                <% }) %>
+            <%
+                let activeEventChunkIndex = 0;
+                if (activeGroup && activeGroup.isEvent) {
+                    activeEventChunkIndex = eventChunks.findIndex(chunk => chunk.some(g => g.id === activeGroup.id));
+                    if (activeEventChunkIndex === -1) activeEventChunkIndex = 0;
+                }
+            %>
+            <% if (eventGroups.length > 3) { %>
+                <div id="eventGroupsCarousel" class="carousel slide mb-4" data-bs-ride="false" data-bs-interval="false">
+                    <div class="carousel-inner">
+                        <% eventChunks.forEach((chunk, index) => { %>
+                            <div class="carousel-item <%= index === activeEventChunkIndex ? 'active' : '' %>">
+                                <div class="carousel-nav-container">
+                                    <% chunk.forEach(g => { %>
+                                        <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>" style="<%= (activeGroup && g.id === activeGroup.id) ? 'background-color: #3498db; box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); border-color: #3498db;' : 'border-color: #3498db; color: #2980b9;' %>">
+                                            <i class="bi bi-calendar-event me-1"></i> <span><%= g.name %></span>
+                                        </a>
+                                    <% }) %>
+                                </div>
                             </div>
-                        </div>
+                        <% }) %>
+                    </div>
+                    <% if (eventChunks.length > 1) { %>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#eventGroupsCarousel" data-bs-slide="prev" aria-label="Vorig event">
+                            <i class="bi bi-chevron-left" style="font-size: 1.1rem; -webkit-text-stroke: 1px;"></i>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#eventGroupsCarousel" data-bs-slide="next" aria-label="Volgend event">
+                            <i class="bi bi-chevron-right" style="font-size: 1.1rem; -webkit-text-stroke: 1px;"></i>
+                        </button>
+                    <% } %>
+                </div>
+            <% } else { %>
+                <div class="carousel-nav-container no-scrollbar">
+                    <% eventGroups.forEach(g => { %>
+                        <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>" style="<%= (activeGroup && g.id === activeGroup.id) ? 'background-color: #3498db; box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); border-color: #3498db;' : 'border-color: #3498db; color: #2980b9;' %>">
+                            <i class="bi bi-calendar-event me-1"></i> <span><%= g.name %></span>
+                        </a>
                     <% }) %>
                 </div>
-                <% if (eventChunks.length > 1) { %>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#eventGroupsCarousel" data-bs-slide="prev" style="width: 5%; left: -10px;" aria-label="Vorig event">
-                        <span class="carousel-control-prev-icon shadow-sm" aria-hidden="true"></span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#eventGroupsCarousel" data-bs-slide="next" style="width: 5%; right: -10px;" aria-label="Volgend event">
-                        <span class="carousel-control-next-icon shadow-sm" aria-hidden="true"></span>
-                    </button>
-                <% } %>
-            </div>
+            <% } %>
         <% } %>
 
         <% if (activeGroup) { %>
@@ -483,7 +598,7 @@ function autoResize(element) {
     <div class="card post-card mb-4">
         <div class="card-body d-flex align-items-center p-3">
              <% if (user.profilePicture) { %>
-                <img src="<%= user.profilePicture %>" class="rounded-circle me-3 border shadow-sm" style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(user.username) %>" onclick="showPolaroid('<%= user.profilePicture %>', '<%= capitalizeName(user.username) %>')">
+                <img src="<%= user.profilePicture %>" class="rounded-circle me-3 flex-shrink-0 border shadow-sm" style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(user.username) %>" onclick="showPolaroid('<%= user.profilePicture %>', '<%= capitalizeName(user.username) %>')">
              <% } else { %>
                 <div class="avatar-circle me-3" style="background-color: <%= getAvatarColor(user.username) %>; width: 40px; height: 40px; font-size: 1rem;">
                     <%= getInitials(user.username) %>
@@ -1302,6 +1417,7 @@ function showLikesModal(element) {
             img.style.width = '40px';
             img.style.height = '40px';
             img.style.objectFit = 'cover';
+            img.style.flexShrink = '0';
             img.style.cursor = 'pointer';
             img.onclick = function() {
                 // Ensure polaroid is visible over modal
