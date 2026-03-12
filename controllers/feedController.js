@@ -2,6 +2,8 @@ const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess, Lea
 const quoteController = require('./quoteController');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
+const http = require('http');
 const { Op } = require('sequelize');
 const NotificationService = require('../services/NotificationService');
 
@@ -23,12 +25,31 @@ const getInitials = (username) => {
 
 const highlightMentions = (text) => {
     if (!text) return '';
-    // Match HTML tags OR mentions. Capture group 1 is tag, group 2 is username.
-    return text.replace(/(<[^>]+>)|@(\w+)/g, (match, tag, username) => {
-        if (tag) return tag; // Return HTML tags unchanged
-        const capitalized = username.charAt(0).toUpperCase() + username.slice(1).toLowerCase();
-        return `<span class="text-primary fw-bold">@${capitalized}</span>`;
+    
+    // 1. Process Mentions first, but avoid touching content inside HTML tags
+    // We'll use a more sophisticated approach: split by tags, process text nodes
+    const parts = text.split(/(<[^>]+>)/g);
+    const processedParts = parts.map(part => {
+        if (part.startsWith('<')) {
+            // This is an HTML tag. 
+            // If it's an img tag, add our error handler if it's an external URL
+            if (part.toLowerCase().startsWith('<img')) {
+                // Check if it's an external URL (not starting with /uploads/)
+                if (part.includes('src="http') && !part.includes('src="/uploads/')) {
+                    // Add onerror handler to external images to help debug/fix expired links
+                    return part.replace('>', ' onerror="handleBrokenImage(this)">');
+                }
+            }
+            return part;
+        }
+        // This is text content, process mentions
+        return part.replace(/@(\w+)/g, (match, username) => {
+            const capitalized = username.charAt(0).toUpperCase() + username.slice(1).toLowerCase();
+            return `<span class="text-primary fw-bold">@${capitalized}</span>`;
+        });
     });
+
+    return processedParts.join('');
 };
 
 const stripHtml = (text) => {
@@ -1128,5 +1149,62 @@ exports.postDeleteEvent = async (req, res) => {
     } catch (error) {
         console.error('Delete Event Error:', error);
         res.status(500).send('Kon event niet verwijderen');
+    }
+};
+
+exports.fixImageApi = async (req, res) => {
+    const { url } = req.body;
+    if (!url || typeof url !== 'string') {
+        return res.status(400).json({ error: 'Geen URL opgegeven' });
+    }
+
+    // Security check: only allow images and prevent SSRF to local network
+    if (!url.startsWith('http')) {
+        return res.status(400).json({ error: 'Ongeldige URL' });
+    }
+
+    try {
+        const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
+        const protocol = url.startsWith('https') ? https : http;
+        const filename = `fixed-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(new URL(url).pathname) || '.jpg'}`;
+        const filePath = path.join(uploadDir, filename);
+
+        const file = fs.createWriteStream(filePath);
+        
+        protocol.get(url, (response) => {
+            if (response.statusCode !== 200) {
+                file.close();
+                fs.unlink(filePath, () => {});
+                return res.status(response.statusCode).json({ error: `Fout bij ophalen afbeelding: ${response.statusCode}` });
+            }
+
+            // Check content type
+            const contentType = response.headers['content-type'];
+            if (contentType && !contentType.startsWith('image/')) {
+                file.close();
+                fs.unlink(filePath, () => {});
+                return res.status(400).json({ error: 'URL is geen afbeelding' });
+            }
+
+            response.pipe(file);
+
+            file.on('finish', () => {
+                file.close();
+                res.json({ url: `/uploads/${filename}` });
+            });
+        }).on('error', (err) => {
+            file.close();
+            fs.unlink(filePath, () => {});
+            console.error('Download error:', err);
+            res.status(500).json({ error: 'Fout bij downloaden afbeelding' });
+        });
+
+    } catch (error) {
+        console.error('Fix Image Error:', error);
+        res.status(500).json({ error: 'Interne serverfout' });
     }
 };

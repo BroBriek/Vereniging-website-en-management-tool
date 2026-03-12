@@ -14,7 +14,22 @@ function getInitials(username) {
 }
 function highlightMentions(text) {
     if (!text) return '';
-    return text.replace(/@(\w+)/g, '<span class="text-primary fw-bold">@$1</span>');
+    const parts = text.split(/(<[^>]+>)/g);
+    const processedParts = parts.map(part => {
+        if (part.startsWith('<')) {
+            if (part.toLowerCase().startsWith('<img')) {
+                if (part.includes('src="http') && !part.includes('src="/uploads/')) {
+                    return part.replace('>', ' onerror="handleBrokenImage(this)">');
+                }
+            }
+            return part;
+        }
+        return part.replace(/@(\w+)/g, (match, username) => {
+            const capitalized = username.charAt(0).toUpperCase() + username.slice(1).toLowerCase();
+            return `<span class="text-primary fw-bold">@${capitalized}</span>`;
+        });
+    });
+    return processedParts.join('');
 }
 %>
 <div class="d-flex mb-3 align-items-start" id="comment-container-<%= comment.id %>">

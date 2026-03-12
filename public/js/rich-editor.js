@@ -73,34 +73,66 @@ window.initializeRichEditors = function(elements) {
                 textarea.value = quill.root.innerHTML;
             });
 
-            // Image Handler
+            // Handle Pasting Images
+            quill.root.addEventListener('paste', (event) => {
+                const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const file = items[i].getAsFile();
+                        uploadFile(file, quill);
+                    }
+                }
+            });
+
+            // Handle Dropping Images
+            quill.root.addEventListener('drop', (event) => {
+                event.preventDefault();
+                const files = event.dataTransfer.files;
+                if (files && files.length > 0) {
+                    for (let i = 0; i < files.length; i++) {
+                        if (files[i].type.indexOf('image') !== -1) {
+                            uploadFile(files[i], quill);
+                        }
+                    }
+                }
+            }, false);
+
+            // Reusable Upload Function
+            async function uploadFile(file, quillInstance) {
+                const formData = new FormData();
+                formData.append('image', file);
+
+                try {
+                    // Show a placeholder or loading state if needed
+                    const range = quillInstance.getSelection() || { index: quillInstance.getLength() };
+                    
+                    const response = await fetch('/admin/api/upload-image', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) throw new Error('Upload failed');
+
+                    const data = await response.json();
+                    quillInstance.insertEmbed(range.index, 'image', data.url);
+                    quillInstance.setSelection(range.index + 1);
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Kon afbeelding niet uploaden. Probeer opnieuw.');
+                }
+            }
+
+            // Image Handler for toolbar
             function imageHandler() {
                 const input = document.createElement('input');
                 input.setAttribute('type', 'file');
                 input.setAttribute('accept', 'image/*');
                 input.click();
 
-                input.onchange = async () => {
+                input.onchange = () => {
                     const file = input.files[0];
                     if (file) {
-                        const formData = new FormData();
-                        formData.append('image', file);
-
-                        try {
-                            const range = quill.getSelection();
-                            const response = await fetch('/admin/api/upload-image', {
-                                method: 'POST',
-                                body: formData
-                            });
-
-                            if (!response.ok) throw new Error('Upload failed');
-
-                            const data = await response.json();
-                            quill.insertEmbed(range.index, 'image', data.url);
-                        } catch (error) {
-                            console.error('Error:', error);
-                            alert('Kon afbeelding niet uploaden. Probeer opnieuw.');
-                        }
+                        uploadFile(file, quill);
                     }
                 };
             }
