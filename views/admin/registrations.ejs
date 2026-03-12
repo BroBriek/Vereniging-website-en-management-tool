@@ -1,9 +1,9 @@
 <%- include('../partials/header') %>
 
 <div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-            <h1>
+            <h1 class="mb-0">
                 Inschrijvingen 
                 <span class="text-muted fs-4">
                     <% if (selectedPeriod === 'all') { %>
@@ -15,34 +15,55 @@
             </h1>
         </div>
 
-        <!-- Search Bar -->
-        <form action="/admin/registrations" method="GET" class="d-flex flex-grow-1 mx-4" style="max-width: 400px;">
-            <input type="hidden" name="period" value="<%= selectedPeriod %>">
-            <div class="input-group">
-                <input type="text" name="search" class="form-control" placeholder="Zoek op naam, email..." value="<%= searchQuery %>">
-                <% if (searchQuery) { %>
-                    <a href="/admin/registrations?period=<%= selectedPeriod %>" class="btn btn-outline-secondary" title="Zoekopdracht wissen"><i class="bi bi-x-lg"></i></a>
-                <% } %>
-                <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
-            </div>
-        </form>
+        <!-- Search & Sort Bar -->
+        <div class="d-flex flex-grow-1 gap-2 flex-wrap align-items-center" style="max-width: 600px;">
+            <form action="/admin/registrations" method="GET" class="d-flex flex-grow-1">
+                <input type="hidden" name="period" value="<%= selectedPeriod %>">
+                <input type="hidden" name="sort" value="<%= sortField %>">
+                <input type="hidden" name="direction" value="<%= sortDirection %>">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control shadow-sm border-0" placeholder="Zoek op naam, email..." value="<%= searchQuery %>">
+                    <% if (searchQuery) { %>
+                        <a href="/admin/registrations?period=<%= selectedPeriod %>&sort=<%= sortField %>&direction=<%= sortDirection %>" class="btn btn-white border-0 shadow-sm" title="Zoekopdracht wissen"><i class="bi bi-x-lg"></i></a>
+                    <% } %>
+                    <button class="btn btn-primary shadow-sm" type="submit"><i class="bi bi-search"></i></button>
+                </div>
+            </form>
 
-        <div>
-            <div class="btn-group me-2">
-                <button type="button" class="btn btn-outline-danger dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-file-pdf"></i> PDF
+            <div class="dropdown">
+                <button class="btn btn-white shadow-sm border-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-sort-alpha-down"></i> Sorteer: <%= 
+                        sortField === 'name' ? 'Naam' : 
+                        sortField === 'group' ? 'Groep' : 
+                        sortField === 'type' ? 'Rol' : 
+                        sortField === 'birthdate' ? 'Leeftijd' : 
+                        sortField === 'period' ? 'Jaar' : 'Standaard' 
+                    %>
                 </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="/admin/registrations/export-pdf?mode=current">Huidige Periode (<%= currentPeriod %>)</a></li>
-                    <li><a class="dropdown-item" href="/admin/registrations/export-pdf?mode=all">Alles (Archief)</a></li>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li><h6 class="dropdown-header">Sorteer op</h6></li>
+                    <li><a class="dropdown-item <%= sortField === 'default' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=default&direction=ASC">Standaard (Groep)</a></li>
+                    <li><a class="dropdown-item <%= sortField === 'name' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=name&direction=ASC">Naam (A-Z)</a></li>
+                    <li><a class="dropdown-item <%= sortField === 'birthdate' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=birthdate&direction=ASC">Leeftijd</a></li>
+                    <li><a class="dropdown-item <%= sortField === 'type' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=type&direction=ASC">Rol (Leiding eerst)</a></li>
+                    <% if (selectedPeriod === 'all') { %>
+                        <li><a class="dropdown-item <%= sortField === 'period' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=period&direction=DESC">Jaar (Nieuwste eerst)</a></li>
+                    <% } %>
                 </ul>
             </div>
+        </div>
 
-            <div class="btn-group me-2">
-                <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Excel
+        <div class="d-flex gap-2">
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-dark dropdown-toggle shadow-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-download"></i> Exporteren
                 </button>
-                <ul class="dropdown-menu">
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li><h6 class="dropdown-header"><i class="bi bi-file-pdf text-danger"></i> PDF Document</h6></li>
+                    <li><a class="dropdown-item" href="/admin/registrations/export-pdf?mode=current">Huidige Periode (<%= currentPeriod %>)</a></li>
+                    <li><a class="dropdown-item" href="/admin/registrations/export-pdf?mode=all">Alles (Archief)</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><h6 class="dropdown-header"><i class="bi bi-file-earmark-spreadsheet text-success"></i> Excel Spreadsheet</h6></li>
                     <li><a class="dropdown-item" href="/admin/registrations/export?mode=current">Huidige Periode (<%= currentPeriod %>)</a></li>
                     <li><a class="dropdown-item" href="/admin/registrations/export?mode=all">Alles (Archief)</a></li>
                 </ul>
@@ -50,26 +71,26 @@
             
             <% if (canEdit) { %>
             <form action="/admin/registrations/new-period" method="POST" class="d-inline" onsubmit="return confirm('Ben je zeker? Dit start een nieuwe inschrijvingsperiode. De huidige lijst wordt verborgen (maar niet verwijderd).');">
-                <button type="submit" class="btn btn-warning" title="Start een nieuw werkjaar"><i class="bi bi-calendar-plus"></i> Nieuwe Periode</button>
+                <button type="submit" class="btn btn-warning shadow-sm" title="Start een nieuw werkjaar"><i class="bi bi-calendar-plus"></i></button>
             </form>
             <% } %>
 
-            <a href="<%= user.role === 'admin' ? '/admin' : '/' %>" class="btn btn-secondary ms-2">Terug</a>
+            <a href="<%= user.role === 'admin' ? '/admin' : '/' %>" class="btn btn-secondary shadow-sm">Terug</a>
         </div>
     </div>
 
     <div class="row">
         <!-- Sidebar: Period Archive -->
-        <div class="col-md-2 mb-4">
-            <div class="list-group">
-                <div class="list-group-item bg-dark text-white">
+        <div class="col-lg-2 col-md-4 mb-4">
+            <div class="list-group shadow-sm border-0">
+                <div class="list-group-item bg-dark text-white border-0 py-3">
                     <i class="bi bi-archive"></i> Archief
                 </div>
-                <a href="/admin/registrations?period=all" class="list-group-item list-group-item-action <%= selectedPeriod === 'all' ? 'active' : '' %>">
+                <a href="/admin/registrations?period=all" class="list-group-item list-group-item-action border-0 <%= selectedPeriod === 'all' ? 'active' : '' %>">
                     Alles Tonen
                 </a>
                 <% allPeriods.forEach(p => { %>
-                    <a href="/admin/registrations?period=<%= p %>" class="list-group-item list-group-item-action <%= selectedPeriod === p ? 'active' : '' %> d-flex justify-content-between align-items-center">
+                    <a href="/admin/registrations?period=<%= p %>" class="list-group-item list-group-item-action border-0 <%= selectedPeriod === p ? 'active' : '' %> d-flex justify-content-between align-items-center">
                         <%= p %>
                         <% if (p === currentPeriod) { %>
                             <span class="badge bg-success rounded-pill" title="Huidige actieve periode">Actief</span>
@@ -80,119 +101,110 @@
         </div>
 
         <!-- Main Content -->
-        <div class="col-md-10">
-            <!-- Desktop View: Table -->
-            <div class="table-responsive bg-white rounded shadow-sm d-none d-lg-block">
-                <table class="table table-hover table-striped mb-0">
-                    <thead class="table-dark">
-                        <% 
-                            const getSortLink = (field, label) => {
-                                const nextDir = (sortField === field && sortDirection === 'ASC') ? 'DESC' : 'ASC';
-                                let url = `/admin/registrations?period=${selectedPeriod}`;
-                                if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
-                                url += `&sort=${field}&direction=${nextDir}`;
+        <div class="col-lg-10 col-md-8">
+            <!-- Desktop View: Vertical List of Cards -->
+            <div class="d-none d-lg-block">
+                <% registrations.forEach(reg => { %>
+                    <div class="card mb-3 shadow-sm border-0 overflow-hidden">
+                        <div class="card-body p-0">
+                            <div class="row g-0 align-items-center">
+                                <!-- Status Color Strip -->
+                                <div class="col-auto" style="width: 6px; align-self: stretch; background-color: <%= reg.type === 'leiding' ? '#dc3545' : '#198754' %>;"></div>
                                 
-                                let icon = '';
-                                if (sortField === field) {
-                                    icon = sortDirection === 'ASC' ? '<i class="bi bi-caret-down-fill"></i>' : '<i class="bi bi-caret-up-fill"></i>';
-                                } else {
-                                    icon = '<i class="bi bi-arrow-down-up text-white-50" style="font-size: 0.8em;"></i>';
-                                }
-                                
-                                return `<a href="${url}" class="text-white text-decoration-none d-flex align-items-center gap-2">${label} ${icon}</a>`;
-                            };
-                        %>
-                        <tr>
-                            <th><%- getSortLink('group', 'Groep') %></th>
-                            <th><%- getSortLink('type', 'Rol') %></th>
-                            <th><%- getSortLink('name', 'Naam') %></th>
-                            <% if (selectedPeriod === 'all') { %> <th><%- getSortLink('period', 'Jaar') %></th> <% } %>
-                            <th><%- getSortLink('birthdate', 'Geboortedatum') %></th>
-                            <th>Contact (Email/Tel)</th>
-                            <th>Ouders / Extra</th>
-                            <th>Medisch</th>
-                            <% if (canEdit) { %>
-                            <th>Actie</th>
-                            <% } %>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% registrations.forEach(reg => { %>
-                            <tr>
-                                <td><span class="badge bg-secondary"><%= reg.group %></span></td>
-                                <td>
-                                    <% if (reg.type === 'leiding') { %>
-                                        <span class="badge bg-danger">Leiding</span>
-                                    <% } else { %>
-                                        <span class="badge bg-success">Lid</span>
-                                    <% } %>
-                                </td>
-                                <td><strong><%= reg.firstName %> <%= reg.lastName %></strong></td>
-                                <% if (selectedPeriod === 'all') { %> 
-                                    <td><span class="badge bg-light text-dark border"><%= reg.period %></span></td> 
-                                <% } %>
-                                <td><%= reg.birthdate %></td>
-                                <td>
-                                    <%= reg.email %><br>
-                                    <small class="text-muted"><%= reg.type === 'lid' ? reg.parentsPhone : reg.phone %></small>
-                                </td>
-                                <td>
-                                    <% if (reg.type === 'lid') { %>
-                                        <small>Ouders: <%= reg.parentsNames %></small><br>
-                                        <% if(reg.memberPhone) { %><small>GSM Lid: <%= reg.memberPhone %></small><br><% } %>
-                                        <small>Foto's: <%= reg.photoPermission ? 'Ja' : 'Nee' %></small>
-                                    <% } else { %>
-                                        -
-                                    <% } %>
-                                </td>
-                                <td>
-                                    <% if (reg.medicalInfo) { %>
-                                        <span class="text-danger" title="<%= reg.medicalInfo %>"><i class="bi bi-exclamation-circle-fill"></i> Zie info</span>
-                                    <% } else { %>
-                                        <span class="text-muted">-</span>
-                                    <% } %>
-                                </td>
-                                <% if (canEdit) { %>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="/admin/registrations/<%= reg.id %>/edit" class="btn btn-sm btn-outline-primary" title="Bewerk"><i class="bi bi-pencil"></i></a>
-                                        <form action="/admin/registrations/<%= reg.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?');">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijder"><i class="bi bi-trash"></i></button>
-                                        </form>
+                                <div class="col p-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-3">
+                                            <h5 class="mb-0 text-primary fw-bold"><%= reg.firstName %> <%= reg.lastName %></h5>
+                                            <div class="mt-1">
+                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"><%= reg.group %></span>
+                                                <% if (selectedPeriod === 'all') { %>
+                                                    <span class="badge bg-info-subtle text-info border border-info-subtle"><%= reg.period %></span>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-2 border-start ps-4">
+                                            <small class="text-muted d-block text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Geboortedatum</small>
+                                            <span class="fw-bold"><%= reg.birthdate %></span>
+                                            <small class="text-muted d-block">(<%= new Date().getFullYear() - new Date(reg.birthdate).getFullYear() %>j)</small>
+                                        </div>
+
+                                        <div class="col-3 border-start ps-4">
+                                            <small class="text-muted d-block text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Contact Lid</small>
+                                            <% if (reg.type === 'leiding') { %>
+                                                <div class="text-break mb-1" title="<%= reg.email %>"><i class="bi bi-envelope text-muted me-2"></i><%= reg.email %></div>
+                                                <div class="fw-bold"><i class="bi bi-telephone text-muted me-2"></i><%= reg.phone %></div>
+                                            <% } else { %>
+                                                <% if (reg.memberPhone) { %>
+                                                    <div class="fw-bold"><i class="bi bi-telephone text-muted me-2"></i><%= reg.memberPhone %></div>
+                                                <% } else { %>
+                                                    <span class="text-muted small">Geen GSM</span>
+                                                <% } %>
+                                            <% } %>
+                                        </div>
+
+                                        <div class="col-2 border-start ps-4">
+                                            <% if (reg.type === 'lid') { %>
+                                                <small class="text-muted d-block text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Ouders / Contact</small>
+                                                <div class="small text-truncate" title="<%= reg.parentsNames %>"><strong><%= reg.parentsNames %></strong></div>
+                                                <div class="small"><i class="bi bi-telephone text-muted me-1"></i><%= reg.parentsPhone %></div>
+                                                <div class="small text-truncate" title="<%= reg.email %>"><i class="bi bi-envelope text-muted me-1"></i><%= reg.email %></div>
+                                            <% } else { %>
+                                                <span class="badge bg-danger">Leiding</span>
+                                            <% } %>
+                                        </div>
+
+                                        <div class="col-2 text-end pe-4">
+                                            <div class="d-flex gap-2 justify-content-end align-items-center">
+                                                <% if (reg.medicalInfo) { %>
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-outline-warning border-0" 
+                                                            title="Medische/Extra Info"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#infoModal" 
+                                                            data-info="<%= reg.medicalInfo %>"
+                                                            data-name="<%= reg.firstName %> <%= reg.lastName %>">
+                                                        <i class="bi bi-exclamation-circle-fill fs-5"></i>
+                                                    </button>
+                                                <% } %>
+
+                                                <% if (canEdit) { %>
+                                                <a href="/admin/registrations/<%= reg.id %>/edit" class="btn btn-sm btn-outline-primary" title="Bewerk"><i class="bi bi-pencil"></i></a>
+                                                <form action="/admin/registrations/<%= reg.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?');">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijder"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                                <% } %>
+                                            </div>
+                                        </div>
                                     </div>
-                                </td>
-                                <% } %>
-                            </tr>
-                        <% }) %>
-                        <% if (registrations.length === 0) { %>
-                            <tr>
-                                <td colspan="<%= selectedPeriod === 'all' ? 9 : 8 %>" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <% if (searchQuery) { %>
-                                            Geen resultaten gevonden voor "<%= searchQuery %>" in periode <%= selectedPeriod %>.
-                                        <% } else { %>
-                                            Nog geen inschrijvingen in deze periode.
-                                        <% } %>
-                                    </div>
-                                </td>
-                            </tr>
-                        <% } %>
-                    </tbody>
-                </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
             </div>
 
-            <!-- Mobile View: Cards -->
+            <!-- Mobile View: Existing Card Style -->
             <div class="d-lg-none">
-                <div class="mb-3 text-muted fst-italic text-end small">
-                    <i class="bi bi-arrow-down-up"></i> Sorteren kan via desktop weergave
-                </div>
                 <% registrations.forEach(reg => { %>
                     <div class="card mb-3 shadow-sm border-0">
                         <div class="card-header d-flex justify-content-between align-items-center bg-light text-dark border-bottom-0">
                             <div>
-                                <h5 class="mb-0 text-primary"><%= reg.firstName %> <%= reg.lastName %></h5>
+                                <h5 class="mb-0 text-primary fw-bold"><%= reg.firstName %> <%= reg.lastName %></h5>
                             </div>
-                            <span class="badge bg-secondary rounded-pill"><%= reg.group %></span>
+                            <div class="d-flex align-items-center gap-2">
+                                <% if (reg.medicalInfo) { %>
+                                    <button type="button" 
+                                            class="btn btn-sm p-0 text-warning border-0 bg-transparent shadow-none" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#infoModal" 
+                                            data-info="<%= reg.medicalInfo %>"
+                                            data-name="<%= reg.firstName %> <%= reg.lastName %>">
+                                        <i class="bi bi-exclamation-circle-fill fs-5"></i>
+                                    </button>
+                                <% } %>
+                                <span class="badge bg-secondary rounded-pill"><%= reg.group %></span>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="row g-2">
@@ -217,40 +229,40 @@
                                 
                                 <div class="col-12 mt-3">
                                     <div class="bg-light p-2 rounded">
-                                        <small class="text-muted d-block text-uppercase mb-1" style="font-size: 0.75rem;"><i class="bi bi-envelope"></i> Contact</small>
+                                        <small class="text-muted d-block text-uppercase mb-1" style="font-size: 0.75rem;"><i class="bi bi-envelope"></i> Contact <%= reg.type === 'lid' ? 'Lid' : '' %></small>
                                         <div class="d-flex flex-column">
-                                            <span class="text-break"><%= reg.email %></span>
-                                            <span class="fw-bold"><i class="bi bi-telephone"></i> <%= reg.type === 'lid' ? reg.parentsPhone : reg.phone %></span>
+                                            <% if (reg.type === 'leiding') { %>
+                                                <span class="text-break small"><%= reg.email %></span>
+                                                <span class="fw-bold"><i class="bi bi-telephone"></i> <%= reg.phone %></span>
+                                            <% } else { %>
+                                                <% if (reg.memberPhone) { %>
+                                                    <span class="fw-bold"><i class="bi bi-telephone"></i> <%= reg.memberPhone %></span>
+                                                <% } else { %>
+                                                    <span class="text-muted small">Geen GSM Lid</span>
+                                                <% } %>
+                                            <% } %>
                                         </div>
                                     </div>
                                 </div>
 
                                 <% if (reg.type === 'lid') { %>
                                 <div class="col-12 mt-2">
-                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.75rem;">Ouders / Extra</small>
-                                    <div><%= reg.parentsNames %></div>
-                                    <% if(reg.memberPhone) { %><div class="small text-muted">GSM Lid: <%= reg.memberPhone %></div><% } %>
-                                    <div class="small text-muted">Foto's: <%= reg.photoPermission ? 'Ja' : 'Nee' %></div>
-                                </div>
-                                <% } %>
-
-                                <% if (reg.medicalInfo) { %>
-                                <div class="col-12 mt-2">
-                                    <div class="alert alert-danger p-2 mb-0 d-flex gap-2 align-items-start">
-                                        <i class="bi bi-exclamation-circle-fill mt-1"></i>
-                                        <small><%= reg.medicalInfo %></small>
-                                    </div>
+                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.75rem;">Ouders / Contact</small>
+                                    <div class="small fw-bold"><%= reg.parentsNames %></div>
+                                    <div class="small"><i class="bi bi-telephone text-muted me-1"></i><%= reg.parentsPhone %></div>
+                                    <div class="small"><i class="bi bi-envelope text-muted me-1"></i><%= reg.email %></div>
+                                    <div class="small text-muted mt-1">Foto's: <%= reg.photoPermission ? 'Ja' : 'Nee' %></div>
                                 </div>
                                 <% } %>
                             </div>
 
                             <% if (canEdit) { %>
                             <div class="mt-3 pt-2 border-top d-flex justify-content-end gap-2">
-                                <a href="/admin/registrations/<%= reg.id %>/edit" class="btn btn-outline-primary btn-sm flex-grow-1">
+                                <a href="/admin/registrations/<%= reg.id %>/edit" class="btn btn-outline-primary btn-sm flex-grow-1 shadow-sm">
                                     <i class="bi bi-pencil"></i> Bewerken
                                 </a>
                                 <form action="/admin/registrations/<%= reg.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?');" class="flex-grow-1">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100 shadow-sm">
                                         <i class="bi bi-trash"></i> Verwijderen
                                     </button>
                                 </form>
@@ -259,19 +271,61 @@
                         </div>
                     </div>
                 <% }) %>
+            </div>
 
-                <% if (registrations.length === 0) { %>
-                    <div class="alert alert-secondary text-center">
+            <% if (registrations.length === 0) { %>
+                <div class="bg-white rounded shadow-sm p-5 text-center mt-3">
+                    <i class="bi bi-person-x display-4 text-muted mb-3 d-block"></i>
+                    <h5 class="text-muted">
                         <% if (searchQuery) { %>
                             Geen resultaten gevonden voor "<%= searchQuery %>".
                         <% } else { %>
-                            Nog geen inschrijvingen.
+                            Nog geen inschrijvingen gevonden in deze periode.
                         <% } %>
-                    </div>
-                <% } %>
+                    </h5>
+                    <a href="/admin/registrations?period=<%= selectedPeriod %>" class="btn btn-link">Wis alle filters</a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Info Modal -->
+<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark border-0">
+                <h5 class="modal-title fw-bold" id="infoModalLabel">Medische / Extra Info</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <h6 class="text-muted mb-3" id="infoModalName"></h6>
+                <div id="infoModalContent" class="p-3 bg-light rounded shadow-sm border-start border-warning border-4" style="white-space: pre-wrap;"></div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sluiten</button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const infoModalElement = document.getElementById('infoModal');
+        if (infoModalElement) {
+            infoModalElement.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const info = button.getAttribute('data-info');
+                const name = button.getAttribute('data-name');
+                
+                const modalTitleName = infoModalElement.querySelector('#infoModalName');
+                const modalBodyContent = infoModalElement.querySelector('#infoModalContent');
+                
+                modalTitleName.textContent = name;
+                modalBodyContent.textContent = info;
+            });
+        }
+    });
+</script>
 
 <%- include('../partials/footer') %>
