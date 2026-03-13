@@ -92,9 +92,9 @@
                 </div>
 
                 <!-- Group Selection -->
-                <div class="mt-4">
+                <div class="mt-4" id="groupFields">
                     <label for="group" class="form-label fw-bold">Groep</label>
-                    <select class="form-select" id="group" name="group" required>
+                    <select class="form-select" id="groupInput" name="group" required>
                         <option value="" disabled selected>Kies een groep...</option>
                         <option value="ribbel">Ribbels (1e en 2e leerjaar)</option>
                         <option value="speelclub">Speelclub (3e en 4e leerjaar)</option>
@@ -142,27 +142,29 @@
     const roleLid = document.getElementById('roleLid');
     const roleLeiding = document.getElementById('roleLeiding');
     const memberFields = document.getElementById('memberFields');
+    const groupFields = document.getElementById('groupFields');
     const labelEmail = document.getElementById('labelEmail');
     const labelPhone = document.getElementById('labelPhone');
     const phoneInput = document.getElementById('phone');
     const parentsNamesInput = document.getElementById('parentsNames');
+    const groupInput = document.getElementById('groupInput');
 
     function updateForm() {
         if (roleLid.checked) {
             memberFields.style.display = 'block';
+            groupFields.style.display = 'block';
+            groupInput.setAttribute('required', 'required');
             labelEmail.innerText = 'Email Ouders';
             labelPhone.innerText = 'Telefoon Ouders';
             phoneInput.setAttribute('name', 'parentsPhone'); // Use parentsPhone field
             parentsNamesInput.setAttribute('required', 'required');
         } else {
             memberFields.style.display = 'none';
+            groupFields.style.display = 'none';
+            groupInput.removeAttribute('required');
             labelEmail.innerText = 'Email';
             labelPhone.innerText = 'Telefoon';
             phoneInput.setAttribute('name', 'phone'); // Use generic phone field if backend supports or just map to parentsPhone and rename in backend?
-            // Backend has 'parentsPhone' and 'memberPhone'. I should probably add a generic 'phone' column or just reuse 'parentsPhone' as 'primaryPhone'.
-            // Let's stick to the schema I made: 'parentsPhone' (Lid) vs 'phone' (generic/Leiding)?
-            // Wait, my schema has `parentsPhone`. I didn't add a generic `phone` for leiding in my previous step thought process fully.
-            // Let's check Registration.js again.
             parentsNamesInput.removeAttribute('required');
         }
     }

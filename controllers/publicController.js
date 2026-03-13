@@ -299,7 +299,7 @@ exports.postRegister = async (req, res) => {
             email: (req.body.email || '').trim(),
             photoPermission: req.body.photoPermission === 'on' || req.body.photoPermission === 'true',
             medicalInfo: req.body.medicalInfo || null,
-            group: (req.body.group || '').trim().toLowerCase(),
+            group: req.body.type === 'leiding' ? 'leiding' : (req.body.group || '').trim().toLowerCase(),
             privacyAccepted: req.body.privacyAccepted === 'on' || req.body.privacyAccepted === 'true'
         };
         const validGroups = ['ribbel','speelclub','rakwi','tito','keti','aspi', 'leiding'];
