@@ -70,9 +70,27 @@
             </div>
             
             <% if (canEdit) { %>
-            <form action="/admin/registrations/new-period" method="POST" class="d-inline" onsubmit="return confirm('Ben je zeker? Dit start een nieuwe inschrijvingsperiode. De huidige lijst wordt verborgen (maar niet verwijderd).');">
-                <button type="submit" class="btn btn-warning shadow-sm" title="Start een nieuw werkjaar"><i class="bi bi-calendar-plus"></i></button>
-            </form>
+            <div class="btn-group shadow-sm">
+                <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Werkjaar beheer">
+                    <i class="bi bi-calendar-range"></i> Werkjaar
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <li>
+                        <form action="/admin/registrations/new-period" method="POST" onsubmit="return confirm('Ben je zeker? Dit start een nieuwe inschrijvingsperiode. De huidige lijst wordt gearchiveerd en een nieuw leeg werkjaar wordt gestart.');">
+                            <button type="submit" class="dropdown-item">
+                                <i class="bi bi-calendar-plus text-success"></i> Start Nieuw Werkjaar
+                            </button>
+                        </form>
+                    </li>
+                    <li>
+                        <form action="/admin/registrations/delete-period" method="POST" onsubmit="return confirm('Ben je zeker dat je het laatste werkjaar wilt verwijderen? Dit kan enkel als er nog geen inschrijvingen zijn in dit jaar.');">
+                            <button type="submit" class="dropdown-item">
+                                <i class="bi bi-calendar-minus text-danger"></i> Verwijder laatste werkjaar
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
             <% } %>
 
             <a href="<%= user.role === 'admin' ? '/admin' : '/' %>" class="btn btn-secondary shadow-sm">Terug</a>

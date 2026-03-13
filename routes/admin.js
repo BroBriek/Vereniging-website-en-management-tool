@@ -76,6 +76,7 @@ router.post('/api/upload-image', upload.single('image'), uploadController.upload
 
 // Registrations
 router.post('/registrations/new-period', adminController.startNewPeriod);
+router.post('/registrations/delete-period', adminController.deleteLastPeriod);
 router.get('/registrations/:id/edit', adminController.getEditRegistration);
 router.put('/registrations/:id', adminController.updateRegistration);
 router.delete('/registrations/:id', adminController.deleteRegistration);
