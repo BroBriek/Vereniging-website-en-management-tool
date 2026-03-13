@@ -328,6 +328,25 @@ exports.startNewPeriod = async (req, res) => {
     }
 };
 
+exports.deleteLastPeriod = async (req, res) => {
+    try {
+        const currentPeriod = await PeriodService.getCurrentPeriod();
+        
+        // Check if there are any registrations in the current period
+        const count = await Registration.count({ where: { period: currentPeriod } });
+        
+        if (count > 0) {
+            return res.redirect('/admin/registrations?error=' + encodeURIComponent(`Kan het laatste werkjaar niet verwijderen omdat er al ${count} inschrijvingen in staan.`));
+        }
+
+        const newPeriod = await PeriodService.deleteLastPeriod();
+        res.redirect('/admin/registrations?success=' + encodeURIComponent(`Laatste werkjaar verwijderd. Huidige periode is nu: ${newPeriod}`));
+    } catch (error) {
+        console.error('Error deleting last period:', error);
+        res.redirect('/admin/registrations?error=Kon laatste werkjaar niet verwijderen');
+    }
+};
+
 exports.getEditRegistration = async (req, res) => {
     try {
         const registration = await Registration.findByPk(req.params.id);

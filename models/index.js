@@ -85,38 +85,18 @@ const syncDatabase = async () => {
       await sequelize.query('PRAGMA foreign_keys = OFF');
     }
 
-    // Sync User specifically with alter: true to add profilePicture, calendarToken
-    console.log('Syncing User model...');
-    await User.sync({ alter: true });
+    // In SQLite, .sync({ alter: true }) is very fragile on complex tables like Users.
+    // If the schema already matches the model (verified by manual inspection),
+    // we should use standard .sync() to avoid problematic shadow-table migrations.
+    console.log('Syncing database models...');
+    await sequelize.sync();
 
-    // Sync Like with alter: true to add commentId
-    console.log('Syncing Like model...');
-    await Like.sync({ alter: true });
-
-    // Sync Event specifically with alter: true to add endDate
-    console.log('Syncing Event model...');
-    await Event.sync({ alter: true });
-
-    // Sync FeedGroup specifically with alter: true to add isEvent, creatorId, eventDate
-    console.log('Syncing FeedGroup model...');
-    await FeedGroup.sync({ alter: true });
-
-    // Sync FinanceItem specifically with alter: true to add paid
-    console.log('Syncing FinanceItem model...');
-    await FinanceItem.sync({ alter: true });
-
-    // Update existing items to have paid = true if it was null (newly added column)
+    // Ensure all finance items have a "paid" status if it was null (newly added column)
     console.log('Ensuring all finance items have a "paid" status...');
     await FinanceItem.update(
       { paid: true },
       { where: { paid: null } }
     );
-
-    // Sync the rest without alter (or with alter if safe, but we know UGA fails)
-    // We can try to sync everything else. 
-    // If we run sequelize.sync() now, it will check everything.
-    // Let's just run sync() without alter for the rest to ensure tables exist.
-    await sequelize.sync();
 
     if (sequelize.getDialect() === 'sqlite') {
       await sequelize.query('PRAGMA foreign_keys = ON');

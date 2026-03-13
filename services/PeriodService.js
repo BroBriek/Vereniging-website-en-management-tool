@@ -37,3 +37,18 @@ exports.startNewPeriod = async () => {
     await exports.setCurrentPeriod(next);
     return next;
 };
+
+exports.deleteLastPeriod = async () => {
+    const current = await exports.getCurrentPeriod();
+    const parts = current.split('-');
+    if (parts.length === 2) {
+        const start = parseInt(parts[0]);
+        const end = parseInt(parts[1]);
+        if (!isNaN(start) && !isNaN(end)) {
+            const prev = `${start - 1}-${end - 1}`;
+            await exports.setCurrentPeriod(prev);
+            return prev;
+        }
+    }
+    return current;
+};
