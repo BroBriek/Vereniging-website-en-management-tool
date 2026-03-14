@@ -1,4 +1,4 @@
-const { PageContent, Leader, Event, Registration, User } = require('../models');
+const { PageContent, Leader, Event, Registration, User, CalendarAccess } = require('../models');
 const { Op } = require('sequelize');
 const ics = require('ics');
 const crypto = require('crypto');
@@ -19,14 +19,23 @@ exports.getCalendarICS = async (req, res) => {
         const { token } = req.query;
         let whereClause = { isPrivate: false };
         let calName = 'Chiro Vreugdeland';
+        let foundUserId = null;
 
         if (token) {
             const user = await User.findOne({ where: { calendarToken: token, isActive: true } });
             if (user) {
                 whereClause = {}; // All events
                 calName = `Chiro Leidingskalender (${user.username})`;
+                foundUserId = user.id;
             }
         }
+
+        // Log the access (in background to not slow down response)
+        CalendarAccess.create({
+            userId: foundUserId,
+            userAgent: req.get('User-Agent'),
+            ipAddress: req.ip || req.connection.remoteAddress
+        }).catch(err => console.error('Error logging calendar access:', err));
 
         const events = await Event.findAll({
             where: whereClause,

@@ -15,6 +15,7 @@ const Quote = require('./Quote');
 const Form = require('./Form');
 const FormResponse = require('./FormResponse');
 const SystemState = require('./SystemState');
+const CalendarAccess = require('./CalendarAccess');
 
 // Associations
 
@@ -24,6 +25,10 @@ Form.belongsTo(User, { foreignKey: 'creatorId', as: 'creator' });
 
 Form.hasMany(FormResponse, { foreignKey: 'formId', as: 'responses', onDelete: 'CASCADE' });
 FormResponse.belongsTo(Form, { foreignKey: 'formId', as: 'form' });
+
+// Calendar Access Tracking
+User.hasMany(CalendarAccess, { foreignKey: 'userId', as: 'calendarAccesses', onDelete: 'CASCADE' });
+CalendarAccess.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Finance Hierarchy
 FinanceItem.hasMany(FinanceItem, { as: 'children', foreignKey: 'parentId', onDelete: 'CASCADE' });
@@ -126,5 +131,6 @@ module.exports = {
   Quote,
   Form,
   FormResponse,
-  SystemState
+  SystemState,
+  CalendarAccess
 };

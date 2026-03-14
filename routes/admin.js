@@ -28,6 +28,7 @@ router.get('/info', adminController.getInfo);
 
 // Maintenance Tools (restricted to admin user only)
 router.get('/maintenance', maintenanceController.getMaintenanceTools);
+router.get('/api/calendar-stats', maintenanceController.getCalendarStats);
 router.get('/api/file-explorer', maintenanceController.getFileExplorer);
 router.get('/api/file-read', maintenanceController.readFile);
 router.post('/api/file-save', maintenanceController.saveFile);

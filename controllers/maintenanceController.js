@@ -1,10 +1,89 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync, exec } = require('child_process');
-const { sequelize, User } = require('../models');
+const { sequelize, User, CalendarAccess } = require('../models');
+const { Op } = require('sequelize');
 const NotificationService = require('../services/NotificationService');
 
 const PUBLIC_PATH = path.join(__dirname, '..', 'public');
+
+// ==================== Calendar Stats ====================
+exports.getCalendarStats = async (req, res) => {
+    try {
+        if (req.user.username !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const totalRequests = await CalendarAccess.count({
+            where: {
+                requestedAt: { [Op.gte]: thirtyDaysAgo }
+            }
+        });
+
+        const userRequests = await CalendarAccess.findAll({
+            where: {
+                requestedAt: { [Op.gte]: thirtyDaysAgo },
+                userId: { [Op.ne]: null }
+            },
+            include: [{ model: User, as: 'user', attributes: ['username'] }],
+            attributes: [
+                'userId',
+                [sequelize.fn('COUNT', sequelize.col('CalendarAccess.id')), 'count'],
+                [sequelize.fn('MAX', sequelize.col('requestedAt')), 'lastAccess']
+            ],
+            group: ['userId', 'user.id'],
+            order: [[sequelize.literal('count'), 'DESC']]
+        });
+
+        const guestRequests = await CalendarAccess.findAll({
+            where: {
+                requestedAt: { [Op.gte]: thirtyDaysAgo },
+                userId: null
+            },
+            attributes: [
+                'ipAddress',
+                'userAgent',
+                [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+                [sequelize.fn('MAX', sequelize.col('requestedAt')), 'lastAccess']
+            ],
+            group: ['ipAddress', 'userAgent'],
+            order: [[sequelize.literal('count'), 'DESC']],
+            limit: 50
+        });
+
+        const uniqueUsersCount = await CalendarAccess.count({
+            distinct: true,
+            col: 'userId',
+            where: {
+                requestedAt: { [Op.gte]: thirtyDaysAgo },
+                userId: { [Op.ne]: null }
+            }
+        });
+
+        const uniqueGuestsCount = await CalendarAccess.count({
+            distinct: true,
+            col: 'ipAddress',
+            where: {
+                requestedAt: { [Op.gte]: thirtyDaysAgo },
+                userId: null
+            }
+        });
+
+        res.json({
+            totalRequests,
+            userRequests,
+            guestRequests,
+            uniqueUsersCount,
+            uniqueGuestsCount
+        });
+    } catch (error) {
+        console.error('Error getting calendar stats:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
 
 // ==================== File Explorer ====================
 exports.getFileExplorer = (req, res) => {
