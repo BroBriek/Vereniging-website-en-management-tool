@@ -8,9 +8,20 @@ const path = require('path');
 exports.getSettings = async (req, res) => {
   try {
       const user = await User.findByPk(req.user.id);
+      let allUsers = [];
+      let adminUser = null;
+
+      // If we are admin OR impersonating admin, we need the list of users for the switch tool
+      if (user.username === 'admin' || req.session.originalAdminId) {
+          allUsers = await User.findAll({ where: { isActive: true }, order: [['username', 'ASC']] });
+          adminUser = await User.findOne({ where: { username: 'admin' } });
+      }
+
       res.render('account/settings', {
         title: 'Account Instellingen',
         user: user,
+        adminUser: adminUser, // Pass the actual admin user to see their secondaryUserId setting
+        allUsers: allUsers,
         vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
         error: null,
         success: null
@@ -327,5 +338,84 @@ exports.updateNotificationPreferences = async (req, res) => {
     } catch (err) {
         console.error('Update Prefs Error:', err);
         res.render('account/settings', { ...renderContext, error: 'Kon voorkeuren niet opslaan.' });
+    }
+};
+
+exports.updateSecondaryAccount = async (req, res) => {
+    try {
+        if (req.user.username !== 'admin' && !req.session.originalAdminId) {
+            return res.status(403).send('Niet toegestaan');
+        }
+        // Only the actual 'admin' user should be able to update their secondary account preference
+        // If we're impersonating, we shouldn't really be changing the admin's settings this way
+        // but let's allow it if the user is the 'admin' account.
+        const user = await User.findOne({ where: { username: 'admin' } });
+        if (user) {
+            user.secondaryUserId = req.body.secondaryUserId || null;
+            await user.save();
+        }
+        res.redirect('/account/settings');
+    } catch (err) {
+        console.error(err);
+        res.redirect('/account/settings');
+    }
+};
+
+exports.switchAccount = async (req, res) => {
+    try {
+        const currentUser = await User.findByPk(req.user.id);
+        let targetUserId = null;
+        let isSwitchingBack = false;
+        let originalIdToKeep = req.session.originalAdminId;
+
+        // If we are currently the admin, switch to secondary
+        if (currentUser.username === 'admin') {
+            if (!currentUser.secondaryUserId) {
+                return res.redirect('/account/settings');
+            }
+            targetUserId = currentUser.secondaryUserId;
+            originalIdToKeep = currentUser.id; // Mark this as the admin we're coming from
+        } 
+        // If we are impersonating (originalAdminId is in session), switch back to admin
+        else if (req.session.originalAdminId) {
+            targetUserId = req.session.originalAdminId;
+            isSwitchingBack = true;
+        } else {
+            return res.status(403).send('Niet toegestaan');
+        }
+
+        if (targetUserId) {
+            const targetUser = await User.findByPk(targetUserId);
+            if (targetUser) {
+                req.login(targetUser, (err) => {
+                    if (err) {
+                        console.error('Switch Login Error:', err);
+                        return res.redirect('/account/settings');
+                    }
+                    
+                    // Re-assign session variables as req.login might clear/regenerate session in some environments
+                    if (isSwitchingBack) {
+                        delete req.session.originalAdminId;
+                    } else {
+                        req.session.originalAdminId = originalIdToKeep;
+                    }
+
+                    // Explicitly save the session before redirecting
+                    req.session.save((saveErr) => {
+                        if (saveErr) {
+                            console.error('Session Save Error:', saveErr);
+                        }
+                        return res.redirect('/');
+                    });
+                });
+            } else {
+                res.redirect('/account/settings');
+            }
+        } else {
+            res.redirect('/account/settings');
+        }
+    } catch (err) {
+        console.error('Switch Account Error:', err);
+        res.redirect('/account/settings');
     }
 };
