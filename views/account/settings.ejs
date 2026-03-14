@@ -169,6 +169,44 @@
                     </form>
                 </div>
             </div>
+            
+            <% if (adminUser) { %>
+                <div class="card mt-4 shadow-sm border-0">
+                    <div class="card-header bg-dark text-white fw-bold">
+                        <i class="bi bi-people"></i> Secundair Account
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">
+                            <% if (originalAdminId) { %>
+                                Je bent momenteel aan het impersoneren. Je kunt hier nog steeds je test-account wijzigen of teruggaan.
+                            <% } else { %>
+                                Kies een account waarnaar je snel kunt overschakelen om te testen.
+                            <% } %>
+                        </p>
+                        <form action="/account/secondary-account" method="POST">
+                            <div class="mb-3">
+                                <label for="secondaryUserId" class="form-label small fw-bold">Selecteer Account</label>
+                                <select name="secondaryUserId" id="secondaryUserId" class="form-select">
+                                    <option value="">-- Geen --</option>
+                                    <% allUsers.forEach(u => { %>
+                                        <option value="<%= u.id %>" <%= adminUser.secondaryUserId == u.id ? 'selected' : '' %>>
+                                            <%= u.username %> (<%= u.role %>)
+                                        </option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-dark w-100 btn-sm">Instellen</button>
+                        </form>
+                        <% if (adminUser.secondaryUserId || originalAdminId) { %>
+                            <div class="mt-3">
+                                <a href="/account/switch" class="btn btn-outline-dark w-100 btn-sm">
+                                    <%= originalAdminId ? 'Terug naar Admin' : 'Switch naar Test Account' %>
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            <% } %>
         </div>
     </div>
 </div>

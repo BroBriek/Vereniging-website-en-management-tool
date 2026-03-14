@@ -17,5 +17,7 @@ router.post('/email-toggle', accountController.toggleEmailNotifications);
 router.post('/profile-picture', profileUpload.single('profilePicture'), accountController.uploadProfilePicture);
 router.post('/profile-picture/delete', accountController.deleteProfilePicture);
 router.post('/notifications/preferences', accountController.updateNotificationPreferences);
+router.post('/secondary-account', accountController.updateSecondaryAccount);
+router.get('/switch', accountController.switchAccount);
 
 module.exports = router;
