@@ -43,7 +43,12 @@ function highlightMentions(text) {
     <div class="flex-grow-1">
         <div class="comment-bubble w-100">
             <div class="d-flex justify-content-between align-items-baseline mb-1">
-                <span class="fw-bold small me-2"><%= comment.author ? capitalizeName(comment.author.username) : 'Onbekend' %></span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold small"><%= comment.author ? capitalizeName(comment.author.username) : 'Onbekend' %></span>
+                    <span class="text-muted" style="font-size: 0.7rem;">
+                        • <%= new Date(comment.createdAt).toLocaleDateString('nl-BE', { timeZone: 'Europe/Brussels', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) %>
+                    </span>
+                </div>
                 <% if ((comment.author && user && comment.author.id === user.id) || user.role === 'admin') { %>
                     <div class="dropdown">
                         <a href="#" class="text-muted small" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
