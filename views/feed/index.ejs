@@ -776,6 +776,9 @@ function autoResize(element) {
             <p class="mt-2 text-muted">Laden...</p>
         </div>
         <iframe id="previewFrame" src="" class="w-100 h-100 border-0 rounded-bottom-4 d-none"></iframe>
+        <div id="previewImageContainer" class="w-100 h-100 d-none d-flex align-items-center justify-content-center bg-white rounded-bottom-4 overflow-auto">
+            <img id="previewImage" src="" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+        </div>
         <div id="previewError" class="d-none position-absolute top-50 start-50 translate-middle text-center p-4 w-100">
             <i class="bi bi-file-earmark-x display-1 text-muted"></i>
             <h5 class="mt-3">Voorbeeld niet beschikbaar</h5>
@@ -994,6 +997,8 @@ function openFilePreview(url, name) {
     const modalEl = document.getElementById('filePreviewModal');
     const modal = new bootstrap.Modal(modalEl);
     const frame = document.getElementById('previewFrame');
+    const imgContainer = document.getElementById('previewImageContainer');
+    const img = document.getElementById('previewImage');
     const title = document.getElementById('previewFileName');
     const downloadBtn = document.getElementById('previewDownloadBtn');
     const errorBtn = document.getElementById('previewErrorDownloadBtn');
@@ -1002,12 +1007,15 @@ function openFilePreview(url, name) {
 
     // Reset state
     title.textContent = name;
-    downloadBtn.href = url;
-    errorBtn.href = url;
+    const downloadUrl = `/feed/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
+    downloadBtn.href = downloadUrl;
+    errorBtn.href = downloadUrl;
     loader.classList.remove('d-none');
     frame.classList.add('d-none'); 
+    imgContainer.classList.add('d-none');
     errorDiv.classList.add('d-none');
     frame.src = '';
+    img.src = '';
 
     // Determine type
     const ext = name.split('.').pop().toLowerCase();
@@ -1015,7 +1023,17 @@ function openFilePreview(url, name) {
     const isOffice = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext);
     const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
 
-    if (isPDF || isImage) {
+    if (isImage) {
+        img.src = url;
+        img.onload = function() {
+            loader.classList.add('d-none');
+            imgContainer.classList.remove('d-none');
+        };
+        img.onerror = function() {
+            loader.classList.add('d-none');
+            errorDiv.classList.remove('d-none');
+        };
+    } else if (isPDF) {
         frame.src = url;
         frame.onload = function() {
             loader.classList.add('d-none');
