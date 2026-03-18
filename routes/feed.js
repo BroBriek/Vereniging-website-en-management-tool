@@ -8,6 +8,7 @@ router.use(ensureAuthenticated);
 
 router.get('/api/users', feedController.searchUsers);
 router.get('/calendar', feedController.getCalendar);
+router.get('/download', feedController.downloadFile);
 router.get('/', feedController.getFeed);
 router.get('/group/:slug', feedController.getFeed);
 router.get('/group/:slug/files', feedController.getGroupFiles);
