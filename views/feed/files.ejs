@@ -155,7 +155,7 @@ function openFilePreview(url, name) {
     const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
 
     title.textContent = name;
-    const downloadUrl = `/feed/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
+    const downloadUrl = `/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
     
     downloadBtn.href = downloadUrl;
     errorBtn.href = downloadUrl;

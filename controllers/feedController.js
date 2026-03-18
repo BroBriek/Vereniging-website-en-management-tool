@@ -32,12 +32,22 @@ const highlightMentions = (text) => {
     const processedParts = parts.map(part => {
         if (part.startsWith('<')) {
             // This is an HTML tag. 
-            // If it's an img tag, add our error handler if it's an external URL
+            // If it's an img tag, wrap it in a link to our previewer
             if (part.toLowerCase().startsWith('<img')) {
-                // Check if it's an external URL (not starting with /uploads/)
-                if (part.includes('src="http') && !part.includes('src="/uploads/')) {
-                    // Add onerror handler to external images to help debug/fix expired links
-                    return part.replace('>', ' onerror="handleBrokenImage(this)">');
+                // Extract src
+                const srcMatch = part.match(/src="([^"]+)"/);
+                if (srcMatch) {
+                    const src = srcMatch[1];
+                    const filename = src.split('/').pop();
+                    
+                    let extraAttrs = '';
+                    // Check if it's an external URL (not starting with /uploads/ or /feed_uploads/)
+                    if (src.includes('http') && !src.includes('/uploads/') && !src.includes('/feed_uploads/')) {
+                        extraAttrs = ' onerror="handleBrokenImage(this)"';
+                    }
+                    
+                    const modifiedImg = part.replace('>', extraAttrs + '>');
+                    return `<a href="${src}" onclick="openFilePreview('${src}', '${filename}'); return false;" class="d-inline-block">${modifiedImg}</a>`;
                 }
             }
             return part;
@@ -1206,35 +1216,5 @@ exports.fixImageApi = async (req, res) => {
     } catch (error) {
         console.error('Fix Image Error:', error);
         res.status(500).json({ error: 'Interne serverfout' });
-    }
-};
-
-exports.downloadFile = (req, res) => {
-    try {
-        const publicDir = path.join(__dirname, '..', 'public');
-        const filePath = path.join(publicDir, req.query.path);
-        
-        // Security: prevent path traversal
-        const relative = path.relative(publicDir, filePath);
-        if (relative.startsWith('..')) {
-            return res.status(403).json({ error: 'Verboden' });
-        }
-        
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ error: 'Bestand niet gevonden' });
-        }
-
-        const stat = fs.statSync(filePath);
-        if (stat.isDirectory()) {
-            return res.status(400).json({ error: 'Dit is een map, geen bestand' });
-        }
-        
-        // Try to get original filename if available
-        const originalName = req.query.name || path.basename(filePath);
-        
-        res.download(filePath, originalName);
-    } catch (error) {
-        console.error('Download file error:', error);
-        res.status(500).json({ error: 'Fout bij downloaden bestand' });
     }
 };

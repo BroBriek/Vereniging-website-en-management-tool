@@ -2,6 +2,8 @@ const { PageContent, Leader, Event, Registration, User, CalendarAccess, SystemSt
 const { Op } = require('sequelize');
 const ics = require('ics');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const getContent = async (slug) => {
     try {
@@ -515,4 +517,34 @@ exports.getSitemapXml = (req, res) => {
         `
 </urlset>`;
     res.type('application/xml').send(xml);
+};
+
+exports.downloadFile = (req, res) => {
+    try {
+        const publicDir = path.join(__dirname, '..', 'public');
+        const filePath = path.join(publicDir, req.query.path);
+        
+        // Security: prevent path traversal
+        const relative = path.relative(publicDir, filePath);
+        if (relative.startsWith('..')) {
+            return res.status(403).json({ error: 'Verboden' });
+        }
+        
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: 'Bestand niet gevonden' });
+        }
+
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+            return res.status(400).json({ error: 'Dit is een map, geen bestand' });
+        }
+        
+        // Try to get original filename if available
+        const originalName = req.query.name || path.basename(filePath);
+        
+        res.download(filePath, originalName);
+    } catch (error) {
+        console.error('Download file error:', error);
+        res.status(500).json({ error: 'Fout bij downloaden bestand' });
+    }
 };
