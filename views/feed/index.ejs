@@ -998,13 +998,52 @@ function autoResize(element) {
 <script>
 /**
  * Trigger a file download without opening a new tab
+ * Uses Blob approach to keep user inside standalone apps when possible
  */
-function triggerDownload(url) {
-    const iframe = document.getElementById('downloadIframe');
-    if (iframe) {
-        iframe.src = url;
-    } else {
-        window.location.href = url;
+async function triggerDownload(url, filename, btn) {
+    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    const originalContent = btn ? btn.innerHTML : null;
+
+    // Show loading state if button provided
+    if (btn) {
+        btn.classList.add('disabled');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>...';
+    }
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Download mislukt');
+        
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        a.download = filename || 'bestand';
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        setTimeout(() => {
+            window.URL.revokeObjectURL(blobUrl);
+            document.body.removeChild(a);
+        }, 100);
+
+    } catch (e) {
+        console.error('Download error:', e);
+        // Fallback: standard navigation
+        // For standalone apps, we use _blank to try and force a system browser pop-out if it fails internally
+        if (isStandalone) {
+            window.open(url, '_blank');
+        } else {
+            window.location.href = url;
+        }
+    } finally {
+        if (btn && originalContent) {
+            btn.classList.remove('disabled');
+            btn.innerHTML = originalContent;
+        }
     }
 }
 
@@ -1019,24 +1058,37 @@ function openFilePreview(url, name) {
     const errorBtn = document.getElementById('previewErrorDownloadBtn');
     const loader = document.getElementById('previewLoader');
     const errorDiv = document.getElementById('previewError');
+    
+    // Standalone check
+    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
 
     // Reset state
     title.textContent = name;
     const downloadUrl = `/feed/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
     
-    // Set href for right-click/long-press compatibility
+    // Set href and attributes
     downloadBtn.href = downloadUrl;
-    downloadBtn.target = "_self";
     errorBtn.href = downloadUrl;
-    errorBtn.target = "_self";
+    
+    // In standalone mode, we try to open in new window to trigger system browser pop-out
+    if (isStandalone) {
+        downloadBtn.target = "_blank";
+        downloadBtn.rel = "noopener noreferrer";
+        errorBtn.target = "_blank";
+        errorBtn.rel = "noopener noreferrer";
+    } else {
+        downloadBtn.target = "_self";
+        errorBtn.target = "_self";
+    }
 
-    // Add click event for better control in standalone apps
+    // Add click event for better control
     const downloadHandler = (e) => {
+        // If it's a standalone app, we use our blob downloader to try and keep them in-app
+        // OR we let it pop out if they prefer. Let's try blob first.
         e.preventDefault();
-        triggerDownload(downloadUrl);
+        triggerDownload(downloadUrl, name, e.currentTarget);
     };
     
-    // Use onclick to overwrite any previous handlers
     downloadBtn.onclick = downloadHandler;
     errorBtn.onclick = downloadHandler;
     loader.classList.remove('d-none');
