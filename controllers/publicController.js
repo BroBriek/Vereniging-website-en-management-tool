@@ -1,4 +1,4 @@
-const { PageContent, Leader, Event, Registration, User, CalendarAccess } = require('../models');
+const { PageContent, Leader, Event, Registration, User, CalendarAccess, SystemState } = require('../models');
 const { Op } = require('sequelize');
 const ics = require('ics');
 const crypto = require('crypto');
@@ -283,10 +283,14 @@ exports.getShirts = async (req, res) => {
 exports.getRegister = async (req, res) => {
     try {
         const content = await getContent('register');
-        res.render('public/register', { 
-            title: 'Inschrijven bij Chiro Vreugdeland', 
+        const regState = await SystemState.findOne({ where: { key: 'is_registration_open' } });
+        const isRegistrationOpen = regState ? regState.value === 'true' : true;
+
+        res.render('public/register', {
+            title: 'Inschrijven bij Chiro Vreugdeland',
             description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
-            content 
+            content,
+            isRegistrationOpen
         });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
@@ -296,6 +300,19 @@ exports.getRegister = async (req, res) => {
 exports.postRegister = async (req, res) => {
     const content = await getContent('register');
     try {
+        const regState = await SystemState.findOne({ where: { key: 'is_registration_open' } });
+        const isRegistrationOpen = regState ? regState.value === 'true' : true;
+
+        if (!isRegistrationOpen) {
+            return res.render('public/register', {
+                title: 'Inschrijven bij Chiro Vreugdeland',
+                description: 'De inschrijvingen zijn gesloten.',
+                content,
+                isRegistrationOpen,
+                error: 'De inschrijvingsperiode is helaas gesloten.'
+            });
+        }
+
         const payload = {
             type: req.body.type === 'leiding' ? 'leiding' : 'lid',
             firstName: (req.body.firstName || '').trim(),

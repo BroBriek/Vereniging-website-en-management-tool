@@ -1,4 +1,4 @@
-const { PageContent, Leader, Event, Registration, User, Post, Comment, PostResponse, FeedGroup, UserGroupAccess, sequelize } = require('../models');
+const { PageContent, Leader, Event, Registration, User, Post, Comment, PostResponse, FeedGroup, UserGroupAccess, SystemState, sequelize } = require('../models');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const { exec } = require('child_process');
@@ -225,6 +225,9 @@ exports.getRegistrations = async (req, res) => {
             order
         });
 
+        const regState = await SystemState.findOne({ where: { key: 'is_registration_open' } });
+        const isRegistrationOpen = regState ? regState.value === 'true' : true; // Default to true if not set
+
         res.render('admin/registrations', { 
             title: 'Inschrijvingen', 
             registrations, 
@@ -235,11 +238,26 @@ exports.getRegistrations = async (req, res) => {
             searchQuery,
             sortField,
             sortDirection,
-            canEdit: req.user.role === 'admin'
+            canEdit: req.user.role === 'admin',
+            isRegistrationOpen
         });
     } catch (error) {
         console.error('Error fetching registrations:', error);
         res.redirect('/admin?error=Kon inschrijvingen niet ophalen');
+    }
+};
+
+exports.postToggleRegistration = async (req, res) => {
+    try {
+        const { isOpen } = req.body;
+        await SystemState.upsert({
+            key: 'is_registration_open',
+            value: isOpen === 'true' ? 'true' : 'false'
+        });
+        res.redirect('/admin/registrations?success=Inschrijvingsperiode bijgewerkt.');
+    } catch (error) {
+        console.error('Error toggling registration period:', error);
+        res.redirect('/admin/registrations?error=Kon periode niet bijwerken.');
     }
 };
 

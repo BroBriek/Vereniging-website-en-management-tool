@@ -18,6 +18,7 @@ const checkViewRegistrationsPermission = (req, res, next) => {
 };
 
 router.get('/registrations', checkViewRegistrationsPermission, adminController.getRegistrations);
+router.post('/registrations/toggle', ensureAdmin, adminController.postToggleRegistration);
 router.get('/registrations/export', checkViewRegistrationsPermission, adminController.exportRegistrationsExcel);
 router.get('/registrations/export-pdf', checkViewRegistrationsPermission, adminController.exportRegistrationsPDF);
 
