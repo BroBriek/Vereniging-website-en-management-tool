@@ -428,7 +428,7 @@ exports.postContact = async (req, res) => {
         }
 
         await sendMail({
-            to: 'Chiromeeuwen@outlook.com',
+            to: process.env.CONTACT_EMAIL || 'Chiromeeuwen@outlook.com',
             replyTo: email,
             subject: `Nieuw bericht van ${name} via Website`,
             text: `Naam: ${name}\nEmail: ${email}\n\nBericht:\n${message}`,
