@@ -33,7 +33,7 @@
             <div class="ps-lg-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <h1 class="display-4 fw-bold text-chiro-blue mb-0">Chiro Meeuwen T-shirt</h1>
-                    <% if (user && user.role === 'admin') { %>
+                    <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
                         <a href="/admin/page/shirts" class="btn btn-sm btn-outline-secondary rounded-pill">
                             <i class="bi bi-pencil-square"></i>
                         </a>

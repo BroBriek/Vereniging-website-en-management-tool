@@ -4,7 +4,7 @@ const adminController = require('../controllers/adminController');
 const uploadController = require('../controllers/uploadController');
 const maintenanceController = require('../controllers/maintenanceController');
 const formController = require('../controllers/formController');
-const { ensureAuthenticated, ensureAdmin } = require('../middleware/auth');
+const { ensureAuthenticated, ensureAdmin, ensureMedia } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 router.use(ensureAuthenticated);
@@ -21,12 +21,56 @@ router.get('/registrations', checkViewRegistrationsPermission, adminController.g
 router.get('/registrations/export', checkViewRegistrationsPermission, adminController.exportRegistrationsExcel);
 router.get('/registrations/export-pdf', checkViewRegistrationsPermission, adminController.exportRegistrationsPDF);
 
+// --- Routes accessible by both Admin and Media ---
+router.get('/', ensureMedia, adminController.getDashboard);
+router.get('/info', ensureMedia, adminController.getInfo);
+
+// Page Content Editors
+router.get('/page/:page', ensureMedia, adminController.getEditPage);
+router.post('/page/:page', ensureMedia, upload.single('image'), adminController.postEditPage);
+
+// Leader CRUD
+router.get('/leaders', ensureMedia, adminController.getLeaders);
+router.post('/leaders', ensureMedia, upload.single('image'), adminController.postLeader);
+router.get('/leaders/:id/edit', ensureMedia, adminController.getEditLeader);
+router.put('/leaders/:id', ensureMedia, upload.single('image'), adminController.updateLeader);
+router.delete('/leaders/:id', ensureMedia, adminController.deleteLeader);
+
+// Event CRUD
+router.get('/events', ensureMedia, adminController.getEvents);
+router.post('/events', ensureMedia, adminController.postEvent);
+router.put('/events/:id', ensureMedia, adminController.updateEvent);
+router.delete('/events/:id', ensureMedia, adminController.deleteEvent);
+
+// Upload Manager
+router.get('/uploads', ensureMedia, uploadController.getUploads);
+router.post('/uploads', ensureMedia, (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+        if (err) {
+            return res.redirect('/admin/uploads?error=' + encodeURIComponent(err.message));
+        }
+        next();
+    });
+}, uploadController.postUpload);
+router.delete('/uploads/:filename', ensureMedia, uploadController.deleteUpload);
+router.post('/api/upload-image', ensureMedia, upload.single('image'), uploadController.uploadImageApi);
+
+// Form Builder
+router.get('/forms', ensureMedia, formController.getForms);
+router.get('/forms/create', ensureMedia, formController.getCreateForm);
+router.post('/forms', ensureMedia, formController.postCreateForm);
+router.get('/forms/:id/edit', ensureMedia, formController.getEditForm);
+router.post('/forms/:id/edit', ensureMedia, formController.postEditForm);
+router.post('/forms/:id/delete', ensureMedia, formController.postDeleteForm);
+router.get('/forms/:id/responses', ensureMedia, formController.getResponses);
+router.get('/forms/:id/responses/export', ensureMedia, formController.exportResponses);
+router.put('/forms/responses/:id', ensureMedia, formController.updateResponse);
+router.delete('/forms/responses/:id', ensureMedia, formController.deleteResponse);
+
+// --- Routes ONLY for Admin ---
 router.use(ensureAdmin);
 
-router.get('/', adminController.getDashboard);
-router.get('/info', adminController.getInfo);
-
-// Maintenance Tools (restricted to admin user only)
+// Maintenance Tools
 router.get('/maintenance', maintenanceController.getMaintenanceTools);
 router.get('/api/calendar-stats', maintenanceController.getCalendarStats);
 router.get('/api/file-explorer', maintenanceController.getFileExplorer);
@@ -62,20 +106,7 @@ router.get('/users/:id/edit', adminController.getEditUser);
 router.put('/users/:id', adminController.updateUser);
 router.put('/users/:id/toggle-status', adminController.toggleUserStatus);
 
-// Upload Manager
-router.get('/uploads', uploadController.getUploads);
-router.post('/uploads', (req, res, next) => {
-    upload.single('file')(req, res, (err) => {
-        if (err) {
-            return res.redirect('/admin/uploads?error=' + encodeURIComponent(err.message));
-        }
-        next();
-    });
-}, uploadController.postUpload);
-router.delete('/uploads/:filename', uploadController.deleteUpload);
-router.post('/api/upload-image', upload.single('image'), uploadController.uploadImageApi);
-
-// Registrations
+// Registrations Management (Admins only for these actions)
 router.post('/registrations/new-period', adminController.startNewPeriod);
 router.post('/registrations/delete-period', adminController.deleteLastPeriod);
 router.get('/registrations/:id/edit', adminController.getEditRegistration);
@@ -88,24 +119,7 @@ router.post('/danger/reset-website', adminController.resetWebsite);
 router.post('/danger/backup', adminController.triggerBackup);
 router.get('/danger/test-push', adminController.testPush);
 
-// Page Content Editors
-router.get('/page/:page', adminController.getEditPage);
-router.post('/page/:page', upload.single('image'), adminController.postEditPage);
-
-// Leader CRUD
-router.get('/leaders', adminController.getLeaders);
-router.post('/leaders', upload.single('image'), adminController.postLeader);
-router.get('/leaders/:id/edit', adminController.getEditLeader);
-router.put('/leaders/:id', upload.single('image'), adminController.updateLeader);
-router.delete('/leaders/:id', adminController.deleteLeader);
-
 const financeController = require('../controllers/financeController');
-
-// Existing Event CRUD
-router.get('/events', adminController.getEvents);
-router.post('/events', adminController.postEvent);
-router.put('/events/:id', adminController.updateEvent);
-router.delete('/events/:id', adminController.deleteEvent);
 
 // --- Finance Tool ---
 router.get('/finance', financeController.getIndex); // Root
@@ -124,17 +138,5 @@ router.get('/feedgroups', adminController.getFeedGroups);
 router.post('/feedgroups', adminController.postFeedGroup);
 router.put('/feedgroups/:id', adminController.updateFeedGroup);
 router.delete('/feedgroups/:id', adminController.deleteFeedGroup);
-
-// Form Builder
-router.get('/forms', formController.getForms);
-router.get('/forms/create', formController.getCreateForm);
-router.post('/forms', formController.postCreateForm);
-router.get('/forms/:id/edit', formController.getEditForm);
-router.post('/forms/:id/edit', formController.postEditForm);
-router.post('/forms/:id/delete', formController.postDeleteForm);
-router.get('/forms/:id/responses', formController.getResponses);
-router.get('/forms/:id/responses/export', formController.exportResponses);
-router.put('/forms/responses/:id', formController.updateResponse);
-router.delete('/forms/responses/:id', formController.deleteResponse);
 
 module.exports = router;

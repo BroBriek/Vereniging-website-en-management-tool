@@ -94,7 +94,7 @@
                                 <%= capitalizeName(user.username.split(' ')[0]) %>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-2 mt-2" aria-labelledby="userDropdown">
-                                <% if (user.role === 'admin') { %>
+                                <% if (user.role === 'admin' || user.role === 'media') { %>
                                     <li><h6 class="dropdown-header text-uppercase small fw-bold opacity-50">Beheer</h6></li>
                                     <li><a class="dropdown-item rounded-3 py-2" href="/admin"><i class="bi bi-speedometer2 me-2 text-primary"></i> Dashboard</a></li>
                                     <li><hr class="dropdown-divider opacity-10"></li>

@@ -12,10 +12,10 @@
 </div>
 
 <div class="container pb-6">
-    <% if (user && user.role === 'admin') { %>
+    <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
         <div class="mb-4">
             <div class="alert alert-info d-flex justify-content-between align-items-center shadow-sm rounded-4">
-                <span class="fw-bold"><i class="bi bi-shield-check me-2"></i>Admin modus actief</span>
+                <span class="fw-bold"><i class="bi bi-shield-check me-2"></i>Beheer modus actief</span>
                 <a href="/admin/page/home" class="btn btn-chiro btn-sm">Bewerk deze pagina</a>
             </div>
         </div>

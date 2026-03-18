@@ -3,7 +3,7 @@
 <div class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="display-4 fw-bold mb-0">Afdelingen</h1>
-        <% if (user && user.role === 'admin') { %>
+        <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
             <a href="/admin/page/departments" class="btn btn-chiro btn-sm shadow-sm">
                 <i class="bi bi-pencil-square me-1"></i> Bewerk Pagina
             </a>

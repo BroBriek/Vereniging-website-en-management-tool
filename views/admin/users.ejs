@@ -109,6 +109,7 @@ function closePolaroid() {
                     <label>Rol</label>
                     <select class="form-select" name="role">
                         <option value="leader">Leiding (Geen Admin)</option>
+                        <option value="media">Media (Website & Formulieren)</option>
                         <option value="admin">Administrator</option>
                     </select>
                 </div>
@@ -149,6 +150,8 @@ function closePolaroid() {
                 <td>
                     <% if(u.role === 'admin') { %>
                         <span class="badge bg-danger">Admin</span>
+                    <% } else if(u.role === 'media') { %>
+                        <span class="badge bg-warning text-dark">Media</span>
                     <% } else { %>
                         <span class="badge bg-info">Leiding</span>
                     <% } %>

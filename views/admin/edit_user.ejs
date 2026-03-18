@@ -17,6 +17,7 @@
           <label>Rol</label>
           <select class="form-select" name="role">
             <option value="leader" <%= target.role === 'leader' ? 'selected' : '' %>>Leiding</option>
+            <option value="media" <%= target.role === 'media' ? 'selected' : '' %>>Media (Website & Formulieren)</option>
             <option value="admin" <%= target.role === 'admin' ? 'selected' : '' %>>Administrator</option>
           </select>
         </div>
