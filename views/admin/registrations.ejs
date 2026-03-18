@@ -70,6 +70,15 @@
             </div>
             
             <% if (canEdit) { %>
+            <!-- Registration Period Toggle -->
+            <form action="/admin/registrations/toggle" method="POST" class="d-inline">
+                <input type="hidden" name="isOpen" value="<%= !isRegistrationOpen %>">
+                <button type="submit" class="btn btn-<%= isRegistrationOpen ? 'outline-danger' : 'outline-success' %> shadow-sm" title="<%= isRegistrationOpen ? 'Inschrijvingen Sluiten' : 'Inschrijvingen Openen' %>">
+                    <i class="bi bi-<%= isRegistrationOpen ? 'lock' : 'unlock' %>"></i>
+                    <span class="d-none d-sm-inline"><%= isRegistrationOpen ? 'Sluit Inschrijvingen' : 'Open Inschrijvingen' %></span>
+                </button>
+            </form>
+
             <div class="btn-group shadow-sm">
                 <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Werkjaar beheer">
                     <i class="bi bi-calendar-range"></i> Werkjaar

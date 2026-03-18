@@ -17,111 +17,121 @@
                 <div class="fs-5"><%- content.top_text.content %></div>
             <% } %>
 
-            <form action="/inschrijven" method="POST" class="mt-4" id="registrationForm">
-                
-                <!-- Role Selection -->
-                <div class="mb-5 p-4 border-0 rounded-4 bg-light shadow-inner">
-                    <label class="form-label fw-bold text-primary mb-3">Ik schrijf in als:</label>
-                    <div class="d-flex gap-4">
-                        <div class="form-check custom-option">
-                            <input class="form-check-input" type="radio" name="type" id="roleLid" value="lid" checked>
-                            <label class="form-check-label fw-bold" for="roleLid">Lid</label>
-                        </div>
-                        <div class="form-check custom-option">
-                            <input class="form-check-input" type="radio" name="type" id="roleLeiding" value="leiding">
-                            <label class="form-check-label fw-bold" for="roleLeiding">Leiding</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row g-4">
-                    <!-- First Name -->
-                    <div class="col-md-6">
-                        <label for="firstName" class="form-label fw-bold">Voornaam</label>
-                        <input type="text" class="form-control" id="firstName" name="firstName" required placeholder="Bijv. Jan">
-                    </div>
-                    <!-- Last Name -->
-                    <div class="col-md-6">
-                        <label for="lastName" class="form-label fw-bold">Achternaam</label>
-                        <input type="text" class="form-control" id="lastName" name="lastName" required placeholder="Bijv. Janssens">
-                    </div>
-                </div>
-
-                <div class="mt-4">
-                    <label for="birthdate" class="form-label fw-bold">Geboortedatum</label>
-                    <input type="date" class="form-control" id="birthdate" name="birthdate" required>
-                </div>
-
-                <!-- Contact Info -->
-                <div class="row g-4 mt-2">
-                    <div class="col-md-6">
-                        <label for="email" class="form-label fw-bold" id="labelEmail">Email Ouders</label>
-                        <input type="email" class="form-control" id="email" name="email" required placeholder="email@voorbeeld.be">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="phone" class="form-label fw-bold" id="labelPhone">Telefoon Ouders</label>
-                        <input type="text" class="form-control" id="phone" name="parentsPhone" required placeholder="0470 00 00 00">
-                    </div>
-                </div>
-
-                <!-- Member Specific Fields -->
-                <div id="memberFields" class="mt-4">
-                    <div class="mb-4">
-                        <label for="parentsNames" class="form-label fw-bold">Namen Ouders/Voogd</label>
-                        <input type="text" class="form-control" id="parentsNames" name="parentsNames" placeholder="Bijv. Mark en Linda">
-                    </div>
+            <% if (isRegistrationOpen) { %>
+                <form action="/inschrijven" method="POST" class="mt-4" id="registrationForm">
                     
-                    <div class="mb-4">
-                        <label for="memberPhone" class="form-label fw-bold">GSM Nummer Lid (Optioneel)</label>
-                        <input type="text" class="form-control" id="memberPhone" name="memberPhone" placeholder="0470 00 00 00">
-                    </div>
-
-                    <div class="mb-4 p-4 border rounded-4 bg-white border-2">
-                        <label class="form-label fw-bold text-primary mb-3">Mogen er foto's genomen worden van het lid?</label>
+                    <!-- Role Selection -->
+                    <div class="mb-5 p-4 border-0 rounded-4 bg-light shadow-inner">
+                        <label class="form-label fw-bold text-primary mb-3">Ik schrijf in als:</label>
                         <div class="d-flex gap-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="photoPermission" id="photoYes" value="true" checked>
-                                <label class="form-check-label" for="photoYes">Ja, tuurlijk!</label>
+                            <div class="form-check custom-option">
+                                <input class="form-check-input" type="radio" name="type" id="roleLid" value="lid" checked>
+                                <label class="form-check-label fw-bold" for="roleLid">Lid</label>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="photoPermission" id="photoNo" value="false">
-                                <label class="form-check-label" for="photoNo">Liever niet</label>
+                            <div class="form-check custom-option">
+                                <input class="form-check-input" type="radio" name="type" id="roleLeiding" value="leiding">
+                                <label class="form-check-label fw-bold" for="roleLeiding">Leiding</label>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Group Selection -->
-                <div class="mt-4" id="groupFields">
-                    <label for="group" class="form-label fw-bold">Groep</label>
-                    <select class="form-select" id="groupInput" name="group" required>
-                        <option value="" disabled selected>Kies een groep...</option>
-                        <option value="ribbel">Ribbels (1e en 2e leerjaar)</option>
-                        <option value="speelclub">Speelclub (3e en 4e leerjaar)</option>
-                        <option value="rakwi">Rakwi (5e en 6e leerjaar)</option>
-                        <option value="tito">Tito (1e en 2e middelbaar)</option>
-                        <option value="keti">Keti (3e en 4e middelbaar)</option>
-                        <option value="aspi">Aspi (5e en 6e middelbaar)</option>
-                    </select>
-                </div>
-
-                <!-- Extra Info -->
-                <div class="mt-4">
-                    <label for="medicalInfo" class="form-label fw-bold">Extra Info (Allergieën, medische info, etc.)</label>
-                    <textarea class="form-control" id="medicalInfo" name="medicalInfo" rows="4" placeholder="Zijn er zaken waar we rekening mee moeten houden?"></textarea>
-                </div>
-
-                <div class="mt-5 mb-4 form-check bg-light p-3 rounded-3 ms-0">
-                    <div class="ms-4">
-                        <input class="form-check-input" type="checkbox" id="privacyAccepted" name="privacyAccepted" required>
-                        <label class="form-check-label small" for="privacyAccepted">
-                            Ik heb de <a href="/pdf/privacyNotice.pdf" target="_blank" rel="noopener" class="text-primary fw-bold">privacy notice</a> gelezen en ga akkoord met de verwerking van deze gegevens.
-                        </label>
+                    <div class="row g-4">
+                        <!-- First Name -->
+                        <div class="col-md-6">
+                            <label for="firstName" class="form-label fw-bold">Voornaam</label>
+                            <input type="text" class="form-control" id="firstName" name="firstName" required placeholder="Bijv. Jan">
+                        </div>
+                        <!-- Last Name -->
+                        <div class="col-md-6">
+                            <label for="lastName" class="form-label fw-bold">Achternaam</label>
+                            <input type="text" class="form-control" id="lastName" name="lastName" required placeholder="Bijv. Janssens">
+                        </div>
                     </div>
-                </div>
 
-                <button type="submit" class="btn btn-chiro w-100 py-3 fs-4 mt-2 shadow">Nu Inschrijven!</button>
-            </form>
+                    <div class="mt-4">
+                        <label for="birthdate" class="form-label fw-bold">Geboortedatum</label>
+                        <input type="date" class="form-control" id="birthdate" name="birthdate" required>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="row g-4 mt-2">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label fw-bold" id="labelEmail">Email Ouders</label>
+                            <input type="email" class="form-control" id="email" name="email" required placeholder="email@voorbeeld.be">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label fw-bold" id="labelPhone">Telefoon Ouders</label>
+                            <input type="text" class="form-control" id="phone" name="parentsPhone" required placeholder="0470 00 00 00">
+                        </div>
+                    </div>
+
+                    <!-- Member Specific Fields -->
+                    <div id="memberFields" class="mt-4">
+                        <div class="mb-4">
+                            <label for="parentsNames" class="form-label fw-bold">Namen Ouders/Voogd</label>
+                            <input type="text" class="form-control" id="parentsNames" name="parentsNames" placeholder="Bijv. Mark en Linda">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="memberPhone" class="form-label fw-bold">GSM Nummer Lid (Optioneel)</label>
+                            <input type="text" class="form-control" id="memberPhone" name="memberPhone" placeholder="0470 00 00 00">
+                        </div>
+
+                        <div class="mb-4 p-4 border rounded-4 bg-white border-2">
+                            <label class="form-label fw-bold text-primary mb-3">Mogen er foto's genomen worden van het lid?</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="photoPermission" id="photoYes" value="true" checked>
+                                    <label class="form-check-label" for="photoYes">Ja, tuurlijk!</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="photoPermission" id="photoNo" value="false">
+                                    <label class="form-check-label" for="photoNo">Liever niet</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Group Selection -->
+                    <div class="mt-4" id="groupFields">
+                        <label for="group" class="form-label fw-bold">Groep</label>
+                        <select class="form-select" id="groupInput" name="group" required>
+                            <option value="" disabled selected>Kies een groep...</option>
+                            <option value="ribbel">Ribbels (1e en 2e leerjaar)</option>
+                            <option value="speelclub">Speelclub (3e en 4e leerjaar)</option>
+                            <option value="rakwi">Rakwi (5e en 6e leerjaar)</option>
+                            <option value="tito">Tito (1e en 2e middelbaar)</option>
+                            <option value="keti">Keti (3e en 4e middelbaar)</option>
+                            <option value="aspi">Aspi (5e en 6e middelbaar)</option>
+                        </select>
+                    </div>
+
+                    <!-- Extra Info -->
+                    <div class="mt-4">
+                        <label for="medicalInfo" class="form-label fw-bold">Extra Info (Allergieën, medische info, etc.)</label>
+                        <textarea class="form-control" id="medicalInfo" name="medicalInfo" rows="4" placeholder="Zijn er zaken waar we rekening mee moeten houden?"></textarea>
+                    </div>
+
+                    <div class="mt-5 mb-4 form-check bg-light p-3 rounded-3 ms-0">
+                        <div class="ms-4">
+                            <input class="form-check-input" type="checkbox" id="privacyAccepted" name="privacyAccepted" required>
+                            <label class="form-check-label small" for="privacyAccepted">
+                                Ik heb de <a href="/pdf/privacyNotice.pdf" target="_blank" rel="noopener" class="text-primary fw-bold">privacy notice</a> gelezen en ga akkoord met de verwerking van deze gegevens.
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-chiro w-100 py-3 fs-4 mt-2 shadow">Nu Inschrijven!</button>
+                </form>
+            <% } else { %>
+                <div class="text-center py-5">
+                    <div class="display-1 text-muted mb-4">
+                        <i class="bi bi-lock"></i>
+                    </div>
+                    <h2 class="fw-bold mb-3">Inschrijvingen Gesloten</h2>
+                    <p class="lead mb-0">De inschrijvings periode is gesloten. Voor meer info kan je altijd een bericht sturen naar onze hoofdleiding.</p>
+                </div>
+            <% } %>
         </div>
     </div>
 
