@@ -66,10 +66,13 @@ async function triggerDownload(url, filename, btn) {
     }
 }
 
+// Keep track of active blob URLs to clean up
+let activePreviewBlobUrl = null;
+
 /**
  * Open a file in the shared preview modal
  */
-function openFilePreview(url, name) {
+async function openFilePreview(url, name) {
     const modalEl = document.getElementById('filePreviewModal');
     if (!modalEl) {
         console.warn('filePreviewModal not found, navigating directly to:', url);
@@ -90,6 +93,12 @@ function openFilePreview(url, name) {
     if (!frame || !img || !title || !downloadBtn) {
         console.error('Required preview modal elements missing');
         return false;
+    }
+
+    // Cleanup previous blob URL if exists
+    if (activePreviewBlobUrl) {
+        window.URL.revokeObjectURL(activePreviewBlobUrl);
+        activePreviewBlobUrl = null;
     }
 
     // Standalone check
@@ -149,15 +158,32 @@ function openFilePreview(url, name) {
             errorDiv.classList.remove('d-none');
         };
     } else if (isPDF) {
-        frame.src = url;
-        frame.onload = function() {
-            loader.classList.add('d-none');
-            frame.classList.remove('d-none');
-        };
-        frame.onerror = function() {
-             loader.classList.add('d-none');
-             errorDiv.classList.remove('d-none');
-        };
+        try {
+            // Use Fetch/Blob system for PDF preview too
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Kon PDF niet ophalen');
+            
+            const blob = await response.blob();
+            activePreviewBlobUrl = window.URL.createObjectURL(blob);
+            
+            frame.src = activePreviewBlobUrl;
+            frame.onload = function() {
+                loader.classList.add('d-none');
+                frame.classList.remove('d-none');
+            };
+        } catch (err) {
+            console.error('PDF Preview Error:', err);
+            // Fallback to direct URL if fetch fails
+            frame.src = url;
+            frame.onload = function() {
+                loader.classList.add('d-none');
+                frame.classList.remove('d-none');
+            };
+            frame.onerror = function() {
+                 loader.classList.add('d-none');
+                 errorDiv.classList.remove('d-none');
+            };
+        }
     } else if (isOffice) {
         // Check if localhost/local IP
         const isLocal = window.location.hostname === 'localhost' || 
@@ -186,5 +212,15 @@ function openFilePreview(url, name) {
     }
 
     modal.show();
+    
+    // Add event listener to cleanup blob URL when modal is hidden
+    modalEl.addEventListener('hidden.bs.modal', function handler() {
+        if (activePreviewBlobUrl) {
+            window.URL.revokeObjectURL(activePreviewBlobUrl);
+            activePreviewBlobUrl = null;
+        }
+        modalEl.removeEventListener('hidden.bs.modal', handler);
+    });
+
     return false; // Prevent default link click
 }

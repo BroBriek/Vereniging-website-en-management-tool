@@ -279,6 +279,18 @@
             wrapper.appendChild(img);
             img.style.cursor = 'pointer';
         });
+
+        // Handle PDF links in rich text content
+        document.querySelectorAll('.rich-text-content a[href$=".pdf"]').forEach(link => {
+            link.classList.add('pdf-preview-link');
+            link.onclick = function(e) {
+                e.preventDefault();
+                const src = this.getAttribute('href');
+                const filename = src.split('/').pop();
+                openFilePreview(src, filename);
+                return false;
+            };
+        });
     });
 </script>
 

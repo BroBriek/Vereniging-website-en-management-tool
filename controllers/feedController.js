@@ -26,33 +26,44 @@ const getInitials = (username) => {
 const highlightMentions = (text) => {
     if (!text) return '';
     
-    // 1. Process Mentions first, but avoid touching content inside HTML tags
-    // We'll use a more sophisticated approach: split by tags, process text nodes
+    // 1. Process tags and text nodes
     const parts = text.split(/(<[^>]+>)/g);
     const processedParts = parts.map(part => {
         if (part.startsWith('<')) {
-            // This is an HTML tag. 
-            // If it's an img tag, wrap it in a link to our previewer
-            if (part.toLowerCase().startsWith('<img')) {
-                // Extract src
+            // HTML tag processing
+            const lowerPart = part.toLowerCase();
+            
+            // Image wrapping
+            if (lowerPart.startsWith('<img')) {
                 const srcMatch = part.match(/src="([^"]+)"/);
                 if (srcMatch) {
                     const src = srcMatch[1];
                     const filename = src.split('/').pop();
-                    
                     let extraAttrs = '';
-                    // Check if it's an external URL (not starting with /uploads/ or /feed_uploads/)
                     if (src.includes('http') && !src.includes('/uploads/') && !src.includes('/feed_uploads/')) {
                         extraAttrs = ' onerror="handleBrokenImage(this)"';
                     }
-                    
                     const modifiedImg = part.replace('>', extraAttrs + '>');
                     return `<a href="${src}" onclick="openFilePreview('${src}', '${filename}'); return false;" class="d-inline-block">${modifiedImg}</a>`;
                 }
             }
+            
+            // PDF link wrapping (if it's an <a> tag pointing to a .pdf)
+            if (lowerPart.startsWith('<a')) {
+                const hrefMatch = part.match(/href="([^"]+\.pdf)"/i);
+                if (hrefMatch) {
+                    const href = hrefMatch[1];
+                    const filename = href.split('/').pop();
+                    // Inject onclick but keep original href for context
+                    if (!part.includes('onclick=')) {
+                        return part.replace('>', ` onclick="openFilePreview('${href}', '${filename}'); return false;">`);
+                    }
+                }
+            }
+
             return part;
         }
-        // This is text content, process mentions
+        // Text node processing: mentions
         return part.replace(/@(\w+)/g, (match, username) => {
             const capitalized = username.charAt(0).toUpperCase() + username.slice(1).toLowerCase();
             return `<span class="text-primary fw-bold">@${capitalized}</span>`;

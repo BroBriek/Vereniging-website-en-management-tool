@@ -17,7 +17,8 @@ function highlightMentions(text) {
     const parts = text.split(/(<[^>]+>)/g);
     const processedParts = parts.map(part => {
         if (part.startsWith('<')) {
-            if (part.toLowerCase().startsWith('<img')) {
+            const lowerPart = part.toLowerCase();
+            if (lowerPart.startsWith('<img')) {
                 const srcMatch = part.match(/src="([^"]+)"/);
                 if (srcMatch) {
                     const src = srcMatch[1];
@@ -28,6 +29,16 @@ function highlightMentions(text) {
                     }
                     const modifiedImg = part.replace('>', extraAttrs + '>');
                     return `<a href="${src}" onclick="openFilePreview('${src}', '${filename}'); return false;" class="d-inline-block">${modifiedImg}</a>`;
+                }
+            }
+            if (lowerPart.startsWith('<a')) {
+                const hrefMatch = part.match(/href="([^"]+\.pdf)"/i);
+                if (hrefMatch) {
+                    const href = hrefMatch[1];
+                    const filename = href.split('/').pop();
+                    if (!part.includes('onclick=')) {
+                        return part.replace('>', ` onclick="openFilePreview('${href}', '${filename}'); return false;">`);
+                    }
                 }
             }
             return part;
