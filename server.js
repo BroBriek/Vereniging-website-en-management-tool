@@ -195,4 +195,6 @@ app.listen(PORT, () => {
     require('./services/LogMonitorService').init();
     // Initialize Birthday Notifications
     require('./services/BirthdayService').init();
+    // Initialize Weekly Registration Update
+    require('./services/RegistrationUpdateService').init();
 });

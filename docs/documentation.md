@@ -29,11 +29,13 @@ Voorbeeld inhoud:
 PORT=3000
 SESSION_SECRET=een_lang_willekeurig_geheim
 EMAIL_PASSWORD=jouw_outlook_wachtwoord
+CONTACT_EMAIL=Chiromeeuwen@outlook.com
 ```
 
 - `PORT`: De poort waarop de server draait (standaard 3000).
 - `SESSION_SECRET`: Gebruikt voor het beveiligen van adminsessies.
-- `EMAIL_PASSWORD`: Het wachtwoord van het `Chiromeeuwen@outlook.com` account voor het contactformulier.
+- `EMAIL_PASSWORD`: Het wachtwoord van het e-mailaccount voor het verzenden van e-mails.
+- `CONTACT_EMAIL`: Het e-mailadres waarop contactberichten en wekelijkse updates worden ontvangen (standaard Chiromeeuwen@outlook.com).
 
 ## 4. Starten van de Applicatie
 

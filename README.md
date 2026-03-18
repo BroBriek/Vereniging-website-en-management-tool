@@ -35,12 +35,14 @@ Om de applicatie lokaal te draaien, volg je de onderstaande stappen:
     ```env
     PORT=3000
     SESSION_SECRET=uw_geheime_sessie_sleutel # VERPLICHT! Verander deze naar een unieke, sterke sleutel
-    EMAIL= Johnathan.Doe@example.com
-    EMAIL_PASSWORD=uw_email_wachtwoord # Optioneel, voor contactformulier e-mails
+    EMAIL=Johnathan.Doe@example.com
+    EMAIL_PASSWORD=uw_email_wachtwoord
+    CONTACT_EMAIL=Chiromeeuwen@outlook.com # Het adres waarop je meldingen wilt ontvangen
     ```
     *   **`PORT`**: De poort waarop de server draait.
     *   **`SESSION_SECRET`**: Een willekeurige string die gebruikt wordt om sessies te versleutelen. **Essentieel voor beveiliging.**
-    *   **`EMAIL_PASSWORD`**: Het wachtwoord voor het e-mailaccount dat wordt gebruikt voor het contactformulier en de mail server.
+    *   **`EMAIL_PASSWORD`**: Het wachtwoord voor het e-mailaccount dat wordt gebruikt voor het verzenden van e-mails.
+    *   **`CONTACT_EMAIL`**: Het e-mailadres waarop contactberichten en wekelijkse updates worden ontvangen.
 
 5.  **Start de applicatie:**
     ```bash
