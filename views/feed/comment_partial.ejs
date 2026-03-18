@@ -18,8 +18,16 @@ function highlightMentions(text) {
     const processedParts = parts.map(part => {
         if (part.startsWith('<')) {
             if (part.toLowerCase().startsWith('<img')) {
-                if (part.includes('src="http') && !part.includes('src="/uploads/')) {
-                    return part.replace('>', ' onerror="handleBrokenImage(this)">');
+                const srcMatch = part.match(/src="([^"]+)"/);
+                if (srcMatch) {
+                    const src = srcMatch[1];
+                    const filename = src.split('/').pop();
+                    let extraAttrs = '';
+                    if (src.includes('http') && !src.includes('/uploads/') && !src.includes('/feed_uploads/')) {
+                        extraAttrs = ' onerror="handleBrokenImage(this)"';
+                    }
+                    const modifiedImg = part.replace('>', extraAttrs + '>');
+                    return `<a href="${src}" onclick="openFilePreview('${src}', '${filename}'); return false;" class="d-inline-block">${modifiedImg}</a>`;
                 }
             }
             return part;

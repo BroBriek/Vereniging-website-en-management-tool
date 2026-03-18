@@ -17,6 +17,7 @@ router.post('/inschrijven', publicController.postRegister);
 router.get('/contact', publicController.getContact);
 router.post('/contact', publicController.postContact);
 router.get('/help', publicController.getHelp);
+router.get('/download', publicController.downloadFile);
 router.get('/robots.txt', publicController.getRobotsTxt);
 router.get('/sitemap.xml', publicController.getSitemapXml);
 

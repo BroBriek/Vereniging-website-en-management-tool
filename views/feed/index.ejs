@@ -1064,7 +1064,7 @@ function openFilePreview(url, name) {
 
     // Reset state
     title.textContent = name;
-    const downloadUrl = `/feed/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
+    const downloadUrl = `/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
     
     // Set href and attributes
     downloadBtn.href = downloadUrl;

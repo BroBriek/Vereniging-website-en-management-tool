@@ -87,7 +87,9 @@
                         <% } else if (field.type === 'image') { %>
                             <% if (field.url) { %>
                                 <div class="text-center">
-                                    <img src="<%= field.url %>" class="img-fluid rounded shadow-sm" alt="Form afbeelding">
+                                    <a href="<%= field.url %>" onclick="openFilePreview('<%= field.url %>', '<%= field.url.split('/').pop() %>'); return false;" class="d-inline-block">
+                                        <img src="<%= field.url %>" class="img-fluid rounded shadow-sm" alt="Form afbeelding" style="cursor: pointer;">
+                                    </a>
                                 </div>
                             <% } %>
                         <% } else if (field.type === 'short_text') { %>
@@ -190,7 +192,185 @@
     </div>
 </div>
 
+<!-- File Preview Modal -->
+<div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content rounded-4 border-0 shadow" style="height: 90vh;">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title font-playful text-truncate" id="previewFileName" style="max-width: 80%;">Bestand</h5>
+        <div class="d-flex gap-2">
+            <a id="previewDownloadBtn" href="#" class="btn btn-primary btn-sm rounded-pill">
+                <i class="bi bi-download"></i> Download
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+        </div>
+      </div>
+      <div class="modal-body p-0 h-100 position-relative bg-light">
+        <div id="previewLoader" class="position-absolute top-50 start-50 translate-middle text-center">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Laden...</p>
+        </div>
+        <iframe id="previewFrame" src="" class="w-100 h-100 border-0 rounded-bottom-4 d-none"></iframe>
+        <div id="previewImageContainer" class="w-100 h-100 d-none d-flex align-items-center justify-content-center bg-white rounded-bottom-4 overflow-auto">
+            <img id="previewImage" src="" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+        </div>
+        <div id="previewError" class="d-none position-absolute top-50 start-50 translate-middle text-center p-4 w-100">
+            <i class="bi bi-file-earmark-x display-1 text-muted"></i>
+            <h5 class="mt-3">Voorbeeld niet beschikbaar</h5>
+            <p class="text-muted mb-3">Dit bestandstype kan niet worden weergegeven in de browser of we kunnen er niet bij.</p>
+            <a id="previewErrorDownloadBtn" href="#" class="btn btn-primary rounded-pill mt-2">
+                <i class="bi bi-download"></i> Download Bestand
+            </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden iframe for background downloads -->
+<iframe id="downloadIframe" style="display: none;"></iframe>
+
 <script>
+    /**
+     * Trigger a file download without opening a new tab
+     */
+    async function triggerDownload(url, filename, btn) {
+        const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+        const originalContent = btn ? btn.innerHTML : null;
+
+        if (btn) {
+            btn.classList.add('disabled');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>...';
+        }
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Download mislukt');
+            
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = blobUrl;
+            a.download = filename || 'bestand';
+            document.body.appendChild(a);
+            a.click();
+            
+            setTimeout(() => {
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
+            }, 100);
+
+        } catch (e) {
+            console.error('Download error:', e);
+            if (isStandalone) {
+                window.open(url, '_blank');
+            } else {
+                window.location.href = url;
+            }
+        } finally {
+            if (btn && originalContent) {
+                btn.classList.remove('disabled');
+                btn.innerHTML = originalContent;
+            }
+        }
+    }
+
+    function openFilePreview(url, name) {
+        const modalEl = document.getElementById('filePreviewModal');
+        const modal = new bootstrap.Modal(modalEl);
+        const frame = document.getElementById('previewFrame');
+        const imgContainer = document.getElementById('previewImageContainer');
+        const img = document.getElementById('previewImage');
+        const title = document.getElementById('previewFileName');
+        const downloadBtn = document.getElementById('previewDownloadBtn');
+        const errorBtn = document.getElementById('previewErrorDownloadBtn');
+        const loader = document.getElementById('previewLoader');
+        const errorDiv = document.getElementById('previewError');
+        
+        const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+
+        title.textContent = name;
+        // Public forms use /feed/download as it's the only proxy we have, and it's public (ensureAuthenticated is handled in router)
+        // Wait, ensuresAuthenticated IS in /feed router. Let's check if we need a public download.
+        const downloadUrl = `/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
+        
+        downloadBtn.href = downloadUrl;
+        errorBtn.href = downloadUrl;
+        
+        if (isStandalone) {
+            downloadBtn.target = "_blank";
+            downloadBtn.rel = "noopener noreferrer";
+            errorBtn.target = "_blank";
+            errorBtn.rel = "noopener noreferrer";
+        } else {
+            downloadBtn.target = "_self";
+            errorBtn.target = "_self";
+        }
+
+        const downloadHandler = (e) => {
+            e.preventDefault();
+            triggerDownload(downloadUrl, name, e.currentTarget);
+        };
+        
+        downloadBtn.onclick = downloadHandler;
+        errorBtn.onclick = downloadHandler;
+
+        loader.classList.remove('d-none');
+        frame.classList.add('d-none'); 
+        imgContainer.classList.add('d-none');
+        errorDiv.classList.add('d-none');
+        frame.src = '';
+        img.src = '';
+
+        const ext = name.split('.').pop().toLowerCase();
+        const isPDF = ext === 'pdf';
+        const isOffice = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext);
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+
+        if (isImage) {
+            img.src = url;
+            img.onload = function() {
+                loader.classList.add('d-none');
+                imgContainer.classList.remove('d-none');
+            };
+            img.onerror = function() {
+                loader.classList.add('d-none');
+                errorDiv.classList.remove('d-none');
+            };
+        } else if (isPDF) {
+            frame.src = url;
+            frame.onload = function() {
+                loader.classList.add('d-none');
+                frame.classList.remove('d-none');
+            };
+            frame.onerror = function() {
+                 loader.classList.add('d-none');
+                 errorDiv.classList.remove('d-none');
+            };
+        } else if (isOffice) {
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.')) {
+                 loader.classList.add('d-none');
+                 errorDiv.classList.remove('d-none');
+                 errorDiv.querySelector('p').textContent = "Office bestanden kunnen niet lokaal worden bekeken (Google Docs Viewer vereist een publieke URL).";
+            } else {
+                 const encodedUrl = encodeURIComponent(window.location.origin + url);
+                 frame.src = `https://docs.google.com/gview?url=${encodedUrl}&embedded=true`;
+                 frame.onload = function() {
+                    loader.classList.add('d-none');
+                    frame.classList.remove('d-none');
+                 };
+            }
+        } else {
+             loader.classList.add('d-none');
+             errorDiv.classList.remove('d-none');
+        }
+
+        modal.show();
+        return false;
+    }
+
     function calculatePricingTotal(fieldId) {
         const container = document.querySelector(`[name^="${fieldId}"][class*="pricing-qty"]`).closest('.pricing-module');
         const qtyInputs = container.querySelectorAll('.pricing-qty');
@@ -221,6 +401,24 @@
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // Wrap images in rich text content with preview links
+        document.querySelectorAll('.rich-text-content img').forEach(img => {
+            if (img.closest('a')) return; // Already wrapped
+            const src = img.getAttribute('src');
+            const filename = src.split('/').pop();
+            const wrapper = document.createElement('a');
+            wrapper.href = src;
+            wrapper.className = 'd-inline-block';
+            wrapper.onclick = function(e) {
+                e.preventDefault();
+                openFilePreview(src, filename);
+                return false;
+            };
+            img.parentNode.insertBefore(wrapper, img);
+            wrapper.appendChild(img);
+            img.style.cursor = 'pointer';
         });
     });
 </script>
