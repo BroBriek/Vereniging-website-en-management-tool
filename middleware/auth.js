@@ -36,5 +36,11 @@ module.exports = {
       }
       // req.flash('error_msg', 'Geen toegang');
       res.redirect('/');
+  },
+  ensureMedia: function(req, res, next) {
+      if (req.isAuthenticated() && (req.user.role === 'admin' || req.user.role === 'media')) {
+          return next();
+      }
+      res.redirect('/');
   }
 };

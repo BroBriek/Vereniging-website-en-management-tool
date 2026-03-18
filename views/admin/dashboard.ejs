@@ -47,6 +47,7 @@
         <h3>Administratie</h3>
     </div>
 
+    <% if (user.role === 'admin') { %>
     <div class="col-md-4 mb-4">
         <div class="card h-100 border-success">
             <div class="card-body text-center text-success">
@@ -96,6 +97,7 @@
             </div>
         </div>
     </div>
+    <% } %>
 
     <div class="col-md-4 mb-4">
         <div class="card h-100 border-success">
@@ -108,7 +110,7 @@
     </div>
 
     <!-- Advanced Tools (Orange) -->
-    <% if (user.username === 'admin') { %>
+    <% if (user.role === 'admin') { %>
     <div class="col-12 mb-3 mt-2">
         <h3>Geavanceerde Tools</h3>
     </div>
@@ -148,6 +150,7 @@
     </div>
 
     <div class="col-md-12 mt-5">
+        <% if (user.role === 'admin') { %>
         <div class="card border-danger">
             <div class="card-header bg-danger text-white">
                 <h3 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Danger Zone</h3>
@@ -173,6 +176,7 @@
                 </div>
             </div>
         </div>
+        <% } %>
     </div>
 </div>
 
