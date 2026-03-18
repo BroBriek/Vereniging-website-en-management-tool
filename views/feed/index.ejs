@@ -792,6 +792,9 @@ function autoResize(element) {
   </div>
 </div>
 
+<!-- Hidden iframe for background downloads to avoid tab switching in standalone web apps -->
+<iframe id="downloadIframe" style="display: none;"></iframe>
+
 <!-- Create Event Modal -->
 <div class="modal fade" id="createEventModal" tabindex="-1" aria-labelledby="createEventModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -993,6 +996,18 @@ function autoResize(element) {
 <% } %>
 
 <script>
+/**
+ * Trigger a file download without opening a new tab
+ */
+function triggerDownload(url) {
+    const iframe = document.getElementById('downloadIframe');
+    if (iframe) {
+        iframe.src = url;
+    } else {
+        window.location.href = url;
+    }
+}
+
 function openFilePreview(url, name) {
     const modalEl = document.getElementById('filePreviewModal');
     const modal = new bootstrap.Modal(modalEl);
@@ -1008,8 +1023,22 @@ function openFilePreview(url, name) {
     // Reset state
     title.textContent = name;
     const downloadUrl = `/feed/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
+    
+    // Set href for right-click/long-press compatibility
     downloadBtn.href = downloadUrl;
+    downloadBtn.target = "_self";
     errorBtn.href = downloadUrl;
+    errorBtn.target = "_self";
+
+    // Add click event for better control in standalone apps
+    const downloadHandler = (e) => {
+        e.preventDefault();
+        triggerDownload(downloadUrl);
+    };
+    
+    // Use onclick to overwrite any previous handlers
+    downloadBtn.onclick = downloadHandler;
+    errorBtn.onclick = downloadHandler;
     loader.classList.remove('d-none');
     frame.classList.add('d-none'); 
     imgContainer.classList.add('d-none');
