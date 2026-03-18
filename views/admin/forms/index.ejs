@@ -2,13 +2,21 @@
 
 <div class="row">
     <div class="col-12 mb-4">
-        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
-            <h1>Formulier Beheer</h1>
-            <a href="/admin/forms/create" class="btn btn-primary w-100 w-sm-auto">
-                <i class="bi bi-plus-circle me-1"></i> Nieuw Formulier
-            </a>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-0">Formulier Beheer</h1>
+                <p class="text-muted mb-0 d-none d-sm-block">Beheer formulieren voor inschrijvingen, enquêtes of andere doeleinden.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/admin" class="btn btn-outline-secondary d-none d-sm-inline-flex align-items-center">
+                    <i class="bi bi-arrow-left me-1"></i> Terug
+                </a>
+                <a href="/admin/forms/create" class="btn btn-primary d-inline-flex align-items-center">
+                    <i class="bi bi-plus-circle me-1"></i> <span class="d-none d-md-inline">Nieuw Formulier</span><span class="d-md-none">Nieuw</span>
+                </a>
+            </div>
         </div>
-        <p class="text-muted mt-2 mt-sm-0">Beheer formulieren voor inschrijvingen, enquêtes of andere doeleinden.</p>
+        <p class="text-muted mt-2 d-sm-none">Beheer formulieren voor inschrijvingen, enquêtes of andere doeleinden.</p>
     </div>
 
     <div class="col-12">
