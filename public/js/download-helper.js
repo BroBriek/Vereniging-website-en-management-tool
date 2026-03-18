@@ -20,7 +20,8 @@ async function triggerDownload(url, filename, btn) {
     }
 
     try {
-        const response = await fetch(url);
+        // Use same-origin credentials for the fetch (ensures session cookie is sent if needed)
+        const response = await fetch(url, { credentials: 'same-origin' });
         if (!response.ok) {
             if (response.status === 404) throw new Error('Bestand niet gevonden op de server.');
             throw new Error('Download mislukt (Server Error: ' + response.status + ')');
@@ -33,27 +34,29 @@ async function triggerDownload(url, filename, btn) {
         a.style.display = 'none';
         a.href = blobUrl;
         a.download = filename || 'bestand';
+        
+        // Critical for standalone PWAs: some environments need the link in the DOM to trigger
         document.body.appendChild(a);
         a.click();
         
         // Cleanup - Increased timeout to 60 seconds for mobile stability
         // Revoking too fast can cause "Page not found" if the browser navigates to the blob instead of downloading
         setTimeout(() => {
-            window.URL.revokeObjectURL(blobUrl);
             if (a.parentNode) {
                 document.body.removeChild(a);
             }
+            window.URL.revokeObjectURL(blobUrl);
         }, 60000);
 
     } catch (e) {
         console.error('Download error:', e);
         
-        // Alert the user so they know why it might navigate
-        alert('Download kon niet direct worden gestart: ' + e.message + '\n\nWe proberen het nu op de standaard manier.');
-
-        // Fallback: standard navigation
-        // For standalone apps, we use _blank to try and force a system browser pop-out
+        // If we're already in a standalone app, window.location.href or window.open 
+        // often navigates the app itself, which we want to avoid.
+        // But if the blob method failed, we have to try standard navigation.
+        
         if (isStandalone) {
+            // In iOS PWA mode, window.open often pops out to Safari, which is good for downloads
             window.open(url, '_blank');
         } else {
             window.location.href = url;
@@ -112,7 +115,7 @@ async function openFilePreview(url, name) {
     downloadBtn.href = downloadUrl;
     if (errorBtn) errorBtn.href = downloadUrl;
     
-    // In standalone mode, we try to open in new window to trigger system browser pop-out if it fails internally
+    // In standalone mode, we try to open in new window to trigger system browser pop-out
     if (isStandalone) {
         downloadBtn.target = "_blank";
         downloadBtn.rel = "noopener noreferrer";
@@ -159,8 +162,8 @@ async function openFilePreview(url, name) {
         };
     } else if (isPDF) {
         try {
-            // Use Fetch/Blob system for PDF preview too
-            const response = await fetch(url);
+            // Use Fetch/Blob system for PDF preview
+            const response = await fetch(url, { credentials: 'same-origin' });
             if (!response.ok) throw new Error('Kon PDF niet ophalen');
             
             const blob = await response.blob();
@@ -173,7 +176,7 @@ async function openFilePreview(url, name) {
             };
         } catch (err) {
             console.error('PDF Preview Error:', err);
-            // Fallback to direct URL if fetch fails
+            // Fallback to direct URL
             frame.src = url;
             frame.onload = function() {
                 loader.classList.add('d-none');
@@ -206,7 +209,6 @@ async function openFilePreview(url, name) {
              };
         }
     } else {
-        // Unknown type
          loader.classList.add('d-none');
          errorDiv.classList.remove('d-none');
     }
