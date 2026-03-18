@@ -1,4 +1,7 @@
 Admin Management Script:
       Je kunt nu admins toevoegen of verwijderen via de terminal.
-       * Toevoegen: node scripts/manage_admin.js add <gebruikersnaam> <wachtwoord>
+       * Toevoegen: node scripts/manage_admin.js add <gebruikersnaam> <wachtwoord> (Altijd rol 'admin')
        * Verwijderen: node scripts/manage_admin.js remove <gebruikersnaam>
+      
+      Opmerking: Gebruikers die via het script zijn toegevoegd hebben standaard de rol 'admin'. 
+      Je kunt hun rol later wijzigen naar 'media' of 'member' via het Admin Dashboard op de website.

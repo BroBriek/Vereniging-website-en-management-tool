@@ -124,15 +124,26 @@ In het ChiroSite systeem is het beheer van gebruikers en hun toegang tot specifi
 
 ## 1. Rollen en Rechten
 
-Er zijn twee hoofdrollen in het systeem:
+Er zijn drie hoofdrollen in het systeem:
 
 *   **Admin:**
-    *   Heeft toegang tot **alle** groepen en feeds.
-    *   Kan gebruikers aanmaken, bewerken en verwijderen.
-    *   Kan groepen beheren.
-    *   Kan de website instellingen en content beheren.
+    *   Heeft volledige toegang tot alle onderdelen van het systeem.
+    *   **Gebruikersbeheer:** Aanmaken, bewerken en verwijderen van alle accounts (behalve het onzichtbare hoofdaccount).
+    *   **Onderhoud & Veiligheid:** Toegang tot database-tools, bestandsbeheer op de server, logs en backups.
+    *   **Inschrijvingen:** Volledig beheer van inschrijvingsperiodes, bewerken en verwijderen van inschrijvingen.
+    *   **Financiën:** Toegang tot de financiële tool.
+    *   **Groepen:** Beheer van de verschillende "Leidingshoekjes".
+    *   **Communicatie:** Verzenden van e-mails via de e-mail tool.
+*   **Media:**
+    *   Heeft toegang tot de meeste content-beheer functies, maar geen systeem-kritieke instellingen.
+    *   **Pagina's:** Bewerken van de teksten op de publieke pagina's (Home, Praktisch, Afdelingen, etc.).
+    *   **Leiding:** Beheer van de leidingsinfo voor de publieke site.
+    *   **Kalender:** Toevoegen en wijzigen van activiteiten.
+    *   **Bestanden:** Uploaden en beheren van afbeeldingen en documenten in de upload-manager.
+    *   **Formulieren:** Volledig beheer van de form-builder (formulieren maken, antwoorden bekijken en exporteren).
+    *   *Opmerking: Media-gebruikers hebben GEEN toegang tot gebruikersbeheer, onderhoudstools, financiën of inschrijvingsbeheer.*
 *   **Member (Lid/Leiding):**
-    *   Heeft enkel toegang tot de groepen die specifiek aan hen zijn toegewezen.
+    *   Heeft enkel toegang tot de groepen (Leidingshoekjes) die specifiek aan hen zijn toegewezen.
     *   Kan berichten plaatsen en reageren in hun toegewezen groepen.
 
 ## 2. Gebruikers Aanmaken
