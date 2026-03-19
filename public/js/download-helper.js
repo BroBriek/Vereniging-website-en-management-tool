@@ -10,28 +10,54 @@
 async function triggerDownload(url, filename, btn) {
     if (btn && btn.classList.contains('disabled')) return;
 
+    // Detect if the user is on an iOS device and if they are in Standalone (PWA) mode
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    
     const originalContent = btn ? btn.innerHTML : null;
 
-    // Show loading state if button provided
     if (btn) {
         btn.classList.add('disabled');
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>...';
     }
 
     try {
-        // Use same-origin credentials for the fetch (ensures session cookie is sent if needed)
+        // --- STRATEGY 1: Native Share Sheet for iOS PWAs ---
+        // This prevents the memory crash and bypasses the missing download manager
+        if (isIOS && isStandalone && navigator.canShare) {
+            const response = await fetch(url, { credentials: 'same-origin' });
+            if (!response.ok) throw new Error('Download mislukt');
+            
+            const blob = await response.blob();
+            const file = new File([blob], filename || 'bestand', { type: blob.type });
+
+            // Check if the system allows sharing this specific file type
+            if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: filename || 'Download'
+                });
+                return; // Exit early, the native iOS share sheet will handle the rest
+            }
+        }
+
+        // --- STRATEGY 2: Standard Fetch & Blob (Android, Desktop, non-PWA) ---
         const response = await fetch(url, { credentials: 'same-origin' });
         if (!response.ok) {
             if (response.status === 404) throw new Error('Bestand niet gevonden op de server.');
             throw new Error('Download mislukt (Server Error: ' + response.status + ')');
         }
 
-        // Check file size - if > 50MB, bypass blob to avoid PWA crash
+        // Check file size - if > 50MB, or if Content-Length is missing, bypass blob
         const contentLength = response.headers.get('Content-Length');
-        if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) {
-            window.location.href = url;
-            return;
+        if (!contentLength || parseInt(contentLength) > 50 * 1024 * 1024) {
+             // For massive files, "kick" the user out to the system browser to handle it
+             if (isStandalone) {
+                 window.open(url, '_blank');
+             } else {
+                 window.location.href = url;
+             }
+             return;
         }
         
         const blob = await response.blob();
@@ -42,12 +68,9 @@ async function triggerDownload(url, filename, btn) {
         a.href = blobUrl;
         a.download = filename || 'bestand';
         
-        // Critical for standalone PWAs: some environments need the link in the DOM to trigger
         document.body.appendChild(a);
         a.click();
         
-        // Cleanup - Wait slightly to ensure the OS intercepts the download, 
-        // then immediately destroy the blob to free up the RAM.
         setTimeout(() => {
             if (a.parentNode) {
                 document.body.removeChild(a);
@@ -58,12 +81,9 @@ async function triggerDownload(url, filename, btn) {
     } catch (e) {
         console.error('Download error:', e);
         
-        // If we're already in a standalone app, window.location.href or window.open 
-        // often navigates the app itself, which we want to avoid.
-        // But if the blob method failed, we have to try standard navigation.
-        
+        // --- STRATEGY 3: Ultimate Fallback ---
+        // If everything fails (or user cancels the share sheet), just open the URL directly
         if (isStandalone) {
-            // In iOS PWA mode, window.open often pops out to Safari, which is good for downloads
             window.open(url, '_blank');
         } else {
             window.location.href = url;
