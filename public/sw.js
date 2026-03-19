@@ -1,3 +1,7 @@
+// Service Worker for Chiro Vreugdeland
+// NOTE: If adding a 'fetch' event handler in the future, ensure it ignores media/download URLs
+// to avoid hitting the 50MB PWA storage limit on iOS, which can "brick" the app's offline features.
+
 self.addEventListener('push', function(event) {
   let data = { title: 'Chiro Leiding', body: 'Nieuw bericht in het leidingshoekje!', url: '/feed' };
   

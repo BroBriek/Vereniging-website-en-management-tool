@@ -26,6 +26,13 @@ async function triggerDownload(url, filename, btn) {
             if (response.status === 404) throw new Error('Bestand niet gevonden op de server.');
             throw new Error('Download mislukt (Server Error: ' + response.status + ')');
         }
+
+        // Check file size - if > 50MB, bypass blob to avoid PWA crash
+        const contentLength = response.headers.get('Content-Length');
+        if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) {
+            window.location.href = url;
+            return;
+        }
         
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
@@ -39,14 +46,14 @@ async function triggerDownload(url, filename, btn) {
         document.body.appendChild(a);
         a.click();
         
-        // Cleanup - Increased timeout to 60 seconds for mobile stability
-        // Revoking too fast can cause "Page not found" if the browser navigates to the blob instead of downloading
+        // Cleanup - Wait slightly to ensure the OS intercepts the download, 
+        // then immediately destroy the blob to free up the RAM.
         setTimeout(() => {
             if (a.parentNode) {
                 document.body.removeChild(a);
             }
             window.URL.revokeObjectURL(blobUrl);
-        }, 60000);
+        }, 1000);
 
     } catch (e) {
         console.error('Download error:', e);
@@ -166,10 +173,17 @@ async function openFilePreview(url, name) {
             const response = await fetch(url, { credentials: 'same-origin' });
             if (!response.ok) throw new Error('Kon PDF niet ophalen');
             
-            const blob = await response.blob();
-            activePreviewBlobUrl = window.URL.createObjectURL(blob);
+            // Check size for PDF preview
+            const contentLength = response.headers.get('Content-Length');
+            if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) {
+                 // Too large for Blob approach in PWA, use direct link to frame
+                 frame.src = url;
+            } else {
+                 const blob = await response.blob();
+                 activePreviewBlobUrl = window.URL.createObjectURL(blob);
+                 frame.src = activePreviewBlobUrl;
+            }
             
-            frame.src = activePreviewBlobUrl;
             frame.onload = function() {
                 loader.classList.add('d-none');
                 frame.classList.remove('d-none');
