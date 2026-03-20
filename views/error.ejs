@@ -28,12 +28,12 @@
     <p class="lead mt-3 mb-4" style="font-size: 1.5rem;">
         <% if (status === 404) { %>
             Het lijkt erop dat deze pagina op dropping is vertrokken en niet meer is teruggekeerd. <br>
-            Pak snel je <strong>verrekijker</strong> en zoek een ander pad! 🌲🔭
+            Pak snel je <strong>verrekijker</strong> (of de Google maps...) en zoek een ander pad! 🌲🔭
         <% } else if (status === 403) { %>
             Gij moogt hier ni binnen! <br>
             Dit lokaal is <strong>verboden toegang</strong>. Geen leden in het Leilo!
         <% } else if (status === 500) { %>
-            De kookploeg heeft de server laten aanbranden. 🔥🍳 <br>
+            De kookmoekes hebben de server laten aanbranden. 🔥🍳 <br>
             We zijn druk bezig met blussen, probeer het zo meteen nog eens!
         <% } else { %>
             <%= description || 'Er is iets misgegaan. Probeer eens te roepen, misschien helpt dat.' %>
