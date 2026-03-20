@@ -125,7 +125,14 @@ exports.updatePassword = async (req, res) => {
 exports.subscribePush = async (req, res) => {
   try {
     const subscription = req.body;
+    
+    // Basic validation of subscription object
+    if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ error: 'Invalid subscription data' });
+    }
+
     const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     let subscriptions = user.pushSubscriptions || [];
     
@@ -146,7 +153,7 @@ exports.subscribePush = async (req, res) => {
 
     res.status(201).json({ message: 'Subscribed successfully' });
   } catch (err) {
-    console.error(err);
+    console.error('Subscribe Push Controller Error:', err);
     res.status(500).json({ error: 'Failed to save subscription' });
   }
 };

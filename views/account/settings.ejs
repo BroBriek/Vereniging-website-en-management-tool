@@ -266,6 +266,7 @@ function urlBase64ToUint8Array(base64String) {
 const enableBtn = document.getElementById('enable-push-btn');
 const statusText = document.getElementById('push-status');
 let isSubscribed = false;
+let isLoading = false;
 
 async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
@@ -275,51 +276,76 @@ async function registerServiceWorker() {
       return registration;
     } catch (error) {
       console.error('Service Worker registration failed:', error);
+      statusText.innerText = 'Service Worker kon niet laden. Ververs de pagina.';
     }
   }
   return null;
 }
 
 function updateUI() {
+    enableBtn.disabled = isLoading;
+    
+    if (isLoading) {
+        enableBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Bezig...';
+        return;
+    }
+
     if (isSubscribed) {
         enableBtn.innerHTML = '<i class="bi bi-bell-slash"></i> Meldingen Uitschakelen';
         enableBtn.classList.remove('btn-outline-success', 'btn-success');
         enableBtn.classList.add('btn-outline-danger');
-        enableBtn.disabled = false;
         statusText.innerText = 'Meldingen zijn actief op dit toestel.';
     } else {
         enableBtn.innerHTML = '<i class="bi bi-bell"></i> Meldingen Inschakelen';
         enableBtn.classList.remove('btn-outline-danger', 'btn-success');
         enableBtn.classList.add('btn-outline-success');
-        enableBtn.disabled = false;
         statusText.innerText = 'Ontvang meldingen direct op dit toestel.';
     }
 }
 
 async function subscribeUserToPush() {
-  if (!VAPID_PUBLIC_KEY) {
-      alert('Server configuratie fout: VAPID key ontbreekt.');
+  if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY === '') {
+      statusText.innerText = 'Server configuratie fout: VAPID key ontbreekt.';
       return;
   }
 
+  isLoading = true;
+  updateUI();
+
   try {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      statusText.innerText = 'Meldingen zijn geblokkeerd. Sta meldingen toe in je browser.';
-      return;
+    // 1. Check if SW and Notifications are supported
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+        throw new Error('Push-meldingen worden niet ondersteund door deze browser.');
     }
 
     const registration = await navigator.serviceWorker.ready;
-    if (!registration) return;
+    if (!registration) {
+        throw new Error('Service Worker is niet gereed.');
+    }
 
+    // 2. Request permission (or check if already denied)
+    if (Notification.permission === 'denied') {
+        statusText.innerText = 'Meldingen zijn geblokkeerd in je browser-instellingen. Sta ze toe om meldingen te ontvangen.';
+        isLoading = false;
+        updateUI();
+        return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+        throw new Error('Toestemming voor meldingen niet verleend.');
+    }
+
+    // 3. Subscribe to push manager
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
 
-    console.log('Received PushSubscription:', JSON.stringify(subscription));
+    console.log('PushSubscription success:', subscription.endpoint);
 
-    await fetch('/account/subscribe', {
+    // 4. Send to server
+    const response = await fetch('/account/subscribe', {
       method: 'POST',
       body: JSON.stringify(subscription),
       headers: {
@@ -327,37 +353,62 @@ async function subscribeUserToPush() {
       }
     });
 
+    if (!response.ok) {
+        throw new Error('Server kon de aanvraag niet verwerken (Status: ' + response.status + ')');
+    }
+
     isSubscribed = true;
-    updateUI();
+    statusText.innerText = 'Meldingen succesvol ingeschakeld!';
+    setTimeout(() => {
+        if (isSubscribed) statusText.innerText = 'Meldingen zijn actief op dit toestel.';
+    }, 3000);
 
   } catch (err) {
-    console.error('Failed to subscribe the user: ', err);
-    statusText.innerText = 'Kon meldingen niet inschakelen. Sta meldingen toe in je browser.';
+    console.error('Push Error:', err);
+    statusText.innerText = 'Fout bij inschakelen: ' + (err.message || 'Onbekende fout');
+    // If permission was denied earlier, we already handled it. 
+    // This catch handles other errors like network issues or SW registration issues.
+  } finally {
+    isLoading = false;
+    updateUI();
   }
 }
 
 async function unsubscribeUserFromPush() {
+    isLoading = true;
+    updateUI();
+    
     try {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
 
         if (subscription) {
             // 1. Remove from server
-            await fetch('/account/unsubscribe', {
+            const response = await fetch('/account/unsubscribe', {
                 method: 'POST',
                 body: JSON.stringify({ endpoint: subscription.endpoint }),
                 headers: { 'Content-Type': 'application/json' }
             });
+
+            if (!response.ok) {
+                console.warn('Server kon uitschrijving niet bevestigen, maar we gaan lokaal verder.');
+            }
 
             // 2. Unsubscribe locally
             await subscription.unsubscribe();
         }
 
         isSubscribed = false;
-        updateUI();
+        statusText.innerText = 'Meldingen uitgeschakeld voor dit toestel.';
+        setTimeout(() => {
+            if (!isSubscribed) statusText.innerText = 'Ontvang meldingen direct op dit toestel.';
+        }, 3000);
     } catch (err) {
-        console.error('Failed to unsubscribe: ', err);
-        statusText.innerText = 'Kon niet uitschrijven.';
+        console.error('Unsubscribe Error:', err);
+        statusText.innerText = 'Fout bij uitschakelen: ' + (err.message || 'Onbekende fout');
+    } finally {
+        isLoading = false;
+        updateUI();
     }
 }
 
