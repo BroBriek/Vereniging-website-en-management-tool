@@ -289,8 +289,8 @@
         <div class="bg-light bg-opacity-50 p-3 rounded-bottom-4">
             <div class="comments-section-wrapper">
                 <% 
-                    const visibleComments = post.comments.slice(0, 3);
-                    const hiddenComments = post.comments.slice(3);
+                    const visibleComments = post.comments.slice(0, 2);
+                    const hiddenComments = post.comments.slice(2);
                 %>
 
                 <% visibleComments.forEach(comment => { %>

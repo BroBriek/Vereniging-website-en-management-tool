@@ -191,6 +191,13 @@
         background-color: #f0f2f5;
     }
 
+    .comment-text-clamped {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
     .poll-bar {
         border-radius: 0.5rem;
         overflow: hidden;
@@ -1414,6 +1421,38 @@ function initPostFeatures(rootElement = document) {
             if (btn) btn.classList.remove('d-none');
         }
     });
+
+    // Check for long comments
+    rootElement.querySelectorAll('.comment-text-clamped').forEach(el => {
+        const id = el.id.replace('comment-text-', '');
+        const btn = document.getElementById('read-more-' + id);
+        if (btn) {
+            // Using a short delay ensures the layout has stabilized before checking height
+            setTimeout(() => {
+                if (el.scrollHeight > el.clientHeight) {
+                    btn.style.display = 'inline';
+                } else {
+                    btn.style.display = 'none';
+                }
+            }, 50);
+        }
+    });
+}
+
+function toggleComment(id) {
+    const textEl = document.getElementById('comment-text-' + id);
+    const btnEl = document.getElementById('read-more-' + id);
+    if (!textEl || !btnEl) return;
+    
+    if (textEl.classList.contains('comment-text-clamped')) {
+        textEl.classList.remove('comment-text-clamped');
+        textEl.style.webkitLineClamp = 'unset';
+        btnEl.textContent = 'Minder weergeven';
+    } else {
+        textEl.classList.add('comment-text-clamped');
+        textEl.style.webkitLineClamp = '2';
+        btnEl.textContent = 'Lees meer';
+    }
 }
 
 function expandPost(id) {
@@ -1556,6 +1595,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                                 
                                 repliesContainer.insertAdjacentHTML('beforeend', data.html);
+                                initPostFeatures(document);
                                 
                                 // Hide form
                                 const replyFormContainer = document.getElementById('reply-form-' + parentId);
@@ -1565,6 +1605,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             // New Comment
                             // Insert before the form itself
                             form.insertAdjacentHTML('beforebegin', data.html);
+                            initPostFeatures(document);
                         }
 
                         // Update Post Comment Count
@@ -1616,8 +1657,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             const editEl = document.getElementById('comment-content-edit-' + commentId);
                             
                             if(viewEl) {
-                                viewEl.querySelector('span').innerHTML = data.content;
+                                const contentEl = viewEl.querySelector('.comment-text');
+                                if(contentEl) contentEl.innerHTML = data.content;
                                 viewEl.classList.remove('d-none');
+                                initPostFeatures(document);
                             }
                             if(editEl) editEl.classList.add('d-none');
                         }
