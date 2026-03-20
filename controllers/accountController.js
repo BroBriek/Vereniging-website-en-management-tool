@@ -5,27 +5,31 @@ const { sendMail } = require('../config/mailer');
 const fs = require('fs');
 const path = require('path');
 
-exports.getSettings = async (req, res) => {
-  try {
-      const user = await User.findByPk(req.user.id);
-      let allUsers = [];
-      let adminUser = null;
+async function getSettingsContext(req, user = null) {
+    const currentUser = user || await User.findByPk(req.user.id);
+    let allUsers = [];
+    let adminUser = null;
 
-      // If we are admin OR impersonating admin, we need the list of users for the switch tool
-      if (user.username === 'admin' || req.session.originalAdminId) {
-          allUsers = await User.findAll({ where: { isActive: true }, order: [['username', 'ASC']] });
-          adminUser = await User.findOne({ where: { username: 'admin' } });
-      }
+    if (currentUser.username === 'admin' || req.session.originalAdminId) {
+        allUsers = await User.findAll({ where: { isActive: true }, order: [['username', 'ASC']] });
+        adminUser = await User.findOne({ where: { username: 'admin' } });
+    }
 
-      res.render('account/settings', {
+    return {
         title: 'Account Instellingen',
-        user: user,
-        adminUser: adminUser, // Pass the actual admin user to see their secondaryUserId setting
+        user: currentUser,
+        adminUser: adminUser,
         allUsers: allUsers,
         vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
         error: null,
         success: null
-      });
+    };
+}
+
+exports.getSettings = async (req, res) => {
+  try {
+      const context = await getSettingsContext(req);
+      res.render('account/settings', context);
   } catch (err) {
       console.error(err);
       res.render('error', {
@@ -38,17 +42,10 @@ exports.getSettings = async (req, res) => {
 };
 
 exports.uploadProfilePicture = async (req, res) => {
-  const renderContext = {
-      title: 'Account Instellingen',
-      user: req.user,
-      vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-      error: null,
-      success: null
-  };
-  
   try {
       if (!req.file) {
-          return res.render('account/settings', { ...renderContext, error: 'Geen bestand geüpload of bestandstype niet toegestaan.' });
+          const context = await getSettingsContext(req);
+          return res.render('account/settings', { ...context, error: 'Geen bestand geüpload of bestandstype niet toegestaan.' });
       }
 
       const user = await User.findByPk(req.user.id);
@@ -65,25 +62,17 @@ exports.uploadProfilePicture = async (req, res) => {
       user.profilePicture = '/uploads/profiles/' + req.file.filename;
       await user.save();
       
-      // Update render context with new user data
-      renderContext.user = user;
-      res.render('account/settings', { ...renderContext, success: 'Profielfoto bijgewerkt.' });
+      const context = await getSettingsContext(req, user);
+      res.render('account/settings', { ...context, success: 'Profielfoto bijgewerkt.' });
 
   } catch (err) {
       console.error(err);
-      res.render('account/settings', { ...renderContext, error: 'Kon profielfoto niet uploaden.' });
+      const context = await getSettingsContext(req);
+      res.render('account/settings', { ...context, error: 'Kon profielfoto niet uploaden.' });
   }
 };
 
 exports.deleteProfilePicture = async (req, res) => {
-    const renderContext = {
-        title: 'Account Instellingen',
-        user: req.user,
-        vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-        error: null,
-        success: null
-    };
-
     try {
         const user = await User.findByPk(req.user.id);
         
@@ -96,45 +85,40 @@ exports.deleteProfilePicture = async (req, res) => {
             await user.save();
         }
 
-        renderContext.user = user;
-        res.render('account/settings', { ...renderContext, success: 'Profielfoto verwijderd.' });
+        const context = await getSettingsContext(req, user);
+        res.render('account/settings', { ...context, success: 'Profielfoto verwijderd.' });
     } catch (err) {
         console.error(err);
-        res.render('account/settings', { ...renderContext, error: 'Kon profielfoto niet verwijderen.' });
+        const context = await getSettingsContext(req);
+        res.render('account/settings', { ...context, error: 'Kon profielfoto niet verwijderen.' });
     }
 };
 
 exports.updatePassword = async (req, res) => {
   const { currentPassword, newPassword, confirmPassword } = req.body;
 
-  // Default render context
-  const renderContext = {
-    title: 'Account Instellingen',
-    user: req.user,
-    vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-    error: null,
-    success: null
-  };
-
-  if (newPassword !== confirmPassword) {
-    return res.render('account/settings', { ...renderContext, error: 'Nieuwe wachtwoorden komen niet overeen' });
-  }
-
   try {
     const user = await User.findByPk(req.user.id);
+    const context = await getSettingsContext(req, user);
+
+    if (newPassword !== confirmPassword) {
+      return res.render('account/settings', { ...context, error: 'Nieuwe wachtwoorden komen niet overeen' });
+    }
+
     const isMatch = await user.validatePassword(currentPassword);
 
     if (!isMatch) {
-       return res.render('account/settings', { ...renderContext, error: 'Huidig wachtwoord is onjuist' });
+       return res.render('account/settings', { ...context, error: 'Huidig wachtwoord is onjuist' });
     }
 
     user.password = newPassword;
     await user.save();
 
-    res.render('account/settings', { ...renderContext, success: 'Wachtwoord succesvol gewijzigd' });
+    res.render('account/settings', { ...context, success: 'Wachtwoord succesvol gewijzigd' });
   } catch (err) {
     console.error(err);
-    res.render('account/settings', { ...renderContext, error: 'Er ging iets mis' });
+    const context = await getSettingsContext(req);
+    res.render('account/settings', { ...context, error: 'Er ging iets mis' });
   }
 };
 
@@ -192,21 +176,16 @@ exports.unsubscribePush = async (req, res) => {
 
 exports.updateEmail = async (req, res) => {
   const { email } = req.body;
-  const renderContext = {
-    title: 'Account Instellingen',
-    user: req.user,
-    vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-    error: null,
-    success: null
-  };
   try {
     const user = await User.findByPk(req.user.id);
+    const context = await getSettingsContext(req, user);
+
     user.email = (email || '').trim();
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(user.email)) {
-       return res.render('account/settings', { ...renderContext, user, error: 'Ongeldig e-mailadres' });
+       return res.render('account/settings', { ...context, error: 'Ongeldig e-mailadres' });
     }
 
     user.emailVerified = false;
@@ -253,71 +232,55 @@ exports.updateEmail = async (req, res) => {
       text: `Bevestig je e-mailadres door deze link te openen: ${verifyUrl}`,
       html: html
     });
-    res.render('account/settings', { ...renderContext, user, success: 'Verificatiemail verzonden.' });
+    res.render('account/settings', { ...context, success: 'Verificatiemail verzonden.' });
   } catch (err) {
     console.error(err);
-    res.render('account/settings', { ...renderContext, error: 'Kon e-mailadres niet bijwerken' });
+    const context = await getSettingsContext(req);
+    res.render('account/settings', { ...context, error: 'Kon e-mailadres niet bijwerken' });
   }
 };
 
 exports.verifyEmail = async (req, res) => {
-  const renderContext = {
-    title: 'Account Instellingen',
-    user: req.user,
-    vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-    error: null,
-    success: null
-  };
   try {
     const { token } = req.params;
     const user = await User.findByPk(req.user.id);
+    const context = await getSettingsContext(req, user);
     
     if (!user || !user.emailVerificationToken || user.emailVerificationToken !== token) {
-      return res.render('account/settings', { ...renderContext, error: 'Ongeldige verificatielink' });
+      return res.render('account/settings', { ...context, error: 'Ongeldige verificatielink' });
     }
     user.emailVerified = true;
     user.emailVerificationToken = null;
     user.emailNotificationsEnabled = true; // Auto-enable notifications upon verification
     await user.save();
-    res.render('account/settings', { ...renderContext, user, success: 'E-mailadres geverifieerd' });
+    res.render('account/settings', { ...context, success: 'E-mailadres geverifieerd' });
   } catch (err) {
     console.error(err);
-    res.render('account/settings', { ...renderContext, error: 'Kon e-mailadres niet verifiëren' });
+    const context = await getSettingsContext(req);
+    res.render('account/settings', { ...context, error: 'Kon e-mailadres niet verifiëren' });
   }
 };
 
 exports.toggleEmailNotifications = async (req, res) => {
-  const renderContext = {
-    title: 'Account Instellingen',
-    user: req.user,
-    vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-    error: null,
-    success: null
-  };
   try {
     const user = await User.findByPk(req.user.id);
+    const context = await getSettingsContext(req, user);
+
     if (!user.email || !user.emailVerified) {
-      return res.render('account/settings', { ...renderContext, user, error: 'Verifieer eerst je e-mailadres' });
+      return res.render('account/settings', { ...context, error: 'Verifieer eerst je e-mailadres' });
     }
     const enabled = req.body.enabled === 'on' || req.body.enabled === 'true';
     user.emailNotificationsEnabled = enabled;
     await user.save();
-    res.render('account/settings', { ...renderContext, user, success: 'E-mailmeldingen bijgewerkt' });
+    res.render('account/settings', { ...context, success: 'E-mailmeldingen bijgewerkt' });
   } catch (err) {
     console.error(err);
-    res.render('account/settings', { ...renderContext, error: 'Kon voorkeur niet opslaan' });
+    const context = await getSettingsContext(req);
+    res.render('account/settings', { ...context, error: 'Kon voorkeur niet opslaan' });
   }
 };
 
 exports.updateNotificationPreferences = async (req, res) => {
-    const renderContext = {
-        title: 'Account Instellingen',
-        user: req.user,
-        vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
-        error: null,
-        success: null
-    };
-
     try {
         const user = await User.findByPk(req.user.id);
         
@@ -332,12 +295,13 @@ exports.updateNotificationPreferences = async (req, res) => {
         user.notificationPreferences = newPrefs;
         await user.save();
         
-        renderContext.user = user;
-        res.render('account/settings', { ...renderContext, success: 'Notificatievoorkeuren bijgewerkt.' });
+        const context = await getSettingsContext(req, user);
+        res.render('account/settings', { ...context, success: 'Notificatievoorkeuren bijgewerkt.' });
 
     } catch (err) {
         console.error('Update Prefs Error:', err);
-        res.render('account/settings', { ...renderContext, error: 'Kon voorkeuren niet opslaan.' });
+        const context = await getSettingsContext(req);
+        res.render('account/settings', { ...context, error: 'Kon voorkeuren niet opslaan.' });
     }
 };
 
