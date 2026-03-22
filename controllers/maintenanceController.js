@@ -648,6 +648,7 @@ exports.restoreBackup = async (req, res) => {
         const rootDir = path.join(__dirname, '..');
         const dbFile = path.join(rootDir, 'database.sqlite');
         const uploadsDir = path.join(rootDir, 'public', 'uploads');
+        const feedUploadsDir = path.join(rootDir, 'public', 'feed_uploads');
         
         // Restore Database
         const backupDb = path.join(backupPath, 'database.sqlite');
@@ -684,6 +685,16 @@ exports.restoreBackup = async (req, res) => {
             }
             fs.mkdirSync(uploadsDir, { recursive: true });
             fs.cpSync(backupUploads, uploadsDir, { recursive: true });
+        }
+
+        // Restore Feed Uploads
+        const backupFeedUploads = path.join(backupPath, 'feed_uploads');
+        if (fs.existsSync(backupFeedUploads)) {
+            if (fs.existsSync(feedUploadsDir)) {
+                fs.rmSync(feedUploadsDir, { recursive: true, force: true });
+            }
+            fs.mkdirSync(feedUploadsDir, { recursive: true });
+            fs.cpSync(backupFeedUploads, feedUploadsDir, { recursive: true });
         }
 
         // Trigger restart if PM2 is available?
