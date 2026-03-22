@@ -93,6 +93,8 @@ router.get('/api/backups', maintenanceController.getBackups);
 router.post('/api/backups/create', maintenanceController.createBackup);
 router.post('/api/backups/delete', maintenanceController.deleteBackup);
 router.get('/api/backups/content', maintenanceController.getBackupContent);
+router.get('/api/backups/download', maintenanceController.downloadBackup);
+router.post('/api/backups/upload', upload.single('backup'), maintenanceController.uploadBackup);
 router.post('/api/backups/restore', maintenanceController.restoreBackup);
 
 // Email Tool
