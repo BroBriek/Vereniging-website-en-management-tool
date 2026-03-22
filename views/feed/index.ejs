@@ -92,7 +92,7 @@
     .carousel-control-next { right: -5px; }
 
     .nav-chip:hover, .nav-chip:focus {
-...        transform: translateY(-2px);
+        transform: translateY(-2px);
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         color: #db3e41;
         border-color: #db3e41;
@@ -115,10 +115,6 @@
         transition: transform 0.2s;
         overflow: hidden;
     }
-    
-    /* .post-card:hover {
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-    } */
 
     .avatar-circle {
         width: 45px;
@@ -143,7 +139,7 @@
         overflow-wrap: break-word;
         word-break: break-word;
         max-width: 100%;
-        min-width: 200px; /* Ensure readable width even when deeply nested */
+        min-width: 200px;
     }
 
     .comments-section-wrapper {
@@ -151,7 +147,7 @@
         overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
         scroll-behavior: smooth;
-        padding-bottom: 0.5rem; /* Space for potential scrollbar */
+        padding-bottom: 0.5rem;
     }
 
     .reply-container {
@@ -168,7 +164,6 @@
             border-left-width: 1px;
         }
         
-        /* Reduce indentation even more for deep levels but keep them scrollable */
         .reply-container .reply-container .reply-container {
             margin-left: 0.4rem;
             padding-left: 0.3rem;
@@ -191,11 +186,39 @@
         background-color: #f0f2f5;
     }
 
+    /*
+     * FIX: Use max-height + overflow:hidden for clamping instead of -webkit-line-clamp.
+     * This makes scrollHeight > clientHeight detection reliable on all browsers including
+     * mobile Safari/Chrome where -webkit-line-clamp causes scrollHeight to equal clientHeight.
+     *
+     * We calculate 4 lines: 1.5 line-height * 1rem base * 4 lines = 6rem.
+     * The comment bubble uses default font-size ~0.95rem and line-height ~1.5.
+     * Using 6em ensures it scales with whatever font-size is applied.
+     */
     .comment-text-clamped {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
+        max-height: 6em; /* ~4 lines at line-height:1.5 */
         overflow: hidden;
+        line-height: 1.5;
+        position: relative;
+    }
+
+    /* Fade-out gradient at bottom when clamped */
+    .comment-text-clamped::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1.5em; /* Reduced from 2em for subtle blur */
+        background: linear-gradient(to bottom, transparent, #f0f2f5);
+        pointer-events: none;
+    }
+
+    .read-more-btn {
+        display: inline-block;
+        padding-top: 0.15rem;
+        padding-bottom: 0.15rem;
+        cursor: pointer;
     }
 
     .poll-bar {
@@ -326,12 +349,12 @@ function showPolaroid(src, name) {
     document.getElementById('polaroid-image').src = src;
     document.getElementById('polaroid-caption').textContent = name;
     document.getElementById('polaroid-overlay').classList.remove('d-none');
-    document.body.style.overflow = 'hidden'; // Prevent scrolling background
+    document.body.style.overflow = 'hidden';
 }
 
 function closePolaroid() {
     document.getElementById('polaroid-overlay').classList.add('d-none');
-    document.body.style.overflow = ''; // Restore scrolling
+    document.body.style.overflow = '';
 }
 
 function autoResize(element) {
@@ -441,7 +464,6 @@ function autoResize(element) {
             const normalGroups = groups.filter(g => !g.isEvent);
             const eventGroups = groups.filter(g => g.isEvent);
             
-            // Sort normal groups by year (descending)
             normalGroups.sort((a, b) => {
                 if (!a.year) return 1;
                 if (!b.year) return -1;
@@ -459,7 +481,6 @@ function autoResize(element) {
             const normalChunks = chunkArray(normalGroups, 3);
             const eventChunks = chunkArray(eventGroups, 3);
 
-            // Determine which chunk should be active
             let activeNormalChunkIndex = 0;
             if (activeGroup && !activeGroup.isEvent) {
                 activeNormalChunkIndex = normalChunks.findIndex(chunk => chunk.some(g => g.id === activeGroup.id));
@@ -713,7 +734,6 @@ function autoResize(element) {
       </div>
       <div class="modal-body pt-2" style="max-height: 400px;">
         <ul id="likesModalList" class="list-unstyled mb-0">
-            <!-- Items will be injected here -->
         </ul>
       </div>
     </div>
@@ -729,7 +749,6 @@ function autoResize(element) {
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
       </div>
       <div class="modal-body pt-3" id="pollResultsBody">
-        <!-- Results will be injected here -->
       </div>
     </div>
   </div>
@@ -1002,7 +1021,6 @@ function autoResize(element) {
 <script>
 // triggerDownload and openFilePreview are now provided by /js/download-helper.js
 
-// Keep existing scripts for Edit Mode, Polls, Forms, and Like AJAX
 // Edit Mode Toggle
 function enableEditMode(id) {
     document.getElementById('post-content-view-' + id).classList.add('d-none');
@@ -1163,7 +1181,6 @@ async function togglePollVote(element, postId, pollIndex, index, allowMultiple) 
         }
     }
 
-    // Optimistic Update
     if (allowMultiple) {
         element.setAttribute('data-selected', isSelected ? 'false' : 'true');
         toggleOptionVisuals(element, !isSelected);
@@ -1239,15 +1256,12 @@ function updatePollStats(container, stats, myVotes) {
         const total = stats.totalVotes;
         const pct = total > 0 ? Math.round((count / total) * 100) : 0;
         
-        // Update Percentage Text
         const pctEl = opt.querySelector('.poll-percent-text');
         if(pctEl) pctEl.textContent = pct + '%';
         
-        // Update Background Bar
         const bar = opt.querySelector('.poll-progress-bar');
         if(bar) bar.style.width = pct + '%';
         
-        // Update Voters List
         const votersContainer = opt.querySelector('.poll-voters-container');
         const votersEl = opt.querySelector('.poll-voters-list');
         
@@ -1371,7 +1385,6 @@ function showLikesModal(element) {
             img.style.flexShrink = '0';
             img.style.cursor = 'pointer';
             img.onclick = function() {
-                // Ensure polaroid is visible over modal
                 document.getElementById('polaroid-overlay').style.zIndex = '10000'; 
                 showPolaroid(profilePicture, username.charAt(0).toUpperCase() + username.slice(1));
             };
@@ -1401,7 +1414,6 @@ function showLikesModal(element) {
         list.appendChild(li);
     });
     
-    // Remove last border
     if(list.lastChild) list.lastChild.classList.remove('border-bottom');
 
     const modalEl = document.getElementById('likesModal');
@@ -1409,11 +1421,50 @@ function showLikesModal(element) {
     modal.show();
 }
 
-// Function to initialize post features (read more, likes) on a specific container or document
+/**
+ * Check whether a clamped comment element is actually overflowing.
+ *
+ * THE BUG: With -webkit-line-clamp, mobile Safari/Chrome report scrollHeight == clientHeight
+ * because the browser clips the content at the layout level before scrollHeight is computed.
+ * Using max-height + overflow:hidden instead makes scrollHeight reliable again.
+ *
+ * This function temporarily removes the clamping class, reads the natural (unclamped) height,
+ * re-applies the class, then compares. This is the only truly cross-browser-safe approach.
+ */
+function isCommentClamped(el) {
+    // If element is hidden (e.g. in a collapsed reply), we can't measure it accurately.
+    // Return false for now; it will be re-evaluated when shown.
+    if (el.offsetParent === null) return false;
+
+    const wasClamped = el.classList.contains('comment-text-clamped');
+    
+    // Temporarily remove max-height clamping to get the real content height
+    el.classList.remove('comment-text-clamped');
+    const fullHeight = el.scrollHeight;
+    
+    // Re-apply to get the clamped height
+    el.classList.add('comment-text-clamped');
+    const clampedHeight = el.clientHeight;
+    
+    // Restore original state if it wasn't clamped (caller might want to remove it permanently)
+    if (!wasClamped) {
+        el.classList.remove('comment-text-clamped');
+    }
+    
+    // Add a small buffer (3px) to avoid false positives from sub-pixel rounding or zoom
+    return fullHeight > clampedHeight + 3;
+}
+
+/**
+ * Initialize post and comment truncation features on a given root element.
+ * Safe to call multiple times (e.g. after AJAX comment inserts).
+ */
 function initPostFeatures(rootElement = document) {
-    // Check for long posts
+    // --- Long posts (max-height gradient approach) ---
     rootElement.querySelectorAll('.post-text-container').forEach(container => {
-        // Only add class if not already processed/collapsed
+        // Skip hidden containers
+        if (container.offsetParent === null) return;
+
         if (container.scrollHeight > 200 && !container.classList.contains('post-content-collapsed')) {
             container.classList.add('post-content-collapsed');
             const id = container.id.replace('post-text-container-', '');
@@ -1422,19 +1473,34 @@ function initPostFeatures(rootElement = document) {
         }
     });
 
-    // Check for long comments
-    rootElement.querySelectorAll('.comment-text-clamped').forEach(el => {
+    // --- Clamped comments ---
+    // Process immediately for best perceived performance
+    processComments(rootElement);
+    
+    // Re-check after fonts are ready for final accuracy
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+            processComments(rootElement);
+        });
+    }
+}
+
+function processComments(rootElement) {
+    // Use .comment-text class as base, then check if it should be clamped
+    rootElement.querySelectorAll('.comment-text').forEach(el => {
         const id = el.id.replace('comment-text-', '');
         const btn = document.getElementById('read-more-' + id);
-        if (btn) {
-            // Using a short delay ensures the layout has stabilized before checking height
-            setTimeout(() => {
-                if (el.scrollHeight > el.clientHeight) {
-                    btn.style.display = 'inline';
-                } else {
-                    btn.style.display = 'none';
-                }
-            }, 50);
+        if (!btn) return;
+
+        // Skip hidden comments for now (inside collapsed replies)
+        if (el.offsetParent === null) return;
+
+        if (isCommentClamped(el)) {
+            el.classList.add('comment-text-clamped');
+            btn.style.display = 'inline';
+        } else {
+            el.classList.remove('comment-text-clamped');
+            btn.style.display = 'none';
         }
     });
 }
@@ -1446,11 +1512,9 @@ function toggleComment(id) {
     
     if (textEl.classList.contains('comment-text-clamped')) {
         textEl.classList.remove('comment-text-clamped');
-        textEl.style.webkitLineClamp = 'unset';
         btnEl.textContent = 'Minder weergeven';
     } else {
         textEl.classList.add('comment-text-clamped');
-        textEl.style.webkitLineClamp = '2';
         btnEl.textContent = 'Lees meer';
     }
 }
@@ -1463,21 +1527,28 @@ function expandPost(id) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize features on load
+    // Run on DOMContentLoaded
     initPostFeatures(document);
 
-    // Event Delegation for Likes
+    // Re-run when bootstrap collapses are shown (for nested replies)
+    document.addEventListener('shown.bs.collapse', function (event) {
+        initPostFeatures(event.target);
+    });
+
+    // Also re-run on full window load as a safety net for late-loading resources
+    window.addEventListener('load', () => {
+        initPostFeatures(document);
+    });
+
+    // Event Delegation for Likes & Comments
     document.body.addEventListener('submit', async function(e) {
         if (e.target.matches('.like-form')) {
             e.preventDefault();
             const form = e.target;
             const btn = form.querySelector('button');
             const icon = btn.querySelector('i');
-            
-            // Try to find count element inside button (Posts)
             const countSpan = btn.querySelector('.like-count');
             
-            // Try to find detached count container (Comments)
             let countContainer = null;
             if (form.dataset.commentId) {
                 countContainer = document.getElementById('like-count-container-' + form.dataset.commentId);
@@ -1500,7 +1571,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         icon.classList.remove('bi-heart-fill'); icon.classList.add('bi-heart');
                     }
                     
-                    // Update Posts Style Count
                     if (countSpan) {
                         countSpan.textContent = data.count > 0 ? data.count : '';
                         if (data.likers) {
@@ -1519,7 +1589,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
 
-                    // Update Comments Style Count (Detached)
                     if (countContainer) {
                         if (data.count > 0) {
                             countContainer.querySelector('.count-text').textContent = data.count;
@@ -1571,14 +1640,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         const parentId = form.querySelector('input[name="parentId"]')?.value;
                         
                         if (parentId) {
-                            // Reply
                             const parentContainer = document.getElementById('comment-container-' + parentId);
                             if (parentContainer) {
                                 let repliesContainer = parentContainer.querySelector('.reply-container'); 
                                 if (!repliesContainer) {
                                     repliesContainer = document.createElement('div');
                                     
-                                    // Calculate depth for the new container
                                     let currentDepth = 0;
                                     const parentReplyContainer = parentContainer.closest('.reply-container');
                                     if (parentReplyContainer) {
@@ -1589,29 +1656,27 @@ document.addEventListener('DOMContentLoaded', function() {
                                     }
                                     
                                     repliesContainer.className = 'mt-2 reply-container depth-' + currentDepth;
-                                    // Append to the flex-grow-1 container inside parent
                                     const flexContainer = parentContainer.querySelector('.flex-grow-1');
                                     if(flexContainer) flexContainer.appendChild(repliesContainer);
                                 }
                                 
                                 repliesContainer.insertAdjacentHTML('beforeend', data.html);
-                                initPostFeatures(document);
+                                // Re-run features for newly inserted comment
+                                initPostFeatures(repliesContainer);
                                 
-                                // Hide form
                                 const replyFormContainer = document.getElementById('reply-form-' + parentId);
                                 if(replyFormContainer) replyFormContainer.classList.add('d-none');
                             }
                         } else {
-                            // New Comment
-                            // Insert before the form itself
                             form.insertAdjacentHTML('beforebegin', data.html);
-                            initPostFeatures(document);
+                            // Re-run features for newly inserted comment
+                            // Find the just-inserted element (sibling before form)
+                            const newComment = form.previousElementSibling;
+                            if (newComment) initPostFeatures(newComment);
                         }
 
-                        // Update Post Comment Count
                         const postCard = document.getElementById('post-' + postId);
                         if (postCard) {
-                             // Find the comment count element (last .text-muted.small in action bar)
                              const actionBars = postCard.querySelectorAll('.d-flex.align-items-center.justify-content-between.mt-3');
                              if(actionBars.length > 0) {
                                  const countEl = actionBars[actionBars.length-1].lastElementChild;
@@ -1660,7 +1725,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const contentEl = viewEl.querySelector('.comment-text');
                                 if(contentEl) contentEl.innerHTML = data.content;
                                 viewEl.classList.remove('d-none');
-                                initPostFeatures(document);
+                                // Re-check truncation after edit since content may have changed
+                                initPostFeatures(viewEl);
                             }
                             if(editEl) editEl.classList.add('d-none');
                         }
@@ -1708,7 +1774,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load More Functionality
     let currentOffset = <%= posts.length %>;
-    const limit = <%= typeof limit !== 'undefined' ? limit : 10 %>; // Default fallback
+    const limit = <%= typeof limit !== 'undefined' ? limit : 10 %>;
     const loadMoreBtn = document.getElementById('btn-load-more');
     const loader = document.getElementById('loader-spinner');
     const container = document.getElementById('load-more-container');
@@ -1744,7 +1810,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function performSearch(query) {
         currentSearchQuery = query;
-        currentOffset = 0; // Reset offset for new search
+        currentOffset = 0;
         
         const feedTimeline = document.querySelector('.feed-timeline');
         const spinner = document.getElementById('refresh-spinner');
@@ -1769,13 +1835,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 feedTimeline.style.opacity = '1';
                 if (spinner) spinner.classList.add('d-none');
 
-                // Re-init features
-                document.querySelectorAll('.feed-timeline .post-card').forEach(item => initPostFeatures(item));
+                initPostFeatures(document);
                 if (window.initializeRichEditors) window.initializeRichEditors();
 
-                currentOffset = limit; // Reset offset logic
+                currentOffset = limit;
 
-                // Handle Load More Button Visibility
                 if (!data.hasMore) {
                     if (container) container.classList.add('d-none');
                     if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
@@ -1809,7 +1873,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if(loader) loader.classList.remove('d-none');
             loadMoreBtn.disabled = true;
             
-            // Construct URL with offset
             const currentUrl = new URL(window.location.href);
             currentUrl.searchParams.set('ajax', 'true');
             currentUrl.searchParams.set('offset', currentOffset);
@@ -1825,15 +1888,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = data.html;
                     
-                    // Append new posts
                     const newItems = [];
                     while (tempDiv.firstChild) {
                         const child = tempDiv.firstChild;
-                        if (child.nodeType === 1) newItems.push(child); // Element node
+                        if (child.nodeType === 1) newItems.push(child);
                         feedTimeline.appendChild(child);
                     }
                     
-                    // Initialize features for new posts
                     newItems.forEach(item => initPostFeatures(item));
                     
                     if (window.initializeRichEditors) {
@@ -1855,13 +1916,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadMoreBtn.classList.remove('d-none');
                     loadMoreBtn.disabled = false;
                     if(loader) loader.classList.add('d-none');
-                    // alert('Kon niet meer berichten laden.'); // Silently fail for infinite scroll is often better
                 });
         });
     }
 
     // --- Pull to Refresh ---
-    const p2rThreshold = 150; // px to drag
+    const p2rThreshold = 150;
     let touchStartY = 0;
     let isPulling = false;
     const feedTimeline = document.querySelector('.feed-timeline');
@@ -1881,7 +1941,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (window.scrollY === 0 && dy > 0) {
             isPulling = true;
-            // Visual resistance
             const translateY = Math.min(dy * 0.5, p2rThreshold); 
             if (feedTimeline) feedTimeline.style.transform = `translateY(${translateY}px)`;
             if (dy > p2rThreshold && spinner) spinner.classList.remove('d-none');
@@ -1891,19 +1950,16 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('touchend', (e) => {
         if (!isPulling) return;
         
-        // Check if pulled enough
         const touchY = e.changedTouches[0].clientY;
         const dy = touchY - touchStartY;
         
         if (window.scrollY === 0 && dy > p2rThreshold) {
-            // If search is active, we refresh the search results, not the whole feed
             if (currentSearchQuery) {
                 performSearch(currentSearchQuery);
             } else {
                 refreshFeed();
             }
         } else {
-            // Reset
             if (feedTimeline) feedTimeline.style.transform = '';
             if (spinner) spinner.classList.add('d-none');
         }
@@ -1914,13 +1970,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function refreshFeed() {
         if (spinner) spinner.classList.remove('d-none');
-        if (feedTimeline) feedTimeline.style.transform = 'translateY(0)'; // Reset position but keep spinner
+        if (feedTimeline) feedTimeline.style.transform = 'translateY(0)';
 
         const currentUrl = new URL(window.location.href);
         currentUrl.searchParams.set('ajax', 'true');
         currentUrl.searchParams.set('offset', 0);
-        // Clear search on P2R if we want standard behavior, OR keep it.
-        // Usually P2R on a search result refreshes the search.
         if (currentSearchQuery) {
             currentUrl.searchParams.set('search', currentSearchQuery);
         } else {
@@ -1935,16 +1989,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     feedTimeline.style.transform = '';
                 }
                 
-                // Re-init features
-                document.querySelectorAll('.feed-timeline .post-card').forEach(item => initPostFeatures(item));
+                initPostFeatures(document);
                 if (window.initializeRichEditors) window.initializeRichEditors();
                 
-                // Reset Offset
                 currentOffset = <%= typeof limit !== 'undefined' ? limit : 10 %>; 
                 
                 if (spinner) spinner.classList.add('d-none');
                 
-                // Reset Load More
                  if (data.hasMore) {
                     if (container) container.classList.remove('d-none');
                     if (loadMoreBtn) {
@@ -1984,7 +2035,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById(`${modalType}-user-list`);
         if (!container) return;
 
-        // Determine if we should select or deselect
         let allSelected = true;
         userIds.forEach(uid => {
             const cb = document.getElementById(`${modalType}_user_${uid}`);
@@ -2060,13 +2110,11 @@ document.addEventListener('DOMContentLoaded', function() {
         updateGroupButtonStates(modalType);
     };
 
-    // Initialize button states when modals open
     ['createEventModal', 'editEventModal'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('show.bs.modal', function () {
                 const type = id.startsWith('create') ? 'create' : 'edit';
-                // Small timeout to ensure DOM is ready if needed, though usually fine
                 setTimeout(() => updateGroupButtonStates(type), 10);
             });
         }
@@ -2085,7 +2133,6 @@ function handleBrokenImage(img) {
     const originalSrc = img.src;
     img.style.display = 'none';
     
-    // Create a container for the error message and repair button
     const container = document.createElement('div');
     container.className = 'alert alert-light border border-dashed d-flex align-items-center justify-content-between p-2 mb-2 rounded-3';
     container.style.fontSize = '0.85rem';
@@ -2124,13 +2171,11 @@ async function fixImage(btn, url) {
         const data = await response.json();
         
         if (response.ok && data.url) {
-            // Find the original image and update its source
             const img = btn.closest('div.alert').previousSibling;
             if (img && img.tagName === 'IMG') {
                 img.src = data.url;
                 img.style.display = 'block';
                 delete img.dataset.handling;
-                // Remove the alert container
                 btn.closest('div.alert').remove();
             }
         } else {

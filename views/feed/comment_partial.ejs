@@ -84,7 +84,7 @@ function highlightMentions(text) {
             </div>
             
             <div id="comment-content-view-<%= comment.id %>" class="position-relative">
-                <div class="small text-dark comment-text comment-text-clamped" id="comment-text-<%= comment.id %>" style="white-space: pre-line;"><%- highlightMentions(comment.content) %></div>
+                <div class="small text-dark comment-text" id="comment-text-<%= comment.id %>" style="white-space: pre-line;"><%- highlightMentions(comment.content) %></div>
                 <span id="read-more-<%= comment.id %>" class="read-more-btn" onclick="toggleComment('<%= comment.id %>')" style="display: none; cursor: pointer; font-size: 0.75rem; font-weight: bold; color: #db3e41;">Lees meer</span>
             </div>
             
