@@ -523,21 +523,27 @@ exports.getBackups = (req, res) => {
         const backupDir = path.join(__dirname, '..', 'backups');
         
         if (!fs.existsSync(backupDir)) {
-            fs.mkdirSync(backupDir);
+            fs.mkdirSync(backupDir, { recursive: true });
         }
         
         const files = fs.readdirSync(backupDir, { withFileTypes: true });
         const backups = files
             .filter(file => file.isDirectory())
             .map(file => {
-                const fullPath = path.join(backupDir, file.name);
-                const stat = fs.statSync(fullPath);
-                return {
-                    name: file.name,
-                    created: stat.birthtime,
-                    path: file.name // just the folder name
-                };
+                try {
+                    const fullPath = path.join(backupDir, file.name);
+                    const stat = fs.statSync(fullPath);
+                    return {
+                        name: file.name,
+                        created: stat.birthtime,
+                        path: file.name
+                    };
+                } catch (e) {
+                    console.error(`Error reading backup folder ${file.name}:`, e);
+                    return null;
+                }
             })
+            .filter(b => b !== null)
             .sort((a, b) => b.created - a.created);
             
         res.json({ backups });
@@ -632,8 +638,21 @@ exports.getBackupContent = (req, res) => {
 
 exports.restoreBackup = async (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, password } = req.body;
+        
+        // Only the 'admin' user is allowed to restore backups
+        if (req.user.username !== 'admin') {
+            return res.status(403).json({ error: 'Alleen de hoofdbeheerder kan backups herstellen.' });
+        }
+
         if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
+        if (!password) return res.status(400).json({ error: 'Wachtwoord ontbreekt' });
+
+        // Verify password
+        const isMatch = await req.user.validatePassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Fout wachtwoord' });
+        }
 
         // Security check
         if (name.includes('..') || name.includes('/') || name.includes('\\')) {
@@ -647,39 +666,34 @@ exports.restoreBackup = async (req, res) => {
 
         const rootDir = path.join(__dirname, '..');
         const dbFile = path.join(rootDir, 'database.sqlite');
+        const sessionFile = path.join(rootDir, 'sessions.sqlite');
         const uploadsDir = path.join(rootDir, 'public', 'uploads');
         const feedUploadsDir = path.join(rootDir, 'public', 'feed_uploads');
         
         // Restore Database
         const backupDb = path.join(backupPath, 'database.sqlite');
         if (fs.existsSync(backupDb)) {
-            // Backup current DB just in case? Maybe too much overhead for now.
-            // Copy file
             fs.copyFileSync(backupDb, dbFile);
         }
 
         // Restore Sessions (if exists)
         const backupSessions = path.join(backupPath, 'sessions.sqlite');
-        const sessionFile = path.join(rootDir, 'sessions.sqlite');
         if (fs.existsSync(backupSessions)) {
             fs.copyFileSync(backupSessions, sessionFile);
         }
         
-        // Sync database to ensure schema is up to date (adds missing columns like profilePicture)
+        // Sync database to ensure schema is up to date safely
         try {
-            await User.sync({ alter: true });
-            await sequelize.sync();
+            const { syncDatabase } = require('../models');
+            await syncDatabase();
             console.log('Database synced after restore.');
         } catch (syncError) {
             console.error('Error syncing database after restore:', syncError);
-            // We continue, as the file restore itself was successful
         }
 
         // Restore Uploads
         const backupUploads = path.join(backupPath, 'uploads');
         if (fs.existsSync(backupUploads)) {
-            // Remove current uploads? Or overwrite? 
-            // Safer to remove current and copy backup to ensure exact state.
             if (fs.existsSync(uploadsDir)) {
                 fs.rmSync(uploadsDir, { recursive: true, force: true });
             }
@@ -697,14 +711,132 @@ exports.restoreBackup = async (req, res) => {
             fs.cpSync(backupFeedUploads, feedUploadsDir, { recursive: true });
         }
 
-        // Trigger restart if PM2 is available?
-        // We can try to use exec to reload pm2 if it's running.
-        // But for now, we just return success.
-        
-        res.json({ success: true, message: 'Backup succesvol teruggezet. Het kan zijn dat de server herstart moet worden.' });
+        res.json({ success: true, message: 'Backup succesvol teruggezet. De site is hersteld naar de geselecteerde staat.' });
 
     } catch (error) {
         console.error('Restore backup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.downloadBackup = (req, res) => {
+    try {
+        const { name } = req.query;
+        
+        // Only the 'admin' user is allowed to download backups
+        if (req.user.username !== 'admin') {
+            return res.status(403).json({ error: 'Geen toegang' });
+        }
+
+        if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
+
+        if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+            return res.status(403).json({ error: 'Ongeldige backup naam' });
+        }
+
+        const backupDir = path.join(__dirname, '..', 'backups');
+        const sourcePath = path.join(backupDir, name);
+        const zipFile = `${name}.zip`;
+        const zipPath = path.join(backupDir, zipFile);
+
+        if (!fs.existsSync(sourcePath)) {
+            return res.status(404).json({ error: 'Backup niet gevonden' });
+        }
+
+        // Create zip
+        exec(`cd "${backupDir}" && zip -r "${zipFile}" "${name}"`, (error, stdout, stderr) => {
+            if (error) {
+                console.error('Zip failed:', error);
+                return res.status(500).json({ error: 'Inpakken mislukt: ' + error.message });
+            }
+
+            res.download(zipPath, `${name}.back`, (err) => {
+                if (err) console.error('Download error:', err);
+                // Clean up zip file after download
+                if (fs.existsSync(zipPath)) {
+                    fs.unlinkSync(zipPath);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Download backup error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.uploadBackup = async (req, res) => {
+    try {
+        const { password } = req.body;
+        
+        // Only the 'admin' user is allowed to upload backups
+        if (req.user.username !== 'admin') {
+            if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+            return res.status(403).json({ error: 'Alleen de hoofdbeheerder kan backups uploaden.' });
+        }
+
+        if (!req.file) return res.status(400).json({ error: 'Geen bestand geüpload' });
+        if (!password) {
+            // Clean up uploaded file if password missing
+            if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+            return res.status(400).json({ error: 'Wachtwoord ontbreekt' });
+        }
+
+        // Verify password
+        const isMatch = await req.user.validatePassword(password);
+        if (!isMatch) {
+            if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+            return res.status(401).json({ error: 'Fout wachtwoord' });
+        }
+
+        const backupDir = path.join(__dirname, '..', 'backups');
+        if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+
+        const uploadedPath = req.file.path;
+        const tempZipName = `upload-${Date.now()}.zip`;
+        const tempZipPath = path.join(backupDir, tempZipName);
+
+        // Move to backups dir and rename to .zip for unzip command
+        fs.renameSync(uploadedPath, tempZipPath);
+
+        // Unzip into backups dir
+        exec(`unzip -o "${tempZipPath}" -d "${backupDir}"`, async (error, stdout, stderr) => {
+            // Cleanup zip
+            if (fs.existsSync(tempZipPath)) fs.unlinkSync(tempZipPath);
+
+            if (error) {
+                console.error('Unzip failed:', error);
+                return res.status(500).json({ error: 'Uitpakken mislukt: ' + error.message });
+            }
+
+            // The unzip output might tell us what was created, or we can look for the folder.
+            // If it was created with our downloadBackup, it contains a folder with the backup name.
+            // We need to identify that folder to restore it.
+            // Extract folder name from stdout or just look at what changed.
+            // Simpler: find the most recently modified directory in backups/
+            
+            const folders = fs.readdirSync(backupDir, { withFileTypes: true })
+                .filter(dirent => dirent.isDirectory())
+                .map(dirent => ({
+                    name: dirent.name,
+                    time: fs.statSync(path.join(backupDir, dirent.name)).mtime.getTime()
+                }))
+                .sort((a, b) => b.time - a.time);
+
+            if (folders.length === 0) {
+                return res.status(500).json({ error: 'Geen backup folder gevonden na uitpakken' });
+            }
+
+            const latestFolder = folders[0].name;
+            
+            // Now trigger restore using this folder
+            // We can call restoreBackup internal logic or just reuse the code
+            req.body.name = latestFolder;
+            // Password already verified
+            return exports.restoreBackup(req, res);
+        });
+
+    } catch (error) {
+        console.error('Upload backup error:', error);
         res.status(500).json({ error: error.message });
     }
 };
