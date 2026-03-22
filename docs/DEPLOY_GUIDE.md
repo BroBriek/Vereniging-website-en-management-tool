@@ -5,7 +5,7 @@ Deze gids legt uit hoe je jouw Node.js/Express applicatie (met SQLite database) 
 ## Stap 1: Voorbereiding
 
 1.  Zorg dat je project op een online Git repository staat (bijv. **GitHub** of GitLab). Dit is de makkelijkste manier om je code op de server te krijgen.
-    *   *Let op:* Zorg dat `database.sqlite`, `sessions.sqlite` en de map `public/uploads` (behalve .gitkeep) in je `.gitignore` staan. Je wilt geen lokale test-data of test-database naar de server pushen. De server maakt zijn eigen database aan.
+    *   *Let op:* Zorg dat `database.sqlite`, `sessions.sqlite` en de mappen `public/uploads` en `public/feed_uploads` (behalve .gitkeep) in je `.gitignore` staan. Je wilt geen lokale test-data of test-database naar de server pushen. De server maakt zijn eigen database aan.
 
 ## Stap 2: Server & Domein Regelen
 
@@ -69,6 +69,7 @@ npm install
 # 5. Maak de database en uploads map klaar
 # Omdat SQLite en Uploads naar de schijf schrijven, moet de map bestaan
 mkdir -p public/uploads
+mkdir -p public/feed_uploads
 ```
 
 ## Stap 6: Configuratie (.env)

@@ -5,6 +5,7 @@ const path = require('path');
 const rootDir = path.join(__dirname, '..');
 const backupRootDir = path.join(rootDir, 'backups');
 const uploadsDir = path.join(rootDir, 'public/uploads');
+const feedUploadsDir = path.join(rootDir, 'public/feed_uploads');
 const dbFile = path.join(rootDir, 'database.sqlite');
 const sessionFile = path.join(rootDir, 'sessions.sqlite');
 
@@ -48,6 +49,19 @@ if (fs.existsSync(uploadsDir)) {
     }
 } else {
     console.log('⚠️ Uploads folder not found (skipping).');
+}
+
+// 4. Backup Feed Uploads
+const targetFeedUploadsDir = path.join(targetDir, 'feed_uploads');
+if (fs.existsSync(feedUploadsDir)) {
+    try {
+        fs.cpSync(feedUploadsDir, targetFeedUploadsDir, { recursive: true });
+        console.log('✅ Feed Uploads folder backed up.');
+    } catch (err) {
+        console.error('❌ Error backing up feed uploads:', err.message);
+    }
+} else {
+    console.log('⚠️ Feed Uploads folder not found (skipping).');
 }
 
 console.log('\n🎉 Backup completed successfully!');

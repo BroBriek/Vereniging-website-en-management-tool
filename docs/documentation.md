@@ -120,7 +120,8 @@ npm run backup
 Dit script:
 1. Maakt een map `backups/` aan.
 2. Maakt daarin een submap met de datum en tijd.
-3. Kopieert `database.sqlite`, `sessions.sqlite` en de map `public/uploads` naar deze locatie.# Gebruikersbeheer & Groepen Handleiding
+3. Kopieert `database.sqlite`, `sessions.sqlite`, de map `public/uploads` en `public/feed_uploads` naar deze locatie.
+# Gebruikersbeheer & Groepen Handleiding
 
 In het ChiroSite systeem is het beheer van gebruikers en hun toegang tot specifieke delen van het "Leidingshoekje" (de feed) gestructureerd via **Gebruikers** en **Groepen**.
 

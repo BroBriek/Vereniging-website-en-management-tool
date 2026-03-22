@@ -521,29 +521,26 @@ exports.resetWebsite = async (req, res) => {
 
         // Delete all uploads (except .gitkeep)
         const uploadsDir = path.join(__dirname, '../public/uploads');
-        fs.readdir(uploadsDir, (err, files) => {
-            if (err) console.error('Error reading uploads dir:', err);
-            else {
-                for (const file of files) {
-                    if (file !== '.gitkeep') {
-                        const fullPath = path.join(uploadsDir, file);
-                        fs.stat(fullPath, (err, stats) => {
-                            if (err) return console.error('Error stating file:', file, err);
-                            
-                            if (stats.isDirectory()) {
-                                fs.rm(fullPath, { recursive: true, force: true }, err => {
-                                    if (err) console.error('Error deleting directory:', file, err);
-                                });
-                            } else {
-                                fs.unlink(fullPath, err => {
-                                    if (err) console.error('Error deleting file:', file, err);
-                                });
-                            }
-                        });
+        const feedUploadsDir = path.join(__dirname, '../public/feed_uploads');
+
+        const clearDir = (dirPath) => {
+            if (!fs.existsSync(dirPath)) return;
+            const files = fs.readdirSync(dirPath);
+            for (const file of files) {
+                if (file !== '.gitkeep') {
+                    const fullPath = path.join(dirPath, file);
+                    const stats = fs.statSync(fullPath);
+                    if (stats.isDirectory()) {
+                        fs.rmSync(fullPath, { recursive: true, force: true });
+                    } else {
+                        fs.unlinkSync(fullPath);
                     }
                 }
             }
-        });
+        };
+
+        clearDir(uploadsDir);
+        clearDir(feedUploadsDir);
 
         res.redirect('/admin?success=Website volledig gereset (inclusief afbeeldingen).');
     } catch (error) {

@@ -15,6 +15,8 @@ backups/
 # User Uploads (Keep folder, ignore content)
 public/uploads/*
 !public/uploads/.gitkeep
+public/feed_uploads/*
+!public/feed_uploads/.gitkeep
 
 # Logs
 *.log
