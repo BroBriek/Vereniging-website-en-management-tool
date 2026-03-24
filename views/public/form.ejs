@@ -37,6 +37,7 @@
         margin-bottom: 10px;
         display: block;
         font-size: 1.1rem;
+        white-space: pre-wrap;
     }
     .rich-text-content {
         line-height: 1.6;
@@ -66,7 +67,7 @@
     <div class="form-public-container mt-0">
         <h1 class="font-playful mb-2"><%= form.title %></h1>
         <% if (form.description) { %>
-            <p class="text-muted lead mb-4"><%= form.description %></p>
+            <p class="text-muted lead mb-4" style="white-space: pre-wrap;"><%= form.description %></p>
         <% } %>
         <hr class="mb-4">
 
