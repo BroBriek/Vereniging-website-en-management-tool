@@ -282,14 +282,14 @@
                     content = field.url ? `<img src="${field.url}" class="img-fluid rounded mb-2" style="max-height: 200px;">` : '<p class="text-muted fst-italic">Geen afbeelding geüpload</p>';
                     break;
                 case 'short_text':
-                    content = `<label class="form-label fw-bold">${field.label || 'Korte vraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}${isEmailField ? ' <span class="badge bg-primary ms-2"><i class="bi bi-envelope me-1"></i> E-mail Overzicht</span>' : ''}</label><input type="text" class="form-control" disabled placeholder="${field.placeholder || ''}">`;
+                    content = `<label class="form-label fw-bold">${field.label || 'Korte vraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}${isEmailField ? ' <span class="badge bg-primary ms-2"><i class="bi bi-envelope me-1"></i> E-mail Overzicht</span>' : ''}</label>${field.extraExplanation ? `<div class="small text-muted mb-1">${field.extraExplanation}</div>` : ''}<input type="text" class="form-control" disabled placeholder="${field.placeholder || ''}">`;
                     break;
                 case 'long_text':
-                    content = `<label class="form-label fw-bold">${field.label || 'Lange vraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label><textarea class="form-control" disabled rows="2" placeholder="${field.placeholder || ''}"></textarea>`;
+                    content = `<label class="form-label fw-bold">${field.label || 'Lange vraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>${field.extraExplanation ? `<div class="small text-muted mb-1">${field.extraExplanation}</div>` : ''}<textarea class="form-control" disabled rows="2" placeholder="${field.placeholder || ''}"></textarea>`;
                     break;
                 case 'multiple_choice':
                 case 'multiple_choice_multi':
-                    content = `<label class="form-label fw-bold">${field.label || 'Meerkeuzevraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>`;
+                    content = `<label class="form-label fw-bold">${field.label || 'Meerkeuzevraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>${field.extraExplanation ? `<div class="small text-muted mb-1">${field.extraExplanation}</div>` : ''}`;
                     const options = field.options || ['Optie 1', 'Optie 2'];
                     options.forEach(opt => {
                         content += `<div class="form-check"><input class="form-check-input" type="${field.type === 'multiple_choice' ? 'radio' : 'checkbox'}" disabled><label class="form-check-label">${opt}</label></div>`;
@@ -298,6 +298,7 @@
                 case 'pricing':
                     content = `
                         <label class="form-label fw-bold">${field.label || 'Slimme Prijsmodule'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>
+                        ${field.extraExplanation ? `<div class="small text-muted mb-1">${field.extraExplanation}</div>` : ''}
                         <div class="border rounded p-3 bg-light">
                             ${(field.options || []).map(opt => `
                                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -451,6 +452,10 @@
                         <input type="text" id="edit_label" class="form-control" value="${field.label || ''}" placeholder="bv. Jouw voornaam">
                     </div>
                     <div class="mb-3">
+                        <label class="form-label fw-bold">Extra uitleg (Onder de vraag)</label>
+                        <textarea id="edit_extra_explanation" class="form-control" rows="2" placeholder="bv. Dit veld is voor je roepnaam.">${field.extraExplanation || ''}</textarea>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label fw-bold">Placeholder (Hulptekst in veld)</label>
                         <input type="text" id="edit_placeholder" class="form-control" value="${field.placeholder || ''}" placeholder="bv. Vul hier in...">
                     </div>
@@ -466,6 +471,10 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Vraag / Label</label>
                         <input type="text" id="edit_label" class="form-control" value="${field.label || ''}" placeholder="bv. Welke maat heb je?">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Extra uitleg (Onder de vraag)</label>
+                        <textarea id="edit_extra_explanation" class="form-control" rows="2" placeholder="bv. Selecteer één of meerdere opties.">${field.extraExplanation || ''}</textarea>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Opties</label>
@@ -490,6 +499,10 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Titel van de module</label>
                         <input type="text" id="edit_label" class="form-control" value="${field.label || ''}" placeholder="bv. Bestelling">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Extra uitleg (Onder de vraag)</label>
+                        <textarea id="edit_extra_explanation" class="form-control" rows="2" placeholder="bv. Vul hier het gewenste aantal in.">${field.extraExplanation || ''}</textarea>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Producten / Opties</label>
@@ -599,18 +612,21 @@
             case 'short_text':
             case 'long_text':
                 field.label = document.getElementById('edit_label').value;
+                field.extraExplanation = document.getElementById('edit_extra_explanation').value;
                 field.placeholder = document.getElementById('edit_placeholder').value;
                 field.required = document.getElementById('edit_required').checked;
                 break;
             case 'multiple_choice':
             case 'multiple_choice_multi':
                 field.label = document.getElementById('edit_label').value;
+                field.extraExplanation = document.getElementById('edit_extra_explanation').value;
                 field.required = document.getElementById('edit_required').checked;
                 const optionInputs = document.querySelectorAll('.edit-option');
                 field.options = Array.from(optionInputs).map(input => input.value).filter(v => v.trim() !== '');
                 break;
             case 'pricing':
                 field.label = document.getElementById('edit_label').value;
+                field.extraExplanation = document.getElementById('edit_extra_explanation').value;
                 field.required = document.getElementById('edit_required').checked;
                 const items = document.querySelectorAll('.pricing-option-item');
                 field.options = Array.from(items).map(item => {
