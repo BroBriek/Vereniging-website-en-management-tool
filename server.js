@@ -94,7 +94,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'secret_chiro_key_change_me',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 } // 1 week
+  cookie: { maxAge: null } // Session cookie (expires on browser close)
 }));
 
 // Passport Middleware

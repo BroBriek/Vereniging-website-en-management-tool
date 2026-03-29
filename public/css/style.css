@@ -425,13 +425,13 @@ body.navbar-open {
 
 /* Compact Table Styles for Admin Dashboard */
 .table {
-    font-size: 0.85rem !important;
+    font-size: 1rem !important;
     width: 100% !important;
     max-width: 100% !important;
 }
 
 .table th, .table td {
-    padding: 0.3rem 0.5rem !important;
+    padding: 0.6rem 0.75rem !important;
     white-space: normal !important; /* Force text wrapping */
     word-break: break-word !important; /* Break long words/URLs */
     vertical-align: middle !important;
