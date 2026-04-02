@@ -1,92 +1,117 @@
 <%- include('../partials/header') %>
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Leiding Beheren</h1>
-    <div>
-        <a href="/admin/info" class="btn btn-info text-white me-2" title="Algemene Hulp & Info">
-            <i class="bi bi-info-circle"></i> Algemene Info
+    <div class="d-flex gap-2">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addLeaderModal">
+            <i class="bi bi-plus-circle me-1"></i> Leiding Toevoegen
+        </button>
+        <a href="/admin/info" class="btn btn-info text-white" title="Algemene Hulp & Info">
+            <i class="bi bi-info-circle"></i>
         </a>
         <a href="/admin" class="btn btn-secondary">Terug</a>
     </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-header">Nieuwe Leiding Toevoegen</div>
-    <div class="card-body">
-        <form action="/admin/leaders" method="POST" enctype="multipart/form-data">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label>Naam</label>
-                    <input type="text" class="form-control" name="name" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label>Groep</label>
-                    <select class="form-select" name="group">
-                        <option>Ribbels</option>
-                        <option>Speelclub</option>
-                        <option>Rakwi's</option>
-                        <option>Tito's</option>
-                        <option>Keti's</option>
-                        <option>Aspi's</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label>Aantal jaren leiding</label>
-                    <input type="number" class="form-control" name="years_active" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label>Studie/Werk</label>
-                    <input type="text" class="form-control" name="study">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label>Geboortedatum</label>
-                    <input type="date" class="form-control" name="birth_date">
-                </div>
-                <div class="col-md-6 mb-3 d-flex align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="is_head_leader" id="headLeaderCheck">
-                        <label class="form-check-label" for="headLeaderCheck">
-                            Hoofdleiding?
-                        </label>
-                    </div>
-                </div>
-                <div class="col-md-12 mb-3">
-                    <label>Extra Info</label>
-                    <textarea class="form-control" name="extra_info" rows="2"></textarea>
-                </div>
-                <div class="col-md-12 mb-3">
-                    <label>Foto</label>
-                    <input type="file" class="form-control" name="image">
-                </div>
+<!-- Add Leader Modal -->
+<div class="modal fade" id="addLeaderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Nieuwe Leiding Toevoegen</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <button type="submit" class="btn btn-success">Toevoegen</button>
-        </form>
+            <div class="modal-body">
+                <form action="/admin/leaders" method="POST" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Naam</label>
+                            <input type="text" class="form-control" name="name" required placeholder="bv. Jan Peeters">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Groep</label>
+                            <select class="form-select" name="group">
+                                <option>Ribbels</option>
+                                <option>Speelclub</option>
+                                <option>Rakwi's</option>
+                                <option>Tito's</option>
+                                <option>Keti's</option>
+                                <option>Aspi's</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Aantal jaren leiding</label>
+                            <input type="number" class="form-control" name="years_active" required value="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Studie/Werk</label>
+                            <input type="text" class="form-control" name="study" placeholder="bv. Student Rechten">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Geboortedatum</label>
+                            <input type="date" class="form-control" name="birth_date">
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-center pt-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_head_leader" id="headLeaderCheck">
+                                <label class="form-check-label fw-bold" for="headLeaderCheck">
+                                    Hoofdleiding?
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold">Extra Info</label>
+                            <textarea class="form-control" name="extra_info" rows="2" placeholder="bv. Favoriete kampgerecht, hobby's..."></textarea>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold">Foto</label>
+                            <input type="file" class="form-control" name="image">
+                        </div>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                        <button type="submit" class="btn btn-success">Opslaan & Toevoegen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
 <h3>Huidige Leiding</h3>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Naam</th>
-            <th>Groep</th>
-            <th>Jaren</th>
-            <th>Actie</th>
-        </tr>
-    </thead>
-    <tbody>
-        <% leaders.forEach(leader => { %>
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
             <tr>
-                <td><%= leader.name %></td>
-                <td><%= leader.group %></td>
-                <td><%= leader.years_active %></td>
-                <td>
-                    <a href="/admin/leaders/<%= leader.id %>/edit" class="btn btn-sm btn-primary">Bewerk</a>
-                    <form action="/admin/leaders/<%= leader.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
-                        <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
-                    </form>
-                </td>
+                <th>Naam</th>
+                <th>Groep</th>
+                <th class="d-none d-md-table-cell">Jaren</th>
+                <th class="text-end">Actie</th>
             </tr>
-        <% }) %>
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            <% leaders.forEach(leader => { %>
+                <tr>
+                    <td>
+                        <div class="fw-bold"><%= leader.name %></div>
+                        <% if (leader.is_head_leader) { %>
+                            <span class="badge bg-danger small">Hoofdleiding</span>
+                        <% } %>
+                    </td>
+                    <td><%= leader.group %></td>
+                    <td class="d-none d-md-table-cell"><%= leader.years_active %></td>
+                    <td class="text-end">
+                        <div class="btn-group">
+                            <a href="/admin/leaders/<%= leader.id %>/edit" class="btn btn-sm btn-outline-primary" title="Bewerken">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form action="/admin/leaders/<%= leader.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijderen"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
 <%- include('../partials/footer') %>

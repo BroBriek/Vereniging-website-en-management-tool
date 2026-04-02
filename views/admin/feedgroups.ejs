@@ -1,58 +1,84 @@
 <%- include('../partials/header') %>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1>Leidingshoekjes beheren</h1>
-  <a href="/admin" class="btn btn-secondary">Terug</a>
+  <div class="d-flex gap-2">
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPageModal">
+      <i class="bi bi-plus-circle me-1"></i> Nieuw Hoekje
+    </button>
+    <a href="/admin" class="btn btn-secondary">Terug</a>
+  </div>
 </div>
 
-<div class="card mb-4">
-  <div class="card-header">Nieuwe pagina toevoegen</div>
-  <div class="card-body">
-    <form action="/admin/feedgroups" method="POST">
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          <label>Naam</label>
-          <input type="text" name="name" class="form-control" placeholder="vb. Groep 2025" required>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label>Jaar (optioneel)</label>
-          <input type="text" name="year" class="form-control" placeholder="2025">
-        </div>
-        <div class="col-md-4 mb-3">
-          <label>Omschrijving</label>
-          <input type="text" name="description" class="form-control" placeholder="Omschrijving">
-        </div>
+<!-- Add Page Modal -->
+<div class="modal fade" id="addPageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">Nieuw Leidingshoekje Toevoegen</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <button type="submit" class="btn btn-success">Toevoegen</button>
-    </form>
+      <div class="modal-body">
+        <form action="/admin/feedgroups" method="POST">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="fw-bold">Naam</label>
+              <input type="text" name="name" class="form-control" placeholder="vb. Groep 2025" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="fw-bold">Jaar (optioneel)</label>
+              <input type="text" name="year" class="form-control" placeholder="2025">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="fw-bold">Omschrijving</label>
+              <input type="text" name="description" class="form-control" placeholder="Omschrijving">
+            </div>
+          </div>
+          <div class="text-end mt-3">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+            <button type="submit" class="btn btn-success">Opslaan & Toevoegen</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 
 <h3>Bestaande Leidingshoekjes</h3>
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th>Naam</th>
-      <th>Slug</th>
-      <th>Jaar</th>
-      <th>Acties</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% groups.forEach(g => { %>
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead>
       <tr>
-        <td><%= g.name %></td>
-        <td><code><%= g.slug %></code></td>
-        <td><%= g.year || '' %></td>
-        <td>
-          <button class="btn btn-sm btn-warning me-1" onclick="openEditModal('<%= g.id %>', '<%= g.name %>', '<%= g.year || '' %>', '<%= g.description || '' %>')">Bewerk</button>
-          <form action="/admin/feedgroups/<%= g.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Verwijderen?');" style="display:inline;">
-            <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
-          </form>
-        </td>
+        <th>Naam</th>
+        <th class="d-none d-md-table-cell">Slug</th>
+        <th class="d-none d-sm-table-cell">Jaar</th>
+        <th class="text-end">Acties</th>
       </tr>
-    <% }) %>
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      <% groups.forEach(g => { %>
+        <tr>
+          <td>
+            <div class="fw-bold"><%= g.name %></div>
+            <div class="d-md-none small"><code><%= g.slug %></code></div>
+            <div class="d-sm-none small text-muted"><%= g.year || '' %></div>
+          </td>
+          <td class="d-none d-md-table-cell"><code><%= g.slug %></code></td>
+          <td class="d-none d-sm-table-cell"><%= g.year || '' %></td>
+          <td class="text-end">
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('<%= g.id %>', '<%= g.name %>', '<%= g.year || '' %>', '<%= g.description || '' %>')" title="Bewerken">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <form action="/admin/feedgroups/<%= g.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Verwijderen?');" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijderen"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
 
 <!-- Edit Modal -->
 <div class="modal fade" id="editGroupModal" tabindex="-1">

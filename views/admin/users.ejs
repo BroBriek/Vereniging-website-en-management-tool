@@ -125,105 +125,129 @@ function closePolaroid() {
 %>
 
 <h3>Actieve Gebruikers</h3>
-<table class="table table-striped align-middle">
-    <thead>
-        <tr>
-            <th style="width: 45px;"></th>
-            <th>Gebruikersnaam</th>
-            <th>Rol</th>
-            <th>Actie</th>
-        </tr>
-    </thead>
-    <tbody>
-        <% activeUsers.forEach(u => { %>
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
             <tr>
-                <td>
-                    <% if (u.profilePicture) { %>
-                        <img src="<%= u.profilePicture %>" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(u.username) %>" onclick="showPolaroid('<%= u.profilePicture %>', '<%= capitalizeName(u.username) %>')">
-                    <% } else { %>
-                        <div class="avatar-circle-sm" style="background-color: <%= getAvatarColor(u.username) %>;">
-                            <%= u.username.substring(0, 2).toUpperCase() %>
-                        </div>
-                    <% } %>
-                </td>
-                <td><%= capitalizeName(u.username) %></td>
-                <td>
-                    <% if(u.role === 'admin') { %>
-                        <span class="badge bg-danger">Admin</span>
-                    <% } else if(u.role === 'media') { %>
-                        <span class="badge bg-warning text-dark">Media</span>
-                    <% } else { %>
-                        <span class="badge bg-info">Leiding</span>
-                    <% } %>
-                </td>
-                <td>
-                    <a href="/admin/users/<%= u.id %>/edit" class="btn btn-sm btn-primary me-2">Bewerken</a>
-                    <% if (user.id !== u.id) { %>
-                        <form action="/admin/users/<%= u.id %>/toggle-status?_method=PUT" method="POST" style="display:inline;" class="me-1">
-                            <button type="submit" class="btn btn-sm btn-warning" title="Zet op non-actief (oud-leiding)">
-                                <i class="bi bi-archive"></i> Naar Oud
-                            </button>
-                        </form>
-                        <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                        </form>
-                    <% } else { %>
-                        <span class="text-muted">(Jezelf)</span>
-                    <% } %>
-                </td>
+                <th style="width: 45px;"></th>
+                <th>Gebruikersnaam</th>
+                <th class="d-none d-md-table-cell">Rol</th>
+                <th class="text-end">Actie</th>
             </tr>
-        <% }) %>
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            <% activeUsers.forEach(u => { %>
+                <tr>
+                    <td>
+                        <% if (u.profilePicture) { %>
+                            <img src="<%= u.profilePicture %>" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(u.username) %>" onclick="showPolaroid('<%= u.profilePicture %>', '<%= capitalizeName(u.username) %>')">
+                        <% } else { %>
+                            <div class="avatar-circle-sm" style="background-color: <%= getAvatarColor(u.username) %>;">
+                                <%= u.username.substring(0, 2).toUpperCase() %>
+                            </div>
+                        <% } %>
+                    </td>
+                    <td>
+                        <div class="fw-bold"><%= capitalizeName(u.username) %></div>
+                        <div class="d-md-none small">
+                            <% if(u.role === 'admin') { %>
+                                <span class="badge bg-danger">Admin</span>
+                            <% } else if(u.role === 'media') { %>
+                                <span class="badge bg-warning text-dark">Media</span>
+                            <% } else { %>
+                                <span class="badge bg-info">Leiding</span>
+                            <% } %>
+                        </div>
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        <% if(u.role === 'admin') { %>
+                            <span class="badge bg-danger">Admin</span>
+                        <% } else if(u.role === 'media') { %>
+                            <span class="badge bg-warning text-dark">Media</span>
+                        <% } else { %>
+                            <span class="badge bg-info">Leiding</span>
+                        <% } %>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group">
+                            <a href="/admin/users/<%= u.id %>/edit" class="btn btn-sm btn-outline-primary" title="Bewerken">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <% if (user.id !== u.id) { %>
+                                <form action="/admin/users/<%= u.id %>/toggle-status?_method=PUT" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Zet op non-actief (oud-leiding)">
+                                        <i class="bi bi-archive"></i>
+                                    </button>
+                                </form>
+                                <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijderen"><i class="bi bi-trash"></i></button>
+                                </form>
+                            <% } else { %>
+                                <span class="text-muted small p-2">(Ik)</span>
+                            <% } %>
+                        </div>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
 
 <div class="mt-5">
-    <button class="btn btn-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#inactiveUsersList" aria-expanded="false" aria-controls="inactiveUsersList">
+    <button class="btn btn-secondary w-100 w-md-auto" type="button" data-bs-toggle="collapse" data-bs-target="#inactiveUsersList" aria-expanded="false" aria-controls="inactiveUsersList">
         <i class="bi bi-clock-history"></i> Toon Oud-Leiding (<%= inactiveUsers.length %>)
     </button>
     
     <div class="collapse mt-3" id="inactiveUsersList">
-        <div class="card card-body bg-light">
-            <h4 class="text-muted">Oud-Leiding (Inactief)</h4>
+        <div class="card card-body bg-light border-0 shadow-sm">
+            <h4 class="text-muted mb-4">Oud-Leiding (Inactief)</h4>
             <% if (inactiveUsers.length === 0) { %>
                 <p class="text-muted">Geen oud-leiding.</p>
             <% } else { %>
-                <table class="table table-sm text-muted align-middle">
-                    <thead>
-                        <tr>
-                            <th style="width: 45px;"></th>
-                            <th>Gebruikersnaam</th>
-                            <th>Rol</th>
-                            <th>Actie</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% inactiveUsers.forEach(u => { %>
+                <div class="table-responsive">
+                    <table class="table table-sm text-muted align-middle">
+                        <thead>
                             <tr>
-                                <td>
-                                    <% if (u.profilePicture) { %>
-                                        <img src="<%= u.profilePicture %>" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(u.username) %>" onclick="showPolaroid('<%= u.profilePicture %>', '<%= capitalizeName(u.username) %>')">
-                                    <% } else { %>
-                                        <div class="avatar-circle-sm" style="background-color: <%= getAvatarColor(u.username) %>;">
-                                            <%= u.username.substring(0, 2).toUpperCase() %>
-                                        </div>
-                                    <% } %>
-                                </td>
-                                <td><%= capitalizeName(u.username) %></td>
-                                <td><span class="badge bg-secondary">Oud-Leiding</span></td>
-                                <td>
-                                    <form action="/admin/users/<%= u.id %>/toggle-status?_method=PUT" method="POST" style="display:inline;" class="me-1">
-                                        <button type="submit" class="btn btn-sm btn-success" title="Maak weer actief">
-                                            <i class="bi bi-arrow-counterclockwise"></i> Activeren
-                                        </button>
-                                    </form>
-                                    <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Definitief verwijderen?');" style="display:inline;">
-                                        <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                                    </form>
-                                </td>
+                                <th style="width: 45px;"></th>
+                                <th>Gebruikersnaam</th>
+                                <th class="d-none d-md-table-cell">Rol</th>
+                                <th class="text-end">Actie</th>
                             </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <% inactiveUsers.forEach(u => { %>
+                                <tr>
+                                    <td>
+                                        <% if (u.profilePicture) { %>
+                                            <img src="<%= u.profilePicture %>" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(u.username) %>" onclick="showPolaroid('<%= u.profilePicture %>', '<%= capitalizeName(u.username) %>')">
+                                        <% } else { %>
+                                            <div class="avatar-circle-sm" style="background-color: <%= getAvatarColor(u.username) %>; opacity: 0.6;">
+                                                <%= u.username.substring(0, 2).toUpperCase() %>
+                                            </div>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold"><%= capitalizeName(u.username) %></div>
+                                        <div class="d-md-none small"><span class="badge bg-secondary">Oud-Leiding</span></div>
+                                    </td>
+                                    <td class="d-none d-md-table-cell"><span class="badge bg-secondary">Oud-Leiding</span></td>
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <form action="/admin/users/<%= u.id %>/toggle-status?_method=PUT" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Maak weer actief">
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                </button>
+                                            </form>
+                                            <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Definitief verwijderen?');" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijderen"><i class="bi bi-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
             <% } %>
         </div>
     </div>

@@ -1,96 +1,121 @@
 <%- include('../partials/header') %>
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Kalender Beheren</h1>
-    <div>
-        <a href="/admin/info" class="btn btn-info text-white me-2" title="Algemene Hulp & Info">
-            <i class="bi bi-info-circle"></i> Algemene Info
+    <div class="d-flex gap-2">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addEventModal">
+            <i class="bi bi-plus-circle me-1"></i> Activiteit Toevoegen
+        </button>
+        <a href="/admin/info" class="btn btn-info text-white" title="Algemene Hulp & Info">
+            <i class="bi bi-info-circle"></i>
         </a>
         <a href="/admin" class="btn btn-secondary">Terug</a>
     </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-header">Nieuwe Activiteit</div>
-    <div class="card-body">
-        <form action="/admin/events" method="POST">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label>Titel</label>
-                    <input type="text" class="form-control" name="title" required>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label>Begindatum</label>
-                    <input type="date" class="form-control" name="date" required>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label>Einddatum (optioneel)</label>
-                    <input type="date" class="form-control" name="endDate">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label>Startuur (optioneel)</label>
-                    <input type="time" class="form-control" name="startTime">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label>Einduur (optioneel)</label>
-                    <input type="time" class="form-control" name="endTime">
-                </div>
-                <div class="col-md-3 mb-3 d-flex align-items-end">
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" name="isPrivate" id="isPrivate">
-                        <label class="form-check-label" for="isPrivate">Alleen voor leiding</label>
-                    </div>
-                </div>
-                <div class="col-md-12 mb-3">
-                    <label>Beschrijving</label>
-                    <textarea class="form-control rich-editor" name="description" rows="2"></textarea>
-                </div>
+<!-- Add Event Modal -->
+<div class="modal fade" id="addEventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Nieuwe Activiteit Toevoegen</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <button type="submit" class="btn btn-success">Toevoegen</button>
-        </form>
+            <div class="modal-body">
+                <form action="/admin/events" method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Titel</label>
+                            <input type="text" class="form-control" name="title" required placeholder="bv. Zondagse Vergadering">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="fw-bold">Begindatum</label>
+                            <input type="date" class="form-control" name="date" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="fw-bold">Einddatum (optioneel)</label>
+                            <input type="date" class="form-control" name="endDate">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="fw-bold">Startuur (optioneel)</label>
+                            <input type="time" class="form-control" name="startTime">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="fw-bold">Einduur (optioneel)</label>
+                            <input type="time" class="form-control" name="endTime">
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="isPrivate" id="isPrivate">
+                                <label class="form-check-label" for="isPrivate">Alleen voor leiding (interne kalender)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold">Beschrijving</label>
+                            <textarea class="form-control rich-editor" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                        <button type="submit" class="btn btn-success">Opslaan & Toevoegen</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
 <h3>Geplande Activiteiten</h3>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Datum</th>
-            <th>Titel</th>
-            <th>Type</th>
-            <th>Actie</th>
-        </tr>
-    </thead>
-    <tbody>
-        <% events.forEach(event => { %>
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
             <tr>
-                <td>
-                    <%= event.date %>
-                    <% if (event.endDate && event.endDate !== event.date) { %>
-                        t/m <%= event.endDate %>
-                    <% } %>
-                </td>
-                <td><%= event.title %></td>
-                <td>
-                    <% if (event.isPrivate) { %>
-                        <span class="badge bg-warning text-dark">Leiding</span>
-                    <% } else { %>
-                        <span class="badge bg-info">Publiek</span>
-                    <% } %>
-                </td>
-                <td>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-primary me-1" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
-                            Bewerk
-                        </button>
-                        <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');">
-                            <button type="submit" class="btn btn-sm btn-danger">Verwijder</button>
-                        </form>
-                    </div>
-                </td>
+                <th>Datum</th>
+                <th>Titel</th>
+                <th class="d-none d-md-table-cell">Type</th>
+                <th class="text-end">Actie</th>
             </tr>
-        <% }) %>
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            <% events.forEach(event => { %>
+                <tr>
+                    <td>
+                        <div class="fw-bold"><%= event.date %></div>
+                        <% if (event.endDate && event.endDate !== event.date) { %>
+                            <div class="small text-muted">t/m <%= event.endDate %></div>
+                        <% } %>
+                    </td>
+                    <td>
+                        <%= event.title %>
+                        <div class="d-md-none small mt-1">
+                            <% if (event.isPrivate) { %>
+                                <span class="badge bg-warning text-dark">Leiding</span>
+                            <% } else { %>
+                                <span class="badge bg-info">Publiek</span>
+                            <% } %>
+                        </div>
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        <% if (event.isPrivate) { %>
+                            <span class="badge bg-warning text-dark">Leiding</span>
+                        <% } else { %>
+                            <span class="badge bg-info">Publiek</span>
+                        <% } %>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
 
 <!-- Edit Modal -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">

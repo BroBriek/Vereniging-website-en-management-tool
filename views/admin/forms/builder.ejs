@@ -204,6 +204,9 @@
             <div class="draggable-item" onclick="addField('pricing')" draggable="true" ondragstart="handleDragStart(event, 'pricing')">
                 <i class="bi bi-calculator text-danger"></i> Slimme Prijsmodule
             </div>
+            <div class="draggable-item" onclick="addField('total_box')" draggable="true" ondragstart="handleDragStart(event, 'total_box')">
+                <i class="bi bi-plus-slash-minus text-danger"></i> Slimme Totaal Box
+            </div>
             <hr>
             <div class="draggable-item" onclick="enableEmailOverview()">
                 <i class="bi bi-envelope-check text-primary"></i> Verplicht E-mail Veld
@@ -246,6 +249,22 @@
 <script>
     let fields = <%- form && form.fields ? JSON.stringify(form.fields) : '[]' %>;
     let editingIndex = -1;
+    let hasUnsavedChanges = false;
+
+    // Track changes
+    const markDirty = () => { hasUnsavedChanges = true; };
+    window.addEventListener('beforeunload', (e) => {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = 'Ben je zeker dat je de pagina wilt verlaten? Niet alle veranderingen zijn opgeslagen.';
+            return e.returnValue;
+        }
+    });
+
+    // Reset flag on form submit
+    document.getElementById('formBuilderSubmit').addEventListener('submit', () => {
+        hasUnsavedChanges = false;
+    });
 
     function renderFields() {
         const list = document.getElementById('formPreviewList');
@@ -306,9 +325,20 @@
                                     <div style="width: 60px;"><input type="number" class="form-control form-control-sm" value="0" disabled></div>
                                 </div>
                             `).join('')}
-                            <div class="mt-2 pt-2 border-top fw-bold d-flex justify-content-between">
-                                <span>Totaal:</span>
+                            <div class="mt-2 pt-2 border-top fw-bold d-flex justify-content-between text-danger">
+                                <span>Subtotaal:</span>
                                 <span>€0,00</span>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'total_box':
+                    content = `
+                        <div class="card border-danger bg-light">
+                            <div class="card-body text-center py-4">
+                                <h3 class="text-danger mb-0 font-playful">${field.label || 'TOTAAL'}</h3>
+                                <div class="display-4 fw-bold text-danger mt-2">€0,00</div>
+                                <p class="text-muted small mt-2 mb-0">Deze box telt automatisch alle prijsmodules in het formulier bij elkaar op.</p>
                             </div>
                         </div>
                     `;
@@ -332,6 +362,7 @@
     }
 
     function addField(type) {
+        markDirty();
         const id = 'field_' + Math.random().toString(36).substring(2, 11);
         let newField = { id, type, label: '', required: false };
 
@@ -341,6 +372,9 @@
         if (type === 'pricing') {
             newField.label = 'Bestelling';
             newField.options = [{ label: 'Item 1', price: 0, showPrice: true }];
+        }
+        if (type === 'total_box') {
+            newField.label = 'Totaal te betalen';
         }
         
         fields.push(newField);
@@ -389,6 +423,7 @@
 
     function deleteField(index) {
         if (confirm('Weet je zeker dat je dit item wilt verwijderen?')) {
+            markDirty();
             const field = fields[index];
             const emailFieldIdInput = document.getElementById('emailFieldIdInput');
             const sendEmailOverviewInput = document.getElementById('sendEmailOverviewInput');
@@ -410,6 +445,7 @@
     function moveField(index, direction) {
         const newIndex = index + direction;
         if (newIndex < 0 || newIndex >= fields.length) return;
+        markDirty();
         const temp = fields[index];
         fields[index] = fields[newIndex];
         fields[newIndex] = temp;
@@ -541,6 +577,15 @@
                     </div>
                 `;
                 break;
+            case 'total_box':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Titel van de Totaal Box</label>
+                        <input type="text" id="edit_label" class="form-control" value="${field.label || ''}" placeholder="bv. Totaal">
+                    </div>
+                    <p class="text-muted small">Deze box heeft geen verdere instellingen. Hij telt automatisch alle prijsmodules in het formulier bij elkaar op.</p>
+                `;
+                break;
         }
 
         modalBody.innerHTML = html;
@@ -600,6 +645,7 @@
 
     document.getElementById('saveFieldChangesBtn').addEventListener('click', function() {
         if (editingIndex === -1) return;
+        markDirty();
         const field = fields[editingIndex];
 
         switch(field.type) {
@@ -636,6 +682,9 @@
                         showPrice: item.querySelector('.edit-pricing-show').checked
                     };
                 }).filter(v => v.label.trim() !== '');
+                break;
+            case 'total_box':
+                field.label = document.getElementById('edit_label').value;
                 break;
         }
 
@@ -716,6 +765,7 @@
             return;
         }
         
+        markDirty();
         const item = fields.splice(draggedIndex, 1)[0];
         fields.splice(index, 0, item);
         

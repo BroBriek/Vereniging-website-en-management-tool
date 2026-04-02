@@ -56,13 +56,18 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="period" class="form-label">Periode</label>
-                                    <select class="form-select" id="period" name="period">
+                                    <label class="form-label fw-bold">Werkjaren / Periodes</label>
+                                    <div class="p-3 border rounded bg-white" style="max-height: 150px; overflow-y: auto;">
                                         <% periods.forEach(p => { %>
-                                            <option value="<%= p %>" <%= p === currentPeriod ? 'selected' : '' %>><%= p %></option>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="periods[]" value="<%= p %>" id="period_<%= p %>" <%= p === currentPeriod ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="period_<%= p %>">
+                                                    <%= p %>
+                                                </label>
+                                            </div>
                                         <% }); %>
-                                    </select>
-                                    <div class="form-text">Selecteer uit welke periode je de inschrijvingen wil gebruiken.</div>
+                                    </div>
+                                    <div class="form-text">Selecteer de werkjaren waarvan je de inschrijvingen wil gebruiken.</div>
                                 </div>
                             </div>
                         </div>
