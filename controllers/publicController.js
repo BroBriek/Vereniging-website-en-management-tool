@@ -301,10 +301,10 @@ exports.getRegister = async (req, res) => {
 
 exports.postRegister = async (req, res) => {
     const content = await getContent('register');
+    const regState = await SystemState.findOne({ where: { key: 'is_registration_open' } });
+    const isRegistrationOpen = regState ? regState.value === 'true' : true;
+    
     try {
-        const regState = await SystemState.findOne({ where: { key: 'is_registration_open' } });
-        const isRegistrationOpen = regState ? regState.value === 'true' : true;
-
         if (!isRegistrationOpen) {
             return res.render('public/register', {
                 title: 'Inschrijven bij Chiro Vreugdeland',
@@ -340,13 +340,15 @@ exports.postRegister = async (req, res) => {
         
         payload.period = await PeriodService.getCurrentPeriod();
 
-                        await Registration.create(payload);
-                        res.render('public/register', { 
-                            title: 'Inschrijven bij Chiro Vreugdeland', 
-                            description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
-                            content, 
-                            success: 'Bedankt voor je inschrijving! We hebben de gegevens goed ontvangen.' 
-                        });    } catch (error) {
+        await Registration.create(payload);
+        res.render('public/register', { 
+            title: 'Inschrijven bij Chiro Vreugdeland', 
+            description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
+            content, 
+            isRegistrationOpen,
+            success: 'Bedankt voor je inschrijving! We hebben de gegevens goed ontvangen.' 
+        });
+    } catch (error) {
         let errorMessage = 'Er ging iets mis bij het opslaan. Controleer of alle velden correct zijn ingevuld.';
         
         if (error.name === 'SequelizeValidationError') {
@@ -365,13 +367,14 @@ exports.postRegister = async (req, res) => {
         }
 
         res.render('public/register', { 
-                    title: 'Inschrijven bij Chiro Vreugdeland', 
-                    description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
-                    content, 
-                    error: errorMessage 
-                });
-            }
-        };
+            title: 'Inschrijven bij Chiro Vreugdeland', 
+            description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
+            content, 
+            isRegistrationOpen,
+            error: errorMessage 
+        });
+    }
+};
 const nodemailer = require('nodemailer');
 const { sendMail } = require('../config/mailer');
 const PeriodService = require('../services/PeriodService');
