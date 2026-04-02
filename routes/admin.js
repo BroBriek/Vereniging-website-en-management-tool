@@ -65,6 +65,7 @@ router.post('/forms/:id/edit', ensureMedia, formController.postEditForm);
 router.post('/forms/:id/delete', ensureMedia, formController.postDeleteForm);
 router.get('/forms/:id/responses', ensureMedia, formController.getResponses);
 router.get('/forms/:id/responses/export', ensureMedia, formController.exportResponses);
+router.get('/forms/:id/responses/export-eetdag', ensureMedia, formController.exportEetdagPDF);
 router.put('/forms/responses/:id', ensureMedia, formController.updateResponse);
 router.delete('/forms/responses/:id', ensureMedia, formController.deleteResponse);
 

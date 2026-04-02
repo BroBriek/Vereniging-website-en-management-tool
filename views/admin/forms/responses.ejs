@@ -72,6 +72,9 @@
                     <input type="text" id="tableSearch" class="form-control border-start-0" placeholder="Zoek...">
                 </div>
                 <div class="d-flex gap-2 w-100 w-sm-auto">
+                    <button type="button" class="btn btn-primary flex-grow-1 flex-sm-grow-0" data-bs-toggle="modal" data-bs-target="#eetdagExportModal">
+                        <i class="bi bi-printer"></i> <span class="d-none d-sm-inline">Eetdag Export</span>
+                    </button>
                     <a href="/admin/forms/<%= form.id %>/responses/export" class="btn btn-success flex-grow-1 flex-sm-grow-0">
                         <i class="bi bi-file-earmark-excel"></i> <span class="d-none d-sm-inline">Exporteer</span>
                     </a>
@@ -188,7 +191,77 @@
     </div>
 </div>
 
+<!-- Modal for Eetdag Export -->
+<div class="modal fade" id="eetdagExportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title font-playful">Exporteer naar Eetdagformaat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-4">Selecteer welke velden op het briefje moeten komen te staan.</p>
+                <form id="eetdagExportForm">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Veld voor NAAM:</label>
+                        <select name="nameField" class="form-select rounded-3" required>
+                            <option value="">-- Selecteer veld --</option>
+                            <% form.fields.filter(f => ['short_text', 'long_text', 'multiple_choice'].includes(f.type)).forEach(f => { %>
+                                <option value="<%= f.id %>"><%= f.label %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold d-block">Velden voor BESTELLING:</label>
+                        <div class="p-3 bg-light rounded-3 border" style="max-height: 200px; overflow-y: auto;">
+                            <% form.fields.filter(f => ['pricing', 'multiple_choice', 'multiple_choice_multi'].includes(f.type)).forEach(f => { %>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="orderFields" value="<%= f.id %>" id="check-<%= f.id %>" <%= f.type === 'pricing' ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="check-<%= f.id %>">
+                                        <%= f.label %> <small class="text-muted">(<%= f.type %>)</small>
+                                    </label>
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="executeEetdagExport()">
+                    <i class="bi bi-file-earmark-pdf"></i> Exporteer PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    function executeEetdagExport() {
+        const form = document.getElementById('eetdagExportForm');
+        const formData = new FormData(form);
+        const nameField = formData.get('nameField');
+        const orderFields = formData.getAll('orderFields');
+
+        if (!nameField) {
+            alert('Selecteer a.u.b. een veld voor de naam.');
+            return;
+        }
+        if (orderFields.length === 0) {
+            alert('Selecteer a.u.b. ten minste één veld voor de bestelling.');
+            return;
+        }
+
+        const params = new URLSearchParams();
+        params.append('nameField', nameField);
+        orderFields.forEach(id => params.append('orderFields', id));
+
+        const exportUrl = `/admin/forms/<%= form.id %>/responses/export-eetdag?` + params.toString();
+        window.location.href = exportUrl;
+        
+        bootstrap.Modal.getInstance(document.getElementById('eetdagExportModal')).hide();
+    }
+
     document.getElementById('tableSearch').addEventListener('input', function(e) {
         const query = e.target.value.toLowerCase();
         const rows = document.querySelectorAll('.response-row');
