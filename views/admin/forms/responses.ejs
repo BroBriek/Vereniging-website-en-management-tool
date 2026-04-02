@@ -34,6 +34,53 @@
         opacity: 0.5;
         transform: scale(0.98);
     }
+    /* Mobile responsive table adjustments */
+    @media (max-width: 991.98px) {
+        .table-mobile-responsive thead {
+            display: none;
+        }
+        .table-mobile-responsive tr {
+            display: block;
+            border-bottom: 1px solid #eee;
+            padding: 0.75rem 0;
+        }
+        .table-mobile-responsive tr:last-child {
+            border-bottom: none;
+        }
+        .table-mobile-responsive td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem !important;
+            border: none !important;
+            text-align: right;
+        }
+        .table-mobile-responsive td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            font-size: 0.7rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-right: 1.5rem;
+            text-align: left;
+            flex-shrink: 0;
+        }
+        .table-mobile-responsive .editable-cell {
+            padding: 4px 8px;
+            min-height: auto;
+            justify-content: flex-end;
+            width: auto;
+            max-width: 70%;
+        }
+        .table-mobile-responsive td.ps-4, .table-mobile-responsive td.pe-4 {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+        /* Specific alignment for the "Datum" cell content */
+        .table-mobile-responsive td[data-label="Datum"] > div {
+            text-align: right;
+        }
+    }
     /* Fix for global input styles interfering with bootstrap input groups */
     .input-group .form-control {
         padding: 0.4rem 0.75rem !important;
@@ -90,7 +137,7 @@
         <div class="card shadow-sm border-0">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0 align-middle">
+                    <table class="table table-hover table-mobile-responsive mb-0 align-middle">
                         <thead class="bg-light">
                             <tr>
                                 <th class="ps-4" style="width: 150px;">Datum</th>
@@ -107,7 +154,7 @@
                             <% if (responses && responses.length > 0) { %>
                                 <% responses.forEach(resp => { %>
                                     <tr id="response-row-<%= resp.id %>" class="response-row">
-                                        <td class="ps-4">
+                                        <td class="ps-4" data-label="Datum">
                                             <div class="small fw-bold"><%= new Date(resp.submittedAt).toLocaleDateString('nl-BE') %></div>
                                             <div class="small text-muted"><%= new Date(resp.submittedAt).toLocaleTimeString('nl-BE', {hour: '2-digit', minute:'2-digit'}) %></div>
                                         </td>
@@ -126,7 +173,7 @@
                                                 displayValue = isArray ? answer.join(', ') : (answer || '-');
                                             }
                                         %>
-                                            <td>
+                                            <td data-label="<%= f.label %>">
                                                 <div class="editable-cell" 
                                                      onclick="startEdit(this, '<%= resp.id %>', '<%= f.id %>', '<%= f.type %>', <%= JSON.stringify(f.options || []) %>)"
                                                      data-raw-value="<%= typeof answer === 'object' ? JSON.stringify(answer) : answer %>">
@@ -134,7 +181,7 @@
                                                 </div>
                                             </td>
                                         <% }) %>
-                                        <td class="text-end pe-4">
+                                        <td class="text-end pe-4" data-label="Acties">
                                             <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="deleteResponse('<%= resp.id %>')" title="Verwijder dit antwoord">
                                                 <i class="bi bi-trash"></i>
                                             </button>

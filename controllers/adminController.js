@@ -789,8 +789,9 @@ exports.getEmailTool = async (req, res) => {
 
 exports.postSendEmail = async (req, res) => {
     try {
-        const { subject, body, recipient_type, individual_email, group_selection, period } = req.body;
-        
+        const { subject, body, recipient_type, individual_email, group_selection } = req.body;
+        let selectedPeriods = req.body['periods[]'];
+
         let recipients = [];
 
         if (recipient_type === 'individual') {
@@ -799,14 +800,19 @@ exports.postSendEmail = async (req, res) => {
         } else {
             // Group Selection
             const where = {};
-            if (period) where.period = period;
-            
+
+            // Handle multiple periods
+            if (selectedPeriods) {
+                if (!Array.isArray(selectedPeriods)) selectedPeriods = [selectedPeriods];
+                where.period = { [require('sequelize').Op.in]: selectedPeriods };
+            }
+
             // Determine types to fetch
             let typesToFetch = [];
             if (group_selection === 'leiding') typesToFetch = ['leiding'];
             else if (group_selection === 'leden_ouders') typesToFetch = ['lid'];
             else if (group_selection === 'iedereen') typesToFetch = ['lid', 'leiding'];
-            
+
             if (typesToFetch.length > 0) {
                 where.type = { [require('sequelize').Op.in]: typesToFetch };
             }
@@ -815,12 +821,11 @@ exports.postSendEmail = async (req, res) => {
                 where,
                 attributes: ['email']
             });
-            
+
             // Extract and dedup emails
             const emails = registrations.map(r => r.email).filter(e => e && e.includes('@')); // Basic validation
             recipients = [...new Set(emails)]; // Deduplicate
         }
-
         if (recipients.length === 0) {
             return res.redirect('/admin/email?error=Geen ontvangers gevonden voor deze selectie.');
         }
