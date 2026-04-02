@@ -229,77 +229,91 @@ exports.exportEetdagPDF = async (req, res) => {
         doc.pipe(res);
 
         const cols = 3;
-        const rowsPerPage = 6;
-        const slipsPerPage = cols * rowsPerPage;
         const pageWidth = doc.page.width;
         const pageHeight = doc.page.height;
-        const slipWidth = (pageWidth - 40) / cols;
-        const slipHeight = (pageHeight - 40) / rowsPerPage;
+        const margin = 20;
+        const slipWidth = (pageWidth - (margin * 2)) / cols;
+        const pageBottom = pageHeight - margin;
 
         const responses = form.responses.sort((a, b) => a.submittedAt - b.submittedAt);
+        const selectedOrderFields = Array.isArray(orderFields) ? orderFields : (orderFields ? [orderFields] : []);
 
-        responses.forEach((resp, index) => {
-            if (index > 0 && index % slipsPerPage === 0) {
-                doc.addPage();
-            }
-
-            const pageIndex = index % slipsPerPage;
-            const col = pageIndex % cols;
-            const row = Math.floor(pageIndex / cols);
-            
-            const startX = 20 + col * slipWidth;
-            const startY = 20 + row * slipHeight;
-
-            // Draw dotted border for cutting
-            doc.rect(startX, startY, slipWidth, slipHeight).dash(3, { space: 3 }).stroke('#ccc').undash();
-
-            // Content padding
-            const x = startX + 15;
-            const y = startY + 15;
-
-            // Header labels
-            doc.fontSize(11).font('Helvetica-Bold');
-            doc.text('NAAM:', x, y);
-            doc.text('TAFEL:', x, y + 16);
-
-            // Name value
-            const nameFieldId = nameField;
-            const name = resp.data[nameFieldId] || '';
-            doc.fontSize(11).font('Helvetica').text(name, x + 45, y, { width: slipWidth - 65, height: 16, ellipsis: true });
-
-            // Order items
-            let itemY = y + 42;
-            doc.fontSize(10).font('Helvetica-Bold');
-            
-            const selectedOrderFields = Array.isArray(orderFields) ? orderFields : (orderFields ? [orderFields] : []);
-            
+        // Helper to get items for a response
+        const getOrderItems = (resp) => {
+            const items = [];
             selectedOrderFields.forEach(fieldId => {
                 const answer = resp.data[fieldId];
                 if (!answer) return;
-
                 const field = form.fields.find(f => f.id === fieldId);
                 if (!field) return;
 
                 if (field.type === 'pricing') {
                     Object.entries(answer).forEach(([item, qty]) => {
-                        if (item !== 'total' && parseInt(qty) > 0) {
-                            doc.text(`${qty} ${item}`, x + 20, itemY, { width: slipWidth - 40, height: 14, ellipsis: true });
-                            itemY += 13;
-                        }
+                        if (item !== 'total' && parseInt(qty) > 0) items.push(`${qty} ${item}`);
                     });
-                } else if (field.type === 'multiple_choice_multi') {
-                    if (Array.isArray(answer)) {
-                        answer.forEach(item => {
-                            doc.text(`1 ${item}`, x + 20, itemY, { width: slipWidth - 40, height: 14, ellipsis: true });
-                            itemY += 13;
-                        });
-                    }
+                } else if (field.type === 'multiple_choice_multi' && Array.isArray(answer)) {
+                    answer.forEach(item => items.push(`1 ${item}`));
                 } else if (field.type === 'multiple_choice') {
-                    doc.text(`1 ${answer}`, x + 20, itemY, { width: slipWidth - 40, height: 14, ellipsis: true });
-                    itemY += 13;
+                    items.push(`1 ${answer}`);
                 }
             });
-        });
+            return items;
+        };
+
+        // Helper to calculate height needed for a slip
+        const calculateSlipHeight = (items) => {
+            const headerHeight = 55; // NAAM, TAFEL + gaps
+            const itemHeight = 13;
+            const padding = 20;
+            return Math.max(90, headerHeight + (items.length * itemHeight) + padding);
+        };
+
+        let currentY = margin;
+        
+        // Process in rows of 3
+        for (let i = 0; i < responses.length; i += cols) {
+            const rowResponses = responses.slice(i, i + cols);
+            const rowItems = rowResponses.map(resp => getOrderItems(resp));
+            const rowHeights = rowItems.map(items => calculateSlipHeight(items));
+            const maxHeight = Math.max(...rowHeights);
+
+            // Check if row fits on current page
+            if (currentY + maxHeight > pageBottom) {
+                doc.addPage();
+                currentY = margin;
+            }
+
+            // Draw the slips in this row
+            rowResponses.forEach((resp, colIndex) => {
+                const startX = margin + colIndex * slipWidth;
+                const items = rowItems[colIndex];
+                
+                // Draw dotted border
+                doc.rect(startX, currentY, slipWidth, maxHeight).dash(3, { space: 3 }).stroke('#ccc').undash();
+
+                const x = startX + 15;
+                const y = currentY + 15;
+
+                // Header
+                doc.fontSize(11).font('Helvetica-Bold').fillColor('#000');
+                doc.text('NAAM:', x, y);
+                doc.text('TAFEL:', x, y + 16);
+
+                const nameFieldId = nameField;
+                const name = resp.data[nameFieldId] || '';
+                doc.fontSize(11).font('Helvetica').text(name, x + 45, y, { width: slipWidth - 65, height: 16, ellipsis: true });
+
+                // Items
+                let itemY = y + 42;
+                doc.fontSize(10).font('Helvetica-Bold');
+                items.forEach(item => {
+                    doc.text(item, x + 15, itemY, { width: slipWidth - 30 });
+                    itemY += 13;
+                });
+            });
+
+            currentY += maxHeight;
+        }
 
         doc.end();
     } catch (error) {
