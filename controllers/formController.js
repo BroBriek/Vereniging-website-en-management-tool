@@ -1,5 +1,6 @@
 const { Form, FormResponse, User } = require('../models');
 const ExcelJS = require('exceljs');
+const PDFDocument = require('pdfkit');
 const { Op } = require('sequelize');
 const { sendMail } = require('../config/mailer');
 
@@ -210,6 +211,99 @@ exports.exportResponses = async (req, res) => {
         res.end();
     } catch (error) {
         console.error('Error exporting responses:', error);
+        res.status(500).send('Fout bij exporteren');
+    }
+};
+
+exports.exportEetdagPDF = async (req, res) => {
+    try {
+        const { nameField, orderFields } = req.query;
+        const form = await Form.findByPk(req.params.id, {
+            include: [{ model: FormResponse, as: 'responses' }]
+        });
+        if (!form) return res.status(404).send('Formulier niet gevonden');
+
+        const doc = new PDFDocument({ size: 'A4', margin: 20 });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=eetdag-${form.slug}.pdf`);
+        doc.pipe(res);
+
+        const cols = 3;
+        const rowsPerPage = 6;
+        const slipsPerPage = cols * rowsPerPage;
+        const pageWidth = doc.page.width;
+        const pageHeight = doc.page.height;
+        const slipWidth = (pageWidth - 40) / cols;
+        const slipHeight = (pageHeight - 40) / rowsPerPage;
+
+        const responses = form.responses.sort((a, b) => a.submittedAt - b.submittedAt);
+
+        responses.forEach((resp, index) => {
+            if (index > 0 && index % slipsPerPage === 0) {
+                doc.addPage();
+            }
+
+            const pageIndex = index % slipsPerPage;
+            const col = pageIndex % cols;
+            const row = Math.floor(pageIndex / cols);
+            
+            const startX = 20 + col * slipWidth;
+            const startY = 20 + row * slipHeight;
+
+            // Draw dotted border for cutting
+            doc.rect(startX, startY, slipWidth, slipHeight).dash(3, { space: 3 }).stroke('#ccc').undash();
+
+            // Content padding
+            const x = startX + 15;
+            const y = startY + 15;
+
+            // Header labels
+            doc.fontSize(11).font('Helvetica-Bold');
+            doc.text('NAAM:', x, y);
+            doc.text('TAFEL:', x, y + 16);
+
+            // Name value
+            const nameFieldId = nameField;
+            const name = resp.data[nameFieldId] || '';
+            doc.fontSize(11).font('Helvetica').text(name, x + 45, y, { width: slipWidth - 65, height: 16, ellipsis: true });
+
+            // Order items
+            let itemY = y + 42;
+            doc.fontSize(10).font('Helvetica-Bold');
+            
+            const selectedOrderFields = Array.isArray(orderFields) ? orderFields : (orderFields ? [orderFields] : []);
+            
+            selectedOrderFields.forEach(fieldId => {
+                const answer = resp.data[fieldId];
+                if (!answer) return;
+
+                const field = form.fields.find(f => f.id === fieldId);
+                if (!field) return;
+
+                if (field.type === 'pricing') {
+                    Object.entries(answer).forEach(([item, qty]) => {
+                        if (item !== 'total' && parseInt(qty) > 0) {
+                            doc.text(`${qty} ${item}`, x + 20, itemY, { width: slipWidth - 40, height: 14, ellipsis: true });
+                            itemY += 13;
+                        }
+                    });
+                } else if (field.type === 'multiple_choice_multi') {
+                    if (Array.isArray(answer)) {
+                        answer.forEach(item => {
+                            doc.text(`1 ${item}`, x + 20, itemY, { width: slipWidth - 40, height: 14, ellipsis: true });
+                            itemY += 13;
+                        });
+                    }
+                } else if (field.type === 'multiple_choice') {
+                    doc.text(`1 ${answer}`, x + 20, itemY, { width: slipWidth - 40, height: 14, ellipsis: true });
+                    itemY += 13;
+                }
+            });
+        });
+
+        doc.end();
+    } catch (error) {
+        console.error('Error exporting eetdag PDF:', error);
         res.status(500).send('Fout bij exporteren');
     }
 };
