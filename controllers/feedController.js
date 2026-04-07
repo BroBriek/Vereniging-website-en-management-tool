@@ -48,9 +48,9 @@ const highlightMentions = (text) => {
                 }
             }
             
-            // PDF link wrapping (if it's an <a> tag pointing to a .pdf)
+            // Document link wrapping (if it's an <a> tag pointing to a .pdf, .docx, .xlsx, .pptx, etc.)
             if (lowerPart.startsWith('<a')) {
-                const hrefMatch = part.match(/href="([^"]+\.pdf)"/i);
+                const hrefMatch = part.match(/href="([^"]+\.(pdf|docx?|xlsx?|pptx?))"/i);
                 if (hrefMatch) {
                     const href = hrefMatch[1];
                     const filename = href.split('/').pop();
