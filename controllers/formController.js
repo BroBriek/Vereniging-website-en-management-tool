@@ -217,7 +217,7 @@ exports.exportResponses = async (req, res) => {
 
 exports.exportEetdagPDF = async (req, res) => {
     try {
-        const { nameField, orderFields } = req.query;
+        const { nameField, orderFields, tableField, blankTickets } = req.query;
         const form = await Form.findByPk(req.params.id, {
             include: [{ model: FormResponse, as: 'responses' }]
         });
@@ -238,14 +238,31 @@ exports.exportEetdagPDF = async (req, res) => {
         const responses = form.responses.sort((a, b) => a.submittedAt - b.submittedAt);
         const selectedOrderFields = Array.isArray(orderFields) ? orderFields : (orderFields ? [orderFields] : []);
 
-        // Helper to get items for a response
-        const getOrderItems = (resp) => {
+        // Add blank tickets to the list
+        const numBlank = parseInt(blankTickets) || 0;
+        const itemsToPrint = [...responses.map(r => ({ data: r.data, isBlank: false }))];
+        for (let i = 0; i < numBlank; i++) {
+            itemsToPrint.push({ data: {}, isBlank: true });
+        }
+
+        // Helper to get items for a response or blank ticket
+        const getOrderItems = (itemObj) => {
             const items = [];
             selectedOrderFields.forEach(fieldId => {
-                const answer = resp.data[fieldId];
-                if (!answer) return;
                 const field = form.fields.find(f => f.id === fieldId);
                 if (!field) return;
+
+                if (itemObj.isBlank) {
+                    if (field.type === 'pricing' && field.options && field.options.items) {
+                        field.options.items.forEach(i => items.push(i.name));
+                    } else if (field.type === 'multiple_choice' || field.type === 'multiple_choice_multi') {
+                        items.push(field.label);
+                    }
+                    return;
+                }
+
+                const answer = itemObj.data[fieldId];
+                if (!answer) return;
 
                 if (field.type === 'pricing') {
                     Object.entries(answer).forEach(([item, qty]) => {
@@ -271,10 +288,10 @@ exports.exportEetdagPDF = async (req, res) => {
         let currentY = margin;
         
         // Process in rows of 3
-        for (let i = 0; i < responses.length; i += cols) {
-            const rowResponses = responses.slice(i, i + cols);
-            const rowItems = rowResponses.map(resp => getOrderItems(resp));
-            const rowHeights = rowItems.map(items => calculateSlipHeight(items));
+        for (let i = 0; i < itemsToPrint.length; i += cols) {
+            const rowItems = itemsToPrint.slice(i, i + cols);
+            const rowOrderItems = rowItems.map(item => getOrderItems(item));
+            const rowHeights = rowOrderItems.map(items => calculateSlipHeight(items));
             const maxHeight = Math.max(...rowHeights);
 
             // Check if row fits on current page
@@ -284,9 +301,9 @@ exports.exportEetdagPDF = async (req, res) => {
             }
 
             // Draw the slips in this row
-            rowResponses.forEach((resp, colIndex) => {
+            rowItems.forEach((itemObj, colIndex) => {
                 const startX = margin + colIndex * slipWidth;
-                const items = rowItems[colIndex];
+                const items = rowOrderItems[colIndex];
                 
                 // Draw dotted border
                 doc.rect(startX, currentY, slipWidth, maxHeight).dash(3, { space: 3 }).stroke('#ccc').undash();
@@ -299,9 +316,15 @@ exports.exportEetdagPDF = async (req, res) => {
                 doc.text('NAAM:', x, y);
                 doc.text('TAFEL:', x, y + 16);
 
-                const nameFieldId = nameField;
-                const name = resp.data[nameFieldId] || '';
-                doc.fontSize(11).font('Helvetica').text(name, x + 45, y, { width: slipWidth - 65, height: 16, ellipsis: true });
+                if (!itemObj.isBlank) {
+                    const name = itemObj.data[nameField] || '';
+                    doc.fontSize(11).font('Helvetica').text(name, x + 45, y, { width: slipWidth - 65, height: 16, ellipsis: true });
+                    
+                    if (tableField) {
+                        const table = itemObj.data[tableField] || '';
+                        doc.fontSize(11).font('Helvetica').text(table, x + 45, y + 16, { width: slipWidth - 65, height: 16, ellipsis: true });
+                    }
+                }
 
                 // Items
                 let itemY = y + 42;
