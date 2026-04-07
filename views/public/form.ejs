@@ -283,9 +283,9 @@
             img.style.cursor = 'pointer';
         });
 
-        // Handle PDF links in rich text content
-        document.querySelectorAll('.rich-text-content a[href$=".pdf"]').forEach(link => {
-            link.classList.add('pdf-preview-link');
+        // Handle Document links (PDF, Word, Excel, PPT) in rich text content
+        document.querySelectorAll('.rich-text-content a[href$=".pdf"], .rich-text-content a[href$=".doc"], .rich-text-content a[href$=".docx"], .rich-text-content a[href$=".xls"], .rich-text-content a[href$=".xlsx"], .rich-text-content a[href$=".ppt"], .rich-text-content a[href$=".pptx"]').forEach(link => {
+            link.classList.add('document-preview-link');
             link.onclick = function(e) {
                 e.preventDefault();
                 const src = this.getAttribute('href');

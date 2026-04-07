@@ -234,12 +234,28 @@ async function openFilePreview(url, name) {
              const p = errorDiv.querySelector('p');
              if (p) p.textContent = "Office bestanden kunnen niet lokaal worden bekeken (Google Docs Viewer vereist een publieke URL).";
         } else {
-             // Use Google Docs Viewer
+             // Use Google Docs Viewer with Microsoft fallback
              const encodedUrl = encodeURIComponent(window.location.origin + url);
              frame.src = `https://docs.google.com/gview?url=${encodedUrl}&embedded=true`;
+             
+             // Setup a safety timeout in case Google takes too long or fails silently
+             const safetyTimeout = setTimeout(() => {
+                 if (frame.classList.contains('d-none')) {
+                    console.warn('Google viewer slow/failed, trying Microsoft Viewer...');
+                    frame.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
+                 }
+             }, 5000);
+
              frame.onload = function() {
+                clearTimeout(safetyTimeout);
                 loader.classList.add('d-none');
                 frame.classList.remove('d-none');
+             };
+
+             frame.onerror = function() {
+                clearTimeout(safetyTimeout);
+                console.error('Google viewer error, trying Microsoft Viewer...');
+                frame.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}`;
              };
         }
     } else {
