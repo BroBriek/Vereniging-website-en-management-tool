@@ -94,9 +94,33 @@
         border: 1px solid #dee2e6 !important;
         border-right: none !important;
     }
-    .input-group .form-control.border-start-0 {
-        border-left: none !important;
-        border-radius: 0 8px 8px 0 !important;
+    /* Search bar styling */
+    .search-container {
+        position: relative;
+        flex-grow: 1;
+        max-width: 400px;
+    }
+    .search-container .bi-search {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+        z-index: 5;
+    }
+    .search-input {
+        padding-left: 2.75rem !important;
+        border-radius: 50px !important;
+        border: 1px solid #dee2e6 !important;
+        background-color: #f8f9fa !important;
+        transition: all 0.2s ease;
+        height: 42px !important;
+        font-size: 0.95rem !important;
+    }
+    .search-input:focus {
+        background-color: #fff !important;
+        border-color: var(--bs-primary) !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1) !important;
     }
 </style>
 
@@ -113,12 +137,12 @@
                 <h1 class="mb-0">Antwoorden: <%= form.title %></h1>
                 <p class="text-muted mb-0"><%= responses.length %> antwoorden ontvangen. <span class="text-primary small d-none d-md-inline"><i class="bi bi-info-circle"></i> Klik op een cel om deze aan te passen.</span></p>
             </div>
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-                <div class="input-group" style="width: 100%; max-width: 250px;">
-                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                    <input type="text" id="tableSearch" class="form-control border-start-0" placeholder="Zoek...">
+            <div class="d-flex flex-wrap gap-2 align-items-center w-100 w-lg-auto">
+                <div class="search-container">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="tableSearch" class="form-control search-input" placeholder="Zoek in alle antwoorden...">
                 </div>
-                <div class="d-flex gap-2 w-100 w-sm-auto">
+                <div class="d-flex gap-2 ms-auto">
                     <div class="dropdown flex-grow-1 flex-sm-grow-0">
                         <button class="btn btn-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-download"></i> <span class="d-none d-sm-inline">Exporteer</span>
