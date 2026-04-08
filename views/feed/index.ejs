@@ -1601,7 +1601,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     if (likersSpan && data.likers) {
                         const capitalizedLikers = data.likers.map(l => l.username ? l.username.charAt(0).toUpperCase() + l.username.slice(1) : '');
-                        likersSpan.textContent = capitalizedLikers.join(', ');
+                        const desktopSpan = likersSpan.querySelector('.likers-desktop');
+                        const mobileSpan = likersSpan.querySelector('.likers-mobile');
+
+                        if (desktopSpan && mobileSpan) {
+                            desktopSpan.textContent = capitalizedLikers.join(', ');
+                            mobileSpan.textContent = capitalizedLikers.length > 0 ? (capitalizedLikers[0] + (capitalizedLikers.length > 1 ? '...' : '')) : '';
+                        } else {
+                            likersSpan.textContent = capitalizedLikers.join(', ');
+                        }
+
                         likersSpan.setAttribute('data-likers', JSON.stringify(data.likers));
                         likersSpan.style.cursor = 'pointer';
                         likersSpan.onclick = function() { showLikesModal(this); };
@@ -1677,11 +1686,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         const postCard = document.getElementById('post-' + postId);
                         if (postCard) {
-                             const actionBars = postCard.querySelectorAll('.d-flex.align-items-center.justify-content-between.mt-3');
-                             if(actionBars.length > 0) {
-                                 const countEl = actionBars[actionBars.length-1].lastElementChild;
-                                 if(countEl) countEl.textContent = `${data.count} reacties`;
-                             }
+                             const countNumbers = postCard.querySelectorAll('.comment-count-number');
+                             countNumbers.forEach(el => el.textContent = data.count);
                         }
 
                         form.reset();
@@ -1758,13 +1764,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 container.remove();
                                 
                                 if(postCard && data.count !== undefined) {
-                                     const actionBars = postCard.querySelectorAll('.d-flex.align-items-center.justify-content-between.mt-3');
-                                     if(actionBars.length > 0) {
-                                         const countEl = actionBars[actionBars.length-1].lastElementChild;
-                                         if(countEl) countEl.textContent = `${data.count} reacties`;
-                                     }
-                                }
-                            }
+                                    const countNumbers = postCard.querySelectorAll('.comment-count-number');
+                                    countNumbers.forEach(el => el.textContent = data.count);
+                                }                            }
                         }
                     }
                 }

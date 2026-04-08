@@ -255,13 +255,14 @@
             <% } %>
 
             <!-- Action Bar (Likes & Comment Count) -->
-            <div class="d-flex align-items-center justify-content-between mt-3 pt-3 border-top">
+            <div class="d-flex align-items-center justify-content-start justify-content-md-between mt-3 pt-3 border-top gap-3 gap-md-0">
                 <div class="d-flex align-items-center">
                     <% 
                         const likes = post.likes || [];
                         const isLiked = likes.some(l => l.userId === user.id);
                         const likeCount = likes.length;
                         const likerNames = likes.map(l => l.user ? capitalizeName(l.user.username) : 'Onbekend').join(', ');
+                        const firstLikerName = likes.length > 0 ? (likes[0].user ? capitalizeName(likes[0].user.username) : 'Onbekend') : '';
                         const likerArray = likes.map(l => l.user ? { username: l.user.username, profilePicture: l.user.profilePicture } : { username: 'Onbekend', profilePicture: null });
                     %>
                     <form action="/feed/post/<%= post.id %>/like" method="POST" class="like-form" data-post-id="<%= post.id %>">
@@ -274,13 +275,24 @@
                         <small class="text-muted likers-list" 
                                style="font-size: 0.8rem; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;"
                                data-likers='<%= JSON.stringify(likerArray).replace(/'/g, "&#39;") %>'
-                               onclick="showLikesModal(this)"><%= likerNames %></small>
+                               onclick="showLikesModal(this)">
+                            <span class="likers-desktop d-none d-md-inline"><%= likerNames %></span>
+                            <span class="likers-mobile d-inline d-md-none"><%= firstLikerName %><%= likeCount > 1 ? '...' : '' %></span>
+                        </small>
                     <% } else { %>
-                        <small class="text-muted likers-list" style="cursor: pointer;" onclick="showLikesModal(this)"></small>
+                        <small class="text-muted likers-list" style="cursor: pointer;" onclick="showLikesModal(this)">
+                            <span class="likers-desktop d-none d-md-inline"></span>
+                            <span class="likers-mobile d-inline d-md-none"></span>
+                        </small>
                     <% } %>
                 </div>
-                <div class="text-muted small">
-                    <%= post.comments.length %> reacties
+                <div class="text-muted small comment-count-container">
+                    <span class="comment-count-desktop d-none d-md-inline">
+                        <span class="comment-count-number"><%= post.comments.length %></span> reacties
+                    </span>
+                    <span class="comment-count-mobile d-inline d-md-none">
+                        <i class="bi bi-chat me-1"></i><span class="comment-count-number"><%= post.comments.length %></span>
+                    </span>
                 </div>
             </div>
         </div>
