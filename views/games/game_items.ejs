@@ -1,0 +1,134 @@
+<% if (games.length === 0) { %>
+    <div class="col-12">
+        <div class="empty-state">
+            <i class="bi bi-emoji-smile text-muted display-1 mb-4"></i>
+            <h3 class="font-playful">Oeps! Geen spelen gevonden...</h3>
+            <p class="text-muted mb-4">Probeer een andere zoekterm of voeg zelf een spel toe!</p>
+            <a href="/games/add" class="btn btn-primary rounded-pill px-4">Eerste Spel Toevoegen</a>
+        </div>
+    </div>
+<% } else { %>
+    <% games.forEach(game => { %>
+        <div class="col-md-6 col-lg-4">
+            <div class="game-card">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-1 mb-3">
+                        <% 
+                        let groups = [];
+                        if (game.groups) {
+                            if (Array.isArray(game.groups)) {
+                                groups = game.groups;
+                            } else if (typeof game.groups === 'string') {
+                                try { groups = JSON.parse(game.groups); } catch(e) { groups = []; }
+                            }
+                        }
+                        %>
+                        <% groups.forEach(group => { %>
+                            <span class="game-badge badge-<%= group.toLowerCase() %>"><%= group %></span>
+                        <% }) %>
+                    </div>
+                    
+                    <h4 class="game-title font-playful text-truncate" title="<%= game.title %>"><%= game.title %></h4>
+                    
+                    <div class="game-meta mb-2">
+                        <span class="me-2"><i class="bi bi-clock"></i> <%= game.duration %> min</span>
+                        <span><i class="bi bi-people"></i> 
+                            <% if (game.minPlayers && game.maxPlayers) { %>
+                                <%= game.minPlayers %>-<%= game.maxPlayers %>
+                            <% } else if (game.minPlayers) { %>
+                                <%= game.minPlayers %>+
+                            <% } else if (game.maxPlayers) { %>
+                                tot <%= game.maxPlayers %>
+                            <% } else { %>
+                                ?
+                            <% } %>
+                        </span>
+                    </div>
+
+                    <p class="text-muted small mb-2 line-clamp-2">
+                        <%= game.description || 'Geen beschrijving beschikbaar.' %>
+                    </p>
+
+                    <% 
+                    let suppliesItems = [];
+                    if (game.supplies) {
+                        if (Array.isArray(game.supplies)) {
+                            suppliesItems = game.supplies;
+                        } else if (typeof game.supplies === 'string') {
+                            try { 
+                                suppliesItems = JSON.parse(game.supplies); 
+                                if (!Array.isArray(suppliesItems)) suppliesItems = [];
+                            } catch (e) { 
+                                suppliesItems = []; 
+                            }
+                        }
+                    }
+                    %>
+                    <% if (suppliesItems.length > 0) { %>
+                        <div class="mb-3">
+                            <div class="d-flex flex-wrap gap-1">
+                                <% suppliesItems.slice(0, 3).forEach(item => { %>
+                                    <span class="badge rounded-pill bg-light text-dark border fw-normal" style="font-size: 0.65rem; padding: 0.3rem 0.6rem;"><%= item %></span>
+                                <% }) %>
+                                <% if (suppliesItems.length > 3) { %>
+                                    <span class="text-muted small" style="font-size: 0.65rem;">+<%= suppliesItems.length - 3 %></span>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <% if (game.intensity) { %>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small text-muted fw-bold text-uppercase" style="font-size: 0.65rem;">Intensiteit</span>
+                                <span class="small fw-bold text-<%= game.intensity === 'Hoog' ? 'danger' : (game.intensity === 'Medium' ? 'warning' : 'success') %>">
+                                    <% if (game.intensity === 'Hoog') { %><i class="bi bi-lightning-charge-fill me-1"></i><% } %>
+                                    <% if (game.intensity === 'Medium') { %><i class="bi bi-rabbit me-1"></i><% } %>
+                                    <% if (game.intensity === 'Laag') { %><i class="bi bi-turtle me-1"></i><% } %>
+                                    <%= game.intensity %>
+                                </span>
+                            </div>
+                            <div class="intensity-bar">
+                                <div class="intensity-fill intensity-<%= game.intensity.toLowerCase() %> animated-fill" data-intensity="<%= game.intensity.toLowerCase() %>"></div>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <% if (game.author && game.author.profilePicture) { %>
+                                <img src="<%= game.author.profilePicture %>" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;" alt="">
+                            <% } else { %>
+                                <div class="rounded-circle me-2 d-flex align-items-center justify-content-center text-white small fw-bold" style="width: 24px; height: 24px; background-color: <%= getAvatarColor(game.author ? game.author.username : '') %>; font-size: 0.7rem;">
+                                    <%= getInitials(game.author ? game.author.username : '?') %>
+                                </div>
+                            <% } %>
+                            <span class="small text-muted"><%= capitalizeName(game.author ? game.author.username : 'Onbekend') %></span>
+                        </div>
+                        <a href="/games/<%= game.id %>" class="btn btn-sm btn-link text-danger fw-bold text-decoration-none p-0">
+                            Bekijk Spel <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% }) %>
+<% } %>
+
+<style>
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;  
+        overflow: hidden;
+    }
+
+    .animated-fill {
+        width: 0% !important;
+        transition: width 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .intensity-fill.intensity-laag.active { width: 33% !important; }
+    .intensity-fill.intensity-medium.active { width: 66% !important; }
+    .intensity-fill.intensity-hoog.active { width: 100% !important; }
+</style>

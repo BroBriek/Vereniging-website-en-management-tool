@@ -164,6 +164,7 @@ app.use('/account', require('./routes/account'));
 app.use('/admin', require('./routes/admin'));
 app.use('/feed', require('./routes/feed'));
 app.use('/quotes', require('./routes/quote'));
+app.use('/games', require('./routes/game'));
 
 // 404 handler
 app.use((req, res) => {

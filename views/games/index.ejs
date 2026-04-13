@@ -1,0 +1,270 @@
+<%- include('../partials/header') %>
+
+<style>
+    body {
+        background-color: var(--bg-color);
+    }
+    
+    .font-playful {
+        font-family: 'Fredoka', 'Patrick Hand', sans-serif;
+    }
+
+    .game-card {
+        border: 1px solid #f1f5f9;
+        border-radius: 1.5rem;
+        background: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .game-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    }
+
+    .game-card .card-body {
+        padding: 1.5rem;
+        flex-grow: 1;
+    }
+
+    .game-badge {
+        border-radius: 50rem;
+        padding: 0.3rem 0.8rem;
+        font-weight: 700;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-ribbel { background-color: #9b59b6; color: #fff; }
+    .badge-speelclub { background-color: #f1c40f; color: #fff; }
+    .badge-rakwi { background-color: #2ecc71; color: #fff; }
+    .badge-tito { background-color: #e74c3c; color: #fff; }
+    .badge-keti { background-color: #3498db; color: #fff; }
+    .badge-aspi { background-color: #e67e22; color: #fff; }
+    .badge-leiding { background-color: #34495e; color: #fff; }
+
+    .search-container {
+        background: white;
+        border-radius: 2rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        margin-bottom: 2rem;
+        border: 1px solid #f1f5f9;
+    }
+
+    .filter-select {
+        border-radius: 50rem;
+        border: 2px solid #eee;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        color: #555;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .filter-select:focus {
+        border-color: var(--chiro-red);
+        box-shadow: none;
+        outline: none;
+    }
+
+    .btn-add-game {
+        background: linear-gradient(135deg, var(--chiro-red) 0%, #a62d2f 100%);
+        color: white;
+        border: none;
+        border-radius: 50rem;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(219, 62, 65, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .btn-add-game:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(219, 62, 65, 0.4);
+        color: white;
+    }
+
+    .game-title {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+    }
+
+    .game-meta {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-bottom: 1rem;
+    }
+
+    .game-meta i {
+        margin-right: 0.4rem;
+        color: var(--chiro-red);
+    }
+
+    .intensity-bar {
+        height: 8px;
+        border-radius: 10px;
+        background-color: #f0f2f5;
+        margin-top: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    .intensity-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .intensity-laag { background: linear-gradient(90deg, #2ecc71, #27ae60); }
+    .intensity-medium { background: linear-gradient(90deg, #f1c40f, #f39c12); }
+    .intensity-hoog { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    #btn-load-more {
+        border-color: var(--chiro-blue);
+        color: var(--chiro-blue);
+        transition: all 0.2s;
+    }
+
+    #btn-load-more:hover {
+        background-color: var(--chiro-blue);
+        color: white;
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h1 class="font-playful text-dark mb-1">Spelendatabank</h1>
+            <p class="text-muted mb-0">Vind het perfecte spel voor jouw groep!</p>
+        </div>
+        <a href="/games/add" class="btn btn-add-game">
+            <i class="bi bi-plus-lg me-2"></i> Spel Toevoegen
+        </a>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="search-container">
+        <form action="/games" method="GET" id="searchForm">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="input-group rounded-pill overflow-hidden border-2 border" style="border-color: #eee !important; background: white;">
+                        <span class="input-group-text bg-white border-0 ps-3 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control border-0 shadow-none" placeholder="Zoek op titel of beschrijving..." value="<%= search %>" autocomplete="off">
+                    </div>
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <select name="group" class="form-select filter-select" onchange="this.form.submit()">
+                        <option value="">Alle Groepen</option>
+                        <option value="Ribbel" <%= groupFilter === 'Ribbel' ? 'selected' : '' %>>Ribbel</option>
+                        <option value="Speelclub" <%= groupFilter === 'Speelclub' ? 'selected' : '' %>>Speelclub</option>
+                        <option value="Rakwi" <%= groupFilter === 'Rakwi' ? 'selected' : '' %>>Rakwi</option>
+                        <option value="Tito" <%= groupFilter === 'Tito' ? 'selected' : '' %>>Tito</option>
+                        <option value="Keti" <%= groupFilter === 'Keti' ? 'selected' : '' %>>Keti</option>
+                        <option value="Aspi" <%= groupFilter === 'Aspi' ? 'selected' : '' %>>Aspi</option>
+                        <option value="Leiding" <%= groupFilter === 'Leiding' ? 'selected' : '' %>>Leiding</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <select name="type" class="form-select filter-select" onchange="this.form.submit()">
+                        <option value="">Alle Types</option>
+                        <option value="volledige activiteit" <%= typeFilter === 'volledige activiteit' ? 'selected' : '' %>>Volledige activiteit</option>
+                        <option value="kleiner spel" <%= typeFilter === 'kleiner spel' ? 'selected' : '' %>>Kleiner spel</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <select name="intensity" class="form-select filter-select" onchange="this.form.submit()">
+                        <option value="">Alle Intensiteiten</option>
+                        <option value="Laag" <%= intensityFilter === 'Laag' ? 'selected' : '' %>>Laag</option>
+                        <option value="Medium" <%= intensityFilter === 'Medium' ? 'selected' : '' %>>Medium</option>
+                        <option value="Hoog" <%= intensityFilter === 'Hoog' ? 'selected' : '' %>>Hoog</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <button type="submit" class="btn btn-outline-danger w-100 rounded-pill fw-bold">Filteren</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Games Grid -->
+    <div class="row g-4 mb-5" id="gamesGrid">
+        <%- include('game_items') %>
+    </div>
+
+    <% if (hasMore) { %>
+        <div id="load-more-container" class="text-center py-5">
+            <button id="btn-load-more" class="btn btn-outline-primary rounded-pill px-5 py-2 fw-bold">
+                <i class="bi bi-arrow-down-circle me-2"></i> Meer Spelen Laden
+            </button>
+            <div id="loader-spinner" class="spinner-border text-primary d-none" role="status">
+                <span class="visually-hidden">Laden...</span>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<script>
+    let currentOffset = <%= games.length %>;
+    const limit = 10;
+    const loadMoreBtn = document.getElementById('btn-load-more');
+    const loader = document.getElementById('loader-spinner');
+    
+    window.initAnimations = function() {
+        const bars = document.querySelectorAll('.animated-fill:not(.active)');
+        bars.forEach(bar => {
+            const intensity = bar.dataset.intensity;
+            // Force a reflow to ensure the animation triggers
+            bar.getBoundingClientRect();
+            bar.classList.add('active');
+        });
+    };
+
+    document.addEventListener('DOMContentLoaded', window.initAnimations);
+
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function() {
+            loadMoreBtn.classList.add('d-none');
+            loader.classList.remove('d-none');
+            
+            const url = new URL(window.location.href);
+            url.searchParams.set('ajax', 'true');
+            url.searchParams.set('offset', currentOffset);
+            
+            fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('gamesGrid').insertAdjacentHTML('beforeend', data.html);
+                    currentOffset += limit;
+                    
+                    loader.classList.add('d-none');
+                    if (data.hasMore) {
+                        loadMoreBtn.classList.remove('d-none');
+                    }
+                    
+                    if (window.initAnimations) window.initAnimations();
+                })
+                .catch(err => {
+                    console.error('Error loading more games:', err);
+                    loadMoreBtn.classList.remove('d-none');
+                    loader.classList.add('d-none');
+                });
+        });
+    }
+</script>
+
+<%- include('../partials/footer') %>

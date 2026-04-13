@@ -16,8 +16,13 @@ const Form = require('./Form');
 const FormResponse = require('./FormResponse');
 const SystemState = require('./SystemState');
 const CalendarAccess = require('./CalendarAccess');
+const Game = require('./Game');
 
 // Associations
+
+// Game Associations
+User.hasMany(Game, { foreignKey: 'authorId', as: 'games', onDelete: 'CASCADE', hooks: true });
+Game.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
 // Form Associations
 User.hasMany(Form, { foreignKey: 'creatorId', as: 'forms' });
@@ -132,5 +137,6 @@ module.exports = {
   Form,
   FormResponse,
   SystemState,
-  CalendarAccess
+  CalendarAccess,
+  Game
 };
