@@ -106,6 +106,7 @@ app.use((req, res, next) => {
   res.locals.user = req.user || null;
   res.locals.originalAdminId = req.session ? req.session.originalAdminId : null;
   res.locals.enablePublicRegistrations = process.env.ENABLE_PUBLIC_REGISTRATIONS_VIEW === 'true';
+  res.locals.showGamesToAll = process.env.SHOW_GAMES_TO_ALL !== 'false';
   
   // Normalize currentPath for SEO (remove trailing slash unless root)
   let normalizedPath = req.path;

@@ -42,5 +42,17 @@ module.exports = {
           return next();
       }
       res.redirect('/');
+  },
+  ensureGameAccess: function(req, res, next) {
+      const showGamesToAll = process.env.SHOW_GAMES_TO_ALL !== 'false';
+      if (showGamesToAll) {
+          return next();
+      }
+      
+      if (req.isAuthenticated() && req.user.username === 'admin') {
+          return next();
+      }
+      
+      res.redirect('/home');
   }
 };
