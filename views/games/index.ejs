@@ -51,10 +51,22 @@
     .search-container {
         background: white;
         border-radius: 2rem;
-        padding: 1.5rem;
+        padding: 1rem;
         box-shadow: 0 4px 20px rgba(0,0,0,0.02);
         margin-bottom: 2rem;
         border: 1px solid #f1f5f9;
+    }
+
+    @media (max-width: 767px) {
+        .search-container {
+            border-radius: 1.5rem;
+            padding: 0.75rem;
+        }
+        .filter-collapse {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
     }
 
     .filter-select {
@@ -65,12 +77,31 @@
         color: #555;
         transition: all 0.2s;
         cursor: pointer;
+        width: 100%;
     }
 
     .filter-select:focus {
         border-color: var(--chiro-red);
         box-shadow: none;
         outline: none;
+    }
+
+    .btn-filter-toggle {
+        border-radius: 50rem;
+        border: 2px solid #eee;
+        padding: 0.5rem 1.25rem;
+        background: white;
+        color: #555;
+        font-weight: 600;
+        display: none;
+    }
+
+    @media (max-width: 767px) {
+        .btn-filter-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
     }
 
     .btn-add-game {
@@ -160,56 +191,101 @@
     <!-- Search & Filters -->
     <div class="search-container">
         <form action="/games" method="GET" id="searchForm">
-            <div class="row g-3">
-                <div class="col-lg-4">
+            <div class="row g-2 align-items-center">
+                <div class="col col-md-4 col-lg-5">
                     <div class="input-group rounded-pill overflow-hidden border-2 border" style="border-color: #eee !important; background: white;">
                         <span class="input-group-text bg-white border-0 ps-3 text-muted"><i class="bi bi-search"></i></span>
-                        <input type="text" name="search" class="form-control border-0 shadow-none" placeholder="Zoek op titel of beschrijving..." value="<%= search %>" autocomplete="off">
+                        <input type="text" name="search" id="searchInput" class="form-control border-0 shadow-none" placeholder="Zoek spel..." value="<%= search %>" autocomplete="off">
                     </div>
                 </div>
-                <div class="col-md-3 col-lg-2">
-                    <select name="group" class="form-select filter-select" onchange="this.form.submit()">
-                        <option value="">Alle Groepen</option>
-                        <option value="Ribbel" <%= groupFilter === 'Ribbel' ? 'selected' : '' %>>Ribbel</option>
-                        <option value="Speelclub" <%= groupFilter === 'Speelclub' ? 'selected' : '' %>>Speelclub</option>
-                        <option value="Rakwi" <%= groupFilter === 'Rakwi' ? 'selected' : '' %>>Rakwi</option>
-                        <option value="Tito" <%= groupFilter === 'Tito' ? 'selected' : '' %>>Tito</option>
-                        <option value="Keti" <%= groupFilter === 'Keti' ? 'selected' : '' %>>Keti</option>
-                        <option value="Aspi" <%= groupFilter === 'Aspi' ? 'selected' : '' %>>Aspi</option>
-                        <option value="Leiding" <%= groupFilter === 'Leiding' ? 'selected' : '' %>>Leiding</option>
-                    </select>
+                
+                <div class="col-auto d-md-none">
+                    <button type="button" class="btn btn-filter-toggle" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                        <i class="bi bi-sliders"></i> Filters
+                    </button>
                 </div>
-                <div class="col-md-3 col-lg-2">
-                    <select name="type" class="form-select filter-select" onchange="this.form.submit()">
-                        <option value="">Alle Types</option>
-                        <option value="volledige activiteit" <%= typeFilter === 'volledige activiteit' ? 'selected' : '' %>>Volledige activiteit</option>
-                        <option value="kleiner spel" <%= typeFilter === 'kleiner spel' ? 'selected' : '' %>>Kleiner spel</option>
-                    </select>
+
+                <div class="col-12 d-md-none">
+                    <div class="collapse filter-collapse" id="filterCollapse">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <select name="group" class="form-select filter-select ajax-filter">
+                                    <option value="">Alle Groepen</option>
+                                    <option value="Ribbel" <%= groupFilter === 'Ribbel' ? 'selected' : '' %>>Ribbel</option>
+                                    <option value="Speelclub" <%= groupFilter === 'Speelclub' ? 'selected' : '' %>>Speelclub</option>
+                                    <option value="Rakwi" <%= groupFilter === 'Rakwi' ? 'selected' : '' %>>Rakwi</option>
+                                    <option value="Tito" <%= groupFilter === 'Tito' ? 'selected' : '' %>>Tito</option>
+                                    <option value="Keti" <%= groupFilter === 'Keti' ? 'selected' : '' %>>Keti</option>
+                                    <option value="Aspi" <%= groupFilter === 'Aspi' ? 'selected' : '' %>>Aspi</option>
+                                    <option value="Leiding" <%= groupFilter === 'Leiding' ? 'selected' : '' %>>Leiding</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <select name="type" class="form-select filter-select ajax-filter">
+                                    <option value="">Alle Types</option>
+                                    <option value="volledige activiteit" <%= typeFilter === 'volledige activiteit' ? 'selected' : '' %>>Activiteit</option>
+                                    <option value="kleiner spel" <%= typeFilter === 'kleiner spel' ? 'selected' : '' %>>Spel</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <select name="intensity" class="form-select filter-select ajax-filter">
+                                    <option value="">Intensiteit</option>
+                                    <option value="Laag" <%= intensityFilter === 'Laag' ? 'selected' : '' %>>Laag</option>
+                                    <option value="Medium" <%= intensityFilter === 'Medium' ? 'selected' : '' %>>Medium</option>
+                                    <option value="Hoog" <%= intensityFilter === 'Hoog' ? 'selected' : '' %>>Hoog</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3 col-lg-2">
-                    <select name="intensity" class="form-select filter-select" onchange="this.form.submit()">
-                        <option value="">Alle Intensiteiten</option>
-                        <option value="Laag" <%= intensityFilter === 'Laag' ? 'selected' : '' %>>Laag</option>
-                        <option value="Medium" <%= intensityFilter === 'Medium' ? 'selected' : '' %>>Medium</option>
-                        <option value="Hoog" <%= intensityFilter === 'Hoog' ? 'selected' : '' %>>Hoog</option>
-                    </select>
-                </div>
-                <div class="col-md-3 col-lg-2">
-                    <button type="submit" class="btn btn-outline-danger w-100 rounded-pill fw-bold">Filteren</button>
+
+                <!-- Desktop Filters -->
+                <div class="col-md-8 col-lg-7 d-none d-md-block">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <select name="group" class="form-select filter-select ajax-filter">
+                                <option value="">Alle Groepen</option>
+                                <option value="Ribbel" <%= groupFilter === 'Ribbel' ? 'selected' : '' %>>Ribbel</option>
+                                <option value="Speelclub" <%= groupFilter === 'Speelclub' ? 'selected' : '' %>>Speelclub</option>
+                                <option value="Rakwi" <%= groupFilter === 'Rakwi' ? 'selected' : '' %>>Rakwi</option>
+                                <option value="Tito" <%= groupFilter === 'Tito' ? 'selected' : '' %>>Tito</option>
+                                <option value="Keti" <%= groupFilter === 'Keti' ? 'selected' : '' %>>Keti</option>
+                                <option value="Aspi" <%= groupFilter === 'Aspi' ? 'selected' : '' %>>Aspi</option>
+                                <option value="Leiding" <%= groupFilter === 'Leiding' ? 'selected' : '' %>>Leiding</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select name="type" class="form-select filter-select ajax-filter">
+                                <option value="">Alle Types</option>
+                                <option value="volledige activiteit" <%= typeFilter === 'volledige activiteit' ? 'selected' : '' %>>Volledige activiteit</option>
+                                <option value="kleiner spel" <%= typeFilter === 'kleiner spel' ? 'selected' : '' %>>Kleiner spel</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select name="intensity" class="form-select filter-select ajax-filter">
+                                <option value="">Alle Intensiteiten</option>
+                                <option value="Laag" <%= intensityFilter === 'Laag' ? 'selected' : '' %>>Laag</option>
+                                <option value="Medium" <%= intensityFilter === 'Medium' ? 'selected' : '' %>>Medium</option>
+                                <option value="Hoog" <%= intensityFilter === 'Hoog' ? 'selected' : '' %>>Hoog</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
     </div>
 
     <!-- Games Grid -->
-    <div class="row g-4 mb-5" id="gamesGrid">
-        <%- include('game_items') %>
+    <div id="gamesContainer">
+        <div class="row g-3 g-md-4 mb-5" id="gamesGrid">
+            <%- include('game_items') %>
+        </div>
     </div>
 
     <% if (hasMore) { %>
-        <div id="load-more-container" class="text-center py-5">
+        <div id="load-more-container" class="text-center py-4">
             <button id="btn-load-more" class="btn btn-outline-primary rounded-pill px-5 py-2 fw-bold">
-                <i class="bi bi-arrow-down-circle me-2"></i> Meer Spelen Laden
+                <i class="bi bi-arrow-down-circle me-2"></i> Meer Spelen
             </button>
             <div id="loader-spinner" class="spinner-border text-primary d-none" role="status">
                 <span class="visually-hidden">Laden...</span>
@@ -223,48 +299,120 @@
     const limit = 10;
     const loadMoreBtn = document.getElementById('btn-load-more');
     const loader = document.getElementById('loader-spinner');
-    
+    const searchForm = document.getElementById('searchForm');
+    const gamesGrid = document.getElementById('gamesGrid');
+    const searchInput = document.getElementById('searchInput');
+
+    function updateGames(isLoadMore = false) {
+        if (!isLoadMore) {
+            currentOffset = 0;
+            gamesGrid.style.opacity = '0.5';
+        }
+
+        const formData = new FormData(searchForm);
+        const params = new URLSearchParams();
+        for (const [key, value] of formData.entries()) {
+            if (value) params.append(key, value);
+        }
+        params.append('ajax', 'true');
+        params.append('offset', currentOffset);
+
+        const url = `/games?${params.toString()}`;
+        
+        // Update URL without reload
+        if (!isLoadMore) {
+            const cleanUrl = `/games?${params.toString().replace('&ajax=true', '').replace('&offset=0', '')}`;
+            window.history.pushState({}, '', cleanUrl);
+        }
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.json())
+            .then(data => {
+                if (isLoadMore) {
+                    gamesGrid.insertAdjacentHTML('beforeend', data.html);
+                    currentOffset += limit;
+                } else {
+                    gamesGrid.innerHTML = data.html;
+                    gamesGrid.style.opacity = '1';
+                    currentOffset = limit;
+                }
+                
+                if (loader) loader.classList.add('d-none');
+                const loadMoreContainer = document.getElementById('load-more-container');
+                if (data.hasMore) {
+                    if (loadMoreContainer) {
+                        loadMoreContainer.classList.remove('d-none');
+                        const btn = document.getElementById('btn-load-more');
+                        if (btn) btn.classList.remove('d-none');
+                    } else {
+                        // Create load more container if it doesn't exist but we have more
+                        const container = document.createElement('div');
+                        container.id = 'load-more-container';
+                        container.className = 'text-center py-4';
+                        container.innerHTML = `
+                            <button id="btn-load-more" class="btn btn-outline-primary rounded-pill px-5 py-2 fw-bold">
+                                <i class="bi bi-arrow-down-circle me-2"></i> Meer Spelen
+                            </button>
+                            <div id="loader-spinner" class="spinner-border text-primary d-none" role="status">
+                                <span class="visually-hidden">Laden...</span>
+                            </div>
+                        `;
+                        gamesGrid.parentElement.after(container);
+                        attachLoadMoreEvent();
+                    }
+                } else if (loadMoreContainer) {
+                    loadMoreContainer.classList.add('d-none');
+                }
+                
+                if (window.initAnimations) window.initAnimations();
+            })
+            .catch(err => {
+                console.error('Error fetching games:', err);
+                gamesGrid.style.opacity = '1';
+                if (loader) loader.classList.add('d-none');
+            });
+    }
+
+    function attachLoadMoreEvent() {
+        const btn = document.getElementById('btn-load-more');
+        if (btn) {
+            btn.addEventListener('click', function() {
+                btn.classList.add('d-none');
+                const s = document.getElementById('loader-spinner');
+                if (s) s.classList.remove('d-none');
+                updateGames(true);
+            });
+        }
+    }
+
+    // AJAX filters
+    document.querySelectorAll('.ajax-filter').forEach(select => {
+        select.addEventListener('change', () => updateGames());
+    });
+
+    // Debounced search
+    let searchTimeout;
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => updateGames(), 500);
+    });
+
+    searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        updateGames();
+    });
+
+    attachLoadMoreEvent();
+
     window.initAnimations = function() {
         const bars = document.querySelectorAll('.animated-fill:not(.active)');
         bars.forEach(bar => {
-            const intensity = bar.dataset.intensity;
-            // Force a reflow to ensure the animation triggers
             bar.getBoundingClientRect();
             bar.classList.add('active');
         });
     };
 
     document.addEventListener('DOMContentLoaded', window.initAnimations);
-
-    if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', function() {
-            loadMoreBtn.classList.add('d-none');
-            loader.classList.remove('d-none');
-            
-            const url = new URL(window.location.href);
-            url.searchParams.set('ajax', 'true');
-            url.searchParams.set('offset', currentOffset);
-            
-            fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('gamesGrid').insertAdjacentHTML('beforeend', data.html);
-                    currentOffset += limit;
-                    
-                    loader.classList.add('d-none');
-                    if (data.hasMore) {
-                        loadMoreBtn.classList.remove('d-none');
-                    }
-                    
-                    if (window.initAnimations) window.initAnimations();
-                })
-                .catch(err => {
-                    console.error('Error loading more games:', err);
-                    loadMoreBtn.classList.remove('d-none');
-                    loader.classList.add('d-none');
-                });
-        });
-    }
 </script>
 
 <%- include('../partials/footer') %>
