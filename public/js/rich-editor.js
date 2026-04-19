@@ -22,10 +22,37 @@ window.initializeRichEditors = function(elements) {
     if (typeof Quill === 'undefined') {
         const script = document.createElement('script');
         script.src = 'https://cdn.quilljs.com/1.3.6/quill.min.js';
-        script.onload = () => runInit(elements);
+        script.onload = () => {
+            setupQuillExtensions();
+            runInit(elements);
+        };
         document.head.appendChild(script);
     } else {
+        setupQuillExtensions();
         runInit(elements);
+    }
+
+    function setupQuillExtensions() {
+        if (window.QuillExtensionsRegistered) return;
+        
+        // Extend Link blot to add target="_blank" for external links
+        const Link = Quill.import('formats/link');
+        class MyLink extends Link {
+            static create(value) {
+                let node = super.create(value);
+                value = this.sanitize(value);
+                node.setAttribute('href', value);
+                // Check if it's an external link
+                const isExternal = /^https?:\/\//i.test(value) || (!value.startsWith('/') && !value.startsWith('#') && !value.startsWith('mailto:') && !value.startsWith('tel:'));
+                if (isExternal) {
+                    node.setAttribute('target', '_blank');
+                    node.setAttribute('rel', 'noopener noreferrer');
+                }
+                return node;
+            }
+        }
+        Quill.register(MyLink, true);
+        window.QuillExtensionsRegistered = true;
     }
 
     function runInit(targets) {
@@ -36,7 +63,7 @@ window.initializeRichEditors = function(elements) {
             // Create a container for the editor
             const container = document.createElement('div');
             // Set a default height or copy from textarea
-            container.style.height = '300px';
+            container.style.height = textarea.rows > 4 ? (textarea.rows * 25) + 'px' : '300px';
             container.style.backgroundColor = 'white';
             
             // Insert container after textarea
@@ -59,7 +86,8 @@ window.initializeRichEditors = function(elements) {
                             ['link', 'image', 'clean']
                         ],
                         handlers: {
-                            image: imageHandler
+                            image: imageHandler,
+                            link: linkHandler
                         }
                     }
                 }
@@ -68,10 +96,43 @@ window.initializeRichEditors = function(elements) {
             // Set initial content
             quill.root.innerHTML = textarea.value;
 
-            // Update textarea on change
-            quill.on('text-change', function() {
+            // Update textarea on change & handle autolink
+            quill.on('text-change', function(delta, oldDelta, source) {
                 textarea.value = quill.root.innerHTML;
+
+                if (source === 'user') {
+                    handleAutoLink(delta);
+                }
             });
+
+            function handleAutoLink(delta) {
+                const lastOp = delta.ops[delta.ops.length - 1];
+                if (lastOp && typeof lastOp.insert === 'string' && lastOp.insert.endsWith(' ')) {
+                    const range = quill.getSelection();
+                    if (!range) return;
+                    
+                    const textBefore = quill.getText(0, range.index - 1);
+                    const lastWordMatch = textBefore.match(/\S+$/);
+                    if (!lastWordMatch) return;
+                    
+                    const lastWord = lastWordMatch[0];
+                    const urlRegex = /^(https?:\/\/|www\.)[^\s]+\.[^\s]+$/i;
+                    
+                    if (urlRegex.test(lastWord)) {
+                        const start = lastWordMatch.index;
+                        let url = lastWord;
+                        if (url.toLowerCase().startsWith('www.')) {
+                            url = 'https://' + url;
+                        }
+                        
+                        // Check if already formatted as link to avoid redundant ops
+                        const formats = quill.getFormat(start, lastWord.length);
+                        if (!formats.link) {
+                            quill.formatText(start, lastWord.length, 'link', url);
+                        }
+                    }
+                }
+            }
 
             // Handle Pasting Images
             quill.root.addEventListener('paste', (event) => {
@@ -135,6 +196,75 @@ window.initializeRichEditors = function(elements) {
                         uploadFile(file, quill);
                     }
                 };
+            }
+
+            // Link Handler for toolbar (using Bootstrap Modal)
+            function linkHandler() {
+                const range = quill.getSelection();
+                const modalEl = document.getElementById('quillLinkModal');
+                if (!modalEl) {
+                    // Fallback to default if modal not present
+                    const url = prompt('Enter URL:');
+                    if (url) quill.format('link', url);
+                    return;
+                }
+
+                const modal = new bootstrap.Modal(modalEl);
+                const urlInput = document.getElementById('quillLinkUrl');
+                const textInput = document.getElementById('quillLinkText');
+                const submitBtn = document.getElementById('quillLinkSubmit');
+
+                urlInput.value = '';
+                textInput.value = '';
+
+                // If text is selected, pre-fill text input and disable it or just pre-fill
+                if (range && range.length > 0) {
+                    textInput.value = quill.getText(range.index, range.length);
+                }
+
+                const onConfirm = () => {
+                    let url = urlInput.value.trim();
+                    const text = textInput.value.trim();
+
+                    if (url) {
+                        if (!/^https?:\/\//i.test(url) && !url.startsWith('/') && !url.startsWith('#')) {
+                            url = 'https://' + url;
+                        }
+
+                        if (range && range.length > 0) {
+                            // Replace selected text
+                            quill.deleteText(range.index, range.length);
+                            quill.insertText(range.index, text || url, 'link', url);
+                            quill.setSelection(range.index + (text || url).length);
+                        } else {
+                            // Insert at cursor
+                            const index = range ? range.index : quill.getLength();
+                            quill.insertText(index, text || url, 'link', url);
+                            quill.setSelection(index + (text || url).length);
+                        }
+                    }
+                    modal.hide();
+                    cleanup();
+                };
+
+                const onKeyPress = (e) => {
+                    if (e.key === 'Enter') onConfirm();
+                };
+
+                const cleanup = () => {
+                    submitBtn.removeEventListener('click', onConfirm);
+                    urlInput.removeEventListener('keypress', onKeyPress);
+                    textInput.removeEventListener('keypress', onKeyPress);
+                    modalEl.removeEventListener('hidden.bs.modal', cleanup);
+                };
+
+                submitBtn.addEventListener('click', onConfirm);
+                urlInput.addEventListener('keypress', onKeyPress);
+                textInput.addEventListener('keypress', onKeyPress);
+                modalEl.addEventListener('hidden.bs.modal', cleanup);
+
+                modal.show();
+                setTimeout(() => urlInput.focus(), 500);
             }
         });
     }

@@ -35,6 +35,32 @@
             </div>
         </div>
     </footer>
+    <!-- Quill Link Modal -->
+    <div class="modal fade" id="quillLinkModal" tabindex="-1" aria-labelledby="quillLinkModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="quillLinkModalLabel" style="font-family: 'Fredoka', sans-serif; font-weight: 600;">Link Toevoegen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="quillLinkUrl" class="form-label small text-muted text-uppercase fw-bold">URL (Webadres)</label>
+                        <input type="url" class="form-control rounded-pill border-2" id="quillLinkUrl" placeholder="https://example.com" autofocus>
+                    </div>
+                    <div class="mb-0">
+                        <label for="quillLinkText" class="form-label small text-muted text-uppercase fw-bold">Tekst (Optioneel)</label>
+                        <input type="text" class="form-control rounded-pill border-2" id="quillLinkText" placeholder="Klik hier">
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuleren</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" id="quillLinkSubmit">Toevoegen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/download-helper.js"></script>
     <script src="/js/rich-editor.js"></script>
