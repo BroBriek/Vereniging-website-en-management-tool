@@ -10,7 +10,7 @@
         background-color: #f8fafc;
         border-bottom: 1px solid #e2e8f0;
         color: #1e293b;
-        padding: 4rem 0 6rem 0;
+        padding: 3rem 0 5rem 0;
         position: relative;
         overflow: hidden;
     }
@@ -24,6 +24,18 @@
         height: 40px;
         background: var(--bg-color);
         clip-path: ellipse(50% 100% at 50% 100%);
+    }
+
+    @media (max-width: 767px) {
+        .game-hero {
+            padding: 2rem 0 4rem 0;
+        }
+        .game-hero::after {
+            height: 25px;
+        }
+        .display-4 {
+            font-size: 2.2rem;
+        }
     }
 
     .hero-pattern {
@@ -41,20 +53,35 @@
         background: white;
         border-radius: 2.5rem;
         box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-        margin-top: -4rem;
+        margin-top: -3rem;
         position: relative;
         z-index: 10;
         border: 1px solid #f1f5f9;
         overflow: hidden;
     }
 
+    @media (max-width: 767px) {
+        .game-card-main {
+            border-radius: 1.5rem;
+            margin-top: -2.5rem;
+        }
+    }
+
     .info-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 1.5rem;
-        padding: 2rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 1.5rem;
         background: #fafbfc;
         border-bottom: 1px solid #f1f5f9;
+    }
+
+    @media (min-width: 576px) {
+        .info-grid {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
     }
 
     .info-item {
@@ -94,7 +121,13 @@
     }
 
     .content-body {
-        padding: 2.5rem 3rem;
+        padding: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+        .content-body {
+            padding: 2.5rem 3rem;
+        }
     }
 
     .speluitleg-title {
@@ -459,7 +492,34 @@
                     <div class="rich-content mb-5">
                         <%- game.howItWorks %>
                     </div>
-...
+
+                    <% if (game.attachments && game.attachments.length > 0) { %>
+                        <div id="attachments-section" class="pt-5 border-top">
+                            <h3 class="speluitleg-title"><i class="bi bi-download"></i> Bijlagen</h3>
+                            <div class="row g-3 mt-2">
+                                <% game.attachments.forEach(file => { %>
+                                    <div class="col-md-6 col-lg-4">
+                                        <a href="<%= file.path %>" target="_blank" class="attachment-btn h-100 mb-0">
+                                            <div class="me-3 fs-3">
+                                                <% if (file.mimeType.includes('image')) { %>
+                                                    <i class="bi bi-image text-primary"></i>
+                                                <% } else if (file.mimeType.includes('pdf')) { %>
+                                                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                                <% } else { %>
+                                                    <i class="bi bi-file-earmark-text text-secondary"></i>
+                                                <% } %>
+                                            </div>
+                                            <div class="overflow-hidden">
+                                                <div class="small fw-bold text-truncate"><%= file.originalName %></div>
+                                                <div class="text-muted" style="font-size: 0.65rem;">Klik om te openen</div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% } %>
+
                     <% 
                     let tagArray = [];
                     if (game.tags) {
@@ -504,9 +564,9 @@
                 </div>
             </div>
 
-            <!-- Attachments -->
+            <!-- Attachments (duplicated for desktop sidebar) -->
             <% if (game.attachments && game.attachments.length > 0) { %>
-                <div class="sidebar-card">
+                <div class="sidebar-card d-none d-lg-block">
                     <h6 class="text-uppercase small fw-800 text-muted mb-4 letter-spacing-1">Bijlagen (<%= game.attachments.length %>)</h6>
                     <% game.attachments.forEach(file => { %>
                         <a href="<%= file.path %>" target="_blank" class="attachment-btn">
@@ -529,8 +589,8 @@
             <% } %>
 
             <div class="text-center">
-                <a href="/games" class="btn btn-outline-secondary rounded-pill px-4 fw-bold border-2">
-                    <i class="bi bi-arrow-left me-2"></i> Terug naar overzicht
+                <a href="/games" class="btn btn-outline-secondary rounded-pill px-4 fw-bold border-2 w-100">
+                    <i class="bi bi-arrow-left me-2"></i> Overzicht
                 </a>
             </div>
         </div>
