@@ -689,6 +689,39 @@
                 const itemTag = item.dataset.item.toLowerCase();
                 item.style.display = itemTag.includes(term) ? 'inline-block' : 'none';
             });
+
+            // Handige toevoeging: als je een comma typt, voegt hij het toe
+            if (e.data === ',') {
+                addCustomSupply();
+            }
+        });
+
+        // Paste functionaliteit voor de materiaal lijst
+        supplyInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            if (paste) {
+                let items = [];
+                // Als er commas of enters in staan, splits daarop (veiliger voor woorden met spaties)
+                if (paste.includes(',') || paste.includes('\n') || paste.includes('\r')) {
+                    items = paste.split(/[,\n\r\t]+/).map(i => i.trim()).filter(i => i !== '');
+                } else {
+                    // Anders splitsen op spaties (zoals gevraagd voor opsommingen)
+                    items = paste.split(/\s+/).map(i => i.trim()).filter(i => i !== '');
+                }
+                
+                let added = false;
+                items.forEach(item => {
+                    if (item && !activeSupplies.includes(item)) {
+                        activeSupplies.push(item);
+                        added = true;
+                    }
+                });
+                
+                if (added) renderSupplies();
+                supplyInput.value = '';
+                supplyInput.dispatchEvent(new Event('input'));
+            }
         });
 
         supplyInput.addEventListener('keypress', (e) => {
@@ -791,7 +824,25 @@
     function addCustomSupply() {
         if (supplyInput) {
             const val = supplyInput.value.trim();
-            if (val) addSupply(val);
+            if (val) {
+                // Verwijder eventuele trailing comma van het typen
+                const cleanVal = val.replace(/,+$/, '');
+                if (cleanVal) {
+                    // Splitsen op comma's of enters (voor het geval ze meerdere items typen en enter drukken)
+                    const items = cleanVal.split(/[,\n\r\t]+/).map(i => i.trim()).filter(i => i !== '');
+                    let added = false;
+                    items.forEach(item => {
+                        if (item && !activeSupplies.includes(item)) {
+                            activeSupplies.push(item);
+                            added = true;
+                        }
+                    });
+                    if (added) renderSupplies();
+                }
+                
+                supplyInput.value = '';
+                supplyInput.dispatchEvent(new Event('input'));
+            }
         }
     }
 
