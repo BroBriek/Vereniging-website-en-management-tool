@@ -21,8 +21,8 @@
         border-radius: 2rem;
         box-shadow: 0 20px 60px rgba(0,0,0,0.08);
         border: none;
-        overflow: hidden;
         position: relative;
+        /* overflow: hidden; removed to allow sticky toolbar */
     }
 
     .form-header {
@@ -32,6 +32,8 @@
         padding: 2.5rem 1.5rem;
         text-align: center;
         position: relative;
+        border-top-left-radius: 2rem;
+        border-top-right-radius: 2rem;
     }
 
     @media (min-width: 768px) {
@@ -408,16 +410,54 @@
 
     .quill-wrapper {
         border-radius: 1.25rem;
-        overflow: hidden;
         border: 2px solid #edf2f7;
+        background: white;
+        position: relative;
+    }
+
+    .quill-wrapper .ql-toolbar {
+        border: none !important;
+        border-bottom: 1px solid #edf2f7 !important;
+        background: #f8fafc;
+        padding: 0.75rem;
+        position: sticky;
+        top: 80px;
+        z-index: 10;
+        border-top-left-radius: 1.15rem;
+        border-top-right-radius: 1.15rem;
+    }
+
+    .quill-wrapper .ql-container {
+        border: none !important;
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        border-bottom-left-radius: 1.15rem;
+        border-bottom-right-radius: 1.15rem;
+        overflow: hidden;
     }
 
     .quill-wrapper .ql-editor {
-        min-height: 200px;
+        min-height: 250px;
+        padding: 1.5rem;
     }
 
     .quill-wrapper-lg .ql-editor {
-        min-height: 400px;
+        min-height: 600px;
+    }
+
+    .quill-wrapper .ql-editor.ql-blank::before {
+        left: 1.5rem;
+        font-style: normal;
+        color: #94a3b8;
+    }
+
+    /* Fix scrolling glitches */
+    .ql-container.ql-snow {
+        height: auto !important;
+    }
+    .ql-editor {
+        height: auto !important;
+        overflow-y: visible !important;
     }
 </style>
 
@@ -594,7 +634,7 @@
                 <div class="mb-4">
                     <label class="form-label">Speluitleg & Verloop *</label>
                     <div class="quill-wrapper quill-wrapper-lg">
-                        <textarea name="howItWorks" class="form-control rich-editor" placeholder="Beschrijf het verloop en de regels..."><%= game ? game.howItWorks : '' %></textarea>
+                        <textarea name="howItWorks" class="form-control rich-editor" rows="20" placeholder="Beschrijf het verloop en de regels..."><%= game ? game.howItWorks : '' %></textarea>
                     </div>
                 </div>
 
