@@ -489,12 +489,12 @@
                 </div>
 
                 <div>
-                    <label class="form-label d-block mb-3">Hoe wild is het spel?</label>
+                    <label class="form-label d-block mb-3">Hoe intens is het spel?</label>
                     <div class="intensity-container">
                         <div class="intensity-card">
                             <input type="radio" name="intensity" value="Laag" id="i_laag" class="intensity-radio" <%= (game && game.intensity === 'Laag') ? 'checked' : '' %>>
                             <label for="i_laag" class="intensity-label intensity-laag">
-                                <i class="bi bi-turtle text-success"></i>
+                                <span class="fs-4 mb-1">🐢</span>
                                 <span class="fw-bold">Rustig</span>
                             </label>
                         </div>
@@ -502,16 +502,16 @@
                         <div class="intensity-card">
                             <input type="radio" name="intensity" value="Medium" id="i_medium" class="intensity-radio" <%= (game && game.intensity === 'Medium') ? 'checked' : '' %>>
                             <label for="i_medium" class="intensity-label intensity-medium">
-                                <i class="bi bi-rabbit text-warning"></i>
-                                <span class="fw-bold">Gezellig</span>
+                                <span class="fs-4 mb-1">😊</span>
+                                <span class="fw-bold">Matig</span>
                             </label>
                         </div>
                         
                         <div class="intensity-card">
                             <input type="radio" name="intensity" value="Hoog" id="i_hoog" class="intensity-radio" <%= (game && game.intensity === 'Hoog') ? 'checked' : '' %>>
                             <label for="i_hoog" class="intensity-label intensity-hoog">
-                                <i class="bi bi-lightning-charge-fill text-danger"></i>
-                                <span class="fw-bold">Wild!</span>
+                                <span class="fs-4 mb-1">🔥</span>
+                                <span class="fw-bold">Hevig</span>
                             </label>
                         </div>
                     </div>
@@ -548,7 +548,7 @@
                             'Kringspel', 'Loopspel', 'Massaspel', 'Nachtspel', 'Onthaalspel', 
                             'Opdrachten', 'Pleinspel', 'Quiz', 'Samenwerking', 'Schattenjacht', 
                             'Smokkelspel', 'Sport', 'Stadsspel', 'Stratego', 'Teambuilding', 
-                            'Themaspel', 'Tikkertje', 'Waterspel', 'Wild'
+                            'Themaspel', 'Tikkertje', 'Waterspel'
                         ];
                         allTags.forEach(tag => { %>
                             <span class="suggestion-tag" data-tag="<%= tag %>" onclick="addTag('<%= tag %>')"><%= tag %></span>

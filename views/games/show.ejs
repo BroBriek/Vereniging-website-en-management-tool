@@ -432,11 +432,13 @@
                     </div>
                     <% if (game.intensity) { %>
                         <div class="info-item">
-                            <div class="info-icon">
-                                <% if (game.intensity === 'Hoog') { %><i class="bi bi-lightning-charge-fill text-danger"></i><% } else if (game.intensity === 'Medium') { %><i class="bi bi-rabbit text-warning"></i><% } else { %><i class="bi bi-turtle text-success"></i><% } %>
+                            <div class="info-icon fs-4">
+                                <% if (game.intensity === 'Hoog') { %>🔥<% } else if (game.intensity === 'Medium') { %>😊<% } else { %>🐢<% } %>
                             </div>
                             <div class="info-label">Intensiteit</div>
-                            <div class="info-value"><%= game.intensity %></div>
+                            <div class="info-value">
+                                <%= game.intensity === 'Hoog' ? 'Hevig' : (game.intensity === 'Medium' ? 'Matig' : 'Rustig') %>
+                            </div>
                             <div class="intensity-meter-wrapper mx-auto" style="width: 60px;">
                                 <div class="intensity-bar bar-<%= game.intensity.toLowerCase() %>" id="intensityBar" data-level="<%= game.intensity %>"></div>
                             </div>
