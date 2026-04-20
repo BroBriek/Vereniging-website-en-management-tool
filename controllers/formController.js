@@ -126,10 +126,14 @@ exports.updateResponse = async (req, res) => {
         const response = await FormResponse.findByPk(req.params.id);
         if (!response) return res.status(404).json({ success: false, error: 'Antwoord niet gevonden' });
 
-        const newData = { ...response.data };
-        newData[fieldId] = value;
+        if (fieldId === 'nickname') {
+            await response.update({ nickname: value });
+        } else {
+            const newData = { ...response.data };
+            newData[fieldId] = value;
+            await response.update({ data: newData });
+        }
         
-        await response.update({ data: newData });
         res.json({ success: true });
     } catch (error) {
         console.error('Error updating response:', error);
@@ -162,7 +166,8 @@ exports.exportResponses = async (req, res) => {
 
         // Define columns based on form fields
         const columns = [
-            { header: 'Datum', key: 'submittedAt', width: 20 }
+            { header: 'Datum', key: 'submittedAt', width: 20 },
+            { header: 'Bijnaam', key: 'nickname', width: 20 }
         ];
 
         // Only include questions in columns
@@ -183,7 +188,8 @@ exports.exportResponses = async (req, res) => {
 
         form.responses.forEach(resp => {
             const row = {
-                submittedAt: resp.submittedAt.toLocaleString('nl-BE')
+                submittedAt: resp.submittedAt.toLocaleString('nl-BE'),
+                nickname: resp.nickname || ''
             };
             
             questionFields.forEach(f => {
@@ -217,7 +223,7 @@ exports.exportResponses = async (req, res) => {
 
 exports.exportEetdagPDF = async (req, res) => {
     try {
-        const { nameField, orderFields, tableField, blankTickets } = req.query;
+        const { nameField, orderFields, tableField, blankTickets, useNicknames, sortBy } = req.query;
         const form = await Form.findByPk(req.params.id, {
             include: [{ model: FormResponse, as: 'responses' }]
         });
@@ -235,12 +241,33 @@ exports.exportEetdagPDF = async (req, res) => {
         const slipWidth = (pageWidth - (margin * 2)) / cols;
         const pageBottom = pageHeight - margin;
 
-        const responses = form.responses.sort((a, b) => a.submittedAt - b.submittedAt);
+        let responses = [...form.responses];
+
+        // Sort responses
+        if (sortBy === 'newest') {
+            responses.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+        } else if (sortBy === 'oldest') {
+            responses.sort((a, b) => new Date(a.submittedAt) - new Date(b.submittedAt));
+        } else {
+            // Default: alphabetical
+            responses.sort((a, b) => {
+                const getName = (r) => {
+                    if (useNicknames === 'true' && r.nickname) return r.nickname;
+                    return r.data[nameField] || '';
+                };
+                return getName(a).localeCompare(getName(b), 'nl-BE', { sensitivity: 'base' });
+            });
+        }
+
         const selectedOrderFields = Array.isArray(orderFields) ? orderFields : (orderFields ? [orderFields] : []);
 
         // Add blank tickets to the list
         const numBlank = parseInt(blankTickets) || 0;
-        const itemsToPrint = [...responses.map(r => ({ data: r.data, isBlank: false }))];
+        const itemsToPrint = [...responses.map(r => ({ 
+            data: r.data, 
+            nickname: r.nickname,
+            isBlank: false 
+        }))];
         for (let i = 0; i < numBlank; i++) {
             itemsToPrint.push({ data: {}, isBlank: true });
         }
@@ -317,7 +344,10 @@ exports.exportEetdagPDF = async (req, res) => {
                 doc.text('TAFEL:', x, y + 16);
 
                 if (!itemObj.isBlank) {
-                    const name = itemObj.data[nameField] || '';
+                    let name = itemObj.data[nameField] || '';
+                    if (useNicknames === 'true' && itemObj.nickname) {
+                        name = itemObj.nickname;
+                    }
                     doc.fontSize(11).font('Helvetica').text(name, x + 45, y, { width: slipWidth - 65, height: 16, ellipsis: true });
                     
                     if (tableField) {

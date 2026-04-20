@@ -10,6 +10,10 @@ const FormResponse = sequelize.define('FormResponse', {
     type: DataTypes.JSON,
     allowNull: false // Object mapping field IDs to answers
   },
+  nickname: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   submittedAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
