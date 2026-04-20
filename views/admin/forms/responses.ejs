@@ -172,15 +172,16 @@
         <div class="card shadow-sm border-0">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover table-mobile-responsive mb-0 align-middle">
+                    <table class="table table-hover table-mobile-responsive mb-0 align-middle" id="responsesTable">
                         <thead class="bg-light">
                             <tr>
-                                <th class="ps-4" style="width: 150px;">Datum</th>
+                                <th class="ps-4 sortable" onclick="sortTable(0)" style="width: 150px; cursor: pointer;">Datum <i class="bi bi-arrow-down-up small ms-1"></i></th>
+                                <th class="sortable" onclick="sortTable(1)" style="cursor: pointer;">Bijnaam <i class="bi bi-arrow-down-up small ms-1"></i></th>
                                 <% 
                                     const questionFields = form.fields.filter(f => ['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi', 'pricing'].includes(f.type));
-                                    questionFields.forEach(f => { 
+                                    questionFields.forEach((f, index) => { 
                                 %>
-                                    <th><%= f.label %></th>
+                                    <th class="sortable" onclick="sortTable(<%= index + 2 %>)" style="cursor: pointer;"><%= f.label %> <i class="bi bi-arrow-down-up small ms-1"></i></th>
                                 <% }) %>
                                 <th class="text-end pe-4" style="width: 50px;"></th>
                             </tr>
@@ -189,9 +190,16 @@
                             <% if (responses && responses.length > 0) { %>
                                 <% responses.forEach(resp => { %>
                                     <tr id="response-row-<%= resp.id %>" class="response-row">
-                                        <td class="ps-4" data-label="Datum">
+                                        <td class="ps-4" data-label="Datum" data-sort-value="<%= new Date(resp.submittedAt).getTime() %>">
                                             <div class="small fw-bold"><%= new Date(resp.submittedAt).toLocaleDateString('nl-BE') %></div>
                                             <div class="small text-muted"><%= new Date(resp.submittedAt).toLocaleTimeString('nl-BE', {hour: '2-digit', minute:'2-digit'}) %></div>
+                                        </td>
+                                        <td data-label="Bijnaam">
+                                            <div class="editable-cell" 
+                                                 onclick="startEdit(this, '<%= resp.id %>', 'nickname', 'short_text', [])"
+                                                 data-raw-value="<%= resp.nickname || '' %>">
+                                                <span><%- resp.nickname || '<span class="text-muted fst-italic">Niet ingesteld</span>' %></span>
+                                            </div>
                                         </td>
                                         <% questionFields.forEach(f => { 
                                             let answer = resp.data[f.id];
@@ -225,7 +233,7 @@
                                 <% }) %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="<%= questionFields.length + 2 %>" class="text-center py-5 text-muted">
+                                    <td colspan="<%= questionFields.length + 3 %>" class="text-center py-5 text-muted">
                                         <i class="bi bi-chat-left-dots display-4 d-block mb-3 opacity-25"></i>
                                         Nog geen antwoorden ontvangen.
                                     </td>
@@ -307,6 +315,21 @@
                         <input type="number" name="blankTickets" class="form-control rounded-3" min="0" value="0">
                         <small class="text-muted">Extra tickets met titels maar zonder waarden.</small>
                     </div>
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="useNicknames" id="useNicknames" value="true">
+                            <label class="form-check-label fw-bold" for="useNicknames">Gebruik bijnamen indien beschikbaar</label>
+                        </div>
+                        <small class="text-muted d-block mt-1">Vervangt de normale naam op de tickets als er een bijnaam is ingevuld.</small>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Sorteer tickets op:</label>
+                        <select name="sortBy" class="form-select rounded-3">
+                            <option value="alphabetical">Alfabetisch (Naam)</option>
+                            <option value="newest">Datum (Nieuw naar Oud)</option>
+                            <option value="oldest">Datum (Oud naar Nieuw)</option>
+                        </select>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold d-block">Velden voor BESTELLING:</label>
                         <div class="p-3 bg-light rounded-3 border" style="max-height: 200px; overflow-y: auto;">
@@ -340,6 +363,8 @@
         const tableField = formData.get('tableField');
         const blankTickets = formData.get('blankTickets');
         const orderFields = formData.getAll('orderFields');
+        const useNicknames = formData.get('useNicknames');
+        const sortBy = formData.get('sortBy');
 
         if (!nameField) {
             alert('Selecteer a.u.b. een veld voor de naam.');
@@ -354,6 +379,8 @@
         params.append('nameField', nameField);
         if (tableField) params.append('tableField', tableField);
         if (blankTickets) params.append('blankTickets', blankTickets);
+        if (useNicknames) params.append('useNicknames', 'true');
+        if (sortBy) params.append('sortBy', sortBy);
         orderFields.forEach(id => params.append('orderFields', id));
 
         const exportUrl = `/admin/forms/<%= form.id %>/responses/export-eetdag?` + params.toString();
@@ -362,6 +389,61 @@
         triggerDownload(exportUrl, `eetdag-<%= form.slug %>.pdf`, document.querySelector('[onclick="executeEetdagExport()"]'));
         
         bootstrap.Modal.getInstance(document.getElementById('eetdagExportModal')).hide();
+    }
+
+    function sortTable(n) {
+        const table = document.getElementById("responsesTable");
+        let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        switching = true;
+        dir = "asc"; 
+        
+        // Reset icons
+        const headers = table.querySelectorAll('th.sortable i');
+        headers.forEach(h => h.className = 'bi bi-arrow-down-up small ms-1');
+
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                
+                let xValue = x.getAttribute('data-sort-value') || x.innerText.toLowerCase();
+                let yValue = y.getAttribute('data-sort-value') || y.innerText.toLowerCase();
+                
+                if (n === 0) { // Date column
+                    xValue = parseInt(xValue);
+                    yValue = parseInt(yValue);
+                }
+
+                if (dir == "asc") {
+                    if (xValue > yValue) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (xValue < yValue) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount ++;      
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+        
+        // Set active icon
+        const icon = table.rows[0].getElementsByTagName("TH")[n].querySelector('i');
+        icon.className = dir === 'asc' ? 'bi bi-arrow-up small ms-1' : 'bi bi-arrow-down small ms-1';
     }
 
     document.getElementById('tableSearch').addEventListener('input', function(e) {
