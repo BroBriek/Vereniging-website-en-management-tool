@@ -96,14 +96,121 @@ window.initializeRichEditors = function(elements) {
             // Set initial content
             quill.root.innerHTML = textarea.value;
 
-            // Update textarea on change & handle autolink
+            // --- @ Mention / Game Tagging Logic ---
+            const mentionList = document.createElement('div');
+            mentionList.className = 'mention-suggestions list-group position-absolute shadow-lg d-none';
+            mentionList.style.zIndex = '2000';
+            mentionList.style.maxHeight = '250px';
+            mentionList.style.overflowY = 'auto';
+            mentionList.style.minWidth = '250px';
+            mentionList.style.borderRadius = '1rem';
+            mentionList.style.border = '1px solid #e2e8f0';
+            mentionList.style.backgroundColor = 'white';
+            document.body.appendChild(mentionList);
+
+            let mentionQuery = '';
+            let mentionStartIndex = -1;
+
             quill.on('text-change', function(delta, oldDelta, source) {
                 textarea.value = quill.root.innerHTML;
 
                 if (source === 'user') {
                     handleAutoLink(delta);
+                    handleMention(delta);
                 }
             });
+
+            async function handleMention(delta) {
+                const range = quill.getSelection();
+                if (!range) {
+                    mentionList.classList.add('d-none');
+                    return;
+                }
+
+                const textBefore = quill.getText(0, range.index);
+                const lastAt = textBefore.lastIndexOf('@');
+                
+                // If there's an @ and no space between it and cursor
+                if (lastAt !== -1 && !textBefore.substring(lastAt).includes(' ')) {
+                    mentionStartIndex = lastAt;
+                    mentionQuery = textBefore.substring(lastAt + 1);
+                    
+                    try {
+                        const response = await fetch(`/games/api/search?q=${mentionQuery}`);
+                        const games = await response.json();
+                        renderMentionList(games, lastAt, mentionQuery.length === 0);
+                    } catch (err) {
+                        console.error('Mention fetch error:', err);
+                    }
+                } else {
+                    mentionList.classList.add('d-none');
+                }
+            }
+
+            function renderMentionList(games, index, isInitial = false) {
+                const bounds = quill.getBounds(index);
+                const editorRect = container.getBoundingClientRect();
+                
+                // Use absolute positioning relative to document body
+                mentionList.style.top = (editorRect.top + bounds.top + bounds.height + 5 + window.scrollY) + 'px';
+                mentionList.style.left = (editorRect.left + bounds.left + window.scrollX) + 'px';
+                
+                mentionList.innerHTML = '';
+                
+                if (isInitial && games.length === 0) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item disabled text-muted small border-0';
+                    item.innerHTML = '<i class="bi bi-search me-2"></i> Typ de titel van een spel...';
+                    mentionList.appendChild(item);
+                } else if (games.length === 0) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item disabled text-muted small border-0';
+                    item.innerHTML = 'Geen spellen gevonden...';
+                    mentionList.appendChild(item);
+                } else {
+                    games.forEach(game => {
+                        const item = document.createElement('button');
+                        item.type = 'button';
+                        item.className = 'list-group-item list-group-item-action border-0 d-flex align-items-center gap-2 py-2';
+                        item.innerHTML = `<i class="bi bi-controller text-danger"></i> <span class="fw-bold">${game.title}</span>`;
+                        item.onclick = (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            insertGameLink(game);
+                        };
+                        mentionList.appendChild(item);
+                    });
+                }
+                
+                mentionList.classList.remove('d-none');
+            }
+
+            function insertGameLink(game) {
+                const range = quill.getSelection();
+                if (!range) return;
+
+                // Delete the @query
+                const lengthToDelete = mentionQuery.length + 1;
+                quill.deleteText(mentionStartIndex, lengthToDelete);
+                
+                // Insert the link
+                quill.insertText(mentionStartIndex, game.title, 'link', `/games/${game.id}`);
+                quill.insertText(mentionStartIndex + game.title.length, ' ');
+                
+                // Move cursor
+                quill.setSelection(mentionStartIndex + game.title.length + 1);
+                
+                mentionList.classList.add('d-none');
+            }
+
+            // Close mention list on click outside
+            document.addEventListener('click', (e) => {
+                if (!mentionList.contains(e.target) && !container.contains(e.target)) {
+                    mentionList.classList.add('d-none');
+                }
+            });
+
+            // --- End Mention Logic ---
 
             function handleAutoLink(delta) {
                 const lastOp = delta.ops[delta.ops.length - 1];

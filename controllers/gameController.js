@@ -199,3 +199,25 @@ exports.postDeleteGame = async (req, res) => {
         res.status(500).send('Kon spel niet verwijderen');
     }
 };
+
+exports.searchGames = async (req, res) => {
+    try {
+        const query = req.query.q || '';
+        if (!query || query.length < 2) {
+            return res.json([]);
+        }
+
+        const games = await Game.findAll({
+            where: {
+                title: { [Op.like]: `%${query}%` }
+            },
+            attributes: ['id', 'title'],
+            limit: 10
+        });
+
+        res.json(games);
+    } catch (error) {
+        console.error('Search Games Error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};

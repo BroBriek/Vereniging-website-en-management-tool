@@ -493,11 +493,18 @@
                         </select>
                     </div>
                     <div class="col-md-6 mb-4">
-                        <label class="form-label">Duur (minuten) *</label>
-                        <div class="input-group">
-                            <input type="number" name="duration" class="form-control" placeholder="bv. 45" value="<%= game ? game.duration : '' %>" required>
-                            <span class="input-group-text bg-light border-2 px-3 fw-bold">min</span>
+                        <label class="form-label">Duur *</label>
+                        <div class="d-flex gap-2">
+                            <div class="input-group">
+                                <input type="number" id="duration_h" class="form-control" placeholder="0" min="0" value="<%= game ? Math.floor(game.duration / 60) : '' %>">
+                                <span class="input-group-text bg-light border-1 px-2 fw-bold small text-muted">u</span>
+                            </div>
+                            <div class="input-group">
+                                <input type="number" id="duration_m" class="form-control" placeholder="bv. 45" min="0" max="59" value="<%= game ? game.duration % 60 : '' %>">
+                                <span class="input-group-text bg-light border-1 px-2 fw-bold small text-muted">min</span>
+                            </div>
                         </div>
+                        <input type="hidden" name="duration" id="duration_total" value="<%= game ? game.duration : '' %>" required>
                     </div>
                 </div>
 
@@ -635,6 +642,10 @@
                     <label class="form-label">Speluitleg & Verloop *</label>
                     <div class="quill-wrapper quill-wrapper-lg">
                         <textarea name="howItWorks" class="form-control rich-editor" rows="20" placeholder="Beschrijf het verloop en de regels..."><%= game ? game.howItWorks : '' %></textarea>
+                    </div>
+                    <div class="mt-2 d-flex align-items-center gap-2 text-muted small bg-light p-2 rounded-3 border">
+                        <i class="bi bi-lightbulb-fill text-warning"></i>
+                        <span><strong>Tip:</strong> Typ <strong>@</strong> in de speluitleg om naar een ander spel te linken!</span>
                     </div>
                 </div>
 
@@ -922,6 +933,22 @@
     document.addEventListener('DOMContentLoaded', () => {
         renderTags();
         renderSupplies();
+
+        // Duration sync logic
+        const hInput = document.getElementById('duration_h');
+        const mInput = document.getElementById('duration_m');
+        const totalInput = document.getElementById('duration_total');
+
+        function syncDuration() {
+            const h = parseInt(hInput.value) || 0;
+            const m = parseInt(mInput.value) || 0;
+            totalInput.value = (h * 60) + m;
+        }
+
+        if (hInput && mInput) {
+            hInput.addEventListener('input', syncDuration);
+            mInput.addEventListener('input', syncDuration);
+        }
     });
 </script>
 

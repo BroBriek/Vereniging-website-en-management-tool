@@ -5,6 +5,7 @@ const { ensureAuthenticated, ensureGameAccess } = require('../middleware/auth');
 const upload = require('../middleware/gameUpload');
 
 router.get('/', ensureAuthenticated, ensureGameAccess, gameController.getGames);
+router.get('/api/search', ensureAuthenticated, ensureGameAccess, gameController.searchGames);
 router.get('/add', ensureAuthenticated, ensureGameAccess, gameController.getAddGame);
 router.post('/add', ensureAuthenticated, ensureGameAccess, upload.array('attachments'), gameController.postAddGame);
 router.get('/:id', ensureAuthenticated, ensureGameAccess, gameController.getGame);

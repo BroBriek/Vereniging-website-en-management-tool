@@ -31,7 +31,13 @@
                     <h4 class="game-title font-playful text-truncate" title="<%= game.title %>"><%= game.title %></h4>
                     
                     <div class="game-meta mb-2">
-                        <span class="me-2"><i class="bi bi-clock"></i> <%= game.duration %> min</span>
+                        <span class="me-2"><i class="bi bi-clock"></i> 
+                            <% if (game.duration >= 60) { %>
+                                <%= Math.floor(game.duration / 60) %>u <% if (game.duration % 60 > 0) { %><%= game.duration % 60 %>min<% } %>
+                            <% } else { %>
+                                <%= game.duration %> min
+                            <% } %>
+                        </span>
                         <span><i class="bi bi-people"></i> 
                             <% if (game.minPlayers && game.maxPlayers) { %>
                                 <%= game.minPlayers %>-<%= game.maxPlayers %>
