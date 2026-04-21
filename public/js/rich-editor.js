@@ -102,7 +102,7 @@ window.initializeRichEditors = function(elements) {
             // --- @ Mention / Game Tagging Logic ---
             const mentionList = document.createElement('div');
             mentionList.className = 'mention-suggestions list-group position-absolute shadow-lg d-none';
-            mentionList.style.zIndex = '2000';
+            mentionList.style.zIndex = '9999';
             mentionList.style.maxHeight = '250px';
             mentionList.style.overflowY = 'auto';
             mentionList.style.minWidth = '250px';
@@ -114,14 +114,14 @@ window.initializeRichEditors = function(elements) {
 
             let mentionQuery = '';
             let mentionStartIndex = -1;
+            let isFetchingMentions = false;
 
             quill.on('text-change', function(delta, oldDelta, source) {
                 textarea.value = quill.root.innerHTML;
 
-                if (source === 'user') {
-                    handleAutoLink(delta);
-                    handleMention(delta);
-                }
+                // Handle both 'user' and other sources just in case some browsers report differently
+                handleAutoLink(delta);
+                handleMention(delta);
             });
 
             async function handleMention(delta) {
@@ -140,23 +140,26 @@ window.initializeRichEditors = function(elements) {
                         mentionStartIndex = lastAt;
                         mentionQuery = textBefore.substring(lastAt + 1);
                         
-                        // Show immediately (isInitial if query is empty)
-                        renderMentionList([], lastAt, mentionQuery.length === 0);
+                        // Show searching state
+                        renderMentionList([], lastAt, true, true);
                         
+                        isFetchingMentions = true;
                         const response = await fetch(`/games/api/search?q=${mentionQuery}`);
+                        isFetchingMentions = false;
+                        
                         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         const games = await response.json();
-                        renderMentionList(games, lastAt, mentionQuery.length === 0);
+                        renderMentionList(games, lastAt, mentionQuery.length === 0, false);
                     } else {
                         mentionList.classList.add('d-none');
                     }
                 } catch (err) {
                     console.error('Mention fetch error:', err);
-                    // Don't hide if it was already showing something useful, or just hide on hard error
+                    isFetchingMentions = false;
                 }
             }
 
-            function renderMentionList(games, index, isInitial = false) {
+            function renderMentionList(games, index, isInitial = false, isSearching = false) {
                 const bounds = quill.getBounds(index);
                 const editorRect = container.getBoundingClientRect();
                 
@@ -166,12 +169,17 @@ window.initializeRichEditors = function(elements) {
                 
                 mentionList.innerHTML = '';
                 
-                if (isInitial && games.length === 0) {
+                if (isSearching && !games.length) {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item disabled text-muted small border-0';
+                    item.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Zoeken...';
+                    mentionList.appendChild(item);
+                } else if (isInitial && games.length === 0) {
                     const item = document.createElement('div');
                     item.className = 'list-group-item disabled text-muted small border-0';
                     item.innerHTML = '<i class="bi bi-search me-2"></i> Typ de titel van een spel...';
                     mentionList.appendChild(item);
-                } else if (games.length === 0 && !isInitial) {
+                } else if (games.length === 0 && !isInitial && !isSearching) {
                     const item = document.createElement('div');
                     item.className = 'list-group-item disabled text-muted small border-0';
                     item.innerHTML = 'Geen spellen gevonden...';
