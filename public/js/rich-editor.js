@@ -93,6 +93,9 @@ window.initializeRichEditors = function(elements) {
                 }
             });
 
+            // Set container to position relative for mention list positioning
+            container.style.position = 'relative';
+
             // Set initial content
             quill.root.innerHTML = textarea.value;
 
@@ -106,6 +109,7 @@ window.initializeRichEditors = function(elements) {
             mentionList.style.borderRadius = '1rem';
             mentionList.style.border = '1px solid #e2e8f0';
             mentionList.style.backgroundColor = 'white';
+            // Append to body to avoid overflow:hidden clipping from editor containers
             document.body.appendChild(mentionList);
 
             let mentionQuery = '';
@@ -121,29 +125,34 @@ window.initializeRichEditors = function(elements) {
             });
 
             async function handleMention(delta) {
-                const range = quill.getSelection();
-                if (!range) {
-                    mentionList.classList.add('d-none');
-                    return;
-                }
+                try {
+                    const range = quill.getSelection();
+                    if (!range) {
+                        mentionList.classList.add('d-none');
+                        return;
+                    }
 
-                const textBefore = quill.getText(0, range.index);
-                const lastAt = textBefore.lastIndexOf('@');
-                
-                // If there's an @ and no space between it and cursor
-                if (lastAt !== -1 && !textBefore.substring(lastAt).includes(' ')) {
-                    mentionStartIndex = lastAt;
-                    mentionQuery = textBefore.substring(lastAt + 1);
+                    const textBefore = quill.getText(0, range.index);
+                    const lastAt = textBefore.lastIndexOf('@');
                     
-                    try {
+                    // If there's an @ and no space between it and cursor
+                    if (lastAt !== -1 && !textBefore.substring(lastAt).includes(' ')) {
+                        mentionStartIndex = lastAt;
+                        mentionQuery = textBefore.substring(lastAt + 1);
+                        
+                        // Show immediately (isInitial if query is empty)
+                        renderMentionList([], lastAt, mentionQuery.length === 0);
+                        
                         const response = await fetch(`/games/api/search?q=${mentionQuery}`);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         const games = await response.json();
                         renderMentionList(games, lastAt, mentionQuery.length === 0);
-                    } catch (err) {
-                        console.error('Mention fetch error:', err);
+                    } else {
+                        mentionList.classList.add('d-none');
                     }
-                } else {
-                    mentionList.classList.add('d-none');
+                } catch (err) {
+                    console.error('Mention fetch error:', err);
+                    // Don't hide if it was already showing something useful, or just hide on hard error
                 }
             }
 
@@ -162,12 +171,12 @@ window.initializeRichEditors = function(elements) {
                     item.className = 'list-group-item disabled text-muted small border-0';
                     item.innerHTML = '<i class="bi bi-search me-2"></i> Typ de titel van een spel...';
                     mentionList.appendChild(item);
-                } else if (games.length === 0) {
+                } else if (games.length === 0 && !isInitial) {
                     const item = document.createElement('div');
                     item.className = 'list-group-item disabled text-muted small border-0';
                     item.innerHTML = 'Geen spellen gevonden...';
                     mentionList.appendChild(item);
-                } else {
+                } else if (games.length > 0) {
                     games.forEach(game => {
                         const item = document.createElement('button');
                         item.type = 'button';
@@ -182,7 +191,9 @@ window.initializeRichEditors = function(elements) {
                     });
                 }
                 
-                mentionList.classList.remove('d-none');
+                if (mentionList.innerHTML !== '') {
+                    mentionList.classList.remove('d-none');
+                }
             }
 
             function insertGameLink(game) {
