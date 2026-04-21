@@ -203,9 +203,7 @@ exports.postDeleteGame = async (req, res) => {
 exports.searchGames = async (req, res) => {
     try {
         const query = req.query.q || '';
-        if (!query || query.length < 2) {
-            return res.json([]);
-        }
+        // Removed length check to show results immediately or at least show the prompt correctly
 
         const games = await Game.findAll({
             where: {
