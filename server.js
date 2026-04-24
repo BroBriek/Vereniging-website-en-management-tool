@@ -16,6 +16,7 @@ const app = express();
 app.use((req, res, next) => {
   const host = req.hostname;
   
+  
   // Allow localhost and local IPs for development
   if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.endsWith('.local') || host.endsWith('.ngrok-free.app') || host.endsWith('.ngrok.io') || host.endsWith('.ngrok-free.dev')) {
     return next();
