@@ -330,12 +330,26 @@ exports.postRegister = async (req, res) => {
             group: req.body.type === 'leiding' ? 'leiding' : (req.body.group || '').trim().toLowerCase(),
             privacyAccepted: req.body.privacyAccepted === 'on' || req.body.privacyAccepted === 'true'
         };
-        const validGroups = ['ribbel','speelclub','rakwi','tito','keti','aspi', 'leiding'];
+        const validGroups = ['ribbel', 'speelclub', 'rakwi', 'tito', 'keti', 'aspi', 'leiding'];
         if (!validGroups.includes(payload.group)) {
-            throw new Error('invalid group');
+            console.warn(`Registration attempt with invalid group: "${payload.group}"`);
+            return res.render('public/register', {
+                title: 'Inschrijven bij Chiro Vreugdeland',
+                description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
+                content,
+                isRegistrationOpen,
+                error: 'Selecteer een geldige groep.'
+            });
         }
+
         if (!payload.firstName || !payload.lastName || !payload.birthdate || !payload.email || !payload.privacyAccepted) {
-            throw new Error('missing fields');
+            return res.render('public/register', {
+                title: 'Inschrijven bij Chiro Vreugdeland',
+                description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
+                content,
+                isRegistrationOpen,
+                error: 'Vul alle verplichte velden in.'
+            });
         }
         
         payload.period = await PeriodService.getCurrentPeriod();
