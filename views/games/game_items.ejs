@@ -26,6 +26,7 @@
                         <% groups.forEach(group => { %>
                             <span class="game-badge badge-<%= group.toLowerCase() %>"><%= group %></span>
                         <% }) %>
+                        <span class="game-badge bg-light text-muted border ms-auto"><%= game.type === 'volledige activiteit' ? 'Volledige activiteit' : 'Kleiner spel' %></span>
                     </div>
                     
                     <h4 class="game-title font-playful text-truncate" title="<%= game.title %>"><%= game.title %></h4>

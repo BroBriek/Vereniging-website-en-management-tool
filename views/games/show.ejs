@@ -372,6 +372,7 @@
             <% groups.forEach(group => { %>
                 <span class="game-badge badge-<%= group.toLowerCase() %>"><%= group %></span>
             <% }) %>
+            <span class="game-badge bg-light text-muted border"><%= game.type === 'volledige activiteit' ? 'Grote activiteit' : 'Tussendoortje' %></span>
         </div>
 
         <div class="btn-print-group d-flex justify-content-center gap-2">
@@ -434,7 +435,7 @@
                     <div class="info-item">
                         <div class="info-icon"><i class="bi bi-layers-fill"></i></div>
                         <div class="info-label">Type</div>
-                        <div class="info-value text-capitalize"><%= game.type.split(' ')[0] %></div>
+                        <div class="info-value"><%= game.type === 'volledige activiteit' ? 'Volledige activiteit' : 'Kleiner spel' %></div>
                     </div>
                     <% if (game.intensity) { %>
                         <div class="info-item">
