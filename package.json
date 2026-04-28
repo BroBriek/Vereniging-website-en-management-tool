@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "backup": "node scripts/backup.js",
-    "reset-finance": "node scripts/reset_finance_tool.js"
+    "reset-finance": "node scripts/reset_finance_tool.js",
+    "compress-images": "node scripts/compress_existing_images.js"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +30,7 @@
     "passport-local": "^1.0.0",
     "pdfkit": "^0.17.2",
     "sequelize": "^6.37.8",
+    "sharp": "^0.34.5",
     "sqlite3": "^6.0.1",
     "web-push": "^3.6.7"
   }

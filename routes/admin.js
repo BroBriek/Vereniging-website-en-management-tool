@@ -6,6 +6,7 @@ const maintenanceController = require('../controllers/maintenanceController');
 const formController = require('../controllers/formController');
 const { ensureAuthenticated, ensureAdmin, ensureMedia } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { compressGenericImage } = require('../middleware/imageCompression');
 
 router.use(ensureAuthenticated);
 
@@ -28,13 +29,13 @@ router.get('/info', ensureMedia, adminController.getInfo);
 
 // Page Content Editors
 router.get('/page/:page', ensureMedia, adminController.getEditPage);
-router.post('/page/:page', ensureMedia, upload.single('image'), adminController.postEditPage);
+router.post('/page/:page', ensureMedia, upload.single('image'), compressGenericImage, adminController.postEditPage);
 
 // Leader CRUD
 router.get('/leaders', ensureMedia, adminController.getLeaders);
-router.post('/leaders', ensureMedia, upload.single('image'), adminController.postLeader);
+router.post('/leaders', ensureMedia, upload.single('image'), compressGenericImage, adminController.postLeader);
 router.get('/leaders/:id/edit', ensureMedia, adminController.getEditLeader);
-router.put('/leaders/:id', ensureMedia, upload.single('image'), adminController.updateLeader);
+router.put('/leaders/:id', ensureMedia, upload.single('image'), compressGenericImage, adminController.updateLeader);
 router.delete('/leaders/:id', ensureMedia, adminController.deleteLeader);
 
 // Event CRUD
@@ -52,9 +53,9 @@ router.post('/uploads', ensureMedia, (req, res, next) => {
         }
         next();
     });
-}, uploadController.postUpload);
+}, compressGenericImage, uploadController.postUpload);
 router.delete('/uploads/:filename', ensureMedia, uploadController.deleteUpload);
-router.post('/api/upload-image', ensureMedia, upload.single('image'), uploadController.uploadImageApi);
+router.post('/api/upload-image', ensureMedia, upload.single('image'), compressGenericImage, uploadController.uploadImageApi);
 
 // Form Builder
 router.get('/forms', ensureMedia, formController.getForms);
