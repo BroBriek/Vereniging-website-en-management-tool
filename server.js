@@ -1,13 +1,34 @@
 process.env.TZ = 'Europe/Brussels';
 require('dotenv').config();
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
+const util = require('util');
 const session = require('express-session');
 const passport = require('passport');
 const methodOverride = require('method-override');
 const { sequelize, syncDatabase } = require('./models');
 const SQLiteStore = require('connect-sqlite3')(session);
 const webpush = require('web-push');
+
+const LOGS_DIR = path.join(__dirname, 'logs');
+fs.mkdirSync(LOGS_DIR, { recursive: true });
+const stdoutLogPath = path.join(LOGS_DIR, 'stdout.log');
+const stderrLogPath = path.join(LOGS_DIR, 'stderr.log');
+const stdoutLogStream = fs.createWriteStream(stdoutLogPath, { flags: 'a' });
+const stderrLogStream = fs.createWriteStream(stderrLogPath, { flags: 'a' });
+const formatConsoleArgs = (...args) => util.format(...args) + '\n';
+
+const originalConsoleLog = console.log.bind(console);
+const originalConsoleError = console.error.bind(console);
+console.log = (...args) => {
+  stdoutLogStream.write(formatConsoleArgs(...args));
+  originalConsoleLog(...args);
+};
+console.error = (...args) => {
+  stderrLogStream.write(formatConsoleArgs(...args));
+  originalConsoleError(...args);
+};
 
 // Init App
 const app = express();

@@ -292,6 +292,26 @@ exports.deleteTableRecord = async (req, res) => {
     }
 };
 
+const readRecentLogLines = (filePath, numLines = 100) => {
+    if (!fs.existsSync(filePath)) return '';
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lines = content.trim().split('\n');
+    return lines.slice(-numLines).join('\n');
+};
+
+const clearLocalLogFiles = () => {
+    const logDir = path.join(__dirname, '..', 'logs');
+    const stdoutPath = path.join(logDir, 'stdout.log');
+    const stderrPath = path.join(logDir, 'stderr.log');
+    try {
+        fs.writeFileSync(stdoutPath, '');
+        fs.writeFileSync(stderrPath, '');
+    } catch (err) {
+        console.error('Failed to clear local log files:', err);
+        throw err;
+    }
+};
+
 // ==================== PM2 Logs ====================
 exports.getPM2Logs = (req, res) => {
     try {
@@ -300,11 +320,22 @@ exports.getPM2Logs = (req, res) => {
         // Try to get logs using pm2 jlist
         exec('pm2 jlist', (error, stdout, stderr) => {
             if (error) {
-                // If pm2 not available, return mock data
+                // Fallback to local application logs when PM2 is not available
+                const logDir = path.join(__dirname, '..', 'logs');
+                const stdoutLog = readRecentLogLines(path.join(logDir, 'stdout.log'), numLines);
+                const stderrLog = readRecentLogLines(path.join(logDir, 'stderr.log'), numLines);
+
                 return res.json({
-                    processes: [],
-                    error: 'PM2 not installed or no processes running',
-                    message: 'PM2 is niet geïnstalleerd of geen processen actief'
+                    processes: {
+                        app: {
+                            name: 'Application',
+                            pid: process.pid,
+                            status: 'running',
+                            stdout: stdoutLog,
+                            stderr: stderrLog
+                        }
+                    },
+                    message: 'PM2 is niet beschikbaar. Lokale applicatielogs worden weergegeven.'
                 });
             }
             
@@ -324,6 +355,25 @@ exports.getPM2Logs = (req, res) => {
                     }
                 });
                 
+                if (logsData.length === 0) {
+                    const logDir = path.join(__dirname, '..', 'logs');
+                    const stdoutLog = readRecentLogLines(path.join(logDir, 'stdout.log'), numLines);
+                    const stderrLog = readRecentLogLines(path.join(logDir, 'stderr.log'), numLines);
+
+                    return res.json({
+                        processes: {
+                            app: {
+                                name: 'Application',
+                                pid: process.pid,
+                                status: 'running',
+                                stdout: stdoutLog,
+                                stderr: stderrLog
+                            }
+                        },
+                        message: 'Geen PM2-processen gevonden. Lokale applicatielogs worden weergegeven.'
+                    });
+                }
+
                 // Get latest logs for each process
                 const logs = {};
                 logsData.forEach(proc => {
@@ -366,8 +416,13 @@ exports.clearPM2Logs = (req, res) => {
     try {
         exec('pm2 flush', (error, stdout, stderr) => {
             if (error) {
-                console.error('Failed to clear logs:', error);
-                return res.status(500).json({ error: 'Kon logs niet wissen: ' + error.message });
+                try {
+                    clearLocalLogFiles();
+                    return res.json({ success: true, message: 'Lokale logs succesvol gewist.' });
+                } catch (logError) {
+                    console.error('Failed to clear local logs:', logError);
+                    return res.status(500).json({ error: 'Kon lokale logs niet wissen: ' + logError.message });
+                }
             }
             res.json({ success: true, message: 'PM2 logs succesvol gewist.' });
         });
