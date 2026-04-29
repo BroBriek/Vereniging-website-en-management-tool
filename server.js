@@ -182,6 +182,7 @@ app.use((req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err);
+  logMonitor.notifyError(err, `Express error at ${req.method} ${req.originalUrl}`);
   res.status(500).render('error', {
       title: 'Server Fout',
       status: 500,
@@ -191,12 +192,13 @@ app.use((err, req, res, next) => {
   });
 });
 
+const logMonitor = require('./services/LogMonitorService');
+
 // Start Server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
-    // Initialize PM2 Log Monitor
-    require('./services/LogMonitorService').init();
+    logMonitor.init();
     // Initialize Birthday Notifications
     require('./services/BirthdayService').init();
     // Initialize Weekly Registration Update
