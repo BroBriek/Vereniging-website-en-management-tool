@@ -21,7 +21,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-RUN npm ci --production && npm rebuild sqlite3 --build-from-source
+RUN npm install --omit=dev && npm rebuild sqlite3 --build-from-source
 
 COPY . .
 
