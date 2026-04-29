@@ -669,6 +669,20 @@ exports.restoreBackup = async (req, res) => {
         const sessionFile = path.join(rootDir, 'sessions.sqlite');
         const uploadsDir = path.join(rootDir, 'public', 'uploads');
         const feedUploadsDir = path.join(rootDir, 'public', 'feed_uploads');
+        const gameUploadsDir = path.join(rootDir, 'public', 'game_uploads');
+
+        const emptyDirectory = (dir) => {
+            if (!fs.existsSync(dir)) return;
+            for (const entry of fs.readdirSync(dir)) {
+                const entryPath = path.join(dir, entry);
+                const stats = fs.lstatSync(entryPath);
+                if (stats.isDirectory()) {
+                    fs.rmSync(entryPath, { recursive: true, force: true });
+                } else {
+                    fs.unlinkSync(entryPath);
+                }
+            }
+        };
         
         // Restore Database
         const backupDb = path.join(backupPath, 'database.sqlite');
@@ -694,21 +708,25 @@ exports.restoreBackup = async (req, res) => {
         // Restore Uploads
         const backupUploads = path.join(backupPath, 'uploads');
         if (fs.existsSync(backupUploads)) {
-            if (fs.existsSync(uploadsDir)) {
-                fs.rmSync(uploadsDir, { recursive: true, force: true });
-            }
             fs.mkdirSync(uploadsDir, { recursive: true });
+            emptyDirectory(uploadsDir);
             fs.cpSync(backupUploads, uploadsDir, { recursive: true });
         }
 
         // Restore Feed Uploads
         const backupFeedUploads = path.join(backupPath, 'feed_uploads');
         if (fs.existsSync(backupFeedUploads)) {
-            if (fs.existsSync(feedUploadsDir)) {
-                fs.rmSync(feedUploadsDir, { recursive: true, force: true });
-            }
             fs.mkdirSync(feedUploadsDir, { recursive: true });
+            emptyDirectory(feedUploadsDir);
             fs.cpSync(backupFeedUploads, feedUploadsDir, { recursive: true });
+        }
+
+        // Restore Game Uploads
+        const backupGameUploads = path.join(backupPath, 'game_uploads');
+        if (fs.existsSync(backupGameUploads)) {
+            fs.mkdirSync(gameUploadsDir, { recursive: true });
+            emptyDirectory(gameUploadsDir);
+            fs.cpSync(backupGameUploads, gameUploadsDir, { recursive: true });
         }
 
         res.json({ success: true, message: 'Backup succesvol teruggezet. De site is hersteld naar de geselecteerde staat.' });

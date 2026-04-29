@@ -1,0 +1,19 @@
+services:
+  chiro-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: chirosite:latest
+    container_name: chirosite
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./database.sqlite:/app/database.sqlite:Z
+      - ./sessions.sqlite:/app/sessions.sqlite:Z
+      - ./backups:/app/backups:Z
+      - ./public/uploads:/app/public/uploads:Z
+      - ./public/feed_uploads:/app/public/feed_uploads:Z
+      - ./public/game_uploads:/app/public/game_uploads:Z

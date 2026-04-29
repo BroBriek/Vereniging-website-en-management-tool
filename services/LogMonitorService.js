@@ -9,11 +9,27 @@ const RATE_LIMIT_MS = 5 * 60 * 1000; // 5 minutes
 const getAdminEmail = async () => {
   try {
     const admin = await User.findOne({ where: { username: 'admin' } });
-    return admin ? admin.email : null;
+    if (admin && admin.email) return admin.email;
   } catch (error) {
     console.error('Error finding admin user:', error);
-    return null;
   }
+  return process.env.ADMIN_EMAIL || process.env.IONOS_EMAIL || process.env.GMAIL_EMAIL || process.env.MAILERSEND_FROM || null;
+};
+
+const formatError = (error, context = '') => {
+  let message;
+  if (typeof error === 'string') {
+    message = error;
+  } else if (error && error.stack) {
+    message = error.stack;
+  } else {
+    try {
+      message = JSON.stringify(error, null, 2);
+    } catch (stringifyError) {
+      message = String(error);
+    }
+  }
+  return `${context ? `${context}\n\n` : ''}${message}`;
 };
 
 const sendErrorNotification = async (errorLog) => {
@@ -25,18 +41,18 @@ const sendErrorNotification = async (errorLog) => {
 
   const adminEmail = await getAdminEmail();
   if (!adminEmail) {
-    console.log('No admin email found (username: admin). Cannot send notification.');
+    console.log('No admin email configured. Cannot send notification.');
     return;
   }
 
   try {
     await sendMail({
       to: adminEmail,
-      subject: '⚠️ Foutmelding in PM2 Log ⚠️',
-      text: `Er is een fout gedetecteerd in de PM2 logs:\n\n${errorLog}\n\n(Dit is een automatisch bericht. Je ontvangt de komende 5 minuten geen nieuwe meldingen.)`,
+      subject: '⚠️ Foutmelding in de applicatie ⚠️',
+      text: `Er is een fout gedetecteerd in de applicatie:\n\n${errorLog}\n\n(Dit is een automatisch bericht. Je ontvangt de komende 5 minuten geen nieuwe meldingen.)`,
       html: `
-        <h3>⚠️ Foutmelding in PM2 Log ⚠️</h3>
-        <p>Er is een fout gedetecteerd in de PM2 logs:</p>
+        <h3>⚠️ Foutmelding in de applicatie ⚠️</h3>
+        <p>Er is een fout gedetecteerd in de applicatie:</p>
         <pre style="background: #f4f4f4; padding: 10px; border: 1px solid #ddd; overflow-x: auto;">${errorLog}</pre>
         <p><small>(Dit is een automatisch bericht. Je ontvangt de komende 5 minuten geen nieuwe meldingen.)</small></p>
       `
@@ -86,35 +102,51 @@ const watchFile = (filePath) => {
   });
 };
 
-const init = () => {
-    exec('pm2 jlist', (err, stdout, stderr) => {
-        if (err) {
-            console.log('PM2 not detected or failed to list processes. Log monitoring skipped.');
-            return;
-        }
-
-        try {
-            const processes = JSON.parse(stdout);
-            const watchedPaths = new Set();
-
-            processes.forEach(proc => {
-                if (proc.pm2_env && proc.pm2_env.pm_err_log_path) {
-                    const logPath = proc.pm2_env.pm_err_log_path;
-                    // Only watch if file exists
-                    if (!watchedPaths.has(logPath) && fs.existsSync(logPath)) {
-                        watchedPaths.add(logPath);
-                        watchFile(logPath);
-                    }
-                }
-            });
-            
-            if (watchedPaths.size === 0) {
-                console.log('No accessible PM2 error logs found to monitor.');
-            }
-        } catch (parseError) {
-            console.error('Failed to parse PM2 output for monitoring:', parseError);
-        }
-    });
+const handleProcessError = async (error, context) => {
+  console.error(context, error);
+  await sendErrorNotification(formatError(error, context));
 };
 
-module.exports = { init };
+const init = () => {
+  process.on('uncaughtException', (err) => {
+    handleProcessError(err, 'Uncaught Exception');
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    handleProcessError(reason, 'Unhandled Rejection');
+  });
+
+  exec('pm2 jlist', (err, stdout, stderr) => {
+    if (err) {
+      console.log('PM2 not detected or failed to list processes. PM2 log monitoring skipped.');
+      return;
+    }
+
+    try {
+      const processes = JSON.parse(stdout);
+      const watchedPaths = new Set();
+
+      processes.forEach(proc => {
+        if (proc.pm2_env && proc.pm2_env.pm_err_log_path) {
+          const logPath = proc.pm2_env.pm_err_log_path;
+          if (!watchedPaths.has(logPath) && fs.existsSync(logPath)) {
+            watchedPaths.add(logPath);
+            watchFile(logPath);
+          }
+        }
+      });
+      
+      if (watchedPaths.size === 0) {
+        console.log('No accessible PM2 error logs found to monitor.');
+      }
+    } catch (parseError) {
+      console.error('Failed to parse PM2 output for monitoring:', parseError);
+    }
+  });
+};
+
+const notifyError = async (error, context = 'Application Error') => {
+  await sendErrorNotification(formatError(error, context));
+};
+
+module.exports = { init, notifyError };

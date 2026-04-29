@@ -50,6 +50,26 @@ Om de applicatie lokaal te draaien, volg je de onderstaande stappen:
     ```
     De applicatie is nu beschikbaar via `http://localhost:3000` (of de poort die je in `.env` hebt ingesteld).
 
+## Docker Deployment
+
+Deze applicatie kan eenvoudig in Docker worden uitgevoerd met de meegeleverde `Dockerfile` en `docker-compose.yml`.
+
+1.  Maak een `.env` bestand aan op basis van `.env.example`.
+2.  Zorg dat de volgende mappen aanwezig zijn op de host:
+    ```bash
+    mkdir -p public/uploads public/feed_uploads public/game_uploads
+    ```
+3.  Start de container:
+    ```bash
+    docker compose up --build -d
+    ```
+4.  Stoppen:
+    ```bash
+    docker compose down
+    ```
+
+> De database (`database.sqlite`) en de uploads-mappen worden via bind mounts buiten de container gehouden. Dit betekent dat je bestaande data bewaard blijft en dat de container opnieuw kan worden opgebouwd zonder verlies.
+
 ## Configuratie Vereisten
 
 *   **Node.js**: Zorg ervoor dat Node.js (LTS-versie aanbevolen) op je systeem is geïnstalleerd.
