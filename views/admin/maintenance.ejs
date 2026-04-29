@@ -312,7 +312,7 @@
                     <!-- Logs Tab -->
                     <div id="logs" class="tab-content d-none">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h4 class="mb-0 fw-bold">PM2 Proceslogs</h4>
+                            <h4 class="mb-0 fw-bold">Applicatielogs</h4>
                             <div class="btn-group shadow-sm">
                                 <button class="btn btn-outline-danger" onclick="clearPM2Logs()">
                                     <i class="bi bi-trash me-2"></i>Wissen
@@ -733,7 +733,7 @@
     pag.innerHTML = html;
   }
 
-  // ===== PM2 LOGS =====
+  // ===== APPLICATION LOGS =====
   function refreshPM2Logs() {
     const container = document.getElementById('logs-content');
     container.innerHTML = '<div class="text-center py-5"><div class="loading-spinner mx-auto"></div></div>';
@@ -741,17 +741,21 @@
     fetch('/admin/api/pm2-logs?lines=100')
       .then(r => r.json())
       .then(data => {
-        if (data.error) {
-            container.innerHTML = `<div class="alert alert-info border-0 shadow-sm">${data.message}</div>`;
+        if (data.error && !data.processes) {
+            container.innerHTML = `<div class="alert alert-info border-0 shadow-sm">${escapeHtml(data.message || data.error)}</div>`;
             return;
         }
-        
+
         let html = '';
-        for (const [name, log] of Object.entries(data.processes)) {
+        if (data.message) {
+          html += `<div class="alert alert-info border-0 shadow-sm mb-4">${escapeHtml(data.message)}</div>`;
+        }
+
+        for (const [name, log] of Object.entries(data.processes || {})) {
           html += `
             <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden">
                 <div class="card-header border-0 d-flex align-items-center bg-white py-3 px-4">
-                    <span class="badge ${log.status === 'online' ? 'bg-success' : 'bg-danger'} rounded-pill me-3" style="width: 12px; height: 12px; padding:0;">&nbsp;</span>
+                    <span class="badge ${log.status === 'online' || log.status === 'running' ? 'bg-success' : 'bg-danger'} rounded-pill me-3" style="width: 12px; height: 12px; padding:0;">&nbsp;</span>
                     <h5 class="mb-0 fw-bold">${name} <small class="text-muted fw-normal ms-2">PID: ${log.pid}</small></h5>
                 </div>
                 <div class="card-body p-4 bg-light">
@@ -769,7 +773,7 @@
         }
         container.innerHTML = html || '<p class="text-center text-muted">Geen actieve processen gevonden</p>';
       })
-      .catch(err => container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`);
+      .catch(err => container.innerHTML = `<div class="alert alert-danger">${escapeHtml(err.message)}</div>`);
   }
 
   // ===== CALENDAR STATS =====
