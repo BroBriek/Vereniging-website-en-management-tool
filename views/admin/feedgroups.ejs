@@ -9,6 +9,11 @@
   </div>
 </div>
 
+<%
+  const normalGroups = groups.filter(g => !g.isEvent);
+  const eventGroups = groups.filter(g => g.isEvent);
+%>
+
 <!-- Add Page Modal -->
 <div class="modal fade" id="addPageModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg">
@@ -33,6 +38,10 @@
               <input type="text" name="description" class="form-control" placeholder="Omschrijving">
             </div>
           </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="newGroupIsEvent" name="isEvent">
+            <label class="form-check-label" for="newGroupIsEvent">Dit is een event</label>
+          </div>
           <div class="text-end mt-3">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
             <button type="submit" class="btn btn-success">Opslaan & Toevoegen</button>
@@ -43,8 +52,8 @@
   </div>
 </div>
 
-<h3>Bestaande Leidingshoekjes</h3>
-<div class="table-responsive">
+<h3>Leidingshoekjes</h3>
+<div class="table-responsive mb-5">
   <table class="table table-striped align-middle">
     <thead>
       <tr>
@@ -55,7 +64,7 @@
       </tr>
     </thead>
     <tbody>
-      <% groups.forEach(g => { %>
+      <% normalGroups.forEach(g => { %>
         <tr>
           <td>
             <div class="fw-bold"><%= g.name %></div>
@@ -66,7 +75,7 @@
           <td class="d-none d-sm-table-cell"><%= g.year || '' %></td>
           <td class="text-end">
             <div class="btn-group">
-              <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('<%= g.id %>', '<%= g.name %>', '<%= g.year || '' %>', '<%= g.description || '' %>')" title="Bewerken">
+              <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('<%= g.id %>', '<%= g.name %>', '<%= g.year || '' %>', '<%= g.description || '' %>', <%= g.isEvent ? 'true' : 'false' %>)" title="Bewerken">
                 <i class="bi bi-pencil"></i>
               </button>
               <form action="/admin/feedgroups/<%= g.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Verwijderen?');" style="display:inline;">
@@ -79,6 +88,45 @@
     </tbody>
   </table>
 </div>
+
+<% if (eventGroups.length) { %>
+  <h3>Evenementen / Leidingsoekjes</h3>
+  <div class="table-responsive mb-5">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Naam</th>
+          <th class="d-none d-md-table-cell">Slug</th>
+          <th class="d-none d-sm-table-cell">Jaar</th>
+          <th class="text-end">Acties</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% eventGroups.forEach(g => { %>
+          <tr>
+            <td>
+              <div class="fw-bold"><%= g.name %> <span class="badge bg-warning text-dark ms-2">Event</span></div>
+              <div class="d-md-none small"><code><%= g.slug %></code></div>
+              <div class="d-sm-none small text-muted"><%= g.year || '' %></div>
+            </td>
+            <td class="d-none d-md-table-cell"><code><%= g.slug %></code></td>
+            <td class="d-none d-sm-table-cell"><%= g.year || '' %></td>
+            <td class="text-end">
+              <div class="btn-group">
+                <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('<%= g.id %>', '<%= g.name %>', '<%= g.year || '' %>', '<%= g.description || '' %>', <%= g.isEvent ? 'true' : 'false' %>)" title="Bewerken">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <form action="/admin/feedgroups/<%= g.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Verwijderen?');" style="display:inline;">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijderen"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } %>
 
 <!-- Edit Modal -->
 <div class="modal fade" id="editGroupModal" tabindex="-1">
@@ -103,6 +151,10 @@
             <label>Omschrijving</label>
             <input type="text" name="description" id="editDesc" class="form-control">
           </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="editIsEvent" name="isEvent">
+            <label class="form-check-label" for="editIsEvent">Dit is een event</label>
+          </div>
           <div class="text-end">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
             <button type="submit" class="btn btn-primary">Opslaan</button>
@@ -114,7 +166,7 @@
 </div>
 
 <script>
-function openEditModal(id, name, year, desc) {
+function openEditModal(id, name, year, desc, isEvent) {
     const form = document.getElementById('editGroupForm');
     // Ensure ID is valid before setting action
     if (id) {
@@ -124,6 +176,7 @@ function openEditModal(id, name, year, desc) {
     document.getElementById('editName').value = name;
     document.getElementById('editYear').value = year;
     document.getElementById('editDesc').value = desc;
+    document.getElementById('editIsEvent').checked = isEvent === true || isEvent === 'true';
     
     const modal = new bootstrap.Modal(document.getElementById('editGroupModal'));
     modal.show();

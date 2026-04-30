@@ -13,8 +13,9 @@
     <!-- Top Info Text -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4 p-md-5">
-            <% if (content && content.top_text) { %>
-                <div class="fs-5"><%- content.top_text.content %></div>
+            <% const topText = (content && content.top_text && content.top_text.content) ? content.top_text.content : (content && content.top_text ? content.top_text : ''); %>
+            <% if (topText) { %>
+                <div class="fs-5"><%- topText %></div>
             <% } %>
 
             <% if (isRegistrationOpen) { %>
@@ -136,12 +137,13 @@
     </div>
 
     <!-- Dynamic Footer Text -->
-    <% if (content && content.info_text) { %>
-        <div class="card border-0 bg-chiro-blue text-white rounded-4 shadow-sm">
+    <% const infoText = (content && content.info_text && content.info_text.content) ? content.info_text.content : (content && content.info_text ? content.info_text : ''); %>
+    <% if (infoText) { %>
+        <div class="card border-0 bg-light text-dark rounded-4 shadow-sm">
             <div class="card-body p-4 p-md-5">
                 <h3 class="fw-bold mb-3" style="color: var(--chiro-yellow);"><i class="bi bi-info-circle me-2"></i>Belangrijke Info</h3>
-                <div class="fs-5 opacity-90">
-                    <%- content.info_text.content %>
+                <div class="fs-5 opacity-90 text-dark">
+                    <%- infoText %>
                 </div>
             </div>
         </div>
