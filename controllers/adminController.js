@@ -103,8 +103,24 @@ exports.deleteLeader = async (req, res) => {
 };
 
 exports.getEvents = async (req, res) => {
-    const events = await Event.findAll({ order: [['date', 'DESC']] });
-    res.render('admin/events', { title: 'Beheer Kalender', events, user: req.user });
+    const allEvents = await Event.findAll({ order: [['date', 'DESC']] });
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - 3);
+    cutoff.setHours(0, 0, 0, 0);
+
+    const activeEvents = [];
+    const archivedEvents = [];
+
+    allEvents.forEach(event => {
+        const referenceDate = new Date(`${event.endDate || event.date}T00:00:00`);
+        if (referenceDate < cutoff) {
+            archivedEvents.push(event);
+        } else {
+            activeEvents.push(event);
+        }
+    });
+
+    res.render('admin/events', { title: 'Beheer Kalender', activeEvents, archivedEvents, user: req.user });
 };
 
 exports.postEvent = async (req, res) => {
@@ -647,7 +663,8 @@ exports.postFeedGroup = async (req, res) => {
         const base = (name + (year ? '-' + year : '')).toLowerCase();
         const slug = base.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
         if (!name) return res.redirect('/admin/feedgroups?error=Naam vereist');
-        await FeedGroup.create({ name, year, description, slug });
+        const isEvent = req.body.isEvent === 'on';
+        await FeedGroup.create({ name, year, description, slug, isEvent });
         res.redirect('/admin/feedgroups');
     } catch (error) {
         console.error('Error creating feed group:', error);
@@ -668,10 +685,11 @@ exports.updateFeedGroup = async (req, res) => {
         name = (name || '').trim();
         const base = (name + (year ? '-' + year : '')).toLowerCase();
         const slug = base.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        const isEvent = req.body.isEvent === 'on';
 
         if (!name) return res.redirect('/admin/feedgroups?error=Naam vereist');
 
-        await group.update({ name, year, description, slug });
+        await group.update({ name, year, description, slug, isEvent });
         res.redirect('/admin/feedgroups?success=Aangepast');
     } catch (error) {
         console.error('Error updating feed group:', error);

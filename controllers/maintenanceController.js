@@ -575,6 +575,10 @@ exports.sendTestNotification = async (req, res) => {
 // ==================== Backup Management ====================
 exports.getBackups = (req, res) => {
     try {
+        if (req.user.username !== 'admin') {
+            return res.status(403).json({ error: 'Geen toegang' });
+        }
+
         const backupDir = path.join(__dirname, '..', 'backups');
         
         if (!fs.existsSync(backupDir)) {
@@ -610,6 +614,10 @@ exports.getBackups = (req, res) => {
 
 exports.createBackup = (req, res) => {
     try {
+        if (req.user.username !== 'admin') {
+            return res.status(403).json({ error: 'Geen toegang' });
+        }
+
         const scriptPath = path.join(__dirname, '..', 'scripts', 'backup.js');
         
         exec(`node "${scriptPath}"`, (error, stdout, stderr) => {
@@ -627,6 +635,10 @@ exports.createBackup = (req, res) => {
 
 exports.deleteBackup = (req, res) => {
     try {
+        if (req.user.username !== 'admin') {
+            return res.status(403).json({ error: 'Geen toegang' });
+        }
+
         const { name } = req.body;
         if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
         
@@ -651,6 +663,10 @@ exports.deleteBackup = (req, res) => {
 
 exports.getBackupContent = (req, res) => {
     try {
+        if (req.user.username !== 'admin') {
+            return res.status(403).json({ error: 'Geen toegang' });
+        }
+
         const { name } = req.query;
         if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
 
