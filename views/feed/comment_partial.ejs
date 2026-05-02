@@ -45,8 +45,8 @@ function highlightMentions(text) {
             return part;
         }
         // Text node processing: mentions
-        // Improved regex to support multi-word names (e.g. @Jan Van Damme)
-        return part.replace(/@([A-Z][\w]*(?:\s+[A-Z][\w]*)*|\w+)/g, (match, username) => {
+        // Improved regex to support multi-word names (e.g. @Jan Van Damme, @Zoé Van Damme)
+        return part.replace(/@([A-ZÀ-ÖØ-Þ][\wÀ-ÿ]*(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ÿ]*)*|[\wÀ-ÿ]+)/g, (match, username) => {
             const capitalized = username.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
             return `<span class="text-primary fw-bold">@${capitalized}</span>`;
         });

@@ -64,11 +64,11 @@ const highlightMentions = (text) => {
             return part;
         }
         // Text node processing: mentions
-        // Improved regex to support multi-word names (e.g. @Jan Van Damme)
+        // Improved regex to support multi-word names (e.g. @Jan Van Damme, @Zoé Van Damme)
         // Matches @ followed by:
-        // 1. Multiple capitalized words (e.g. Jan Van Damme)
-        // 2. Or a single word (e.g. admin)
-        return part.replace(/@([A-Z][\w]*(?:\s+[A-Z][\w]*)*|\w+)/g, (match, username) => {
+        // 1. Multiple capitalized words (including accented chars)
+        // 2. Or a single word
+        return part.replace(/@([A-ZÀ-ÖØ-Þ][\wÀ-ÿ]*(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ÿ]*)*|[\wÀ-ÿ]+)/g, (match, username) => {
             const capitalized = username.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
             return `<span class="text-primary fw-bold">@${capitalized}</span>`;
         });
@@ -387,8 +387,8 @@ exports.getFeed = async (req, res) => {
 // Helper to find mentions
 const extractMentions = (text) => {
     if (!text) return [];
-    // Improved regex to support multi-word names (e.g. @Jan Van Damme)
-    const matches = text.match(/@([A-Z][\w]*(?:\s+[A-Z][\w]*)*|\w+)/g);
+    // Improved regex to support multi-word names (e.g. @Jan Van Damme, @Zoé Van Damme)
+    const matches = text.match(/@([A-ZÀ-ÖØ-Þ][\wÀ-ÿ]*(?:\s+[A-ZÀ-ÖØ-Þ][\wÀ-ÿ]*)*|[\wÀ-ÿ]+)/g);
     if (!matches) return [];
     return [...new Set(matches.map(m => m.substring(1).toLowerCase()))]; // Remove @ and unique
 };
