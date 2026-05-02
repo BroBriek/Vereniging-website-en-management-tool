@@ -44,8 +44,10 @@ function highlightMentions(text) {
             }
             return part;
         }
-        return part.replace(/@(\w+)/g, (match, username) => {
-            const capitalized = username.charAt(0).toUpperCase() + username.slice(1).toLowerCase();
+        // Text node processing: mentions
+        // Improved regex to support multi-word names (e.g. @Jan Van Damme)
+        return part.replace(/@([A-Z][\w]*(?:\s+[A-Z][\w]*)*|\w+)/g, (match, username) => {
+            const capitalized = username.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
             return `<span class="text-primary fw-bold">@${capitalized}</span>`;
         });
     });
