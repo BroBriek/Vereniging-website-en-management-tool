@@ -416,7 +416,8 @@ exports.postCreatePost = async (req, res) => {
                         return {
                             question: p.question,
                             options: opts,
-                            allowMultiple: p.multiple === 'on' || p.multiple === 'true'
+                            allowMultiple: p.multiple === 'on' || p.multiple === 'true',
+                            allowUserOptions: p.allowUserOptions === 'on' || p.allowUserOptions === 'true'
                         };
                     }
                     return null;
@@ -633,6 +634,40 @@ exports.postComment = async (req, res) => {
     }
 };
 
+const getPollStats = async (postId, pollIndex) => {
+    const allResponses = await PostResponse.findAll({
+        where: { postId, type: 'poll' },
+        include: [{ model: User, as: 'user', attributes: ['username'] }]
+    });
+
+    const counts = {};
+    const voters = {};
+    
+    allResponses.forEach(r => {
+        const rData = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+        const pIdx = (rData && rData.pollIndex !== undefined) ? parseInt(rData.pollIndex) : 0;
+        
+        if (pIdx === pollIndex) {
+            let rIndices = Array.isArray(rData.optionIndices) ? rData.optionIndices : (rData.optionIndex !== undefined ? (Array.isArray(rData.optionIndex) ? rData.optionIndex : [parseInt(rData.optionIndex)]) : []);
+            rIndices.forEach(idx => {
+                counts[idx] = (counts[idx] || 0) + 1;
+                if (r.user) {
+                    if (!voters[idx]) voters[idx] = [];
+                    voters[idx].push(r.user.username.charAt(0).toUpperCase() + r.user.username.slice(1).toLowerCase());
+                }
+            });
+        }
+    });
+    
+    const totalVotes = allResponses.filter(r => {
+         const rData = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+         const pIdx = (rData && rData.pollIndex !== undefined) ? parseInt(rData.pollIndex) : 0;
+         return pIdx === pollIndex;
+    }).length;
+
+    return { counts, voters, totalVotes };
+};
+
 exports.postResponse = async (req, res) => {
 
     try {
@@ -663,8 +698,10 @@ exports.postResponse = async (req, res) => {
             });
 
             for (const resp of existingResponses) {
-                // If pollIndex is missing in data (legacy), assume 0
-                const pIdx = (resp.data && resp.data.pollIndex !== undefined) ? resp.data.pollIndex : 0;
+                // Robustly check for pollIndex even if data is a string
+                const rData = typeof resp.data === 'string' ? JSON.parse(resp.data) : resp.data;
+                const pIdx = (rData && rData.pollIndex !== undefined) ? parseInt(rData.pollIndex) : 0;
+                
                 if (pIdx === pollIndex) {
                     await resp.destroy();
                 }
@@ -681,43 +718,12 @@ exports.postResponse = async (req, res) => {
 
             // Handle AJAX: Return updated poll stats
             if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-                const allResponses = await PostResponse.findAll({
-                    where: { postId, type: 'poll' },
-                    include: [{ model: User, as: 'user', attributes: ['username'] }]
-                });
-
-                // Calculate counts for this specific pollIndex
-                const counts = {};
-                const voters = {};
-                // Initialize is hard because we don't have the poll options length here easily without fetching Post
-                // But we can just return what we have. Frontend can merge.
-                // Actually better to fetch Post to be safe or just return dynamic maps.
-                
-                allResponses.forEach(r => {
-                    // Check if this response belongs to the current pollIndex
-                    const pIdx = (r.data && r.data.pollIndex !== undefined) ? r.data.pollIndex : 0;
-                    if (pIdx === pollIndex) {
-                        let rIndices = Array.isArray(r.data.optionIndices) ? r.data.optionIndices : (r.data.optionIndex !== undefined ? [parseInt(r.data.optionIndex)] : []);
-                        rIndices.forEach(idx => {
-                            counts[idx] = (counts[idx] || 0) + 1;
-                            if (r.user) {
-                                if (!voters[idx]) voters[idx] = [];
-                                voters[idx].push(r.user.username.charAt(0).toUpperCase() + r.user.username.slice(1).toLowerCase());
-                            }
-                        });
-                    }
-                });
-                
-                // Calculate total votes for this poll
-                const totalVotes = allResponses.filter(r => {
-                     const pIdx = (r.data && r.data.pollIndex !== undefined) ? r.data.pollIndex : 0;
-                     return pIdx === pollIndex;
-                }).length;
+                const pollStats = await getPollStats(postId, pollIndex);
 
                 return res.json({ 
                     success: true, 
                     myVotes: indices,
-                    pollStats: { counts, voters, totalVotes }
+                    pollStats
                 });
             }
         } else {
@@ -748,6 +754,94 @@ exports.postResponse = async (req, res) => {
     } catch (error) {
         console.error('Response Error:', error);
         res.redirect('/feed?error=Fout bij verzenden');
+    }
+};
+
+exports.addPollOption = async (req, res) => {
+    try {
+        const { id, pollIndex } = req.params;
+        const { option } = req.body;
+        const userId = req.user.id;
+
+        if (!option || option.trim() === "") {
+            return res.status(400).json({ success: false, error: "Optie mag niet leeg zijn." });
+        }
+
+        const post = await Post.findByPk(id);
+        if (!post) {
+            return res.status(404).json({ success: false, error: "Bericht niet gevonden." });
+        }
+
+        let group = null;
+        if (post.groupId) group = await FeedGroup.findByPk(post.groupId);
+        const ok = await ensureAccessToGroup(req.user, group || null);
+        if (!ok) return res.status(403).json({ success: false, error: "Geen toegang." });
+
+        let polls = Array.isArray(post.poll) ? post.poll : [post.poll];
+        const pIdx = parseInt(pollIndex);
+
+        if (!polls[pIdx]) {
+            return res.status(404).json({ success: false, error: "Poll niet gevonden." });
+        }
+
+        if (!polls[pIdx].allowUserOptions) {
+            return res.status(403).json({ success: false, error: "Gebruikers mogen geen opties toevoegen aan deze poll." });
+        }
+
+        // Add the new option
+        const newOptions = [...polls[pIdx].options, option.trim()];
+        const newOptionIndex = newOptions.length - 1;
+
+        // Create a new polls array to force Sequelize to detect the change
+        // (geneste wijzigingen in JSON fields worden niet altijd gedetecteerd)
+        const updatedPolls = JSON.parse(JSON.stringify(polls));
+        updatedPolls[pIdx].options = newOptions;
+        
+        // Save the post - Ensure we save as array if it was an array
+        await post.update({ poll: Array.isArray(post.poll) ? updatedPolls : updatedPolls[0] });
+
+        // Force reload/refresh for all users? No, just for the current user via redirect or JSON response
+        // In this case, we return JSON.
+
+        // Automatically vote for the new option
+        // Remove existing response for this specific poll/user
+        const existingResponses = await PostResponse.findAll({
+            where: { postId: id, userId, type: 'poll' }
+        });
+
+        let indices = [newOptionIndex];
+        const isMultiple = polls[pIdx].allowMultiple === true;
+
+        for (const resp of existingResponses) {
+            // Robustly check for pollIndex even if data is a string
+            const rData = typeof resp.data === 'string' ? JSON.parse(resp.data) : resp.data;
+            const respPollIdx = (rData && rData.pollIndex !== undefined) ? parseInt(rData.pollIndex) : 0;
+            
+            if (respPollIdx === pIdx) {
+                // If it's a multi-choice poll, preserve previous selections
+                if (isMultiple) {
+                    const oldIndices = Array.isArray(rData.optionIndices) 
+                        ? rData.optionIndices 
+                        : (rData.optionIndex !== undefined ? (Array.isArray(rData.optionIndex) ? rData.optionIndex : [parseInt(rData.optionIndex)]) : []);
+                    indices = [...new Set([...oldIndices.map(i => parseInt(i)), newOptionIndex])];
+                }
+                await resp.destroy();
+            }
+        }
+
+        // Create new response
+        await PostResponse.create({
+            postId: id,
+            userId,
+            type: 'poll',
+            data: { optionIndices: indices, pollIndex: pIdx }
+        });
+
+        const pollStats = await getPollStats(id, pIdx);
+        return res.json({ success: true, optionIndex: newOptionIndex, pollStats, myVotes: indices });
+    } catch (error) {
+        console.error('Add Poll Option Error:', error);
+        return res.status(500).json({ success: false, error: "Server fout." });
     }
 };
 
@@ -909,7 +1003,8 @@ exports.updatePost = async (req, res) => {
                         return {
                             question: p.question,
                             options: opts,
-                            allowMultiple: p.multiple === 'on' || p.multiple === 'true'
+                            allowMultiple: p.multiple === 'on' || p.multiple === 'true',
+                            allowUserOptions: p.allowUserOptions === 'on' || p.allowUserOptions === 'true'
                         };
                     }
                     return null;
@@ -1232,5 +1327,18 @@ exports.fixImageApi = async (req, res) => {
     } catch (error) {
         console.error('Fix Image Error:', error);
         res.status(500).json({ error: 'Interne serverfout' });
+    }
+};
+
+exports.getPost = async (req, res) => {
+    try {
+        const post = await Post.findByPk(req.params.id);
+        if (!post) {
+            return res.status(404).json({ success: false, error: 'Post niet gevonden' });
+        }
+        res.json({ success: true, post });
+    } catch (error) {
+        console.error('Get Post Error:', error);
+        res.status(500).json({ success: false, error: 'Interne serverfout' });
     }
 };
