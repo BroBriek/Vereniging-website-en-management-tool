@@ -10,6 +10,7 @@ router.use(ensureAuthenticated);
 router.get('/api/users', feedController.searchUsers);
 router.get('/calendar', feedController.getCalendar);
 router.get('/', feedController.getFeed);
+router.get('/post/:id', feedController.getPost);
 router.get('/group/:slug', feedController.getFeed);
 router.get('/group/:slug/files', feedController.getGroupFiles);
 router.post('/group/create-event', upload.single('bannerImage'), compressFeedImage, feedController.postCreateEvent);
@@ -17,6 +18,7 @@ router.post('/group/:id/update', upload.single('bannerImage'), compressFeedImage
 router.post('/group/:id/delete', feedController.postDeleteEvent);
 router.post('/post', upload.array('attachments'), compressFeedImage, feedController.postCreatePost);
 router.post('/post/:id/update', upload.array('attachments'), compressFeedImage, feedController.updatePost);
+router.post('/post/:id/poll/:pollIndex/option', feedController.addPollOption);
 router.post('/post/:id/delete', feedController.deletePost);
 router.post('/post/:id/like', feedController.toggleLike);
 router.post('/comment', feedController.postComment);

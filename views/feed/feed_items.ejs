@@ -58,10 +58,15 @@
                         const polls = Array.isArray(post.poll) ? post.poll : [post.poll];
                         polls.forEach((pollItem, pollIndex) => {
                     %>
-                        <div class="bg-light p-3 rounded-3 mt-3 border poll-wrapper">
+                        <div class="bg-light p-3 rounded-3 mt-3 border poll-wrapper" data-post-id="<%= post.id %>">
                             <% 
                                 // Filter responses for THIS poll index
-                                const pollResponses = post.responses.filter(r => r.type === 'poll' && ((r.data.pollIndex === undefined && pollIndex === 0) || r.data.pollIndex === pollIndex));
+                                const pollResponses = post.responses.filter(r => {
+                                    if (r.type !== 'poll') return false;
+                                    const rData = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+                                    const rIdx = (rData && rData.pollIndex !== undefined) ? parseInt(rData.pollIndex) : 0;
+                                    return rIdx === pollIndex;
+                                });
                                 const totalVotes = pollResponses.length;
                                 
                                 const counts = {};
@@ -70,7 +75,8 @@
                                 let myVotes = [];
                                 
                                 pollResponses.forEach(r => {
-                                    let indices = Array.isArray(r.data.optionIndices) ? r.data.optionIndices : (r.data.optionIndex !== undefined ? [parseInt(r.data.optionIndex)] : []);
+                                    const rData = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+                                    let indices = Array.isArray(rData.optionIndices) ? rData.optionIndices : (rData.optionIndex !== undefined ? (Array.isArray(rData.optionIndex) ? rData.optionIndex : [parseInt(rData.optionIndex)]) : []);
                                     indices.forEach(idx => {
                                         if (counts[idx] !== undefined) {
                                             counts[idx]++;
@@ -130,6 +136,42 @@
                                     </div>
                                 <% }) %>
                             </div>
+
+                            <% if (pollItem.allowUserOptions) { %>
+                                <div class="mt-3 user-add-option-container">
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 small fw-500 transition-all" 
+                                            onclick="showAddUserOption(this)"
+                                            style="border-width: 1.5px; display: inline-block;">
+                                        <i class="bi bi-plus-circle me-2"></i> Optie toevoegen
+                                    </button>
+                                    <div class="add-option-input-wrapper d-none mt-2">
+                                        <div class="input-group input-group-sm rounded-3 overflow-hidden border">
+                                            <input type="text" 
+                                                   class="form-control form-control-sm border-0 ps-3" 
+                                                   placeholder="Typ je optie..." 
+                                                   onkeydown="if(event.key==='Enter') { event.preventDefault(); addUserPollOption(this, '<%= post.id %>', <%= pollIndex %>); } else if(event.key==='Escape') { event.preventDefault(); cancelAddUserOption(this); }"
+                                                   style="flex: 1;">
+                                            <button class="btn btn-primary border-0" 
+                                                    type="button" 
+                                                    onclick="addUserPollOption(this, '<%= post.id %>', <%= pollIndex %>)"
+                                                    title="Optie toevoegen (Enter)"
+                                                    style="padding: 0.4rem 0.9rem; white-space: nowrap;">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary border-0 border-start" 
+                                                    type="button" 
+                                                    onclick="cancelAddUserOption(this)"
+                                                    title="Annuleren (Escape)"
+                                                    style="padding: 0.4rem 0.9rem; white-space: nowrap;">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                        <small class="text-muted mt-2 d-block" style="font-size: 0.75rem; margin-left: 0.25rem;">
+                                            <i class="bi bi-info-circle me-1"></i>Je stemt automatisch op je eigen optie
+                                        </small>
+                                    </div>
+                                </div>
+                            <% } %>
                         </div>
                     <%  }); 
                        } 
@@ -223,22 +265,52 @@
                                     polls.forEach((pollItem, pIdx) => { 
                                         const uniqueId = 'edit_' + post.id + '_' + pIdx;
                                 %>
-                                    <div class="card border-light shadow-sm mb-3 poll-item" id="poll-item-<%= uniqueId %>">
-                                        <div class="card-body p-3 position-relative">
-                                            <button type="button" class="btn-close position-absolute top-0 end-0 m-2 small" aria-label="Verwijder poll" onclick="removePoll('<%= uniqueId %>')"></button>
-                                            <div class="mb-2">
-                                                <input type="text" class="form-control form-control-sm fw-bold" name="polls[<%= uniqueId %>][question]" placeholder="Poll Vraag" value="<%= pollItem.question %>" required>
+                                    <div class="card border-0 shadow-sm mb-3 poll-item overflow-hidden" id="poll-item-<%= uniqueId %>" style="border-radius: 15px;">
+                                        <div class="card-header bg-primary text-white border-0 d-flex justify-content-between align-items-center py-2 px-3">
+                                            <h6 class="mb-0 small fw-bold"><i class="bi bi-gear-fill me-2 opacity-75"></i>Poll Configureren</h6>
+                                            <button type="button" class="btn-close btn-close-white small" style="font-size: 0.7rem;" aria-label="Verwijder poll" onclick="removePoll('<%= uniqueId %>')"></button>
+                                        </div>
+                                        <div class="card-body p-3 bg-white">
+                                            <div class="mb-3">
+                                                <label class="form-label small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Stel je vraag</label>
+                                                <div class="input-group input-group-sm rounded-3 overflow-hidden border">
+                                                    <span class="input-group-text bg-light border-0 text-primary px-3"><i class="bi bi-question-circle-fill"></i></span>
+                                                    <input type="text" class="form-control form-control-sm fw-bold border-0 ps-1 bg-light" name="polls[<%= uniqueId %>][question]" placeholder="Waar wil je over stemmen?" value="<%= pollItem.question %>" required>
+                                                </div>
                                             </div>
-                                            <div class="form-check mb-2">
-                                                <input class="form-check-input" type="checkbox" name="polls[<%= uniqueId %>][multiple]" id="pollMultiple-<%= uniqueId %>" <%= pollItem.allowMultiple ? 'checked' : '' %>>
-                                                <label class="form-check-label small" for="pollMultiple-<%= uniqueId %>">Meerdere antwoorden mogelijk</label>
+                                            
+                                            <div class="row g-2 mb-3">
+                                                <div class="col-sm-6">
+                                                    <div class="form-check form-switch p-2 rounded-3 border bg-light d-flex align-items-center justify-content-between px-3">
+                                                        <label class="form-check-label small mb-0 ms-1 text-dark fw-500" for="pollMultiple-<%= uniqueId %>">Meerdere stemmen</label>
+                                                        <input class="form-check-input ms-0 mt-0 shadow-none" type="checkbox" name="polls[<%= uniqueId %>][multiple]" id="pollMultiple-<%= uniqueId %>" <%= pollItem.allowMultiple ? 'checked' : '' %>>
+                                                    </div>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <div class="form-check form-switch p-2 rounded-3 border bg-light d-flex align-items-center justify-content-between px-3">
+                                                        <label class="form-check-label small mb-0 ms-1 text-dark fw-500" for="pollUserOptions-<%= uniqueId %>">User kan antwoorden toevoegen</label>
+                                                        <input class="form-check-input ms-0 mt-0 shadow-none" type="checkbox" name="polls[<%= uniqueId %>][allowUserOptions]" id="pollUserOptions-<%= uniqueId %>" <%= pollItem.allowUserOptions ? 'checked' : '' %>>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div id="pollOptions-<%= uniqueId %>">
-                                                <% pollItem.options.forEach(opt => { %>
-                                                    <input type="text" class="form-control form-control-sm mb-2" name="polls[<%= uniqueId %>][options][]" placeholder="Optie" value="<%= opt %>">
+
+                                            <label class="form-label small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Antwoordopties</label>
+                                            <div id="pollOptions-<%= uniqueId %>" class="poll-options-list mb-2">
+                                                <% pollItem.options.forEach((opt, oIdx) => { %>
+                                                    <div class="input-group input-group-sm mb-2 shadow-none transition-all rounded-3 overflow-hidden border">
+                                                        <span class="input-group-text bg-white border-0 text-muted opacity-50 px-3"><i class="bi bi-grip-vertical"></i></span>
+                                                        <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[<%= uniqueId %>][options][]" placeholder="Optie <%= oIdx + 1 %>" value="<%= opt %>">
+                                                        <% if (oIdx >= 2) { %>
+                                                            <button class="btn btn-outline-danger border-0 px-3" type="button" onclick="const p=this.parentElement; p.style.opacity='0'; p.style.transform='translateX(10px)'; setTimeout(()=>p.remove(), 200);"><i class="bi bi-trash-fill"></i></button>
+                                                        <% } else { %>
+                                                            <button class="btn btn-outline-light text-muted border-0 disabled opacity-25 px-3" type="button"><i class="bi bi-x-lg"></i></button>
+                                                        <% } %>
+                                                    </div>
                                                 <% }) %>
                                             </div>
-                                            <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" onclick="addOptionToPoll('<%= uniqueId %>')">+ Optie toevoegen</button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill w-100 mt-1 py-1 fw-bold transition-all" style="font-size: 0.75rem; border-style: dashed; border-width: 2px;" onclick="addOptionToPoll('<%= uniqueId %>')">
+                                                <i class="bi bi-plus-circle-fill me-1"></i> Extra optie toevoegen
+                                            </button>
                                         </div>
                                     </div>
                                 <%  }); } %>
