@@ -777,11 +777,16 @@ exports.addPollOption = async (req, res) => {
         const ok = await ensureAccessToGroup(req.user, group || null);
         if (!ok) return res.status(403).json({ success: false, error: "Geen toegang." });
 
-        let polls = Array.isArray(post.poll) ? post.poll : [post.poll];
+        let polls = post.poll;
+        if (typeof polls === 'string') {
+            try { polls = JSON.parse(polls); } catch(e) { polls = [polls]; }
+        }
+        polls = Array.isArray(polls) ? polls : [polls];
+        
         const pIdx = parseInt(pollIndex);
 
-        if (!polls[pIdx]) {
-            return res.status(404).json({ success: false, error: "Poll niet gevonden." });
+        if (!polls[pIdx] || !polls[pIdx].options) {
+            return res.status(404).json({ success: false, error: "Poll of opties niet gevonden." });
         }
 
         if (!polls[pIdx].allowUserOptions) {
@@ -802,8 +807,9 @@ exports.addPollOption = async (req, res) => {
         const updatedPolls = JSON.parse(JSON.stringify(polls));
         updatedPolls[pIdx].options = newOptions;
         
-        // Save the post - Ensure we save as array if it was an array
-        await post.update({ poll: Array.isArray(post.poll) ? updatedPolls : updatedPolls[0] });
+        // Save the post - Ensure we save as array if it was an array (or stringified array)
+        const wasArray = Array.isArray(post.poll) || (typeof post.poll === 'string' && post.poll.trim().startsWith('['));
+        await post.update({ poll: wasArray ? updatedPolls : updatedPolls[0] });
 
         // Force reload/refresh for all users? No, just for the current user via redirect or JSON response
         // In this case, we return JSON.

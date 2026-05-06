@@ -1039,9 +1039,15 @@ async function enableEditMode(id) {
             const response = await fetch('/feed/post/' + id);
             const data = await response.json();
             if (data.success && data.post && data.post.poll) {
-                const polls = Array.isArray(data.post.poll) ? data.post.poll : [data.post.poll];
+                let polls = data.post.poll;
+                if (typeof polls === 'string') {
+                    try { polls = JSON.parse(polls); } catch(e) { polls = [polls]; }
+                }
+                polls = Array.isArray(polls) ? polls : [polls];
+                
                 pollsContainer.innerHTML = '';
                 polls.forEach((pollItem, pIdx) => {
+                    if (!pollItem || !pollItem.options) return;
                     const uniqueId = 'edit_' + id + '_' + pIdx;
                     const div = document.createElement('div');
                     div.innerHTML = createPollItemHTML(uniqueId, pollItem);
