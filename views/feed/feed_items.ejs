@@ -100,6 +100,8 @@
 
                             <div class="poll-options-container" data-allow-multiple="<%= pollItem.allowMultiple %>">
                                 <% pollItem.options.forEach((option, index) => { 
+                                    const optText = typeof option === 'string' ? option : option.text;
+                                    const addedBy = typeof option === 'string' ? null : option.addedBy;
                                     const count = counts[index] || 0;
                                     const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
                                     const isChecked = myVotes.includes(index);
@@ -119,7 +121,14 @@
                                         <div class="position-relative p-3 d-flex align-items-center justify-content-between" style="z-index: 1;">
                                             <div class="d-flex align-items-center flex-grow-1">
                                                 <i class="bi <%= isChecked ? 'bi-check-circle-fill text-primary' : (pollItem.allowMultiple ? 'bi-square text-muted' : 'bi-circle text-muted') %> poll-check-icon fs-5 me-3 transition-base"></i>
-                                                <span class="fw-bold text-dark small option-text"><%= option %></span>
+                                                <div class="d-flex flex-column">
+                                                    <span class="fw-bold text-dark small option-text"><%= optText %></span>
+                                                    <% if (addedBy) { %>
+                                                        <small class="text-muted fst-italic" style="font-size: 0.65rem;">
+                                                            Toegevoegd door <%= capitalizeName(addedBy) %>
+                                                        </small>
+                                                    <% } %>
+                                                </div>
                                             </div>
                                             <div class="ms-3 text-end">
                                                 <span class="fw-bold text-primary small poll-percent-text"><%= pct %>%</span>
@@ -296,10 +305,12 @@
 
                                             <label class="form-label small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Antwoordopties</label>
                                             <div id="pollOptions-<%= uniqueId %>" class="poll-options-list mb-2">
-                                                <% pollItem.options.forEach((opt, oIdx) => { %>
+                                                <% pollItem.options.forEach((opt, oIdx) => { 
+                                                    const valText = typeof opt === 'string' ? opt : (opt.text || '');
+                                                %>
                                                     <div class="input-group input-group-sm mb-2 shadow-none transition-all rounded-3 overflow-hidden border">
                                                         <span class="input-group-text bg-white border-0 text-muted opacity-50 px-3"><i class="bi bi-grip-vertical"></i></span>
-                                                        <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[<%= uniqueId %>][options][]" placeholder="Optie <%= oIdx + 1 %>" value="<%= opt %>">
+                                                        <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[<%= uniqueId %>][options][]" placeholder="Optie <%= oIdx + 1 %>" value="<%= valText %>">
                                                         <% if (oIdx >= 2) { %>
                                                             <button class="btn btn-outline-danger border-0 px-3" type="button" onclick="const p=this.parentElement; p.style.opacity='0'; p.style.transform='translateX(10px)'; setTimeout(()=>p.remove(), 200);"><i class="bi bi-trash-fill"></i></button>
                                                         <% } else { %>
