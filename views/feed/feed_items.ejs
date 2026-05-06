@@ -55,8 +55,13 @@
 
                     <!-- Polls & Forms (Moved inside container) -->
                     <% if (post.poll) { 
-                        const polls = Array.isArray(post.poll) ? post.poll : [post.poll];
+                        let polls = post.poll;
+                        if (typeof polls === 'string') {
+                            try { polls = JSON.parse(polls); } catch(e) { polls = [polls]; }
+                        }
+                        polls = Array.isArray(polls) ? polls : [polls];
                         polls.forEach((pollItem, pollIndex) => {
+                            if (!pollItem || !pollItem.options) return;
                     %>
                         <div class="bg-light p-3 rounded-3 mt-3 border poll-wrapper" data-post-id="<%= post.id %>">
                             <% 
@@ -71,7 +76,9 @@
                                 
                                 const counts = {};
                                 const voters = {}; 
-                                pollItem.options.forEach((opt, idx) => { counts[idx] = 0; voters[idx] = []; });
+                                if (pollItem.options && Array.isArray(pollItem.options)) {
+                                    pollItem.options.forEach((opt, idx) => { counts[idx] = 0; voters[idx] = []; });
+                                }
                                 let myVotes = [];
                                 
                                 pollResponses.forEach(r => {
@@ -99,51 +106,53 @@
                             </h6>
 
                             <div class="poll-options-container" data-allow-multiple="<%= pollItem.allowMultiple %>">
-                                <% pollItem.options.forEach((option, index) => { 
-                                    const optText = typeof option === 'string' ? option : option.text;
-                                    const addedBy = typeof option === 'string' ? null : option.addedBy;
-                                    const count = counts[index] || 0;
-                                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                                    const isChecked = myVotes.includes(index);
-                                %>
-                                    <!-- Option Item -->
-                                    <div class="poll-option-item position-relative mb-2 rounded-4 overflow-hidden border <%= isChecked ? 'border-primary border-2' : 'border-light' %> bg-white" 
-                                         style="cursor: pointer; transition: transform 0.1s ease, border-color 0.2s;"
-                                         onclick="togglePollVote(this, '<%= post.id %>', <%= pollIndex %>, <%= index %>, <%= pollItem.allowMultiple %>)"
-                                         data-index="<%= index %>"
-                                         data-selected="<%= isChecked %>">
-                                        
-                                        <!-- Progress Bar (Background) -->
-                                        <div class="poll-progress-bar position-absolute top-0 start-0 h-100 bg-primary" 
-                                             style="width: <%= pct %>%; opacity: 0.15; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); z-index: 0;"></div>
-                                        
-                                        <!-- Content -->
-                                        <div class="position-relative p-3 d-flex align-items-center justify-content-between" style="z-index: 1;">
-                                            <div class="d-flex align-items-center flex-grow-1">
-                                                <i class="bi <%= isChecked ? 'bi-check-circle-fill text-primary' : (pollItem.allowMultiple ? 'bi-square text-muted' : 'bi-circle text-muted') %> poll-check-icon fs-5 me-3 transition-base"></i>
-                                                <div class="d-flex flex-column">
-                                                    <span class="fw-bold text-dark small option-text"><%= optText %></span>
-                                                    <% if (addedBy) { %>
-                                                        <small class="text-muted fst-italic" style="font-size: 0.65rem;">
-                                                            Toegevoegd door <%= capitalizeName(addedBy) %>
-                                                        </small>
-                                                    <% } %>
+                                <% if (pollItem.options && Array.isArray(pollItem.options)) { %>
+                                    <% pollItem.options.forEach((option, index) => { 
+                                        const optText = typeof option === 'string' ? option : option.text;
+                                        const addedBy = typeof option === 'string' ? null : option.addedBy;
+                                        const count = counts[index] || 0;
+                                        const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                                        const isChecked = myVotes.includes(index);
+                                    %>
+                                        <!-- Option Item -->
+                                        <div class="poll-option-item position-relative mb-2 rounded-4 overflow-hidden border <%= isChecked ? 'border-primary border-2' : 'border-light' %> bg-white" 
+                                             style="cursor: pointer; transition: transform 0.1s ease, border-color 0.2s;"
+                                             onclick="togglePollVote(this, '<%= post.id %>', <%= pollIndex %>, <%= index %>, <%= pollItem.allowMultiple %>)"
+                                             data-index="<%= index %>"
+                                             data-selected="<%= isChecked %>">
+                                            
+                                            <!-- Progress Bar (Background) -->
+                                            <div class="poll-progress-bar position-absolute top-0 start-0 h-100 bg-primary" 
+                                                 style="width: <%= pct %>%; opacity: 0.15; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); z-index: 0;"></div>
+                                            
+                                            <!-- Content -->
+                                            <div class="position-relative p-3 d-flex align-items-center justify-content-between" style="z-index: 1;">
+                                                <div class="d-flex align-items-center flex-grow-1">
+                                                    <i class="bi <%= isChecked ? 'bi-check-circle-fill text-primary' : (pollItem.allowMultiple ? 'bi-square text-muted' : 'bi-circle text-muted') %> poll-check-icon fs-5 me-3 transition-base"></i>
+                                                    <div class="d-flex flex-column">
+                                                        <span class="fw-bold text-dark small option-text"><%= optText %></span>
+                                                        <% if (addedBy) { %>
+                                                            <small class="text-muted fst-italic" style="font-size: 0.65rem;">
+                                                                Toegevoegd door <%= capitalizeName(addedBy) %>
+                                                            </small>
+                                                        <% } %>
+                                                    </div>
+                                                </div>
+                                                <div class="ms-3 text-end">
+                                                    <span class="fw-bold text-primary small poll-percent-text"><%= pct %>%</span>
                                                 </div>
                                             </div>
-                                            <div class="ms-3 text-end">
-                                                <span class="fw-bold text-primary small poll-percent-text"><%= pct %>%</span>
+                                            
+                                            <!-- Voters (Collapsible/Small) -->
+                                            <div class="poll-voters-container px-3 pb-2 <%= (voters[index] && voters[index].length > 0) ? '' : 'd-none' %>" style="z-index: 1; position: relative;">
+                                                <div class="small text-muted fst-italic" style="font-size: 0.7rem;">
+                                                    <i class="bi bi-people-fill me-1 opacity-50"></i>
+                                                    <span class="poll-voters-list"><%= voters[index] ? voters[index].slice(0, 3).join(', ') : '' %><% if(voters[index] && voters[index].length > 3) { %>, ...<% } %></span>
+                                                </div>
                                             </div>
                                         </div>
-                                        
-                                        <!-- Voters (Collapsible/Small) -->
-                                        <div class="poll-voters-container px-3 pb-2 <%= voters[index].length > 0 ? '' : 'd-none' %>" style="z-index: 1; position: relative;">
-                                            <div class="small text-muted fst-italic" style="font-size: 0.7rem;">
-                                                <i class="bi bi-people-fill me-1 opacity-50"></i>
-                                                <span class="poll-voters-list"><%= voters[index].slice(0, 3).join(', ') %><% if(voters[index].length > 3) { %>, ...<% } %></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <% }) %>
+                                    <% }) %>
+                                <% } %>
                             </div>
 
                             <% if (pollItem.allowUserOptions) { %>
@@ -270,8 +279,13 @@
                             <h6 class="font-playful">Polls</h6>
                             <div id="pollsContainer-<%= post.id %>">
                                 <% if (post.poll) { 
-                                    const polls = Array.isArray(post.poll) ? post.poll : [post.poll];
-                                    polls.forEach((pollItem, pIdx) => { 
+                                    let pollsEdit = post.poll;
+                                    if (typeof pollsEdit === 'string') {
+                                        try { pollsEdit = JSON.parse(pollsEdit); } catch(e) { pollsEdit = [pollsEdit]; }
+                                    }
+                                    pollsEdit = Array.isArray(pollsEdit) ? pollsEdit : [pollsEdit];
+                                    pollsEdit.forEach((pollItem, pIdx) => { 
+                                        if (!pollItem || !pollItem.options) return;
                                         const uniqueId = 'edit_' + post.id + '_' + pIdx;
                                 %>
                                     <div class="card border-0 shadow-sm mb-3 poll-item overflow-hidden" id="poll-item-<%= uniqueId %>" style="border-radius: 15px;">
@@ -305,19 +319,21 @@
 
                                             <label class="form-label small text-muted fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Antwoordopties</label>
                                             <div id="pollOptions-<%= uniqueId %>" class="poll-options-list mb-2">
-                                                <% pollItem.options.forEach((opt, oIdx) => { 
-                                                    const valText = typeof opt === 'string' ? opt : (opt.text || '');
-                                                %>
-                                                    <div class="input-group input-group-sm mb-2 shadow-none transition-all rounded-3 overflow-hidden border">
-                                                        <span class="input-group-text bg-white border-0 text-muted opacity-50 px-3"><i class="bi bi-grip-vertical"></i></span>
-                                                        <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[<%= uniqueId %>][options][]" placeholder="Optie <%= oIdx + 1 %>" value="<%= valText %>">
-                                                        <% if (oIdx >= 2) { %>
-                                                            <button class="btn btn-outline-danger border-0 px-3" type="button" onclick="const p=this.parentElement; p.style.opacity='0'; p.style.transform='translateX(10px)'; setTimeout(()=>p.remove(), 200);"><i class="bi bi-trash-fill"></i></button>
-                                                        <% } else { %>
-                                                            <button class="btn btn-outline-light text-muted border-0 disabled opacity-25 px-3" type="button"><i class="bi bi-x-lg"></i></button>
-                                                        <% } %>
-                                                    </div>
-                                                <% }) %>
+                                                <% if (pollItem.options && Array.isArray(pollItem.options)) { %>
+                                                    <% pollItem.options.forEach((opt, oIdx) => { 
+                                                        const valText = typeof opt === 'string' ? opt : (opt.text || '');
+                                                    %>
+                                                        <div class="input-group input-group-sm mb-2 shadow-none transition-all rounded-3 overflow-hidden border">
+                                                            <span class="input-group-text bg-white border-0 text-muted opacity-50 px-3"><i class="bi bi-grip-vertical"></i></span>
+                                                            <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[<%= uniqueId %>][options][]" placeholder="Optie <%= oIdx + 1 %>" value="<%= valText %>">
+                                                            <% if (oIdx >= 2) { %>
+                                                                <button class="btn btn-outline-danger border-0 px-3" type="button" onclick="const p=this.parentElement; p.style.opacity='0'; p.style.transform='translateX(10px)'; setTimeout(()=>p.remove(), 200);"><i class="bi bi-trash-fill"></i></button>
+                                                            <% } else { %>
+                                                                <button class="btn btn-outline-light text-muted border-0 disabled opacity-25 px-3" type="button"><i class="bi bi-x-lg"></i></button>
+                                                            <% } %>
+                                                        </div>
+                                                    <% }) %>
+                                                <% } %>
                                             </div>
                                             <button type="button" class="btn btn-sm btn-outline-primary rounded-pill w-100 mt-1 py-1 fw-bold transition-all" style="font-size: 0.75rem; border-style: dashed; border-width: 2px;" onclick="addOptionToPoll('<%= uniqueId %>')">
                                                 <i class="bi bi-plus-circle-fill me-1"></i> Extra optie toevoegen
