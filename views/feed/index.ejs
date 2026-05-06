@@ -1610,44 +1610,48 @@ function showPollResults(element) {
     const body = document.getElementById('pollResultsBody');
     body.innerHTML = '';
 
-    data.options.forEach((opt, index) => {
-        const optText = typeof opt === 'string' ? opt : opt.text;
-        const addedBy = typeof opt === 'string' ? null : opt.addedBy;
-        const count = data.counts[index] || 0;
-        const pct = data.totalVotes > 0 ? Math.round((count / data.totalVotes) * 100) : 0;
-        const voterNames = data.voters[index] || [];
+    if (!data.options || !Array.isArray(data.options)) {
+        body.innerHTML = '<div class="text-muted fst-italic">Geen opties gevonden voor deze poll.</div>';
+    } else {
+        data.options.forEach((opt, index) => {
+            const optText = typeof opt === 'string' ? opt : opt.text;
+            const addedBy = typeof opt === 'string' ? null : opt.addedBy;
+            const count = data.counts[index] || 0;
+            const pct = data.totalVotes > 0 ? Math.round((count / data.totalVotes) * 100) : 0;
+            const voterNames = data.voters[index] || [];
 
-        const div = document.createElement('div');
-        div.className = 'mb-3';
-        div.innerHTML = `
-            <div class="d-flex justify-content-between font-monospace small mb-1">
-                <div class="d-flex flex-column">
-                    <span class="fw-bold">${optText}</span>
-                    ${addedBy ? `<small class="text-muted fst-italic" style="font-size: 0.7rem;">Toegevoegd door ${addedBy.charAt(0).toUpperCase() + addedBy.slice(1).toLowerCase()}</small>` : ''}
+            const div = document.createElement('div');
+            div.className = 'mb-3';
+            div.innerHTML = `
+                <div class="d-flex justify-content-between font-monospace small mb-1">
+                    <div class="d-flex flex-column">
+                        <span class="fw-bold">${optText}</span>
+                        ${addedBy ? `<small class="text-muted fst-italic" style="font-size: 0.7rem;">Toegevoegd door ${addedBy.charAt(0).toUpperCase() + addedBy.slice(1).toLowerCase()}</small>` : ''}
+                    </div>
+                    <span>${count} stemmen (${pct}%)</span>
                 </div>
-                <span>${count} stemmen (${pct}%)</span>
-            </div>
-            <div class="progress mb-2" style="height: 10px;">
-                <div class="progress-bar bg-primary" role="progressbar" style="width: ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-        `;
+                <div class="progress mb-2" style="height: 10px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: ${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            `;
 
-        if (voterNames.length > 0) {
-            const votersDiv = document.createElement('div');
-            votersDiv.className = 'small text-muted fst-italic ms-1';
-            votersDiv.style.fontSize = '0.85rem';
-            votersDiv.textContent = voterNames.join(', ');
-            div.appendChild(votersDiv);
-        } else {
-             const noVotersDiv = document.createElement('div');
-             noVotersDiv.className = 'small text-muted fst-italic ms-1';
-             noVotersDiv.style.fontSize = '0.85rem';
-             noVotersDiv.textContent = 'Nog geen stemmen.';
-             div.appendChild(noVotersDiv);
-        }
+            if (voterNames.length > 0) {
+                const votersDiv = document.createElement('div');
+                votersDiv.className = 'small text-muted fst-italic ms-1';
+                votersDiv.style.fontSize = '0.85rem';
+                votersDiv.textContent = voterNames.join(', ');
+                div.appendChild(votersDiv);
+            } else {
+                 const noVotersDiv = document.createElement('div');
+                 noVotersDiv.className = 'small text-muted fst-italic ms-1';
+                 noVotersDiv.style.fontSize = '0.85rem';
+                 noVotersDiv.textContent = 'Nog geen stemmen.';
+                 div.appendChild(noVotersDiv);
+            }
 
-        body.appendChild(div);
-    });
+            body.appendChild(div);
+        });
+    }
 
     const modalEl = document.getElementById('pollResultsModal');
     const modal = new bootstrap.Modal(modalEl);
