@@ -789,7 +789,12 @@ exports.addPollOption = async (req, res) => {
         }
 
         // Add the new option
-        const newOptions = [...polls[pIdx].options, option.trim()];
+        const addedBy = req.user.username;
+        const newOptionObject = {
+            text: option.trim(),
+            addedBy: addedBy
+        };
+        const newOptions = [...polls[pIdx].options, newOptionObject];
         const newOptionIndex = newOptions.length - 1;
 
         // Create a new polls array to force Sequelize to detect the change
@@ -838,7 +843,7 @@ exports.addPollOption = async (req, res) => {
         });
 
         const pollStats = await getPollStats(id, pIdx);
-        return res.json({ success: true, optionIndex: newOptionIndex, pollStats, myVotes: indices });
+        return res.json({ success: true, optionIndex: newOptionIndex, pollStats, myVotes: indices, addedBy: addedBy });
     } catch (error) {
         console.error('Add Poll Option Error:', error);
         return res.status(500).json({ success: false, error: "Server fout." });

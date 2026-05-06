@@ -1160,10 +1160,11 @@ function createPollItemHTML(uniqueId, pollItem = null) {
 }
 
 function createPollOptionHTML(uniqueId, count, value = '') {
+    const valText = typeof value === 'string' ? value : (value.text || '');
     return `
         <div class="input-group input-group-sm mb-2 shadow-none transition-all rounded-3 overflow-hidden border">
             <span class="input-group-text bg-white border-0 text-muted opacity-50 px-3"><i class="bi bi-grip-vertical"></i></span>
-            <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[${uniqueId}][options][]" placeholder="Optie ${count}" value="${value}">
+            <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[${uniqueId}][options][]" placeholder="Optie ${count}" value="${valText}">
             ${count > 2 || (value === '' && count > 2) ? 
                 `<button class="btn btn-outline-danger border-0 px-3" type="button" onclick="const p=this.parentElement; p.style.opacity='0'; p.style.transform='translateX(10px)'; setTimeout(()=>p.remove(), 200);"><i class="bi bi-trash-fill"></i></button>` : 
                 `<button class="btn btn-outline-light text-muted border-0 disabled opacity-25 px-3" type="button"><i class="bi bi-x-lg"></i></button>`
@@ -1311,11 +1312,10 @@ async function addUserPollOption(el, postId, pollIndex) {
             const pollWrapper = container.closest('.poll-wrapper');
             if (pollWrapper) {
                 const pollContainer = pollWrapper.querySelector('.poll-options-container');
-                addPollOptionToUI(pollWrapper, optionText, result.optionIndex, pollIndex);
-                
+                addPollOptionToUI(pollWrapper, optionText, result.optionIndex, pollIndex, result.addedBy);
+
                 // Update all stats if returned
-                if (result.pollStats && pollContainer) {
-                    updatePollStats(pollContainer, result.pollStats, result.myVotes || [result.optionIndex]);
+                if (result.pollStats && pollContainer) {                    updatePollStats(pollContainer, result.pollStats, result.myVotes || [result.optionIndex]);
                 }
             }
             
@@ -1377,14 +1377,14 @@ async function addUserPollOption(el, postId, pollIndex) {
     }
 }
 
-function addPollOptionToUI(pollWrapper, optionText, optionIndex, pollIndex) {
+function addPollOptionToUI(pollWrapper, optionText, optionIndex, pollIndex, addedBy) {
     // Find the poll options container within this poll wrapper
     const pollContainer = pollWrapper.querySelector('.poll-options-container');
-    
+
     if (!pollContainer) return;
-    
+
     const allowMultiple = pollContainer.getAttribute('data-allow-multiple') === 'true';
-    
+
     // If it's a single-choice poll, unselect all other options first
     if (!allowMultiple) {
         pollContainer.querySelectorAll('.poll-option-item').forEach(opt => {
@@ -1401,26 +1401,32 @@ function addPollOptionToUI(pollWrapper, optionText, optionIndex, pollIndex) {
     newOptionEl.style.cssText = 'cursor: pointer; transition: transform 0.1s ease, border-color 0.2s;';
     newOptionEl.setAttribute('data-index', optionIndex);
     newOptionEl.setAttribute('data-selected', 'true');
-    
+
     // Get the post ID from the parent
     const postId = pollWrapper.getAttribute('data-post-id');
-    
+
     newOptionEl.innerHTML = `
         <!-- Progress Bar (Background) -->
-        <div class="poll-progress-bar position-absolute top-0 start-0 h-100 bg-primary" 
+        <div class="poll-progress-bar position-absolute top-0 start-0 h-100 bg-primary"
              style="width: 100%; opacity: 0.15; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); z-index: 0;"></div>
-        
+
         <!-- Content -->
         <div class="position-relative p-3 d-flex align-items-center justify-content-between" style="z-index: 1;">
             <div class="d-flex align-items-center flex-grow-1">
                 <i class="bi bi-check-circle-fill text-primary poll-check-icon fs-5 me-3 transition-base"></i>
-                <span class="fw-bold text-dark small option-text">${optionText}</span>
+                <div class="d-flex flex-column">
+                    <span class="fw-bold text-dark small option-text">${optionText}</span>
+                    ${addedBy ? `
+                        <small class="text-muted fst-italic" style="font-size: 0.65rem;">
+                            Toegevoegd door ${addedBy.charAt(0).toUpperCase() + addedBy.slice(1).toLowerCase()}
+                        </small>
+                    ` : ''}
+                </div>
             </div>
             <div class="ms-3 text-end">
                 <span class="fw-bold text-primary small poll-percent-text">100%</span>
             </div>
-        </div>
-        
+        </div>        
         <!-- Voters (Collapsible/Small) -->
         <div class="poll-voters-container px-3 pb-2 d-none" style="z-index: 1; position: relative;">
             <div class="small text-muted fst-italic" style="font-size: 0.7rem;">
@@ -1605,6 +1611,8 @@ function showPollResults(element) {
     body.innerHTML = '';
 
     data.options.forEach((opt, index) => {
+        const optText = typeof opt === 'string' ? opt : opt.text;
+        const addedBy = typeof opt === 'string' ? null : opt.addedBy;
         const count = data.counts[index] || 0;
         const pct = data.totalVotes > 0 ? Math.round((count / data.totalVotes) * 100) : 0;
         const voterNames = data.voters[index] || [];
@@ -1613,7 +1621,10 @@ function showPollResults(element) {
         div.className = 'mb-3';
         div.innerHTML = `
             <div class="d-flex justify-content-between font-monospace small mb-1">
-                <span class="fw-bold">${opt}</span>
+                <div class="d-flex flex-column">
+                    <span class="fw-bold">${optText}</span>
+                    ${addedBy ? `<small class="text-muted fst-italic" style="font-size: 0.7rem;">Toegevoegd door ${addedBy.charAt(0).toUpperCase() + addedBy.slice(1).toLowerCase()}</small>` : ''}
+                </div>
                 <span>${count} stemmen (${pct}%)</span>
             </div>
             <div class="progress mb-2" style="height: 10px;">
