@@ -63,7 +63,7 @@
                         polls.forEach((pollItem, pollIndex) => {
                             if (!pollItem || !pollItem.options) return;
                     %>
-                        <div class="bg-light p-3 rounded-3 mt-3 border poll-wrapper" data-post-id="<%= post.id %>">
+                        <div class="bg-light p-3 rounded-3 mt-3 border poll-wrapper" data-post-id="<%= post.id %>" data-author-id="<%= post.author.id %>">
                             <% 
                                 // Filter responses for THIS poll index
                                 const pollResponses = post.responses.filter(r => {
@@ -138,8 +138,13 @@
                                                         <% } %>
                                                     </div>
                                                 </div>
-                                                <div class="ms-3 text-end">
+                                                <div class="ms-3 text-end d-flex align-items-center">
                                                     <span class="fw-bold text-primary small poll-percent-text"><%= pct %>%</span>
+                                                    <% if (user.role === 'admin' || (post.author && post.author.id === user.id) || (addedBy && addedBy.toLowerCase() === user.username.toLowerCase())) { %>
+                                                        <button class="btn btn-link text-danger p-0 ms-2 shadow-none border-0" type="button" onclick="event.stopPropagation(); removePollOption(this, '<%= post.id %>', <%= pollIndex %>, <%= index %>)">
+                                                            <i class="bi bi-trash-fill" style="font-size: 0.8rem;"></i>
+                                                        </button>
+                                                    <% } %>
                                                 </div>
                                             </div>
                                             
@@ -322,12 +327,28 @@
                                                 <% if (pollItem.options && Array.isArray(pollItem.options)) { %>
                                                     <% pollItem.options.forEach((opt, oIdx) => { 
                                                         const valText = typeof opt === 'string' ? opt : (opt.text || '');
+                                                        const addedBy = typeof opt === 'string' ? null : opt.addedBy;
                                                     %>
                                                         <div class="input-group input-group-sm mb-2 shadow-none transition-all rounded-3 overflow-hidden border">
                                                             <span class="input-group-text bg-white border-0 text-muted opacity-50 px-3"><i class="bi bi-grip-vertical"></i></span>
-                                                            <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[<%= uniqueId %>][options][]" placeholder="Optie <%= oIdx + 1 %>" value="<%= valText %>">
-                                                            <% if (oIdx >= 2) { %>
-                                                                <button class="btn btn-outline-danger border-0 px-3" type="button" onclick="const p=this.parentElement; p.style.opacity='0'; p.style.transform='translateX(10px)'; setTimeout(()=>p.remove(), 200);"><i class="bi bi-trash-fill"></i></button>
+                                                            <div class="flex-grow-1">
+                                                                <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[<%= uniqueId %>][options][<%= oIdx %>][text]" placeholder="Optie <%= oIdx + 1 %>" value="<%= valText %>">
+                                                                <% if (addedBy) { %>
+                                                                    <small class="text-muted fst-italic d-block" style="font-size: 0.65rem; margin-top: 2px;">
+                                                                        Toegevoegd door <%= capitalizeName(addedBy) %>
+                                                                    </small>
+                                                                <% } %>
+                                                            </div>
+                                                            <% if (addedBy) { %>
+                                                                <input type="hidden" name="polls[<%= uniqueId %>][options][<%= oIdx %>][addedBy]" value="<%= addedBy %>">
+                                                            <% } %>
+                                                            <% 
+                                                                const canRemoveOption = (user.role === 'admin') || 
+                                                                    (post.author && post.author.id === user.id) || 
+                                                                    (addedBy && addedBy.toLowerCase() === user.username.toLowerCase());
+                                                            %>
+                                                            <% if (canRemoveOption) { %>
+                                                                <button class="btn btn-outline-danger border-0 px-3" type="button" onclick="const p=this.parentElement.parentElement; p.style.opacity='0'; p.style.transform='translateX(10px)'; setTimeout(()=>p.remove(), 200);"><i class="bi bi-trash-fill"></i></button>
                                                             <% } else { %>
                                                                 <button class="btn btn-outline-light text-muted border-0 disabled opacity-25 px-3" type="button"><i class="bi bi-x-lg"></i></button>
                                                             <% } %>

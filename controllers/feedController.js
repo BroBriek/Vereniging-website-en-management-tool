@@ -411,7 +411,20 @@ exports.postCreatePost = async (req, res) => {
             
             if (Array.isArray(pollsInput)) {
                 poll = pollsInput.map(p => {
-                    const opts = (Array.isArray(p.options) ? p.options : (p.options ? [p.options] : [])).filter(o => o && o.trim() !== "");
+                    let rawOpts = p.options || [];
+                    if (typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
+                        rawOpts = Object.values(rawOpts);
+                    }
+                    const opts = rawOpts.map(o => {
+                        if (typeof o === 'object' && o !== null) {
+                            if (o.text && o.text.trim() !== "") {
+                                return { text: o.text.trim(), addedBy: o.addedBy || req.user.username };
+                            }
+                            return null;
+                        }
+                        return (o && typeof o === 'string' && o.trim() !== "") ? { text: o.trim(), addedBy: req.user.username } : null;
+                    }).filter(o => o !== null);
+
                     if (opts.length > 0 && p.question) {
                         return {
                             question: p.question,
@@ -436,6 +449,15 @@ exports.postCreatePost = async (req, res) => {
                     options: options,
                     allowMultiple: req.body.poll_multiple === 'on'
                 }];
+            }
+        }
+
+        // Validate polls have at least 1 option
+        if (poll && Array.isArray(poll)) {
+            for (const p of poll) {
+                if (!p.options || p.options.length === 0) {
+                    return res.redirect('/feed?error=Elke poll moet minstens 1 optie hebben');
+                }
             }
         }
 
@@ -856,6 +878,102 @@ exports.addPollOption = async (req, res) => {
     }
 };
 
+exports.removePollOption = async (req, res) => {
+    try {
+        const { id, pollIndex, optionIndex } = req.params;
+        const userId = req.user.id;
+
+        const post = await Post.findByPk(id);
+        if (!post) {
+            return res.status(404).json({ success: false, error: "Bericht niet gevonden." });
+        }
+
+        let group = null;
+        if (post.groupId) group = await FeedGroup.findByPk(post.groupId);
+        const ok = await ensureAccessToGroup(req.user, group || null);
+        if (!ok) return res.status(403).json({ success: false, error: "Geen toegang." });
+
+        let polls = post.poll;
+        if (typeof polls === 'string') {
+            try { polls = JSON.parse(polls); } catch(e) { polls = [polls]; }
+        }
+        polls = Array.isArray(polls) ? polls : [polls];
+        
+        const pIdx = parseInt(pollIndex);
+        const oIdx = parseInt(optionIndex);
+
+        if (!polls[pIdx] || !polls[pIdx].options || !polls[pIdx].options[oIdx]) {
+            return res.status(404).json({ success: false, error: "Poll of optie niet gevonden." });
+        }
+
+        const option = polls[pIdx].options[oIdx];
+        const addedBy = typeof option === 'string' ? null : option.addedBy;
+
+        // Permissions: Admin, Post Author, or the User who added the option
+        const isAuthor = post.authorId === userId;
+        const isAdmin = req.user.role === 'admin';
+        const isOwnerOfOption = addedBy && addedBy.toLowerCase() === req.user.username.toLowerCase();
+
+        if (!isAuthor && !isAdmin && !isOwnerOfOption) {
+            return res.status(403).json({ success: false, error: "Geen rechten om deze optie te verwijderen." });
+        }
+
+        // Cannot remove the last 2 options if it's a standard poll (just a safety measure)
+        if (polls[pIdx].options.length <= 2 && !addedBy) {
+            return res.status(400).json({ success: false, error: "Een poll moet minimaal 2 opties hebben." });
+        }
+
+        // Remove the option
+        const newOptions = polls[pIdx].options.filter((_, index) => index !== oIdx);
+        
+        const updatedPolls = JSON.parse(JSON.stringify(polls));
+        updatedPolls[pIdx].options = newOptions;
+        
+        const wasArray = Array.isArray(post.poll) || (typeof post.poll === 'string' && post.poll.trim().startsWith('['));
+        await post.update({ poll: wasArray ? updatedPolls : updatedPolls[0] });
+
+        // IMPORTANT: We also need to fix/update existing responses because indices have shifted!
+        const existingResponses = await PostResponse.findAll({
+            where: { postId: id, type: 'poll' }
+        });
+
+        for (const resp of existingResponses) {
+            const rData = typeof resp.data === 'string' ? JSON.parse(resp.data) : resp.data;
+            const respPollIdx = (rData && rData.pollIndex !== undefined) ? parseInt(rData.pollIndex) : 0;
+            
+            if (respPollIdx === pIdx) {
+                let indices = Array.isArray(rData.optionIndices) 
+                    ? rData.optionIndices 
+                    : (rData.optionIndex !== undefined ? (Array.isArray(rData.optionIndex) ? rData.optionIndex : [parseInt(rData.optionIndex)]) : []);
+                
+                // Adjust indices
+                let newRespIndices = indices
+                    .map(i => {
+                        const idx = parseInt(i);
+                        if (idx === oIdx) return -1; // Removed
+                        if (idx > oIdx) return idx - 1; // Shifted
+                        return idx; // Unchanged
+                    })
+                    .filter(i => i !== -1);
+
+                if (newRespIndices.length === 0) {
+                    await resp.destroy();
+                } else {
+                    await resp.update({
+                        data: { ...rData, optionIndices: newRespIndices }
+                    });
+                }
+            }
+        }
+
+        const pollStats = await getPollStats(id, pIdx);
+        return res.json({ success: true, pollStats });
+    } catch (error) {
+        console.error('Remove Poll Option Error:', error);
+        return res.status(500).json({ success: false, error: "Server fout." });
+    }
+};
+
 exports.toggleLike = async (req, res) => {
     try {
         const postId = req.params.id;
@@ -1009,7 +1127,24 @@ exports.updatePost = async (req, res) => {
             const pollsInput = typeof req.body.polls === 'object' ? Object.values(req.body.polls) : req.body.polls;
             if (Array.isArray(pollsInput)) {
                 poll = pollsInput.map(p => {
-                    const opts = (Array.isArray(p.options) ? p.options : (p.options ? [p.options] : [])).filter(o => o && o.trim() !== "");
+                    let rawOpts = p.options || [];
+                    if (typeof rawOpts === 'object' && !Array.isArray(rawOpts)) {
+                        rawOpts = Object.values(rawOpts);
+                    }
+
+                    const opts = rawOpts.map(o => {
+                        if (typeof o === 'object' && o !== null) {
+                            if (o.text && o.text.trim() !== "") {
+                                return { 
+                                    text: o.text.trim(), 
+                                    addedBy: o.addedBy || req.user.username 
+                                };
+                            }
+                            return null;
+                        }
+                        return (o && typeof o === 'string' && o.trim() !== "") ? { text: o.trim(), addedBy: req.user.username } : null;
+                    }).filter(o => o !== null);
+
                     if (opts.length > 0 && p.question) {
                         return {
                             question: p.question,
@@ -1022,6 +1157,15 @@ exports.updatePost = async (req, res) => {
                 }).filter(p => p !== null);
                 
                 if (poll.length === 0) poll = null;
+            }
+        }
+
+        // Validate polls have at least 1 option
+        if (poll && Array.isArray(poll)) {
+            for (const p of poll) {
+                if (!p.options || p.options.length === 0) {
+                    return res.redirect('/feed?error=Elke poll moet minstens 1 optie hebben');
+                }
             }
         }
 

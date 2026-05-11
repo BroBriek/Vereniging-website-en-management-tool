@@ -698,7 +698,7 @@ function autoResize(element) {
 
                     <div class="text-end">
                         <button type="button" class="btn btn-light rounded-pill me-2" data-bs-toggle="collapse" data-bs-target="#createPostForm">Annuleren</button>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4" onclick="saveFormSchema()">Plaatsen</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4" onclick="return saveFormSchema()">Plaatsen</button>
                     </div>
                 </form>
             </div>
@@ -1167,10 +1167,16 @@ function createPollItemHTML(uniqueId, pollItem = null) {
 
 function createPollOptionHTML(uniqueId, count, value = '') {
     const valText = typeof value === 'string' ? value : (value.text || '');
+    const addedBy = typeof value === 'string' ? null : (value.addedBy || null);
+    const optionId = Date.now() + '_' + Math.floor(Math.random() * 1000);
     return `
         <div class="input-group input-group-sm mb-2 shadow-none transition-all rounded-3 overflow-hidden border">
             <span class="input-group-text bg-white border-0 text-muted opacity-50 px-3"><i class="bi bi-grip-vertical"></i></span>
-            <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[${uniqueId}][options][]" placeholder="Optie ${count}" value="${valText}">
+            <div class="flex-grow-1">
+                <input type="text" class="form-control form-control-sm border-0 ps-1" name="polls[${uniqueId}][options][${optionId}][text]" placeholder="Optie ${count}" value="${valText}">
+                ${addedBy ? `<small class="text-muted fst-italic d-block" style="font-size: 0.65rem; margin-top: 2px;">Toegevoegd door ${addedBy.charAt(0).toUpperCase() + addedBy.slice(1).toLowerCase()}</small>` : ''}
+            </div>
+            ${addedBy ? `<input type="hidden" name="polls[${uniqueId}][options][${optionId}][addedBy]" value="${addedBy}">` : ''}
             ${count > 2 || (value === '' && count > 2) ? 
                 `<button class="btn btn-outline-danger border-0 px-3" type="button" onclick="const p=this.parentElement; p.style.opacity='0'; p.style.transform='translateX(10px)'; setTimeout(()=>p.remove(), 200);"><i class="bi bi-trash-fill"></i></button>` : 
                 `<button class="btn btn-outline-light text-muted border-0 disabled opacity-25 px-3" type="button"><i class="bi bi-x-lg"></i></button>`
@@ -1248,6 +1254,24 @@ function saveFormSchema() {
     if(formFields.length > 0) {
         document.getElementById('formSchemaJson').value = JSON.stringify(formFields);
     }
+    
+    // Validate polls
+    const pollsContainer = document.getElementById('pollsContainer');
+    if (pollsContainer && pollsContainer.children.length > 0) {
+        for (let pollEl of pollsContainer.children) {
+            const optionsContainer = pollEl.querySelector('.poll-options-list');
+            if (optionsContainer) {
+                const optionInputs = optionsContainer.querySelectorAll('input[name*="[text]"]');
+                const validOptions = Array.from(optionInputs).filter(input => input.value.trim() !== '');
+                if (validOptions.length === 0) {
+                    alert('Elke poll moet minstens 1 optie hebben.');
+                    return false;
+                }
+            }
+        }
+    }
+    
+    return true;
 }
 
 function showAddUserOption(btn) {
@@ -1332,7 +1356,7 @@ async function addUserPollOption(el, postId, pollIndex) {
                 <i class="bi bi-check-circle me-2"></i>Optie toegevoegd!
                 <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
             `;
-            input.parentElement.parentElement.appendChild(successDiv);
+            container.appendChild(successDiv);
             
             // Reset after brief delay
             setTimeout(() => {
@@ -1366,7 +1390,7 @@ async function addUserPollOption(el, postId, pollIndex) {
             <i class="bi bi-exclamation-triangle me-2"></i>${errorMsg}
             <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
         `;
-        input.parentElement.parentElement.appendChild(errorDiv);
+        container.appendChild(errorDiv);
         
         // Reset after delay
         setTimeout(() => {
@@ -1408,8 +1432,14 @@ function addPollOptionToUI(pollWrapper, optionText, optionIndex, pollIndex, adde
     newOptionEl.setAttribute('data-index', optionIndex);
     newOptionEl.setAttribute('data-selected', 'true');
 
-    // Get the post ID from the parent
     const postId = pollWrapper.getAttribute('data-post-id');
+    const postAuthorId = pollWrapper.getAttribute('data-author-id');
+    
+    // Check permissions for showing remove button
+    const isAuthor = window.currentUser && postAuthorId && parseInt(postAuthorId) === window.currentUser.id;
+    const isAdmin = window.currentUser && window.currentUser.role === 'admin';
+    const isOwnerOfOption = addedBy && window.currentUser && addedBy.toLowerCase() === window.currentUser.username.toLowerCase();
+    const canRemove = isAuthor || isAdmin || isOwnerOfOption;
 
     newOptionEl.innerHTML = `
         <!-- Progress Bar (Background) -->
@@ -1429,8 +1459,11 @@ function addPollOptionToUI(pollWrapper, optionText, optionIndex, pollIndex, adde
                     ` : ''}
                 </div>
             </div>
-            <div class="ms-3 text-end">
+            <div class="ms-3 text-end d-flex align-items-center">
                 <span class="fw-bold text-primary small poll-percent-text">100%</span>
+                ${canRemove ? `<button class="btn btn-link text-danger p-0 ms-2 shadow-none border-0" type="button" onclick="event.stopPropagation(); removePollOption(this, '${postId}', ${pollIndex}, ${optionIndex})">
+                    <i class="bi bi-trash-fill" style="font-size: 0.8rem;"></i>
+                </button>` : ''}
             </div>
         </div>        
         <!-- Voters (Collapsible/Small) -->
@@ -1517,6 +1550,35 @@ async function togglePollVote(element, postId, pollIndex, index, allowMultiple) 
         }
     } catch (e) {
         console.error('Poll vote error', e);
+    }
+}
+
+async function removePollOption(button, postId, pollIndex, optionIndex) {
+    if (!confirm('Weet je zeker dat je deze optie wilt verwijderen?')) return;
+
+    try {
+        const response = await fetch(`/feed/post/${postId}/poll/${pollIndex}/option/${optionIndex}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (response.ok) {
+            const resData = await response.json();
+            if (resData.success) {
+                // Find the wrapper and refresh the stats or just reload?
+                // Better to refresh stats, but indices have changed so we might need to re-render options.
+                // For simplicity and correctness (as indices shifted), a reload is safest or we need a robust update.
+                // Since updatePollStats might not handle shifted indices well, let's just reload or re-fetch post content.
+                location.reload(); 
+            } else {
+                alert(resData.error || 'Kon optie niet verwijderen');
+            }
+        }
+    } catch (e) {
+        console.error('Remove poll option error', e);
     }
 }
 
