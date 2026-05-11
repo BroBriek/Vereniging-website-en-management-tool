@@ -156,6 +156,13 @@
         navigator.serviceWorker.register('/sw.js').catch(function(){});
     }
 
+    // Set current user data for JavaScript
+    window.currentUser = {
+        id: <%= user ? user.id : 'null' %>,
+        username: '<%= user ? user.username : '' %>',
+        role: '<%= user ? user.role : '' %>'
+    };
+
     // Lock background scroll when mobile menu is open
     document.addEventListener('DOMContentLoaded', function() {
         var navbarCollapse = document.getElementById('navbarNav');

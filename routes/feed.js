@@ -19,6 +19,7 @@ router.post('/group/:id/delete', feedController.postDeleteEvent);
 router.post('/post', upload.array('attachments'), compressFeedImage, feedController.postCreatePost);
 router.post('/post/:id/update', upload.array('attachments'), compressFeedImage, feedController.updatePost);
 router.post('/post/:id/poll/:pollIndex/option', feedController.addPollOption);
+router.delete('/post/:id/poll/:pollIndex/option/:optionIndex', feedController.removePollOption);
 router.post('/post/:id/delete', feedController.deletePost);
 router.post('/post/:id/like', feedController.toggleLike);
 router.post('/comment', feedController.postComment);
