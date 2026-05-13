@@ -13,6 +13,7 @@ class SettingsService {
             enable_public_registrations_view: { env: 'ENABLE_PUBLIC_REGISTRATIONS_VIEW', type: 'boolean', default: true },
             allow_all_forms_access: { env: 'ALLOW_ALL_FORMS_ACCESS', type: 'boolean', default: false },
             disable_quote_of_the_month: { env: 'DISABLE_QUOTE_OF_THE_MONTH', type: 'boolean', default: false },
+            hidden_nav_pages: { default: '' },
             
             // Theme Colors
             theme_color_primary: { default: '#db3e41' },   // --chiro-red
