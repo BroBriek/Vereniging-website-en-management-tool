@@ -1,0 +1,81 @@
+<%- include('../partials/header') %>
+
+<% if (page.bannerEnabled && page.bannerImage) { %>
+    <div class="hero-banner position-relative mb-5 rounded-4 overflow-hidden shadow-sm" style="height: 300px;">
+        <img src="<%= page.bannerImage %>" class="w-100 h-100 object-fit-cover" alt="<%= page.title %>">
+        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-25">
+            <h1 class="text-white display-3 font-playful mb-0 text-shadow"><%= page.title %></h1>
+        </div>
+    </div>
+<% } else { %>
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4 font-playful fw-bold"><%= page.title %></h1>
+            <hr class="chiro-divider">
+        </div>
+    </div>
+<% } %>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="custom-page-content">
+            <% page.content.forEach(comp => { %>
+                <div class="page-component mb-4">
+                    <% switch(comp.type) { 
+                        case 'header': %>
+                            <h<%= comp.level || 2 %> class="font-playful mt-4 mb-3"><%= comp.text %></h<%= comp.level || 2 %>>
+                        <% break; 
+                        case 'text': %>
+                            <div class="rich-text-content">
+                                <%- comp.text %>
+                            </div>
+                        <% break; 
+                        case 'image': %>
+                            <% if (comp.url) { %>
+                                <div class="text-center my-4">
+                                    <img src="<%= comp.url %>" class="img-fluid rounded-4 shadow-sm" alt="Pagina afbeelding">
+                                </div>
+                            <% } %>
+                        <% break; 
+                        case 'button': %>
+                            <div class="text-<%= comp.align || 'start' %> my-4">
+                                <a href="<%= comp.url || '#' %>" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+                                    <%= comp.text || 'Klik Hier' %>
+                                </a>
+                            </div>
+                        <% break; 
+                        case 'divider': %>
+                            <hr class="my-5 opacity-10">
+                        <% break; 
+                    } %>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+</div>
+
+<style>
+    .text-shadow {
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    .rich-text-content {
+        line-height: 1.7;
+        font-size: 1.1rem;
+    }
+    .rich-text-content p {
+        margin-bottom: 1.5rem;
+    }
+    .custom-page-content {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+    }
+    @media (max-width: 768px) {
+        .custom-page-content {
+            padding: 20px;
+        }
+    }
+</style>
+
+<%- include('../partials/footer') %>

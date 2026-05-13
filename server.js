@@ -11,6 +11,7 @@ const { sequelize, syncDatabase } = require('./models');
 const SQLiteStore = require('connect-sqlite3')(session);
 const webpush = require('web-push');
 const SettingsService = require('./services/SettingsService');
+const CustomPageService = require('./services/CustomPageService');
 
 const LOGS_DIR = path.join(__dirname, 'logs');
 fs.mkdirSync(LOGS_DIR, { recursive: true });
@@ -81,7 +82,8 @@ require('./config/passport')(passport);
 
 // Database Sync
 syncDatabase().then(() => {
-  require('./services/SettingsService').init();
+  SettingsService.init();
+  CustomPageService.init();
 });
 
 // Web Push VAPID configuration
@@ -129,6 +131,7 @@ app.use(passport.session());
 // Global Variables & Alert Middleware
 app.use((req, res, next) => {
   res.locals.settings = SettingsService.getAll() || {};
+  res.locals.navbarPages = CustomPageService.getNavbarPages();
   res.locals.user = req.user || null;
   res.locals.originalAdminId = req.session ? req.session.originalAdminId : null;
   res.locals.enablePublicRegistrations = res.locals.settings.enable_public_registrations_view;

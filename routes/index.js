@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const publicController = require('../controllers/publicController');
 const formController = require('../controllers/formController');
+const customPageController = require('../controllers/customPageController');
 
 router.get('/', publicController.getHome);
 router.get('/home', publicController.getPublicHome);
@@ -24,5 +25,8 @@ router.get('/sitemap.xml', publicController.getSitemapXml);
 // Public Forms
 router.get('/forms/:slug', formController.getPublicForm);
 router.post('/forms/:slug/submit', formController.postSubmitForm);
+
+// Custom Pages
+router.get('/p/:slug', customPageController.getPublicPage);
 
 module.exports = router;
