@@ -31,6 +31,7 @@ exports.postSettings = async (req, res) => {
             move_menu_to_dashboard: req.body.move_menu_to_dashboard === 'on',
             enable_public_registrations_view: req.body.enable_public_registrations_view === 'on',
             allow_all_forms_access: req.body.allow_all_forms_access === 'on',
+            disable_quote_of_the_month: req.body.disable_quote_of_the_month === 'on',
             theme_color_primary: req.body.theme_color_primary,
             theme_color_secondary: req.body.theme_color_secondary,
             theme_color_accent: req.body.theme_color_accent,

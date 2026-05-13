@@ -409,9 +409,11 @@ function autoResize(element) {
                 <a href="/feed/calendar" class="btn btn-outline-danger btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center">
                     <i class="bi bi-calendar3"></i> <span class="d-inline d-sm-none d-lg-inline">Kalender</span><span class="d-none d-sm-inline d-lg-none">Leidingskalender</span>
                 </a>
+                <% if (typeof disableQuote === 'undefined' || !disableQuote) { %>
                 <a href="/quotes" class="btn btn-outline-primary btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center">
                     <i class="bi bi-chat-quote-fill"></i> Quoteboekje
                 </a>
+                <% } %>
                 <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center" data-bs-toggle="modal" data-bs-target="#createEventModal">
                     <i class="bi bi-calendar-plus-fill"></i> Nieuw Event
                 </button>
