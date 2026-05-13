@@ -1,7 +1,27 @@
-Admin Management Script:
-      Je kunt nu admins toevoegen of verwijderen via de terminal.
-       * Toevoegen: node scripts/manage_admin.js add <gebruikersnaam> <wachtwoord> (Altijd rol 'admin')
-       * Verwijderen: node scripts/manage_admin.js remove <gebruikersnaam>
-      
-      Opmerking: Gebruikers die via het script zijn toegevoegd hebben standaard de rol 'admin'. 
-      Je kunt hun rol later wijzigen naar 'media' of 'member' via het Admin Dashboard op de website.
+Admin Management & System Scripts:
+
+1. Gebruikersbeheer:
+   * Toevoegen: node scripts/manage_admin.js add <gebruikersnaam> <wachtwoord>
+   * Verwijderen: node scripts/manage_admin.js remove <gebruikersnaam>
+   * Opmerking: Nieuwe gebruikers via script zijn standaard 'admin'. Pas dit aan in het dashboard indien nodig.
+
+2. Systeem Updates:
+   * Volledige Update: ./update.sh (Docker rebuild + Migraties)
+   * Zachte Update: ./softUpdate.sh (Enkel code update + Herstart)
+   * Terugdraaien: ./downgrade.sh (Herstel vorige versie)
+
+3. Database & Opslag:
+   * Handmatige Backup: npm run backup
+   * Afbeeldingen Comprimeren: node scripts/compress_existing_images.js
+   * Finance Tool Reset: node scripts/reset_finance_tool.js (VOORZICHTIG: wist alle financiële data)
+   * Notificatie Schema Update: node scripts/update_notification_schema.js
+
+4. Data Migraties (Eenmalig/Onderhoud):
+   * Nicknames toevoegen aan formulieren: node scripts/add_nickname_to_form_responses.js
+   * Banners toevoegen aan formulieren: node scripts/add_banner_to_forms.js
+   * Verjaardagsvoorkeuren: node scripts/add_birthday_pref.js
+   * Kalender Tokens: node scripts/add_calendar_token.js
+   * Gebruikers Activatie Status: node scripts/add_is_active_to_users.js
+
+Opmerking: Gebruik scripts altijd vanuit de root map van het project.
+
