@@ -4,6 +4,7 @@ const ics = require('ics');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const PhoneService = require('../services/PhoneService');
 
 const getContent = async (slug) => {
     try {
@@ -320,16 +321,42 @@ exports.postRegister = async (req, res) => {
             firstName: (req.body.firstName || '').trim(),
             lastName: (req.body.lastName || '').trim(),
             birthdate: req.body.birthdate,
-            memberPhone: req.body.memberPhone || null,
+            memberPhone: PhoneService.formatPhoneNumber(req.body.memberPhone),
             parentsNames: req.body.parentsNames || null,
-            parentsPhone: req.body.parentsPhone || null,
-            phone: req.body.phone || null,
+            parentsPhone: PhoneService.formatPhoneNumber(req.body.parentsPhone),
+            phone: PhoneService.formatPhoneNumber(req.body.phone),
             email: (req.body.email || '').trim(),
             photoPermission: req.body.photoPermission === 'on' || req.body.photoPermission === 'true',
             medicalInfo: req.body.medicalInfo || null,
             group: req.body.type === 'leiding' ? 'leiding' : (req.body.group || '').trim().toLowerCase(),
             privacyAccepted: req.body.privacyAccepted === 'on' || req.body.privacyAccepted === 'true'
         };
+
+        // Basic validation for phone numbers if provided
+        if (payload.parentsPhone && !PhoneService.isValidFormat(payload.parentsPhone)) {
+             return res.render('public/register', {
+                title: 'Inschrijven bij Chiro Vreugdeland',
+                content,
+                isRegistrationOpen,
+                error: 'Het telefoonnummer van de ouders is ongeldig. Gebruik bijv. 0470 12 34 56.'
+            });
+        }
+        if (payload.phone && !PhoneService.isValidFormat(payload.phone)) {
+             return res.render('public/register', {
+                title: 'Inschrijven bij Chiro Vreugdeland',
+                content,
+                isRegistrationOpen,
+                error: 'Het telefoonnummer is ongeldig. Gebruik bijv. 0470 12 34 56.'
+            });
+        }
+        if (payload.memberPhone && !PhoneService.isValidFormat(payload.memberPhone)) {
+             return res.render('public/register', {
+                title: 'Inschrijven bij Chiro Vreugdeland',
+                content,
+                isRegistrationOpen,
+                error: 'Het telefoonnummer van het lid is ongeldig. Gebruik bijv. 0470 12 34 56.'
+            });
+        }
         const validGroups = ['ribbel', 'speelclub', 'rakwi', 'tito', 'keti', 'aspi', 'leiding'];
         if (!validGroups.includes(payload.group)) {
             console.warn(`Registration attempt with invalid group: "${payload.group}"`);
@@ -389,6 +416,7 @@ exports.postRegister = async (req, res) => {
         });
     }
 };
+
 const nodemailer = require('nodemailer');
 const { sendMail } = require('../config/mailer');
 const PeriodService = require('../services/PeriodService');

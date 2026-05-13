@@ -62,7 +62,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="phone" class="form-label fw-bold" id="labelPhone">Telefoon Ouders</label>
-                            <input type="text" class="form-control" id="phone" name="parentsPhone" required placeholder="0470 00 00 00">
+                            <input type="text" class="form-control" id="phone" name="parentsPhone" required placeholder="0470 00 00 00" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0470 12 34 56 of +31612345678">
                         </div>
                     </div>
 
@@ -75,7 +75,7 @@
                         
                         <div class="mb-4">
                             <label for="memberPhone" class="form-label fw-bold">GSM Nummer Lid (Optioneel)</label>
-                            <input type="text" class="form-control" id="memberPhone" name="memberPhone" placeholder="0475 00 00 00">
+                            <input type="text" class="form-control" id="memberPhone" name="memberPhone" placeholder="0475 00 00 00" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0475 12 34 56 of +31612345678">
                         </div>
 
                         <div class="mb-4 p-4 border rounded-4 bg-white border-2">
@@ -184,6 +184,61 @@
     roleLid.addEventListener('change', updateForm);
     roleLeiding.addEventListener('change', updateForm);
     
+    // Auto-format phone numbers
+    const memberPhoneInput = document.getElementById('memberPhone');
+    
+    function formatPhoneInput(input) {
+        input.addEventListener('input', (e) => {
+            let originalValue = e.target.value;
+            let value = originalValue.replace(/\D/g, '');
+            let isPlus = originalValue.startsWith('+');
+            
+            // Normalize 00 to + for internal processing
+            if (originalValue.startsWith('00')) {
+                isPlus = true;
+                value = value.substring(2);
+            } else if (originalValue.startsWith('32') && value.length > 9) {
+                // If it starts with 32 and is long enough, treat as Belgian local
+                value = '0' + value.substring(2);
+                isPlus = false;
+            }
+
+            // Only auto-convert to Belgian local if it is a Belgian international number
+            if (isPlus && value.startsWith('32') && value.length > 2) {
+                value = '0' + value.substring(2);
+                isPlus = false;
+            }
+            
+            let formatted = '';
+            if (value.length > 0) {
+                const isMobile = value.startsWith('04');
+                const len = value.length;
+                
+                // If it's international (and not Belgian anymore), just sanitize and keep +
+                if (isPlus) {
+                    formatted = '+' + value;
+                } else {
+                    const firstPartLen = isMobile ? 4 : 3;
+                    formatted = value.substring(0, firstPartLen);
+                    
+                    if (len > firstPartLen) {
+                        formatted += ' ' + value.substring(firstPartLen, firstPartLen + 2);
+                    }
+                    if (len > firstPartLen + 2) {
+                        formatted += ' ' + value.substring(firstPartLen + 2, firstPartLen + 4);
+                    }
+                    if (len > firstPartLen + 4) {
+                        formatted += ' ' + value.substring(firstPartLen + 4);
+                    }
+                }
+            }
+            e.target.value = formatted.trim();
+        });
+    }
+
+    formatPhoneInput(phoneInput);
+    formatPhoneInput(memberPhoneInput);
+
     // Init
     updateForm();
 </script>
