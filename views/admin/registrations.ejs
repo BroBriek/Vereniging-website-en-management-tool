@@ -15,94 +15,90 @@
             </h1>
         </div>
 
-        <!-- Search & Sort Bar -->
-        <div class="d-flex flex-grow-1 gap-2 flex-wrap align-items-center" style="max-width: 600px;">
-            <form action="/admin/registrations" method="GET" class="d-flex flex-grow-1">
-                <input type="hidden" name="period" value="<%= selectedPeriod %>">
-                <input type="hidden" name="sort" value="<%= sortField %>">
-                <input type="hidden" name="direction" value="<%= sortDirection %>">
-                <div class="input-group">
-                    <input type="text" name="search" class="form-control shadow-sm border-0" placeholder="Zoek op naam, email..." value="<%= searchQuery %>">
-                    <% if (searchQuery) { %>
-                        <a href="/admin/registrations?period=<%= selectedPeriod %>&sort=<%= sortField %>&direction=<%= sortDirection %>" class="btn btn-white border-0 shadow-sm" title="Zoekopdracht wissen"><i class="bi bi-x-lg"></i></a>
-                    <% } %>
-                    <button class="btn btn-primary shadow-sm" type="submit"><i class="bi bi-search"></i></button>
+        <div class="d-flex flex-grow-1 justify-content-end gap-3 flex-wrap align-items-center">
+            <!-- Search & Sort Bar -->
+            <div class="d-flex gap-2 flex-wrap align-items-center" style="max-width: 600px; flex: 1 1 300px;">
+                <form action="/admin/registrations" method="GET" class="d-flex flex-grow-1">
+                    <input type="hidden" name="period" value="<%= selectedPeriod %>">
+                    <input type="hidden" name="sort" value="<%= sortField %>">
+                    <input type="hidden" name="direction" value="<%= sortDirection %>">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control shadow-sm border-0" placeholder="Zoek op naam, email..." value="<%= searchQuery %>">
+                        <% if (searchQuery) { %>
+                            <a href="/admin/registrations?period=<%= selectedPeriod %>&sort=<%= sortField %>&direction=<%= sortDirection %>" class="btn btn-white border-0 shadow-sm" title="Zoekopdracht wissen"><i class="bi bi-x-lg"></i></a>
+                        <% } %>
+                        <button class="btn btn-primary shadow-sm" type="submit"><i class="bi bi-search"></i></button>
+                    </div>
+                </form>
+
+                <div class="dropdown">
+                    <button class="btn btn-white shadow-sm border-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-sort-alpha-down"></i> Sorteer
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                        <li><h6 class="dropdown-header">Sorteer op</h6></li>
+                        <li><a class="dropdown-item <%= sortField === 'default' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=default&direction=ASC">Standaard (Groep)</a></li>
+                        <li><a class="dropdown-item <%= sortField === 'name' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=name&direction=ASC">Naam (A-Z)</a></li>
+                        <li><a class="dropdown-item <%= sortField === 'birthdate' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=birthdate&direction=ASC">Leeftijd</a></li>
+                        <li><a class="dropdown-item <%= sortField === 'type' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=type&direction=ASC">Rol (Leiding eerst)</a></li>
+                        <% if (selectedPeriod === 'all') { %>
+                            <li><a class="dropdown-item <%= sortField === 'period' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=period&direction=DESC">Jaar (Nieuwste eerst)</a></li>
+                        <% } %>
+                    </ul>
                 </div>
-            </form>
-
-            <div class="dropdown">
-                <button class="btn btn-white shadow-sm border-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-sort-alpha-down"></i> Sorteer: <%= 
-                        sortField === 'name' ? 'Naam' : 
-                        sortField === 'group' ? 'Groep' : 
-                        sortField === 'type' ? 'Rol' : 
-                        sortField === 'birthdate' ? 'Leeftijd' : 
-                        sortField === 'period' ? 'Jaar' : 'Standaard' 
-                    %>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li><h6 class="dropdown-header">Sorteer op</h6></li>
-                    <li><a class="dropdown-item <%= sortField === 'default' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=default&direction=ASC">Standaard (Groep)</a></li>
-                    <li><a class="dropdown-item <%= sortField === 'name' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=name&direction=ASC">Naam (A-Z)</a></li>
-                    <li><a class="dropdown-item <%= sortField === 'birthdate' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=birthdate&direction=ASC">Leeftijd</a></li>
-                    <li><a class="dropdown-item <%= sortField === 'type' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=type&direction=ASC">Rol (Leiding eerst)</a></li>
-                    <% if (selectedPeriod === 'all') { %>
-                        <li><a class="dropdown-item <%= sortField === 'period' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=period&direction=DESC">Jaar (Nieuwste eerst)</a></li>
-                    <% } %>
-                </ul>
             </div>
-        </div>
 
-        <div class="d-flex gap-2">
-            <div class="btn-group">
-                <button type="button" class="btn btn-outline-dark dropdown-toggle shadow-sm" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-download"></i> Exporteren
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li><h6 class="dropdown-header"><i class="bi bi-file-pdf text-danger"></i> PDF Document</h6></li>
-                    <li><a class="dropdown-item" href="/admin/registrations/export-pdf?mode=current">Huidige Periode (<%= currentPeriod %>)</a></li>
-                    <li><a class="dropdown-item" href="/admin/registrations/export-pdf?mode=all">Alles (Archief)</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><h6 class="dropdown-header"><i class="bi bi-file-earmark-spreadsheet text-success"></i> Excel Spreadsheet</h6></li>
-                    <li><a class="dropdown-item" href="/admin/registrations/export?mode=current">Huidige Periode (<%= currentPeriod %>)</a></li>
-                    <li><a class="dropdown-item" href="/admin/registrations/export?mode=all">Alles (Archief)</a></li>
-                </ul>
+            <div class="d-flex gap-2">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-dark dropdown-toggle shadow-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download"></i> Exporteren
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                        <li><h6 class="dropdown-header"><i class="bi bi-file-pdf text-danger"></i> PDF Document</h6></li>
+                        <li><a class="dropdown-item" href="/admin/registrations/export-pdf?mode=current">Huidige Periode (<%= currentPeriod %>)</a></li>
+                        <li><a class="dropdown-item" href="/admin/registrations/export-pdf?mode=all">Alles (Archief)</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header"><i class="bi bi-file-earmark-spreadsheet text-success"></i> Excel Spreadsheet</h6></li>
+                        <li><a class="dropdown-item" href="/admin/registrations/export?mode=current">Huidige Periode (<%= currentPeriod %>)</a></li>
+                        <li><a class="dropdown-item" href="/admin/registrations/export?mode=all">Alles (Archief)</a></li>
+                    </ul>
+                </div>
+                
+                <% if (canEdit) { %>
+                <!-- Registration Period Toggle -->
+                <form action="/admin/registrations/toggle" method="POST" class="d-inline">
+                    <input type="hidden" name="isOpen" value="<%= !isRegistrationOpen %>">
+                    <button type="submit" class="btn btn-<%= isRegistrationOpen ? 'outline-danger' : 'outline-success' %> shadow-sm" title="<%= isRegistrationOpen ? 'Inschrijvingen Sluiten' : 'Inschrijvingen Openen' %>">
+                        <i class="bi bi-<%= isRegistrationOpen ? 'lock' : 'unlock' %>"></i>
+                        <span class="d-none d-sm-inline"><%= isRegistrationOpen ? 'Sluit Inschrijvingen' : 'Open Inschrijvingen' %></span>
+                    </button>
+                </form>
+
+                <div class="btn-group shadow-sm">
+                    <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Werkjaar beheer">
+                        <i class="bi bi-calendar-range"></i> Werkjaar
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                        <li>
+                            <form action="/admin/registrations/new-period" method="POST" onsubmit="return confirm('Ben je zeker? Dit start een nieuwe inschrijvingsperiode. De huidige lijst wordt gearchiveerd en een nieuw leeg werkjaar wordt gestart.');">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="bi bi-calendar-plus text-success"></i> Start Nieuw Werkjaar
+                                </button>
+                            </form>
+                        </li>
+                        <li>
+                            <form action="/admin/registrations/delete-period" method="POST" onsubmit="return confirm('Ben je zeker dat je het laatste werkjaar wilt verwijderen? Dit kan enkel als er nog geen inschrijvingen zijn in dit jaar.');">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="bi bi-calendar-minus text-danger"></i> Verwijder laatste werkjaar
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                <% } %>
+
+                <a href="<%= user.role === 'admin' ? '/admin' : '/' %>" class="btn btn-secondary shadow-sm">Terug</a>
             </div>
-            
-            <% if (canEdit) { %>
-            <!-- Registration Period Toggle -->
-            <form action="/admin/registrations/toggle" method="POST" class="d-inline">
-                <input type="hidden" name="isOpen" value="<%= !isRegistrationOpen %>">
-                <button type="submit" class="btn btn-<%= isRegistrationOpen ? 'outline-danger' : 'outline-success' %> shadow-sm" title="<%= isRegistrationOpen ? 'Inschrijvingen Sluiten' : 'Inschrijvingen Openen' %>">
-                    <i class="bi bi-<%= isRegistrationOpen ? 'lock' : 'unlock' %>"></i>
-                    <span class="d-none d-sm-inline"><%= isRegistrationOpen ? 'Sluit Inschrijvingen' : 'Open Inschrijvingen' %></span>
-                </button>
-            </form>
-
-            <div class="btn-group shadow-sm">
-                <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Werkjaar beheer">
-                    <i class="bi bi-calendar-range"></i> Werkjaar
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                    <li>
-                        <form action="/admin/registrations/new-period" method="POST" onsubmit="return confirm('Ben je zeker? Dit start een nieuwe inschrijvingsperiode. De huidige lijst wordt gearchiveerd en een nieuw leeg werkjaar wordt gestart.');">
-                            <button type="submit" class="dropdown-item">
-                                <i class="bi bi-calendar-plus text-success"></i> Start Nieuw Werkjaar
-                            </button>
-                        </form>
-                    </li>
-                    <li>
-                        <form action="/admin/registrations/delete-period" method="POST" onsubmit="return confirm('Ben je zeker dat je het laatste werkjaar wilt verwijderen? Dit kan enkel als er nog geen inschrijvingen zijn in dit jaar.');">
-                            <button type="submit" class="dropdown-item">
-                                <i class="bi bi-calendar-minus text-danger"></i> Verwijder laatste werkjaar
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-            <% } %>
-
-            <a href="<%= user.role === 'admin' ? '/admin' : '/' %>" class="btn btn-secondary shadow-sm">Terug</a>
         </div>
     </div>
 
@@ -185,13 +181,14 @@
                                             <div class="d-flex gap-2 justify-content-end align-items-center">
                                                 <% if (reg.medicalInfo) { %>
                                                     <button type="button" 
-                                                            class="btn btn-sm btn-outline-warning border-0" 
+                                                            class="btn btn-sm btn-warning shadow-sm border-0 d-flex align-items-center gap-2 px-2" 
                                                             title="Medische/Extra Info"
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#infoModal" 
                                                             data-info="<%= reg.medicalInfo %>"
                                                             data-name="<%= reg.firstName %> <%= reg.lastName %>">
-                                                        <i class="bi bi-exclamation-circle-fill fs-5"></i>
+                                                        <i class="bi bi-heart-pulse-fill"></i>
+                                                        <span class="d-none d-xl-inline small fw-bold">Medisch</span>
                                                     </button>
                                                 <% } %>
 
@@ -222,12 +219,13 @@
                             <div class="d-flex align-items-center gap-2">
                                 <% if (reg.medicalInfo) { %>
                                     <button type="button" 
-                                            class="btn btn-sm p-0 text-warning border-0 bg-transparent shadow-none" 
+                                            class="btn btn-sm btn-warning shadow-sm border-0 d-flex align-items-center gap-2 px-2 py-1" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#infoModal" 
                                             data-info="<%= reg.medicalInfo %>"
                                             data-name="<%= reg.firstName %> <%= reg.lastName %>">
-                                        <i class="bi bi-exclamation-circle-fill fs-5"></i>
+                                        <i class="bi bi-heart-pulse-fill"></i>
+                                        <span class="small fw-bold">Medisch</span>
                                     </button>
                                 <% } %>
                                 <span class="badge bg-secondary rounded-pill"><%= reg.group %></span>
