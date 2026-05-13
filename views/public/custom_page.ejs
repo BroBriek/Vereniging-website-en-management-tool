@@ -19,37 +19,65 @@
 <div class="row justify-content-center">
     <div class="col-lg-10">
         <div class="custom-page-content">
-            <% page.content.forEach(comp => { %>
-                <div class="page-component mb-4">
-                    <% switch(comp.type) { 
-                        case 'header': %>
-                            <h<%= comp.level || 2 %> class="font-playful mt-4 mb-3"><%= comp.text %></h<%= comp.level || 2 %>>
-                        <% break; 
-                        case 'text': %>
-                            <div class="rich-text-content">
-                                <%- comp.text %>
-                            </div>
-                        <% break; 
-                        case 'image': %>
-                            <% if (comp.url) { %>
-                                <div class="text-center my-4">
-                                    <img src="<%= comp.url %>" class="img-fluid rounded-4 shadow-sm" alt="Pagina afbeelding">
+            <% 
+            function renderComponent(comp) { 
+                switch(comp.type) { 
+                    case 'header': %>
+                        <h<%= comp.level || 2 %> class="font-playful mt-4 mb-3"><%= comp.text %></h<%= comp.level || 2 %>>
+                    <% break; 
+                    case 'text': %>
+                        <div class="rich-text-content">
+                            <%- comp.text %>
+                        </div>
+                    <% break; 
+                    case 'image': %>
+                        <% if (comp.url) { %>
+                            <div class="text-center my-4">
+                                <div style="display: inline-block; transform: rotate(<%= comp.rotation || 0 %>deg); width: <%= comp.width || 'auto' %>; max-width: 100%;">
+                                    <img src="<%= comp.url %>" class="img-fluid rounded-4 shadow-sm" style="width: 100%; height: <%= comp.height || 'auto' %>; object-fit: cover;" alt="Pagina afbeelding">
                                 </div>
-                            <% } %>
-                        <% break; 
-                        case 'button': %>
-                            <div class="text-<%= comp.align || 'start' %> my-4">
-                                <a href="<%= comp.url || '#' %>" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
-                                    <%= comp.text || 'Klik Hier' %>
-                                </a>
                             </div>
-                        <% break; 
-                        case 'divider': %>
-                            <hr class="my-5 opacity-10">
-                        <% break; 
-                    } %>
-                </div>
-            <% }) %>
+                        <% } %>
+                    <% break; 
+                    case 'columns': 
+                        // Migration for old format in public view
+                        if (!comp.cols) {
+                            comp.cols = [
+                                { width: comp.leftWidth || 50, content: comp.left || [] },
+                                { width: comp.rightWidth || 50, content: comp.right || [] }
+                            ];
+                        }
+                        %>
+                        <div class="row g-4 my-4">
+                            <% comp.cols.forEach(col => { %>
+                                <div class="col-md" style="flex: 0 0 <%= col.width %>%; max-width: <%= col.width %>%;">
+                                    <% (col.content || []).forEach(child => { %>
+                                        <% renderComponent(child) %>
+                                    <% }) %>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% break;
+                    case 'button': %>
+                        <div class="text-<%= comp.align || 'start' %> my-4">
+                            <a href="<%= comp.url || '#' %>" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+                                <%= comp.text || 'Klik Hier' %>
+                            </a>
+                        </div>
+                    <% break; 
+                    case 'divider': %>
+                        <hr class="my-5 opacity-10">
+                    <% break; 
+                    case 'spacer': %>
+                        <div style="height: <%= comp.height || 50 %>px;"></div>
+                    <% break;
+                }
+            } 
+
+            page.content.forEach(comp => { 
+                renderComponent(comp);
+            });
+            %>
         </div>
     </div>
 </div>
