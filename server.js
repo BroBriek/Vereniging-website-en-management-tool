@@ -224,4 +224,6 @@ app.listen(PORT, () => {
     require('./services/BirthdayService').init();
     // Initialize Weekly Registration Update
     require('./services/RegistrationUpdateService').init();
+    // Initialize GDPR Medical Info Cleanup
+    require('./services/GdprCleanupService').init();
 });
