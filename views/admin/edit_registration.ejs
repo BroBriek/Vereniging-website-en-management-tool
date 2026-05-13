@@ -58,12 +58,12 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="phone" class="form-label">Telefoon (Leiding)</label>
-                                <input type="text" class="form-control" id="phone" name="phone" value="<%= registration.phone || '' %>">
+                                <input type="text" class="form-control" id="phone" name="phone" value="<%= registration.phone || '' %>" pattern="^0\d{2,3} \d{2} \d{2} \d{2}$" title="Gebruik het formaat: 0470 12 34 56">
                                 <div class="form-text">Enkel invullen indien leiding.</div>
                             </div>
                             <div class="col-md-6">
                                 <label for="parentsPhone" class="form-label">Telefoon Ouders (Lid)</label>
-                                <input type="text" class="form-control" id="parentsPhone" name="parentsPhone" value="<%= registration.parentsPhone || '' %>">
+                                <input type="text" class="form-control" id="parentsPhone" name="parentsPhone" value="<%= registration.parentsPhone || '' %>" pattern="^0\d{2,3} \d{2} \d{2} \d{2}$" title="Gebruik het formaat: 0470 12 34 56">
                                 <div class="form-text">Enkel invullen indien lid.</div>
                             </div>
                         </div>
@@ -71,7 +71,7 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="memberPhone" class="form-label">GSM Lid (Optioneel)</label>
-                                <input type="text" class="form-control" id="memberPhone" name="memberPhone" value="<%= registration.memberPhone || '' %>">
+                                <input type="text" class="form-control" id="memberPhone" name="memberPhone" value="<%= registration.memberPhone || '' %>" pattern="^0\d{2,3} \d{2} \d{2} \d{2}$" title="Gebruik het formaat: 0470 12 34 56">
                             </div>
                             <div class="col-md-6">
                                 <label for="parentsNames" class="form-label">Namen Ouders/Voogd</label>
@@ -101,5 +101,59 @@
         </div>
     </div>
 </div>
+
+<script>
+    function formatPhoneInput(id) {
+        const input = document.getElementById(id);
+        if (!input) return;
+        
+        input.addEventListener('input', (e) => {
+            let originalValue = e.target.value;
+            let value = originalValue.replace(/\D/g, '');
+            let isPlus = originalValue.startsWith('+');
+            
+            if (originalValue.startsWith('00')) {
+                isPlus = true;
+                value = value.substring(2);
+            } else if (originalValue.startsWith('32') && value.length > 9) {
+                value = '0' + value.substring(2);
+                isPlus = false;
+            }
+
+            if (isPlus && value.startsWith('32') && value.length > 2) {
+                value = '0' + value.substring(2);
+                isPlus = false;
+            }
+            
+            let formatted = '';
+            if (value.length > 0) {
+                const isMobile = value.startsWith('04');
+                const len = value.length;
+                
+                if (isPlus) {
+                    formatted = '+' + value;
+                } else {
+                    const firstPartLen = isMobile ? 4 : 3;
+                    formatted = value.substring(0, firstPartLen);
+                    
+                    if (len > firstPartLen) {
+                        formatted += ' ' + value.substring(firstPartLen, firstPartLen + 2);
+                    }
+                    if (len > firstPartLen + 2) {
+                        formatted += ' ' + value.substring(firstPartLen + 2, firstPartLen + 4);
+                    }
+                    if (len > firstPartLen + 4) {
+                        formatted += ' ' + value.substring(firstPartLen + 4);
+                    }
+                }
+            }
+            e.target.value = formatted.trim();
+        });
+    }
+
+    formatPhoneInput('phone');
+    formatPhoneInput('parentsPhone');
+    formatPhoneInput('memberPhone');
+</script>
 
 <%- include('../partials/footer') %>

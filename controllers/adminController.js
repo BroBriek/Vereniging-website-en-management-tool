@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const NotificationService = require('../services/NotificationService');
 const PeriodService = require('../services/PeriodService');
+const PhoneService = require('../services/PhoneService');
 const { sendMail } = require('../config/mailer');
 
 exports.getDashboard = (req, res) => {
@@ -408,9 +409,26 @@ exports.updateRegistration = async (req, res) => {
 
         const photoPermission = req.body.photoPermission === 'on';
 
+        const formattedPhone = PhoneService.formatPhoneNumber(phone);
+        const formattedParentsPhone = PhoneService.formatPhoneNumber(parentsPhone);
+        const formattedMemberPhone = PhoneService.formatPhoneNumber(memberPhone);
+
+        if (formattedPhone && !PhoneService.isValidFormat(formattedPhone)) {
+            return res.redirect(`/admin/registrations?error=Ongeldig telefoonformaat leiding. Gebruik: 0470 12 34 56`);
+        }
+        if (formattedParentsPhone && !PhoneService.isValidFormat(formattedParentsPhone)) {
+            return res.redirect(`/admin/registrations?error=Ongeldig telefoonformaat ouders. Gebruik: 0470 12 34 56`);
+        }
+        if (formattedMemberPhone && !PhoneService.isValidFormat(formattedMemberPhone)) {
+            return res.redirect(`/admin/registrations?error=Ongeldig telefoonformaat lid. Gebruik: 0470 12 34 56`);
+        }
+
         await registration.update({
             firstName, lastName, birthdate, type, group, email,
-            phone, parentsPhone, memberPhone, parentsNames, medicalInfo,
+            phone: formattedPhone,
+            parentsPhone: formattedParentsPhone,
+            memberPhone: formattedMemberPhone,
+            parentsNames, medicalInfo,
             photoPermission
         });
 
