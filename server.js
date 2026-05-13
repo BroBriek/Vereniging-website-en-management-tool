@@ -12,6 +12,7 @@ const SQLiteStore = require('connect-sqlite3')(session);
 const webpush = require('web-push');
 const SettingsService = require('./services/SettingsService');
 const CustomPageService = require('./services/CustomPageService');
+const BackupService = require('./services/BackupService');
 
 const LOGS_DIR = path.join(__dirname, 'logs');
 fs.mkdirSync(LOGS_DIR, { recursive: true });
@@ -233,4 +234,7 @@ app.listen(PORT, () => {
     require('./services/RegistrationUpdateService').init();
     // Initialize GDPR Medical Info Cleanup
     require('./services/GdprCleanupService').init();
+    // Initialize Monthly Backup
+    const backupService = new BackupService();
+    backupService.scheduleMonthlyBackup();
 });
