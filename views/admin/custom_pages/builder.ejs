@@ -65,12 +65,11 @@
         border: 2px solid transparent;
         border-radius: 8px;
         margin-bottom: 15px;
-        transition: all 0.2s;
+        transition: border-color 0.2s;
         background: #fff;
     }
     .item-preview:hover {
         border-color: #dee2e6;
-        background: #fffcfc;
     }
     .item-actions {
         position: absolute;
@@ -78,7 +77,7 @@
         right: 10px;
         display: none;
         gap: 5px;
-        z-index: 10;
+        z-index: 100;
     }
     .item-preview:hover .item-actions {
         display: flex;
@@ -104,6 +103,159 @@
         height: 100%;
         color: #adb5bd;
         text-align: center;
+    }
+
+    /* Resizable & Rotatable Styles */
+    .resizable-wrapper {
+        position: relative;
+        display: inline-block;
+        margin: 20px 0;
+        cursor: default;
+        transition: box-shadow 0.2s;
+    }
+    .item-preview:hover .resizable-wrapper {
+        outline: 1px dashed #db3e41;
+    }
+    .resize-handle {
+        width: 12px;
+        height: 12px;
+        background: #db3e41;
+        border: 2px solid white;
+        border-radius: 50%;
+        position: absolute;
+        display: none;
+        z-index: 10;
+        cursor: nwse-resize;
+    }
+    .item-preview:hover .resize-handle {
+        display: block;
+    }
+    .resize-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
+    .resize-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
+    .resize-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+    .resize-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+    .rotate-handle {
+        width: 12px;
+        height: 12px;
+        background: #28a745;
+        border: 2px solid white;
+        border-radius: 50%;
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        z-index: 10;
+        cursor: crosshair;
+    }
+    .rotate-handle::after {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        width: 2px;
+        height: 15px;
+        background: #28a745;
+        transform: translateX(-50%);
+    }
+    .item-preview:hover .rotate-handle {
+        display: block;
+    }
+
+    .columns-container {
+        display: flex;
+        gap: 0;
+        width: 100%;
+        position: relative;
+        margin: 15px 0;
+    }
+    .column-box {
+        min-height: 120px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        border: 1px dashed #dee2e6;
+        position: relative;
+        transition: all 0.2s;
+    }
+    .column-box.drag-over {
+        background: rgba(219, 62, 65, 0.05);
+        border-color: #db3e41;
+        border-style: solid;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+    }
+    .column-divider {
+        width: 15px;
+        cursor: col-resize;
+        background: transparent;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+    }
+    .column-divider:hover {
+        background: rgba(219, 62, 65, 0.1);
+    }
+    .column-divider::after {
+        content: '';
+        width: 2px;
+        height: 40px;
+        background: #dee2e6;
+        border-radius: 2px;
+    }
+    .column-divider:hover::after {
+        background: #db3e41;
+    }
+    
+    .nested-item {
+        position: relative;
+        padding: 10px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        background: white;
+        transition: all 0.2s;
+    }
+    .nested-item:hover {
+        border-color: #dee2e6;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .nested-item .item-actions {
+        top: 2px;
+        right: 2px;
+        transform: scale(0.85);
+    }
+
+    .spacer-preview {
+        border: 1px dashed #dee2e6;
+        background: rgba(248, 249, 250, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-size: 0.8rem;
+        position: relative;
+    }
+    .spacer-preview:hover {
+        border-color: #db3e41;
+        background: rgba(219, 62, 65, 0.05);
+    }
+    .spacer-handle {
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 30px;
+        height: 10px;
+        background: #dee2e6;
+        border-radius: 5px;
+        cursor: ns-resize;
+        display: none;
+    }
+    .spacer-preview:hover .spacer-handle {
+        display: block;
     }
 </style>
 
@@ -195,16 +347,22 @@
             <div class="draggable-item" onclick="addComponent('image')" draggable="true" ondragstart="handleDragStart(event, 'image')">
                 <i class="bi bi-image text-info"></i> Afbeelding
             </div>
+            <div class="draggable-item" onclick="addComponent('columns')" draggable="true" ondragstart="handleDragStart(event, 'columns')">
+                <i class="bi bi-columns-gap text-danger"></i> Twee Kolommen
+            </div>
             <div class="draggable-item" onclick="addComponent('button')" draggable="true" ondragstart="handleDragStart(event, 'button')">
                 <i class="bi bi-link-45deg text-warning"></i> Knop/Link
             </div>
             <div class="draggable-item" onclick="addComponent('divider')" draggable="true" ondragstart="handleDragStart(event, 'divider')">
                 <i class="bi bi-hr text-secondary"></i> Scheidingslijn
             </div>
+            <div class="draggable-item" onclick="addComponent('spacer')" draggable="true" ondragstart="handleDragStart(event, 'spacer')">
+                <i class="bi bi-distribute-vertical text-dark"></i> Afstandshouder
+            </div>
         </div>
 
         <!-- Main Area -->
-        <div class="builder-main shadow-sm" id="builderPreviewArea" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+        <div class="builder-main shadow-sm" id="builderPreviewArea" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
             <div id="emptyState" class="empty-state">
                 <i class="bi bi-plus-square-dotted display-4"></i>
                 <h4>Begin met bouwen</h4>
@@ -235,7 +393,26 @@
 <script src="/js/rich-editor.js"></script>
 <script>
     let components = <%- page && page.content ? JSON.stringify(page.content) : '[]' %>;
-    let editingIndex = -1;
+    let editingPath = '';
+    let activeInteractPath = '';
+    let interactionType = null; // 'resize', 'rotate', 'col-resize', 'spacer-resize'
+    let startX, startY, startWidth, startHeight, startRotation, startCenterX, startCenterY, startLeftWidth, startRightWidth, activeColIdx;
+
+    // Helper to get/set by path
+    function getCompByPath(path) {
+        if (!path) return components;
+        const parts = path.toString().split('.');
+        let current = components;
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            if (Array.isArray(current)) {
+                current = current[parseInt(part)];
+            } else {
+                current = current[part];
+            }
+        }
+        return current;
+    }
 
     document.querySelectorAll('input[name="visibility"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
@@ -256,66 +433,290 @@
     function renderComponents() {
         const list = document.getElementById('contentPreviewList');
         const emptyState = document.getElementById('emptyState');
-        list.innerHTML = '';
-
+        
         if (components.length === 0) {
             emptyState.style.display = 'flex';
         } else {
             emptyState.style.display = 'none';
         }
 
-        components.forEach((comp, index) => {
-            const div = document.createElement('div');
-            div.className = 'item-preview border-bottom mb-3 pb-3';
-            
-            let html = '';
-            switch(comp.type) {
-                case 'header':
-                    html = `<h${comp.level || 2}>${comp.text || 'Titel'}</h${comp.level || 2}>`;
-                    break;
-                case 'text':
-                    html = `<div class="rich-text-content">${comp.text || 'Voeg tekst toe...'}</div>`;
-                    break;
-                case 'image':
-                    html = comp.url ? `<img src="${comp.url}" class="img-fluid rounded" style="max-height: 300px;">` : '<div class="p-4 bg-light text-center rounded">Geen afbeelding</div>';
-                    break;
-                case 'button':
-                    html = `<div class="text-${comp.align || 'start'}"><a href="${comp.url || '#'}" class="btn btn-primary">${comp.text || 'Knop'}</a></div>`;
-                    break;
-                case 'divider':
-                    html = '<hr>';
-                    break;
-            }
-
-            div.innerHTML = `
-                <div class="item-actions">
-                    <button type="button" class="btn btn-sm btn-light border" onclick="moveComp(${index}, -1)" ${index === 0 ? 'disabled' : ''}><i class="bi bi-arrow-up"></i></button>
-                    <button type="button" class="btn btn-sm btn-light border" onclick="moveComp(${index}, 1)" ${index === components.length - 1 ? 'disabled' : ''}><i class="bi bi-arrow-down"></i></button>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="editComp(${index})"><i class="bi bi-pencil"></i></button>
-                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteComp(${index})"><i class="bi bi-trash"></i></button>
-                </div>
-                ${html}
-            `;
-            list.appendChild(div);
-        });
-
+        list.innerHTML = renderComponentList(components, '');
         document.getElementById('contentJsonInput').value = JSON.stringify(components);
     }
 
-    function addComponent(type) {
+    function renderComponentList(compArray, parentPath) {
+        let html = '';
+        compArray.forEach((comp, index) => {
+            const path = parentPath === '' ? `${index}` : `${parentPath}.${index}`;
+            
+            // Migration for old columns
+            if (comp.type === 'columns') {
+                if (!comp.cols) {
+                    // Check if it was the old 2-column format
+                    const left = comp.left || (comp.leftType ? [{ type: comp.leftType, text: comp.leftText, url: comp.leftUrl }] : []);
+                    const right = comp.right || (comp.rightType ? [{ type: comp.rightType, text: comp.rightText, url: comp.rightUrl }] : []);
+                    comp.cols = [
+                        { width: comp.leftWidth || 50, content: left },
+                        { width: comp.rightWidth || 50, content: right }
+                    ];
+                    delete comp.left; delete comp.right; delete comp.leftWidth; delete comp.rightWidth;
+                    delete comp.leftType; delete comp.leftText; delete comp.leftUrl;
+                    delete comp.rightType; delete comp.rightText; delete comp.rightUrl;
+                }
+            }
+
+            let innerHtml = '';
+            switch(comp.type) {
+                case 'header':
+                    innerHtml = `<h${comp.level || 2}>${comp.text || 'Titel'}</h${comp.level || 2}>`;
+                    break;
+                case 'text':
+                    innerHtml = `<div class="rich-text-content">${comp.text || 'Voeg tekst toe...'}</div>`;
+                    break;
+                case 'image':
+                    const imgStyle = `
+                        width: ${comp.width || '300px'};
+                        height: ${comp.height || 'auto'};
+                        transform: rotate(${comp.rotation || 0}deg);
+                        object-fit: cover;
+                    `;
+                    innerHtml = comp.url ? `
+                        <div class="text-center">
+                            <div class="resizable-wrapper" style="${imgStyle}" data-path="${path}">
+                                <img src="${comp.url}" class="img-fluid rounded shadow-sm" style="width: 100%; height: 100%; pointer-events: none; object-fit: cover;">
+                                <div class="resize-handle nw" onmousedown="initResize(event, '${path}', 'nw')"></div>
+                                <div class="resize-handle ne" onmousedown="initResize(event, '${path}', 'ne')"></div>
+                                <div class="resize-handle sw" onmousedown="initResize(event, '${path}', 'sw')"></div>
+                                <div class="resize-handle se" onmousedown="initResize(event, '${path}', 'se')"></div>
+                                <div class="rotate-handle" onmousedown="initRotate(event, '${path}')"></div>
+                            </div>
+                        </div>
+                    ` : '<div class="p-4 bg-light text-center rounded">Geen afbeelding</div>';
+                    break;
+                case 'columns':
+                    let colsHtml = '';
+                    comp.cols.forEach((col, colIdx) => {
+                        colsHtml += `
+                            <div class="column-box" style="width: ${col.width}%" data-path="${path}.cols.${colIdx}.content" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+                                <small class="text-muted d-block mb-2"><i class="bi bi-layout-sidebar"></i> Kolom ${colIdx + 1} (${col.width}%)</small>
+                                <div class="column-content">
+                                    ${renderComponentList(col.content || [], `${path}.cols.${colIdx}.content`)}
+                                    <div class="text-center py-2 text-muted small"><i class="bi bi-plus-circle"></i> Sleep hierheen</div>
+                                </div>
+                            </div>
+                        `;
+                        if (colIdx < comp.cols.length - 1) {
+                            colsHtml += `<div class="column-divider" onmousedown="initColResize(event, '${path}', ${colIdx})"></div>`;
+                        }
+                    });
+                    innerHtml = `<div class="columns-container" id="columns-${path}">${colsHtml}</div>`;
+                    break;
+                case 'button':
+                    innerHtml = `<div class="text-${comp.align || 'start'}"><a href="${comp.url || '#'}" class="btn btn-primary">${comp.text || 'Knop'}</a></div>`;
+                    break;
+                case 'divider':
+                    innerHtml = '<hr>';
+                    break;
+                case 'spacer':
+                    innerHtml = `
+                        <div class="spacer-preview" style="height: ${comp.height || 50}px;" data-path="${path}">
+                            <i class="bi bi-arrows-expand me-1"></i> Afstandshouder (${comp.height || 50}px)
+                            <div class="spacer-handle" onmousedown="initSpacerResize(event, '${path}')"></div>
+                        </div>
+                    `;
+                    break;
+            }
+
+            const itemClass = parentPath === '' ? 'item-preview border-bottom mb-3 pb-3' : 'nested-item';
+            html += `
+                <div class="${itemClass}">
+                    <div class="item-actions">
+                        <button type="button" class="btn btn-sm btn-light border" onclick="moveComp('${path}', -1)" ${index === 0 ? 'disabled' : ''}><i class="bi bi-arrow-up"></i></button>
+                        <button type="button" class="btn btn-sm btn-light border" onclick="moveComp('${path}', 1)" ${index === compArray.length - 1 ? 'disabled' : ''}><i class="bi bi-arrow-down"></i></button>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="editComp('${path}')"><i class="bi bi-pencil"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteComp('${path}')"><i class="bi bi-trash"></i></button>
+                    </div>
+                    ${innerHtml}
+                </div>
+            `;
+        });
+        return html;
+    }
+
+    // Interaction logic
+    function initResize(e, path, handle) {
+        e.preventDefault();
+        e.stopPropagation();
+        activeInteractPath = path;
+        interactionType = 'resize';
+        const wrapper = e.target.parentElement;
+        const rect = wrapper.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = rect.width;
+        startHeight = rect.height;
+        document.addEventListener('mousemove', handleInteraction);
+        document.addEventListener('mouseup', stopInteraction);
+    }
+
+    function initRotate(e, path) {
+        e.preventDefault();
+        e.stopPropagation();
+        activeInteractPath = path;
+        interactionType = 'rotate';
+        const wrapper = e.target.parentElement;
+        const rect = wrapper.getBoundingClientRect();
+        startCenterX = rect.left + rect.width / 2;
+        startCenterY = rect.top + rect.height / 2;
+        startRotation = getCompByPath(path).rotation || 0;
+        
+        const dx = e.clientX - startCenterX;
+        const dy = e.clientY - startCenterY;
+        startX = Math.atan2(dy, dx) * (180 / Math.PI);
+        
+        document.addEventListener('mousemove', handleInteraction);
+        document.addEventListener('mouseup', stopInteraction);
+    }
+
+    function initColResize(e, path, colIdx) {
+        e.preventDefault();
+        e.stopPropagation();
+        activeInteractPath = path;
+        interactionType = 'col-resize';
+        activeColIdx = colIdx;
+        const container = document.getElementById(`columns-${path}`);
+        const rect = container.getBoundingClientRect();
+        startX = e.clientX;
+        startWidth = rect.width;
+        const comp = getCompByPath(path);
+        startLeftWidth = comp.cols[colIdx].width;
+        startRightWidth = comp.cols[colIdx + 1].width;
+        document.addEventListener('mousemove', handleInteraction);
+        document.addEventListener('mouseup', stopInteraction);
+    }
+
+    function initSpacerResize(e, path) {
+        e.preventDefault();
+        e.stopPropagation();
+        activeInteractPath = path;
+        interactionType = 'spacer-resize';
+        const rect = e.target.parentElement.getBoundingClientRect();
+        startY = e.clientY;
+        startHeight = rect.height;
+        document.addEventListener('mousemove', handleInteraction);
+        document.addEventListener('mouseup', stopInteraction);
+    }
+
+    function handleInteraction(e) {
+        if (!activeInteractPath) return;
+        const comp = getCompByPath(activeInteractPath);
+
+        if (interactionType === 'resize') {
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            comp.width = Math.max(50, startWidth + dx) + 'px';
+            comp.height = Math.max(50, startHeight + dy) + 'px';
+            
+            const wrapper = document.querySelector(`.resizable-wrapper[data-path="${activeInteractPath}"]`);
+            if (wrapper) {
+                wrapper.style.width = comp.width;
+                wrapper.style.height = comp.height;
+            }
+        } else if (interactionType === 'rotate') {
+            const dx = e.clientX - startCenterX;
+            const dy = e.clientY - startCenterY;
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            comp.rotation = (startRotation + (angle - startX));
+            
+            const wrapper = document.querySelector(`.resizable-wrapper[data-path="${activeInteractPath}"]`);
+            if (wrapper) {
+                wrapper.style.transform = `rotate(${comp.rotation}deg)`;
+            }
+        } else if (interactionType === 'col-resize') {
+            const dx = e.clientX - startX;
+            const percentageDelta = (dx / startWidth) * 100;
+            
+            let newLeftWidth = Math.round(startLeftWidth + percentageDelta);
+            let newRightWidth = Math.round(startRightWidth - percentageDelta);
+            
+            // Constrain
+            if (newLeftWidth >= 10 && newRightWidth >= 10) {
+                comp.cols[activeColIdx].width = newLeftWidth;
+                comp.cols[activeColIdx + 1].width = newRightWidth;
+
+                const container = document.getElementById(`columns-${activeInteractPath}`);
+                if (container) {
+                    const boxes = container.querySelectorAll('.column-box');
+                    boxes[activeColIdx].style.width = comp.cols[activeColIdx].width + '%';
+                    boxes[activeColIdx + 1].style.width = comp.cols[activeColIdx + 1].width + '%';
+                    
+                    // Update text indicators
+                    boxes[activeColIdx].querySelector('small').innerHTML = `<i class="bi bi-layout-sidebar"></i> Kolom ${activeColIdx + 1} (${comp.cols[activeColIdx].width}%)`;
+                    boxes[activeColIdx + 1].querySelector('small').innerHTML = `<i class="bi bi-layout-sidebar"></i> Kolom ${activeColIdx + 2} (${comp.cols[activeColIdx + 1].width}%)`;
+                }
+            }
+        } else if (interactionType === 'spacer-resize') {
+            const dy = e.clientY - startY;
+            comp.height = Math.max(10, startHeight + dy);
+            
+            const preview = document.querySelector(`.spacer-preview[data-path="${activeInteractPath}"]`);
+            if (preview) {
+                preview.style.height = comp.height + 'px';
+                preview.innerHTML = `<i class="bi bi-arrows-expand me-1"></i> Afstandshouder (${comp.height}px) <div class="spacer-handle" onmousedown="initSpacerResize(event, '${activeInteractPath}')"></div>`;
+            }
+        }
+    }
+
+    function stopInteraction() {
+        document.removeEventListener('mousemove', handleInteraction);
+        document.removeEventListener('mouseup', stopInteraction);
+        activeInteractPath = '';
+        interactionType = null;
+        renderComponents();
+    }
+
+    function addComponent(type, path = null) {
         let newComp = { type };
         if (type === 'header') { newComp.text = 'Nieuwe Titel'; newComp.level = 2; }
         if (type === 'text') { newComp.text = 'Klik om tekst te bewerken...'; }
         if (type === 'button') { newComp.text = 'Klik Hier'; newComp.url = ''; newComp.align = 'start'; }
+        if (type === 'image') { newComp.url = ''; newComp.width = '300px'; newComp.height = 'auto'; newComp.rotation = 0; }
+        if (type === 'columns') { 
+            newComp.cols = [
+                { width: 50, content: [] },
+                { width: 50, content: [] }
+            ];
+        }
+        if (type === 'spacer') {
+            newComp.height = 50;
+        }
         
-        components.push(newComp);
+        let targetArray;
+        let newIndex;
+        if (path) {
+            targetArray = getCompByPath(path);
+            if (!Array.isArray(targetArray)) {
+                console.error('Target is not an array:', path, targetArray);
+                return;
+            }
+            targetArray.push(newComp);
+            newIndex = targetArray.length - 1;
+        } else {
+            components.push(newComp);
+            newIndex = components.length - 1;
+        }
+        
         renderComponents();
-        editComp(components.length - 1);
+        const newPath = path ? `${path}.${newIndex}` : `${newIndex}`;
+        // Timeout to ensure DOM is ready and avoid conflicts with drag-and-drop state
+        setTimeout(() => editComp(newPath), 50);
     }
 
-    function editComp(index) {
-        editingIndex = index;
-        const comp = components[index];
+    function editComp(path) {
+        editingPath = path;
+        const comp = getCompByPath(path);
+        if (!comp) return;
+        
         const body = document.getElementById('editModalBody');
         let html = '';
 
@@ -367,9 +768,48 @@
                             <label class="form-label">Of gebruik een URL</label>
                             <div class="input-group">
                                 <input type="text" id="editImageUrl" class="form-control" value="${comp.url || ''}" placeholder="https://...">
-                                <button class="btn btn-outline-secondary" type="button" onclick="openMediaManager()">Media</button>
+                                <button class="btn btn-outline-secondary" type="button" onclick="openMediaManager('editImageUrl')">Media</button>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Breedte</label>
+                                <input type="text" id="editImageWidth" class="form-control" value="${comp.width || '300px'}" placeholder="bv. 100% of 300px">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Hoogte</label>
+                                <input type="text" id="editImageHeight" class="form-control" value="${comp.height || 'auto'}" placeholder="bv. auto of 200px">
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Rotatie (graden)</label>
+                                <input type="number" id="editImageRotation" class="form-control" value="${comp.rotation || 0}">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                break;
+            case 'columns':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label">Aantal Kolommen</label>
+                        <input type="number" id="editColCount" class="form-control" min="1" max="6" value="${comp.cols.length}" onchange="adjustColInputs(this.value)">
+                        <small class="text-muted">Bij het verminderen van het aantal kolommen kan inhoud verloren gaan.</small>
+                    </div>
+                    <div id="colWidthContainer">
+                        ${comp.cols.map((col, i) => `
+                            <div class="mb-2">
+                                <label class="form-label small">Breedte Kolom ${i+1} (%)</label>
+                                <input type="number" class="form-control form-control-sm col-width-input" value="${col.width}" data-index="${i}">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                break;
+            case 'spacer':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label">Hoogte (pixels)</label>
+                        <input type="number" id="editSpacerHeight" class="form-control" value="${comp.height || 50}">
                     </div>
                 `;
                 break;
@@ -396,15 +836,40 @@
         }
 
         body.innerHTML = html;
-        new bootstrap.Modal(document.getElementById('editModal')).show();
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editModal'));
+        modal.show();
 
         if (comp.type === 'text' && window.initializeRichEditors) {
             window.initializeRichEditors(document.getElementById('editRichText'));
         }
     }
 
+    function adjustColInputs(count) {
+        const container = document.getElementById('colWidthContainer');
+        const currentInputs = container.querySelectorAll('.col-width-input').length;
+        const target = parseInt(count);
+        
+        if (target > currentInputs) {
+            for (let i = currentInputs; i < target; i++) {
+                const div = document.createElement('div');
+                div.className = 'mb-2';
+                div.innerHTML = `
+                    <label class="form-label small">Breedte Kolom ${i+1} (%)</label>
+                    <input type="number" class="form-control form-control-sm col-width-input" value="${Math.round(100/target)}" data-index="${i}">
+                `;
+                container.appendChild(div);
+            }
+        } else if (target < currentInputs) {
+            for (let i = currentInputs; i > target; i--) {
+                container.lastElementChild.remove();
+            }
+        }
+    }
+
     document.getElementById('saveChangesBtn').addEventListener('click', () => {
-        const comp = components[editingIndex];
+        const comp = getCompByPath(editingPath);
+        if (!comp) return;
+
         if (comp.type === 'header') {
             comp.text = document.getElementById('editHeaderTask').value;
             comp.level = parseInt(document.getElementById('editHeaderLevel').value);
@@ -412,6 +877,21 @@
             comp.text = document.getElementById('editRichText').value;
         } else if (comp.type === 'image') {
             comp.url = document.getElementById('editImageUrl').value;
+            comp.width = document.getElementById('editImageWidth').value;
+            comp.height = document.getElementById('editImageHeight').value;
+            comp.rotation = parseFloat(document.getElementById('editImageRotation').value);
+        } else if (comp.type === 'columns') {
+            const count = parseInt(document.getElementById('editColCount').value);
+            const inputs = document.querySelectorAll('.col-width-input');
+            const newCols = [];
+            for (let i = 0; i < count; i++) {
+                const width = parseInt(inputs[i].value);
+                const oldContent = (comp.cols[i] && comp.cols[i].content) ? comp.cols[i].content : [];
+                newCols.push({ width, content: oldContent });
+            }
+            comp.cols = newCols;
+        } else if (comp.type === 'spacer') {
+            comp.height = parseInt(document.getElementById('editSpacerHeight').value);
         } else if (comp.type === 'button') {
             comp.text = document.getElementById('editBtnText').value;
             comp.url = document.getElementById('editBtnUrl').value;
@@ -422,29 +902,64 @@
         bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
     });
 
-    function deleteComp(index) {
+    function deleteComp(path) {
         if (confirm('Zeker dat je dit component wilt verwijderen?')) {
-            components.splice(index, 1);
+            const parts = path.toString().split('.');
+            const index = parseInt(parts.pop());
+            const parentPath = parts.join('.');
+            const parentArray = parentPath ? getCompByPath(parentPath) : components;
+            parentArray.splice(index, 1);
             renderComponents();
         }
     }
 
-    function moveComp(index, dir) {
+    function moveComp(path, dir) {
+        const parts = path.toString().split('.');
+        const index = parseInt(parts.pop());
+        const parentPath = parts.join('.');
+        const parentArray = parentPath ? getCompByPath(parentPath) : components;
         const newIndex = index + dir;
-        if (newIndex >= 0 && newIndex < components.length) {
-            const temp = components[index];
-            components[index] = components[newIndex];
-            components[newIndex] = temp;
+        if (newIndex >= 0 && newIndex < parentArray.length) {
+            const temp = parentArray[index];
+            parentArray[index] = parentArray[newIndex];
+            parentArray[newIndex] = temp;
             renderComponents();
         }
     }
 
-    function handleDragStart(e, type) { e.dataTransfer.setData('type', type); }
-    function handleDragOver(e) { e.preventDefault(); }
+    function handleDragStart(e, type) { 
+        e.dataTransfer.setData('type', type); 
+    }
+    function handleDragOver(e) { 
+        e.preventDefault(); 
+        e.stopPropagation();
+        const target = e.target.closest('.column-box') || e.target.closest('.builder-main');
+        if (target) {
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            target.classList.add('drag-over');
+        }
+    }
+    function handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const target = e.target.closest('.column-box') || e.target.closest('.builder-main');
+        if (target) target.classList.remove('drag-over');
+    }
     function handleDrop(e) {
         e.preventDefault();
+        e.stopPropagation();
         const type = e.dataTransfer.getData('type');
-        if (type) addComponent(type);
+        if (!type) return;
+        
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+        const columnBox = e.target.closest('.column-box');
+        if (columnBox) {
+            const path = columnBox.dataset.path;
+            addComponent(type, path);
+        } else {
+            addComponent(type);
+        }
     }
 
     function handleCompImageUpload(input) {
@@ -476,13 +991,13 @@
         });
     }
 
-    function openMediaManager() {
-        // This is a placeholder for a media manager if it exists
+    function openMediaManager(targetId) {
         const url = prompt('Geef de URL van de afbeelding op:');
-        if (url) document.getElementById('editImageUrl').value = url;
+        if (url) document.getElementById(targetId).value = url;
     }
 
     renderComponents();
 </script>
+
 
 <%- include('../../partials/footer') %>
