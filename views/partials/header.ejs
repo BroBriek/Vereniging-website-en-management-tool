@@ -104,24 +104,31 @@
                                 <%= capitalizeName(user.username.split(' ')[0]) %>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-2 mt-2" aria-labelledby="userDropdown">
-                                <% if (user.role === 'admin' || user.role === 'media' || settings.allow_all_forms_access) { %>
+                                <% if (user.role === 'admin' || user.role === 'media' || settings.allow_all_forms_access || settings.move_menu_to_dashboard) { %>
                                     <li><h6 class="dropdown-header text-uppercase small fw-bold opacity-50">Beheer</h6></li>
                                     <li><a class="dropdown-item rounded-3 py-2" href="/admin"><i class="bi bi-speedometer2 me-2 text-primary"></i> Dashboard</a></li>
-                                    <li><hr class="dropdown-divider opacity-10"></li>
+                                    <% if (!settings.move_menu_to_dashboard) { %>
+                                        <li><hr class="dropdown-divider opacity-10"></li>
+                                    <% } %>
                                 <% } %>
                                 
-                                <li><h6 class="dropdown-header text-uppercase small fw-bold opacity-50">Persoonlijk</h6></li>
-                                <% if (typeof enablePublicRegistrations !== 'undefined' && enablePublicRegistrations) { %>
-                                    <li><a class="dropdown-item rounded-3 py-2" href="/admin/registrations"><i class="bi bi-people me-2 text-success"></i> Ledenlijst</a></li>
+                                <% if (!settings.move_menu_to_dashboard) { %>
+                                    <li><h6 class="dropdown-header text-uppercase small fw-bold opacity-50">Persoonlijk</h6></li>
+                                    <% if (typeof enablePublicRegistrations !== 'undefined' && enablePublicRegistrations) { %>
+                                        <li><a class="dropdown-item rounded-3 py-2" href="/admin/registrations"><i class="bi bi-people me-2 text-success"></i> Ledenlijst</a></li>
+                                    <% } %>
+                                    <li><a class="dropdown-item rounded-3 py-2" href="/feed"><i class="bi bi-chat-left-text me-2 text-warning"></i> Leidingshoekje</a></li>
+                                    <% if (showGamesToAll || (user && user.username === 'admin')) { %>
+                                        <li><a class="dropdown-item rounded-3 py-2" href="/games"><i class="bi bi-controller me-2 text-info"></i> Spelendatabank</a></li>
+                                    <% } %>
+                                    <li><a class="dropdown-item rounded-3 py-2" href="/feed/calendar"><i class="bi bi-calendar3 me-2 text-danger"></i> Leidingskalender</a></li>
+                                    <li><a class="dropdown-item rounded-3 py-2" href="/account/settings"><i class="bi bi-gear me-2 text-secondary"></i> Instellingen</a></li>
                                 <% } %>
-                                <li><a class="dropdown-item rounded-3 py-2" href="/feed"><i class="bi bi-chat-left-text me-2 text-warning"></i> Leidingshoekje</a></li>
-                                <% if (showGamesToAll || (user && user.username === 'admin')) { %>
-                                    <li><a class="dropdown-item rounded-3 py-2" href="/games"><i class="bi bi-controller me-2 text-info"></i> Spelendatabank</a></li>
-                                <% } %>
-                                <li><a class="dropdown-item rounded-3 py-2" href="/feed/calendar"><i class="bi bi-calendar3 me-2 text-danger"></i> Leidingskalender</a></li>
-                                <li><a class="dropdown-item rounded-3 py-2" href="/account/settings"><i class="bi bi-gear me-2 text-secondary"></i> Instellingen</a></li>
-                                
+
                                 <% if (originalAdminId || (user.username === 'admin' && user.secondaryUserId)) { %>
+                                    <% if (!settings.move_menu_to_dashboard) { %>
+                                        <li><hr class="dropdown-divider opacity-10"></li>
+                                    <% } %>
                                     <li><a class="dropdown-item rounded-3 py-2 text-primary fw-bold" href="/account/switch">
                                         <i class="bi bi-arrow-left-right me-2"></i> 
                                         <%= originalAdminId ? 'Terug naar Admin' : 'Switch naar Test Account' %>

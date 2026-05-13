@@ -20,7 +20,7 @@ const checkFormPermission = (req, res, next) => {
 };
 
 const checkAdminDashboardAccess = (req, res, next) => {
-    if (req.user.role === 'admin' || req.user.role === 'media' || SettingsService.get('allow_all_forms_access')) {
+    if (req.user.role === 'admin' || req.user.role === 'media' || SettingsService.get('allow_all_forms_access') || SettingsService.get('move_menu_to_dashboard')) {
         return next();
     }
     res.redirect('/');

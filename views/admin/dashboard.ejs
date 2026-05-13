@@ -8,8 +8,68 @@
     </div>
 
     <!-- Row 1: Website Management (Blue) -->
+    <% if (settings.move_menu_to_dashboard) { %>
+        <div class="col-12 mb-3 mt-2">
+            <h3>Persoonlijk Menu</h3>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title"><i class="bi bi-chat-left-text"></i></h3>
+                    <p>Ga naar het leidingshoekje voor berichten en bestanden.</p>
+                    <a href="/feed" class="btn btn-primary w-100">Leidingshoekje</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title"><i class="bi bi-calendar3"></i></h3>
+                    <p>Bekijk de volledige leidingskalender.</p>
+                    <a href="/feed/calendar" class="btn btn-primary w-100">Leidingskalender</a>
+                </div>
+            </div>
+        </div>
+
+        <% if (settings.show_games_to_all || (user && user.role === 'admin')) { %>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h3 class="card-title"><i class="bi bi-controller"></i></h3>
+                        <p>Inspiratie nodig? Check de spelendatabank.</p>
+                        <a href="/games" class="btn btn-primary w-100">Spelendatabank</a>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+
+        <% if (settings.enable_public_registrations_view || user.role === 'admin') { %>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h3 class="card-title"><i class="bi bi-people"></i></h3>
+                        <p>Bekijk de lijst met alle ingeschreven leden.</p>
+                        <a href="/admin/registrations" class="btn btn-primary w-100">Ledenlijst</a>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title"><i class="bi bi-person-gear"></i></h3>
+                    <p>Pas je eigen profiel en wachtwoord aan.</p>
+                    <a href="/account/settings" class="btn btn-primary w-100">Mijn Instellingen</a>
+                </div>
+            </div>
+        </div>
+    <% } %>
+
     <% if (user.role === 'admin' || user.role === 'media') { %>
-        <div class="col-12 mb-3">
+        <div class="col-12 mb-3 mt-2">
             <h3>Website Beheer</h3>
         </div>
 
