@@ -1,5 +1,5 @@
-const { Game, User } = require('../models');
-const { Op } = require('sequelize');
+const { Game, User, sequelize } = require('../models');
+const { Op, Sequelize } = require('sequelize');
 const path = require('path');
 const fs = require('fs');
 
@@ -10,7 +10,7 @@ exports.getGames = async (req, res) => {
         const limit = 10;
         const offset = parseInt(req.query.offset) || 0;
         const search = req.query.search || '';
-        const groupFilter = req.query.group || '';
+        let groupFilter = req.query.group || '';
         const typeFilter = req.query.type || '';
         const intensityFilter = req.query.intensity || '';
 
@@ -19,12 +19,31 @@ exports.getGames = async (req, res) => {
         if (search) {
             whereClause[Op.or] = [
                 { title: { [Op.like]: `%${search}%` } },
-                { description: { [Op.like]: `%${search}%` } }
+                { description: { [Op.like]: `%${search}%` } },
+                Sequelize.where(
+                    Sequelize.cast(Sequelize.col('tags'), 'TEXT'),
+                    { [Op.like]: `%${search}%` }
+                )
             ];
         }
 
         if (groupFilter) {
-            whereClause.groups = { [Op.like]: `%${groupFilter}%` };
+            // We use Sequelize.where with CAST to TEXT because Op.like on JSON columns
+            // in SQLite/Sequelize incorrectly stringifies the search pattern with double quotes.
+            // Using substring matching ensures we find the group even if the game has multiple groups.
+            const groupQuery = Sequelize.where(
+                Sequelize.cast(Sequelize.col('groups'), 'TEXT'),
+                { [Op.like]: `%${groupFilter}%` }
+            );
+
+            // If we already have a search filter, we need to combine them
+            if (whereClause[Op.or]) {
+                const searchClause = { [Op.or]: [...whereClause[Op.or]] };
+                delete whereClause[Op.or];
+                whereClause[Op.and] = [searchClause, groupQuery];
+            } else {
+                whereClause[Op.and] = [groupQuery];
+            }
         }
 
         if (typeFilter) {
