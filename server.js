@@ -10,6 +10,7 @@ const methodOverride = require('method-override');
 const { sequelize, syncDatabase } = require('./models');
 const SQLiteStore = require('connect-sqlite3')(session);
 const webpush = require('web-push');
+const SettingsService = require('./services/SettingsService');
 
 const LOGS_DIR = path.join(__dirname, 'logs');
 fs.mkdirSync(LOGS_DIR, { recursive: true });
@@ -79,7 +80,9 @@ app.use((req, res, next) => {
 require('./config/passport')(passport);
 
 // Database Sync
-syncDatabase();
+syncDatabase().then(() => {
+  require('./services/SettingsService').init();
+});
 
 // Web Push VAPID configuration
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -125,10 +128,11 @@ app.use(passport.session());
 
 // Global Variables & Alert Middleware
 app.use((req, res, next) => {
+  res.locals.settings = SettingsService.getAll() || {};
   res.locals.user = req.user || null;
   res.locals.originalAdminId = req.session ? req.session.originalAdminId : null;
-  res.locals.enablePublicRegistrations = process.env.ENABLE_PUBLIC_REGISTRATIONS_VIEW === 'true';
-  res.locals.showGamesToAll = process.env.SHOW_GAMES_TO_ALL !== 'false';
+  res.locals.enablePublicRegistrations = res.locals.settings.enable_public_registrations_view;
+  res.locals.showGamesToAll = res.locals.settings.show_games_to_all;
   
   // Normalize currentPath for SEO (remove trailing slash unless root)
   let normalizedPath = req.path;

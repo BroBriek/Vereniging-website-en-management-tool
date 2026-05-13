@@ -6,6 +6,7 @@ const https = require('https');
 const http = require('http');
 const { Op } = require('sequelize');
 const NotificationService = require('../services/NotificationService');
+const SettingsService = require('../services/SettingsService');
 
 // View Helpers
 const getAvatarColor = (username) => {

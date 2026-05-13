@@ -3,6 +3,8 @@ const { Op } = require('sequelize');
 const path = require('path');
 const fs = require('fs');
 
+const SettingsService = require('../services/SettingsService');
+
 exports.getGames = async (req, res) => {
     try {
         const limit = 10;
