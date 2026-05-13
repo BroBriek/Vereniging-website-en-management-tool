@@ -3,20 +3,37 @@ const router = express.Router();
 const publicController = require('../controllers/publicController');
 const formController = require('../controllers/formController');
 const customPageController = require('../controllers/customPageController');
+const SettingsService = require('../services/SettingsService');
 
-router.get('/', publicController.getHome);
-router.get('/home', publicController.getPublicHome);
-router.get('/praktisch', publicController.getPractical);
-router.get('/leiding', publicController.getLeaders);
-router.get('/kalender', publicController.getCalendar);
+const checkVisibility = (path) => {
+    return (req, res, next) => {
+        const hiddenPages = (SettingsService.get('hidden_nav_pages') || '').split(',').map(p => p.trim()).filter(p => p);
+        if (hiddenPages.includes(path)) {
+            return res.status(404).render('error', { 
+                title: 'Pagina Niet Beschikbaar',
+                status: 404,
+                message: 'Deze pagina is momenteel niet beschikbaar.', 
+                description: 'Deze pagina is door de beheerder tijdelijk uitgeschakeld.',
+                user: req.user 
+            });
+        }
+        next();
+    };
+};
+
+router.get('/', checkVisibility('/home'), publicController.getHome);
+router.get('/home', checkVisibility('/home'), publicController.getPublicHome);
+router.get('/praktisch', checkVisibility('/praktisch'), publicController.getPractical);
+router.get('/leiding', checkVisibility('/leiding'), publicController.getLeaders);
+router.get('/kalender', checkVisibility('/kalender'), publicController.getCalendar);
 router.get('/kalender/hulp', publicController.getCalendarHelp);
 router.get('/kalender/subscribe.ics', publicController.getCalendarICS);
-router.get('/afdelingen', publicController.getDepartments);
-router.get('/t-shirts', publicController.getShirts);
-router.get('/inschrijven', publicController.getRegister);
-router.post('/inschrijven', publicController.postRegister);
-router.get('/contact', publicController.getContact);
-router.post('/contact', publicController.postContact);
+router.get('/afdelingen', checkVisibility('/afdelingen'), publicController.getDepartments);
+router.get('/t-shirts', checkVisibility('/t-shirts'), publicController.getShirts);
+router.get('/inschrijven', checkVisibility('/inschrijven'), publicController.getRegister);
+router.post('/inschrijven', checkVisibility('/inschrijven'), publicController.postRegister);
+router.get('/contact', checkVisibility('/contact'), publicController.getContact);
+router.post('/contact', checkVisibility('/contact'), publicController.postContact);
 router.get('/help', publicController.getHelp);
 router.get('/download', publicController.downloadFile);
 router.get('/robots.txt', publicController.getRobotsTxt);

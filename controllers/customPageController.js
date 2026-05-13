@@ -2,16 +2,7 @@ const { CustomPage, User } = require('../models');
 const CustomPageService = require('../services/CustomPageService');
 
 exports.getCustomPages = async (req, res) => {
-    try {
-        const pages = await CustomPage.findAll({
-            include: [{ model: User, as: 'creator', attributes: ['username'] }],
-            order: [['createdAt', 'DESC']]
-        });
-        res.render('admin/custom_pages/index', { title: 'Pagina Beheer', pages, user: req.user });
-    } catch (error) {
-        console.error('Error fetching custom pages:', error);
-        res.redirect('/admin?error=Kon pagina\'s niet ophalen');
-    }
+    res.redirect('/admin/pages');
 };
 
 exports.getCreatePage = (req, res) => {
@@ -44,22 +35,22 @@ exports.postCreatePage = async (req, res) => {
 
         await CustomPageService.reload();
 
-        res.redirect('/admin/custom-pages?success=Pagina aangemaakt');
+        res.redirect('/admin/pages?success=Pagina aangemaakt');
     } catch (error) {
         console.error('Error creating custom page:', error);
-        res.redirect('/admin/custom-pages?error=Kon pagina niet aanmaken');
+        res.redirect('/admin/pages?error=Kon pagina niet aanmaken');
     }
 };
 
 exports.getEditPage = async (req, res) => {
     try {
         const page = await CustomPage.findByPk(req.params.id);
-        if (!page) return res.redirect('/admin/custom-pages?error=Pagina niet gevonden');
+        if (!page) return res.redirect('/admin/pages?error=Pagina niet gevonden');
         
         res.render('admin/custom_pages/builder', { title: 'Bewerk Pagina', page, user: req.user });
     } catch (error) {
         console.error('Error fetching page for edit:', error);
-        res.redirect('/admin/custom-pages?error=Kon pagina niet laden');
+        res.redirect('/admin/pages?error=Kon pagina niet laden');
     }
 };
 
@@ -67,7 +58,7 @@ exports.postEditPage = async (req, res) => {
     try {
         const { title, status, content, bannerEnabled, showInNavbar, isLinkOnly } = req.body;
         const page = await CustomPage.findByPk(req.params.id);
-        if (!page) return res.redirect('/admin/custom-pages?error=Pagina niet gevonden');
+        if (!page) return res.redirect('/admin/pages?error=Pagina niet gevonden');
 
         const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
 
@@ -87,24 +78,40 @@ exports.postEditPage = async (req, res) => {
         await page.update(updateData);
         await CustomPageService.reload();
 
-        res.redirect('/admin/custom-pages?success=Pagina bijgewerkt');
+        res.redirect('/admin/pages?success=Pagina bijgewerkt');
     } catch (error) {
         console.error('Error updating custom page:', error);
-        res.redirect('/admin/custom-pages?error=Kon pagina niet bijwerken');
+        res.redirect('/admin/pages?error=Kon pagina niet bijwerken');
     }
 };
 
 exports.deletePage = async (req, res) => {
     try {
         const page = await CustomPage.findByPk(req.params.id);
-        if (!page) return res.redirect('/admin/custom-pages?error=Pagina niet gevonden');
+        if (!page) return res.redirect('/admin/pages?error=Pagina niet gevonden');
         
         await page.destroy();
         await CustomPageService.reload();
-        res.redirect('/admin/custom-pages?success=Pagina verwijderd');
+        res.redirect('/admin/pages?success=Pagina verwijderd');
     } catch (error) {
         console.error('Error deleting custom page:', error);
-        res.redirect('/admin/custom-pages?error=Kon pagina niet verwijderen');
+        res.redirect('/admin/pages?error=Kon pagina niet verwijderen');
+    }
+};
+
+exports.toggleStatus = async (req, res) => {
+    try {
+        const page = await CustomPage.findByPk(req.params.id);
+        if (!page) return res.redirect('/admin/pages?error=Pagina niet gevonden');
+        
+        page.status = page.status === 'visible' ? 'invisible' : 'visible';
+        await page.save();
+        await CustomPageService.reload();
+        
+        res.redirect('/admin/pages?success=Pagina status bijgewerkt');
+    } catch (error) {
+        console.error('Error toggling custom page status:', error);
+        res.redirect('/admin/pages?error=Kon status niet bijwerken');
     }
 };
 
@@ -120,8 +127,10 @@ exports.getPublicPage = async (req, res) => {
         
         if (!page) {
             return res.status(404).render('error', { 
+                title: 'Pagina niet gevonden',
+                status: 404,
                 message: 'Pagina niet gevonden', 
-                error: { status: 404 },
+                description: 'De opgevraagde pagina bestaat niet of is nog niet gepubliceerd.',
                 user: req.user 
             });
         }
@@ -134,8 +143,10 @@ exports.getPublicPage = async (req, res) => {
     } catch (error) {
         console.error('Error fetching public custom page:', error);
         res.status(500).render('error', { 
+            title: 'Server Fout',
+            status: 500,
             message: 'Er is een fout opgetreden', 
-            error: { status: 500 },
+            description: 'Onze excuses, er is een interne serverfout opgetreden.',
             user: req.user 
         });
     }
