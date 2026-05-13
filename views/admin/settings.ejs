@@ -39,6 +39,15 @@
                         <div class="col-md-6">
                             <div class="form-check form-switch custom-switch p-0">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-check-label fw-bold" for="move_menu_to_dashboard">Menu naar Dashboard verplaatsen?</label>
+                                    <input class="form-check-input ms-0" type="checkbox" id="move_menu_to_dashboard" name="move_menu_to_dashboard" <%= settings.move_menu_to_dashboard ? 'checked' : '' %>>
+                                </div>
+                                <small class="text-muted">Plaatst alle opties uit het dropdownmenu in het dashboard in plaats van in de dropdown.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch custom-switch p-0">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
                                     <label class="form-check-label fw-bold" for="enable_public_registrations_view">Ledenlijst publiek voor leiding</label>
                                     <input class="form-check-input ms-0" type="checkbox" id="enable_public_registrations_view" name="enable_public_registrations_view" <%= settings.enable_public_registrations_view ? 'checked' : '' %>>
                                 </div>
@@ -156,5 +165,37 @@
         height: 38px;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const settingsForm = document.querySelector('form[action="/admin/settings"]');
+        let isDirty = false;
+        let isSubmitting = false;
+
+        // Track changes to any input within the form
+        settingsForm.addEventListener('change', () => {
+            isDirty = true;
+        });
+
+        // Also track input for color/text fields to be more responsive
+        settingsForm.addEventListener('input', () => {
+            isDirty = true;
+        });
+
+        // Allow form submission without warning
+        settingsForm.addEventListener('submit', () => {
+            isSubmitting = true;
+        });
+
+        // Intercept navigation
+        window.addEventListener('beforeunload', (e) => {
+            if (isDirty && !isSubmitting) {
+                // Standard way to trigger the browser's confirmation dialog
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    });
+</script>
 
 <%- include('../partials/footer') %>

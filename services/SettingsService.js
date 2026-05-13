@@ -9,6 +9,7 @@ class SettingsService {
         this.settingDefinitions = {
             disable_contact_form: { env: 'DISABLE_CONTACT_FORM', type: 'boolean', default: false },
             show_games_to_all: { env: 'SHOW_GAMES_TO_ALL', type: 'boolean', default: true },
+            move_menu_to_dashboard: { env: 'MOVE_MENU_TO_DASHBOARD', type: 'boolean', default: false },
             enable_public_registrations_view: { env: 'ENABLE_PUBLIC_REGISTRATIONS_VIEW', type: 'boolean', default: true },
             allow_all_forms_access: { env: 'ALLOW_ALL_FORMS_ACCESS', type: 'boolean', default: false },
             

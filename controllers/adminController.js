@@ -28,6 +28,7 @@ exports.postSettings = async (req, res) => {
         const settings = {
             disable_contact_form: req.body.disable_contact_form === 'on',
             show_games_to_all: req.body.show_games_to_all === 'on',
+            move_menu_to_dashboard: req.body.move_menu_to_dashboard === 'on',
             enable_public_registrations_view: req.body.enable_public_registrations_view === 'on',
             allow_all_forms_access: req.body.allow_all_forms_access === 'on',
             theme_color_primary: req.body.theme_color_primary,
