@@ -1,0 +1,488 @@
+<%- include('../../partials/header') %>
+
+<style>
+    .builder-container {
+        display: flex;
+        gap: 20px;
+        min-height: 70vh;
+    }
+    .builder-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        height: fit-content;
+        position: sticky;
+        top: 20px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    @media (max-width: 992px) {
+        .builder-container {
+            flex-direction: column;
+        }
+        .builder-sidebar {
+            width: 100%;
+            position: relative;
+            top: 0;
+            max-height: none;
+            order: 2;
+        }
+        .builder-main {
+            order: 1;
+        }
+    }
+    .builder-main {
+        flex-grow: 1;
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        border: 2px dashed #dee2e6;
+        min-height: 500px;
+    }
+    .draggable-item {
+        background: white;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #dee2e6;
+        cursor: grab;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        user-select: none;
+    }
+    .draggable-item:hover {
+        border-color: #db3e41;
+        color: #db3e41;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    .item-preview {
+        position: relative;
+        padding: 20px;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        transition: all 0.2s;
+        background: #fff;
+    }
+    .item-preview:hover {
+        border-color: #dee2e6;
+        background: #fffcfc;
+    }
+    .item-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: none;
+        gap: 5px;
+        z-index: 10;
+    }
+    .item-preview:hover .item-actions {
+        display: flex;
+    }
+    .drag-handle {
+        position: absolute;
+        left: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+        cursor: grab;
+        padding: 10px;
+        display: none;
+    }
+    .item-preview:hover .drag-handle {
+        display: block;
+    }
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #adb5bd;
+        text-align: center;
+    }
+</style>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/admin/custom-pages">Pagina's</a></li>
+                <li class="breadcrumb-item active"><%= page ? 'Bewerken' : 'Nieuwe Pagina' %></li>
+            </ol>
+        </nav>
+        <h1><%= page ? 'Bewerk Pagina' : 'Nieuwe Pagina' %></h1>
+    </div>
+</div>
+
+<form id="pageBuilderSubmit" action="<%= page ? '/admin/custom-pages/' + page.id + '/edit' : '/admin/custom-pages' %>" method="POST" enctype="multipart/form-data">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Titel van de pagina</label>
+                        <input type="text" name="title" class="form-control form-control-lg" placeholder="bv. Onze Geschiedenis" value="<%= page ? page.title : '' %>" required>
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="bannerEnabled" id="bannerEnabledSwitch" value="true" <%= page && page.bannerEnabled ? 'checked' : '' %>>
+                            <label class="form-check-label fw-bold" for="bannerEnabledSwitch">Hero Banner inschakelen</label>
+                        </div>
+                        <div id="bannerOptions" style="<%= page && page.bannerEnabled ? '' : 'display: none;' %>">
+                            <label class="form-label small text-muted">Banner afbeelding (Hero)</label>
+                            <input type="file" name="bannerImage" class="form-control mb-2" accept="image/*">
+                            <% if (page && page.bannerImage) { %>
+                                <div class="mt-2">
+                                    <p class="small text-muted mb-1">Huidige banner:</p>
+                                    <img src="<%= page.bannerImage %>" class="img-thumbnail" style="max-height: 100px;">
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="invisible" <%= page && page.status === 'invisible' ? 'selected' : '' %>>Onzichtbaar (Concept)</option>
+                            <option value="visible" <%= page && page.status === 'visible' ? 'selected' : '' %>>Zichtbaar (Publiek)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Zichtbaarheid</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="visibility" id="visNavbar" value="navbar" <%= page && page.showInNavbar ? 'checked' : (page ? '' : 'checked') %>>
+                            <label class="form-check-label" for="visNavbar">In Navigatiebalk</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="visibility" id="visLink" value="link" <%= page && page.isLinkOnly && !page.showInNavbar ? 'checked' : '' %>>
+                            <label class="form-check-label" for="visLink">Alleen via Link</label>
+                        </div>
+                    </div>
+                    <input type="hidden" name="showInNavbar" id="showInNavbarInput" value="<%= page ? page.showInNavbar : 'true' %>">
+                    <input type="hidden" name="isLinkOnly" id="isLinkOnlyInput" value="<%= page ? page.isLinkOnly : 'false' %>">
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-save me-1"></i> Pagina Opslaan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" name="content" id="contentJsonInput">
+
+    <div class="builder-container">
+        <!-- Sidebar -->
+        <div class="builder-sidebar shadow-sm">
+            <h5 class="font-playful mb-3">Componenten</h5>
+            <div class="draggable-item" onclick="addComponent('header')" draggable="true" ondragstart="handleDragStart(event, 'header')">
+                <i class="bi bi-type-h1 text-primary"></i> Titel/Kop
+            </div>
+            <div class="draggable-item" onclick="addComponent('text')" draggable="true" ondragstart="handleDragStart(event, 'text')">
+                <i class="bi bi-fonts text-success"></i> Tekstblok
+            </div>
+            <div class="draggable-item" onclick="addComponent('image')" draggable="true" ondragstart="handleDragStart(event, 'image')">
+                <i class="bi bi-image text-info"></i> Afbeelding
+            </div>
+            <div class="draggable-item" onclick="addComponent('button')" draggable="true" ondragstart="handleDragStart(event, 'button')">
+                <i class="bi bi-link-45deg text-warning"></i> Knop/Link
+            </div>
+            <div class="draggable-item" onclick="addComponent('divider')" draggable="true" ondragstart="handleDragStart(event, 'divider')">
+                <i class="bi bi-hr text-secondary"></i> Scheidingslijn
+            </div>
+        </div>
+
+        <!-- Main Area -->
+        <div class="builder-main shadow-sm" id="builderPreviewArea" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+            <div id="emptyState" class="empty-state">
+                <i class="bi bi-plus-square-dotted display-4"></i>
+                <h4>Begin met bouwen</h4>
+                <p>Klik of sleep componenten van de linkerkant hierheen.</p>
+            </div>
+            <div id="contentPreviewList"></div>
+        </div>
+    </div>
+</form>
+
+<!-- Modal for editing components -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title font-playful" id="editModalTitle">Component Bewerken</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="editModalBody"></div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" class="btn btn-primary rounded-pill" id="saveChangesBtn">Opslaan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/rich-editor.js"></script>
+<script>
+    let components = <%- page && page.content ? JSON.stringify(page.content) : '[]' %>;
+    let editingIndex = -1;
+
+    document.querySelectorAll('input[name="visibility"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (e.target.value === 'navbar') {
+                document.getElementById('showInNavbarInput').value = 'true';
+                document.getElementById('isLinkOnlyInput').value = 'false';
+            } else {
+                document.getElementById('showInNavbarInput').value = 'false';
+                document.getElementById('isLinkOnlyInput').value = 'true';
+            }
+        });
+    });
+
+    document.getElementById('bannerEnabledSwitch').addEventListener('change', (e) => {
+        document.getElementById('bannerOptions').style.display = e.target.checked ? 'block' : 'none';
+    });
+
+    function renderComponents() {
+        const list = document.getElementById('contentPreviewList');
+        const emptyState = document.getElementById('emptyState');
+        list.innerHTML = '';
+
+        if (components.length === 0) {
+            emptyState.style.display = 'flex';
+        } else {
+            emptyState.style.display = 'none';
+        }
+
+        components.forEach((comp, index) => {
+            const div = document.createElement('div');
+            div.className = 'item-preview border-bottom mb-3 pb-3';
+            
+            let html = '';
+            switch(comp.type) {
+                case 'header':
+                    html = `<h${comp.level || 2}>${comp.text || 'Titel'}</h${comp.level || 2}>`;
+                    break;
+                case 'text':
+                    html = `<div class="rich-text-content">${comp.text || 'Voeg tekst toe...'}</div>`;
+                    break;
+                case 'image':
+                    html = comp.url ? `<img src="${comp.url}" class="img-fluid rounded" style="max-height: 300px;">` : '<div class="p-4 bg-light text-center rounded">Geen afbeelding</div>';
+                    break;
+                case 'button':
+                    html = `<div class="text-${comp.align || 'start'}"><a href="${comp.url || '#'}" class="btn btn-primary">${comp.text || 'Knop'}</a></div>`;
+                    break;
+                case 'divider':
+                    html = '<hr>';
+                    break;
+            }
+
+            div.innerHTML = `
+                <div class="item-actions">
+                    <button type="button" class="btn btn-sm btn-light border" onclick="moveComp(${index}, -1)" ${index === 0 ? 'disabled' : ''}><i class="bi bi-arrow-up"></i></button>
+                    <button type="button" class="btn btn-sm btn-light border" onclick="moveComp(${index}, 1)" ${index === components.length - 1 ? 'disabled' : ''}><i class="bi bi-arrow-down"></i></button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="editComp(${index})"><i class="bi bi-pencil"></i></button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="deleteComp(${index})"><i class="bi bi-trash"></i></button>
+                </div>
+                ${html}
+            `;
+            list.appendChild(div);
+        });
+
+        document.getElementById('contentJsonInput').value = JSON.stringify(components);
+    }
+
+    function addComponent(type) {
+        let newComp = { type };
+        if (type === 'header') { newComp.text = 'Nieuwe Titel'; newComp.level = 2; }
+        if (type === 'text') { newComp.text = 'Klik om tekst te bewerken...'; }
+        if (type === 'button') { newComp.text = 'Klik Hier'; newComp.url = ''; newComp.align = 'start'; }
+        
+        components.push(newComp);
+        renderComponents();
+        editComp(components.length - 1);
+    }
+
+    function editComp(index) {
+        editingIndex = index;
+        const comp = components[index];
+        const body = document.getElementById('editModalBody');
+        let html = '';
+
+        switch(comp.type) {
+            case 'header':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label">Titel Tekst</label>
+                        <input type="text" id="editHeaderTask" class="form-control" value="${comp.text || ''}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Grootte</label>
+                        <select id="editHeaderLevel" class="form-select">
+                            <option value="1" ${comp.level == 1 ? 'selected' : ''}>H1 (Grootst)</option>
+                            <option value="2" ${comp.level == 2 ? 'selected' : ''}>H2</option>
+                            <option value="3" ${comp.level == 3 ? 'selected' : ''}>H3</option>
+                            <option value="4" ${comp.level == 4 ? 'selected' : ''}>H4</option>
+                        </select>
+                    </div>
+                `;
+                break;
+            case 'text':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label">Inhoud</label>
+                        <textarea id="editRichText" class="form-control rich-editor" rows="10">${comp.text || ''}</textarea>
+                        <small class="text-muted">Je kan HTML gebruiken voor meer opmaak.</small>
+                    </div>
+                `;
+                break;
+            case 'image':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label">Afbeelding Bron</label>
+                        <div class="card bg-light border-0 rounded-4 mb-3">
+                            <div class="card-body p-4 text-center">
+                                <i class="bi bi-cloud-upload display-4 text-muted mb-2"></i>
+                                <p class="mb-3">Upload een afbeelding vanaf je apparaat</p>
+                                <input type="file" id="compImageFile" class="form-control d-none" accept="image/*" onchange="handleCompImageUpload(this)">
+                                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="document.getElementById('compImageFile').click()">
+                                    <i class="bi bi-upload me-2"></i>Kies Bestand
+                                </button>
+                                <div id="uploadStatus" class="mt-2 small text-primary" style="display: none;">
+                                    <span class="spinner-border spinner-border-sm me-1"></span> Bezig met uploaden...
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Of gebruik een URL</label>
+                            <div class="input-group">
+                                <input type="text" id="editImageUrl" class="form-control" value="${comp.url || ''}" placeholder="https://...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="openMediaManager()">Media</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                break;
+            case 'button':
+                html = `
+                    <div class="mb-3">
+                        <label class="form-label">Knop Tekst</label>
+                        <input type="text" id="editBtnText" class="form-control" value="${comp.text || ''}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Link (URL)</label>
+                        <input type="text" id="editBtnUrl" class="form-control" value="${comp.url || ''}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Uitlijning</label>
+                        <select id="editBtnAlign" class="form-select">
+                            <option value="start" ${comp.align == 'start' ? 'selected' : ''}>Links</option>
+                            <option value="center" ${comp.align == 'center' ? 'selected' : ''}>Midden</option>
+                            <option value="end" ${comp.align == 'end' ? 'selected' : ''}>Rechts</option>
+                        </select>
+                    </div>
+                `;
+                break;
+        }
+
+        body.innerHTML = html;
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+
+        if (comp.type === 'text' && window.initializeRichEditors) {
+            window.initializeRichEditors(document.getElementById('editRichText'));
+        }
+    }
+
+    document.getElementById('saveChangesBtn').addEventListener('click', () => {
+        const comp = components[editingIndex];
+        if (comp.type === 'header') {
+            comp.text = document.getElementById('editHeaderTask').value;
+            comp.level = parseInt(document.getElementById('editHeaderLevel').value);
+        } else if (comp.type === 'text') {
+            comp.text = document.getElementById('editRichText').value;
+        } else if (comp.type === 'image') {
+            comp.url = document.getElementById('editImageUrl').value;
+        } else if (comp.type === 'button') {
+            comp.text = document.getElementById('editBtnText').value;
+            comp.url = document.getElementById('editBtnUrl').value;
+            comp.align = document.getElementById('editBtnAlign').value;
+        }
+
+        renderComponents();
+        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+    });
+
+    function deleteComp(index) {
+        if (confirm('Zeker dat je dit component wilt verwijderen?')) {
+            components.splice(index, 1);
+            renderComponents();
+        }
+    }
+
+    function moveComp(index, dir) {
+        const newIndex = index + dir;
+        if (newIndex >= 0 && newIndex < components.length) {
+            const temp = components[index];
+            components[index] = components[newIndex];
+            components[newIndex] = temp;
+            renderComponents();
+        }
+    }
+
+    function handleDragStart(e, type) { e.dataTransfer.setData('type', type); }
+    function handleDragOver(e) { e.preventDefault(); }
+    function handleDrop(e) {
+        e.preventDefault();
+        const type = e.dataTransfer.getData('type');
+        if (type) addComponent(type);
+    }
+
+    function handleCompImageUpload(input) {
+        if (!input.files || !input.files[0]) return;
+        
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const status = document.getElementById('uploadStatus');
+        status.style.display = 'block';
+        
+        fetch('/admin/api/upload-image', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.url) {
+                document.getElementById('editImageUrl').value = data.url;
+                status.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i> Upload succesvol!';
+            } else {
+                throw new Error('Geen URL ontvangen');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            status.innerHTML = '<i class="bi bi-exclamation-circle-fill text-danger"></i> Upload mislukt.';
+        });
+    }
+
+    function openMediaManager() {
+        // This is a placeholder for a media manager if it exists
+        const url = prompt('Geef de URL van de afbeelding op:');
+        if (url) document.getElementById('editImageUrl').value = url;
+    }
+
+    renderComponents();
+</script>
+
+<%- include('../../partials/footer') %>

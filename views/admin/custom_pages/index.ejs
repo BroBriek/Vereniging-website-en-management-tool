@@ -1,0 +1,136 @@
+<%- include('../../partials/header') %>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1><i class="bi bi-file-earmark-richtext me-2"></i>Pagina Beheer</h1>
+        <p class="text-muted">Beheer hier je eigen aangepaste pagina's.</p>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <a href="/admin/custom-pages/create" class="btn btn-primary rounded-pill px-4">
+            <i class="bi bi-plus-lg me-1"></i> Nieuwe Pagina
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Titel</th>
+                        <th>Status</th>
+                        <th>Zichtbaarheid</th>
+                        <th>Aangemaakt door</th>
+                        <th class="text-end pe-4">Acties</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (pages.length === 0) { %>
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-file-earmark-plus display-4 mb-3 d-block"></i>
+                                    <p>Nog geen aangepaste pagina's gemaakt.</p>
+                                    <a href="/admin/custom-pages/create" class="btn btn-sm btn-outline-primary rounded-pill">Maak je eerste pagina</a>
+                                </div>
+                            </td>
+                        </tr>
+                    <% } %>
+                    <% pages.forEach(page => { %>
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold"><%= page.title %></div>
+                                <div class="small text-muted">/p/<%= page.slug %></div>
+                            </td>
+                            <td>
+                                <% if (page.status === 'visible') { %>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">Zichtbaar</span>
+                                <% } else { %>
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3">Onzichtbaar</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <% if (page.showInNavbar) { %>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3">Menu</span>
+                                <% } else if (page.isLinkOnly) { %>
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3">Alleen Link</span>
+                                <% } else { %>
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3">Verborgen</span>
+                                <% } %>
+                            </td>
+                            <td><%= page.creator ? page.creator.username : 'Onbekend' %></td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-light border" 
+                                            onclick="copyLink('/p/<%= page.slug %>')" title="Kopieer link">
+                                        <i class="bi bi-link-45deg"></i>
+                                    </button>
+                                    <a href="/p/<%= page.slug %>" class="btn btn-sm btn-light border" target="_blank" title="Bekijk pagina">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="/admin/custom-pages/<%= page.id %>/edit" class="btn btn-sm btn-light border" title="Bewerken">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-light border text-danger" 
+                                            onclick="confirmDelete('<%= page.id %>', '<%= page.title %>')" title="Verwijderen">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title font-playful">Pagina Verwijderen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Ben je zeker dat je de pagina <strong id="deletePageTitle"></strong> wilt verwijderen? Dit kan niet ongedaan gemaakt worden.
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuleren</button>
+                <form id="deleteForm" method="POST">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4">Verwijderen</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function copyLink(path) {
+        const fullUrl = window.location.origin + path;
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            // Visual feedback using existing alert system style
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success fixed-top m-3 shadow-lg border-0 rounded-4';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.width = 'fit-content';
+            alertDiv.style.left = '50%';
+            alertDiv.style.transform = 'translateX(-50%)';
+            alertDiv.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Link gekopieerd naar klembord!';
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 3000);
+        }).catch(err => {
+            console.error('Copy failed:', err);
+        });
+    }
+
+    function confirmDelete(id, title) {
+        document.getElementById('deletePageTitle').innerText = title;
+        document.getElementById('deleteForm').action = '/admin/custom-pages/' + id + '/delete';
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+</script>
+
+<%- include('../../partials/footer') %>

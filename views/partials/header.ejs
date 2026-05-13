@@ -99,6 +99,13 @@
                     <% if (!isHidden('/t-shirts')) { %><li class="nav-item"><a class="nav-link" href="/t-shirts">T-Shirts</a></li><% } %>
                     <% if (!isHidden('/inschrijven')) { %><li class="nav-item"><a class="nav-link" href="/inschrijven">Inschrijven</a></li><% } %>
                     <% if (!isHidden('/contact')) { %><li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li><% } %>
+                    
+                    <% if (typeof navbarPages !== 'undefined' && navbarPages.length > 0) { %>
+                        <% navbarPages.forEach(p => { %>
+                            <li class="nav-item"><a class="nav-link" href="/p/<%= p.slug %>"><%= p.title %></a></li>
+                        <% }) %>
+                    <% } %>
+
                     <% if (user) { %>
                         <li class="nav-item dropdown ms-lg-3 mt-3 mt-lg-0">
                             <a class="nav-user-pill dropdown-toggle d-inline-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">

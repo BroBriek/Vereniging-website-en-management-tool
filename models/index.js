@@ -17,8 +17,13 @@ const FormResponse = require('./FormResponse');
 const SystemState = require('./SystemState');
 const CalendarAccess = require('./CalendarAccess');
 const Game = require('./Game');
+const CustomPage = require('./CustomPage');
 
 // Associations
+
+// CustomPage Associations
+User.hasMany(CustomPage, { foreignKey: 'creatorId', as: 'customPages' });
+CustomPage.belongsTo(User, { foreignKey: 'creatorId', as: 'creator' });
 
 // Game Associations
 User.hasMany(Game, { foreignKey: 'authorId', as: 'games', onDelete: 'CASCADE', hooks: true });
@@ -138,5 +143,6 @@ module.exports = {
   FormResponse,
   SystemState,
   CalendarAccess,
-  Game
+  Game,
+  CustomPage
 };

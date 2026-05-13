@@ -4,6 +4,7 @@ const adminController = require('../controllers/adminController');
 const uploadController = require('../controllers/uploadController');
 const maintenanceController = require('../controllers/maintenanceController');
 const formController = require('../controllers/formController');
+const customPageController = require('../controllers/customPageController');
 const { ensureAuthenticated, ensureAdmin, ensureMedia } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { compressGenericImage } = require('../middleware/imageCompression');
@@ -84,9 +85,18 @@ router.get('/forms/:id/responses', checkFormPermission, formController.getRespon
 router.get('/forms/:id/responses/export', checkFormPermission, formController.exportResponses);
 router.get('/forms/:id/responses/export-eetdag', checkFormPermission, formController.exportEetdagPDF);
 router.put('/forms/responses/:id', checkFormPermission, formController.updateResponse);
-router.delete('/forms/responses/:id', checkFormPermission, formController.deleteResponse);
+router.post('/forms/responses/:id', checkFormPermission, formController.deleteResponse);
+
+// Custom Page Builder
+router.get('/custom-pages', ensureMedia, customPageController.getCustomPages);
+router.get('/custom-pages/create', ensureMedia, customPageController.getCreatePage);
+router.post('/custom-pages', ensureMedia, upload.single('bannerImage'), compressGenericImage, customPageController.postCreatePage);
+router.get('/custom-pages/:id/edit', ensureMedia, customPageController.getEditPage);
+router.post('/custom-pages/:id/edit', ensureMedia, upload.single('bannerImage'), compressGenericImage, customPageController.postEditPage);
+router.post('/custom-pages/:id/delete', ensureMedia, customPageController.deletePage);
 
 // --- Routes ONLY for Admin ---
+
 router.use(ensureAdmin);
 
 // Maintenance Tools

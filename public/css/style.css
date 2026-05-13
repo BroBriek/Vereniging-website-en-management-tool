@@ -9,6 +9,10 @@
     --font-body: 'Patrick Hand', cursive;
 }
 
+.font-playful {
+    font-family: 'Fredoka', 'Patrick Hand', sans-serif;
+}
+
 body {
     font-family: var(--font-body);
     background-color: var(--bg-color);
@@ -433,8 +437,9 @@ body.navbar-open {
         padding: 1.2rem;
         width: 92%;
         border-width: 3px;
-        border-radius: 20px;
-    }
+        border-radius: 25px;
+        }
+
     
     .hero-text h1 { font-size: 1.8rem; }
     .hero-text p { font-size: 1rem; }
