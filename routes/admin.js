@@ -60,9 +60,9 @@ router.post('/api/upload-image', ensureMedia, upload.single('image'), compressGe
 // Form Builder
 router.get('/forms', ensureMedia, formController.getForms);
 router.get('/forms/create', ensureMedia, formController.getCreateForm);
-router.post('/forms', ensureMedia, formController.postCreateForm);
+router.post('/forms', ensureMedia, upload.single('bannerImage'), compressGenericImage, formController.postCreateForm);
 router.get('/forms/:id/edit', ensureMedia, formController.getEditForm);
-router.post('/forms/:id/edit', ensureMedia, formController.postEditForm);
+router.post('/forms/:id/edit', ensureMedia, upload.single('bannerImage'), compressGenericImage, formController.postEditForm);
 router.post('/forms/:id/delete', ensureMedia, formController.postDeleteForm);
 router.get('/forms/:id/responses', ensureMedia, formController.getResponses);
 router.get('/forms/:id/responses/export', ensureMedia, formController.exportResponses);

@@ -139,7 +139,7 @@
     </div>
 </div>
 
-<form id="formBuilderSubmit" action="<%= form ? '/admin/forms/' + form.id + '/edit' : '/admin/forms' %>" method="POST">
+<form id="formBuilderSubmit" action="<%= form ? '/admin/forms/' + form.id + '/edit' : '/admin/forms' %>" method="POST" enctype="multipart/form-data">
     <div class="row mb-4">
         <div class="col-md-8">
             <div class="card shadow-sm border-0 mb-3">
@@ -148,9 +148,25 @@
                         <label class="form-label fw-bold">Titel van het formulier</label>
                         <input type="text" name="title" class="form-control form-control-lg" placeholder="bv. Inschrijving Kamp" value="<%= form ? form.title : '' %>" required>
                     </div>
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label class="form-label fw-bold">Korte beschrijving (optioneel)</label>
                         <textarea name="description" class="form-control" rows="2" placeholder="Wat is het doel van dit formulier?"><%= form ? form.description : '' %></textarea>
+                    </div>
+                    <div class="border-top pt-3">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="bannerEnabled" id="bannerEnabledSwitch" value="true" <%= form && form.bannerEnabled ? 'checked' : '' %>>
+                            <label class="form-check-label fw-bold" for="bannerEnabledSwitch">Hero Banner inschakelen</label>
+                        </div>
+                        <div id="bannerOptions" style="<%= form && form.bannerEnabled ? '' : 'display: none;' %>">
+                            <label class="form-label small text-muted">Banner afbeelding (Hero)</label>
+                            <input type="file" name="bannerImage" class="form-control mb-2" accept="image/*">
+                            <% if (form && form.bannerImage) { %>
+                                <div class="mt-2">
+                                    <p class="small text-muted mb-1">Huidige banner:</p>
+                                    <img src="<%= form.bannerImage %>" class="img-thumbnail" style="max-height: 100px;">
+                                </div>
+                            <% } %>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -794,6 +810,15 @@
     // Initialize on load
     document.addEventListener('DOMContentLoaded', function() {
         renderFields();
+
+        // Banner toggle
+        const bannerSwitch = document.getElementById('bannerEnabledSwitch');
+        const bannerOptions = document.getElementById('bannerOptions');
+        if (bannerSwitch && bannerOptions) {
+            bannerSwitch.addEventListener('change', function() {
+                bannerOptions.style.display = this.checked ? 'block' : 'none';
+            });
+        }
     });
 
     // Prevent form submission if no fields

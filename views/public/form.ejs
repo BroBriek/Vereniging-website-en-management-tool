@@ -9,6 +9,7 @@
         border-radius: 15px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         text-align: left;
+        overflow: hidden; /* Ensure banner corners follow border-radius */
     }
     @media (max-width: 768px) {
         .form-public-container {
@@ -16,6 +17,11 @@
             margin: 20px auto;
             border-radius: 0;
             text-align: left;
+        }
+        .form-banner {
+            margin: -20px -20px 20px -20px !important;
+            width: calc(100% + 40px) !important;
+            border-radius: 0 !important;
         }
         .pricing-module {
             padding: 15px !important;
@@ -30,6 +36,17 @@
         .pricing-item > .col-3 {
             width: 50% !important;
         }
+    }
+    .form-banner {
+        margin: -40px -40px 30px -40px;
+        width: calc(100% + 80px);
+        max-height: 400px;
+        overflow: hidden;
+    }
+    .form-banner img {
+        width: 100%;
+        height: auto;
+        display: block;
     }
     .form-field-item {
         margin-bottom: 25px;
@@ -67,6 +84,11 @@
     <% } %>
 
     <div class="form-public-container mt-0">
+        <% if (form.bannerEnabled && form.bannerImage) { %>
+            <div class="form-banner">
+                <img src="<%= form.bannerImage %>" alt="Form Banner">
+            </div>
+        <% } %>
         <h1 class="font-playful mb-2"><%= form.title %></h1>
         <% if (form.description) { %>
             <p class="text-muted lead mb-4" style="white-space: pre-wrap;"><%= form.description %></p>

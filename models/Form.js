@@ -31,6 +31,14 @@ const Form = sequelize.define('Form', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  bannerEnabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  bannerImage: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   creatorId: {
     type: DataTypes.INTEGER,
     allowNull: false

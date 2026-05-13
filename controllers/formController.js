@@ -23,7 +23,7 @@ exports.getCreateForm = (req, res) => {
 
 exports.postCreateForm = async (req, res) => {
     try {
-        const { title, description, status, fields, sendEmailOverview, emailFieldId } = req.body;
+        const { title, description, status, fields, sendEmailOverview, emailFieldId, bannerEnabled } = req.body;
         
         // Generate slug from title
         let slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -44,6 +44,8 @@ exports.postCreateForm = async (req, res) => {
             fields: parsedFields,
             sendEmailOverview: sendEmailOverview === 'true',
             emailFieldId: emailFieldId || null,
+            bannerEnabled: bannerEnabled === 'true',
+            bannerImage: req.file ? '/uploads/' + req.file.filename : null,
             creatorId: req.user.id
         });
 
@@ -68,20 +70,27 @@ exports.getEditForm = async (req, res) => {
 
 exports.postEditForm = async (req, res) => {
     try {
-        const { title, description, status, fields, sendEmailOverview, emailFieldId } = req.body;
+        const { title, description, status, fields, sendEmailOverview, emailFieldId, bannerEnabled } = req.body;
         const form = await Form.findByPk(req.params.id);
         if (!form) return res.redirect('/admin/forms?error=Formulier niet gevonden');
 
         const parsedFields = typeof fields === 'string' ? JSON.parse(fields) : fields;
 
-        await form.update({
+        const updateData = {
             title,
             description,
             status,
             fields: parsedFields,
             sendEmailOverview: sendEmailOverview === 'true',
-            emailFieldId: emailFieldId || null
-        });
+            emailFieldId: emailFieldId || null,
+            bannerEnabled: bannerEnabled === 'true'
+        };
+
+        if (req.file) {
+            updateData.bannerImage = '/uploads/' + req.file.filename;
+        }
+
+        await form.update(updateData);
 
         res.redirect('/admin/forms?success=Formulier bijgewerkt');
     } catch (error) {
