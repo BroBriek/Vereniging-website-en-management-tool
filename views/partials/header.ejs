@@ -85,14 +85,20 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto py-3 py-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="/home">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/praktisch">Praktisch</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/afdelingen">Afdelingen</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/leiding">Leiding</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<%= user ? '/feed/calendar' : '/kalender' %>"><%= user ? 'Leidingskalender' : 'Kalender' %></a></li>
-                    <li class="nav-item"><a class="nav-link" href="/t-shirts">T-Shirts</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/inschrijven">Inschrijven</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+                    <% 
+                        const hiddenPages = (settings.hidden_nav_pages || '').split(',').map(p => p.trim()).filter(p => p);
+                        const isHidden = (path) => hiddenPages.includes(path);
+                    %>
+                    <% if (!isHidden('/home')) { %><li class="nav-item"><a class="nav-link" href="/home">Home</a></li><% } %>
+                    <% if (!isHidden('/praktisch')) { %><li class="nav-item"><a class="nav-link" href="/praktisch">Praktisch</a></li><% } %>
+                    <% if (!isHidden('/afdelingen')) { %><li class="nav-item"><a class="nav-link" href="/afdelingen">Afdelingen</a></li><% } %>
+                    <% if (!isHidden('/leiding')) { %><li class="nav-item"><a class="nav-link" href="/leiding">Leiding</a></li><% } %>
+                    <% if (!isHidden('/kalender')) { %>
+                        <li class="nav-item"><a class="nav-link" href="<%= user ? '/feed/calendar' : '/kalender' %>"><%= user ? 'Leidingskalender' : 'Kalender' %></a></li>
+                    <% } %>
+                    <% if (!isHidden('/t-shirts')) { %><li class="nav-item"><a class="nav-link" href="/t-shirts">T-Shirts</a></li><% } %>
+                    <% if (!isHidden('/inschrijven')) { %><li class="nav-item"><a class="nav-link" href="/inschrijven">Inschrijven</a></li><% } %>
+                    <% if (!isHidden('/contact')) { %><li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li><% } %>
                     <% if (user) { %>
                         <li class="nav-item dropdown ms-lg-3 mt-3 mt-lg-0">
                             <a class="nav-user-pill dropdown-toggle d-inline-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
