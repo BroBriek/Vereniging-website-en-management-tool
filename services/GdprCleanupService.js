@@ -20,17 +20,17 @@ class GdprCleanupService {
         try {
             console.log('GdprCleanupService: Checking for medical info that needs deletion...');
             
-            const oneYearAgo = new Date();
-            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            const eighteenMonthsAgo = new Date();
+            eighteenMonthsAgo.setMonth(eighteenMonthsAgo.getMonth() - 18);
 
             const deletedMessage = "Deze info is verwijderd om ons te houden aan de GDPR.";
 
-            // Find registrations older than 1 year with non-null medical info that isn't already the deleted message
+            // Find registrations older than 1.5 years with non-null medical info that isn't already the deleted message
             // We use updatedAt as the reference for "last update"
             const registrationsToUpdate = await Registration.findAll({
                 where: {
                     updatedAt: {
-                        [Op.lt]: oneYearAgo
+                        [Op.lt]: eighteenMonthsAgo
                     },
                     medicalInfo: {
                         [Op.and]: [
@@ -53,8 +53,8 @@ class GdprCleanupService {
             for (const reg of registrationsToUpdate) {
                 // We use update instead of save to avoid updating updatedAt again if we don't want to, 
                 // but actually updating it to NOW is fine because it marks when the "deletion" happened.
-                // However, the user said "a year after the last update of the data".
-                // If we update it now, it won't be eligible for cleanup for another year, which is fine since it's already "deleted".
+                // However, the user said "1.5 years after the last update of the data".
+                // If we update it now, it won't be eligible for cleanup for another 1.5 years, which is fine since it's already "deleted".
                 
                 reg.medicalInfo = deletedMessage;
                 await reg.save();
