@@ -97,8 +97,8 @@
             <div class="card h-100">
                 <div class="card-body text-center">
                     <h3 class="card-title"><i class="bi bi-file-earmark-richtext"></i></h3>
-                    <p>Beheer zelf aangemaakte extra pagina's.</p>
-                    <a href="/admin/custom-pages" class="btn btn-primary w-100">Extra Pagina's</a>
+                    <p>Beheer alle pagina's van de website (inhoud & menu).</p>
+                    <a href="/admin/pages" class="btn btn-primary w-100">Pagina Beheer</a>
                 </div>
             </div>
         </div>
@@ -212,7 +212,7 @@
         </div>
     <% } %>
 
-    <!-- Help & Pages -->
+    <!-- Help & Info -->
     <% if (user.role === 'admin' || user.role === 'media') { %>
         <div class="col-md-12 mb-4">
             <div class="alert alert-info d-flex align-items-center">
@@ -222,17 +222,6 @@
                     <br>
                     Bekijk de <a href="/admin/info" class="alert-link">documentatie</a> om te leren hoe je de site aanpast.
                 </div>
-            </div>
-        </div>
-
-        <div class="col-md-12 mt-4">
-            <h3>Pagina's Bewerken</h3>
-            <div class="list-group">
-                <a href="/admin/page/home" class="list-group-item list-group-item-action">Home</a>
-                <a href="/admin/page/practical" class="list-group-item list-group-item-action">Praktisch</a>
-                <a href="/admin/page/departments" class="list-group-item list-group-item-action">Afdelingen</a>
-                <a href="/admin/page/shirts" class="list-group-item list-group-item-action">T-Shirts</a>
-                <a href="/admin/page/register" class="list-group-item list-group-item-action">Inschrijven (Info tekst)</a>
             </div>
         </div>
     <% } %>

@@ -1,4 +1,4 @@
-const { PageContent, Leader, Event, Registration, User, Post, Comment, PostResponse, FeedGroup, UserGroupAccess, SystemState, sequelize } = require('../models');
+const { PageContent, Leader, Event, Registration, User, Post, Comment, PostResponse, FeedGroup, UserGroupAccess, SystemState, CustomPage, sequelize } = require('../models');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const { exec } = require('child_process');
@@ -11,8 +11,68 @@ const { sendMail } = require('../config/mailer');
 
 const SettingsService = require('../services/SettingsService');
 
+const BUILT_IN_PAGES = [
+    { name: 'Home', path: '/home', editPath: '/admin/page/home', slug: 'home' },
+    { name: 'Praktisch', path: '/praktisch', editPath: '/admin/page/practical', slug: 'practical' },
+    { name: 'Afdelingen', path: '/afdelingen', editPath: '/admin/page/departments', slug: 'departments' },
+    { name: 'Leiding', path: '/leiding', editPath: '/admin/leaders', slug: 'leaders' },
+    { name: 'Kalender', path: '/kalender', editPath: '/admin/events', slug: 'kalender' },
+    { name: 'T-Shirts', path: '/t-shirts', editPath: '/admin/page/shirts', slug: 'shirts' },
+    { name: 'Inschrijven', path: '/inschrijven', editPath: '/admin/page/register', slug: 'register' },
+    { name: 'Contact', path: '/contact', editPath: null, slug: 'contact' }
+];
+
 exports.getDashboard = (req, res) => {
     res.render('admin/dashboard', { title: 'Admin Dashboard', user: req.user });
+};
+
+exports.getPages = async (req, res) => {
+    try {
+        const customPages = await CustomPage.findAll({
+            include: [{ model: User, as: 'creator', attributes: ['username'] }],
+            order: [['createdAt', 'DESC']]
+        });
+
+        const settings = SettingsService.getAll();
+        const hiddenPages = (settings.hidden_nav_pages || '').split(',').map(p => p.trim()).filter(p => p);
+
+        const builtInPages = BUILT_IN_PAGES.map(page => ({
+            ...page,
+            isHidden: hiddenPages.includes(page.path)
+        }));
+
+        res.render('admin/pages', { 
+            title: 'Pagina Beheer', 
+            user: req.user,
+            builtInPages,
+            customPages
+        });
+    } catch (error) {
+        console.error('Error fetching pages:', error);
+        res.redirect('/admin?error=Kon pagina\'s niet ophalen');
+    }
+};
+
+exports.togglePage = async (req, res) => {
+    try {
+        const { path: pagePath, action } = req.body;
+        const settings = SettingsService.getAll();
+        let hiddenPages = (settings.hidden_nav_pages || '').split(',').map(p => p.trim()).filter(p => p);
+
+        if (action === 'hide') {
+            if (!hiddenPages.includes(pagePath)) {
+                hiddenPages.push(pagePath);
+            }
+        } else {
+            hiddenPages = hiddenPages.filter(p => p !== pagePath);
+        }
+
+        await SettingsService.set('hidden_nav_pages', hiddenPages.join(', '));
+        res.redirect('/admin/pages?success=Pagina zichtbaarheid bijgewerkt');
+    } catch (error) {
+        console.error('Error toggling page:', error);
+        res.redirect('/admin/pages?error=Kon pagina zichtbaarheid niet bijwerken');
+    }
 };
 
 exports.getSettings = async (req, res) => {
@@ -32,7 +92,6 @@ exports.postSettings = async (req, res) => {
             enable_public_registrations_view: req.body.enable_public_registrations_view === 'on',
             allow_all_forms_access: req.body.allow_all_forms_access === 'on',
             disable_quote_of_the_month: req.body.disable_quote_of_the_month === 'on',
-            hidden_nav_pages: req.body.hidden_nav_pages,
             theme_color_primary: req.body.theme_color_primary,
             theme_color_secondary: req.body.theme_color_secondary,
             theme_color_accent: req.body.theme_color_accent,

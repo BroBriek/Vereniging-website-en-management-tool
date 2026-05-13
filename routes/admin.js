@@ -94,6 +94,7 @@ router.post('/custom-pages', ensureMedia, upload.single('bannerImage'), compress
 router.get('/custom-pages/:id/edit', ensureMedia, customPageController.getEditPage);
 router.post('/custom-pages/:id/edit', ensureMedia, upload.single('bannerImage'), compressGenericImage, customPageController.postEditPage);
 router.post('/custom-pages/:id/delete', ensureMedia, customPageController.deletePage);
+router.post('/custom-pages/:id/toggle', ensureMedia, customPageController.toggleStatus);
 
 // --- Routes ONLY for Admin ---
 
@@ -141,6 +142,10 @@ router.put('/users/:id/toggle-status', adminController.toggleUserStatus);
 router.get('/settings', adminController.getSettings);
 router.post('/settings', adminController.postSettings);
 router.post('/settings/reset', adminController.resetSettings);
+
+// Pages Management
+router.get('/pages', ensureMedia, adminController.getPages);
+router.post('/pages/toggle', ensureMedia, adminController.togglePage);
 
 // Registrations Management (Admins only for these actions)
 router.post('/registrations/new-period', adminController.startNewPeriod);

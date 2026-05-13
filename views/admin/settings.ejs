@@ -73,23 +73,13 @@
                             </div>
                         </div>
                         <div class="col-12 mt-3">
-                            <label for="hidden_nav_pages" class="form-label fw-bold">Verborgen Pagina's in Menu</label>
-                            <input type="text" class="form-control" id="hidden_nav_pages" name="hidden_nav_pages" value="<%= settings.hidden_nav_pages %>" placeholder="bijv. /t-shirts, /inschrijven">
-                            <small class="text-muted">Geef de paden op van de pagina's die je wilt verbergen in het menu (gescheiden door komma's). De pagina's blijven wel bereikbaar via de directe link.</small>
+                            <label class="form-label fw-bold">Pagina Beheer</label>
+                            <p class="text-muted small">Beheer hier alle pagina's van de website, inclusief het verbergen van menu-items en het maken van extra pagina's.</p>
+                            <a href="/admin/pages" class="btn btn-outline-primary rounded-pill">
+                                <i class="bi bi-file-earmark-richtext me-2"></i>Naar Pagina Beheer
+                            </a>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="card shadow-sm mb-4 border-0">
-                <div class="card-header bg-info text-white py-3">
-                    <h5 class="mb-0"><i class="bi bi-file-earmark-richtext me-2"></i>Aangepaste Pagina's</h5>
-                </div>
-                <div class="card-body p-4">
-                    <p class="text-muted">Creëer en beheer eenvoudige extra pagina's voor de website.</p>
-                    <a href="/admin/custom-pages" class="btn btn-outline-info rounded-pill">
-                        <i class="bi bi-pencil-square me-2"></i>Beheer Pagina's
-                    </a>
                 </div>
             </div>
 
