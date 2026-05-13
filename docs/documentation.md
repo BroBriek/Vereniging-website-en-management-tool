@@ -9,9 +9,11 @@ Het project is gebouwd met:
 - **Database:** SQLite (via Sequelize ORM)
 - **Templating:** EJS
 - **Styling:** Custom CSS & Bootstrap 5
+- **Containerisatie:** Docker (optioneel)
 
 ## 2. Installatie
 
+### Lokale installatie
 Zorg dat [Node.js](https://nodejs.org/) is geïnstalleerd op de server.
 
 1. **Project downloaden/clonen**
@@ -19,6 +21,12 @@ Zorg dat [Node.js](https://nodejs.org/) is geïnstalleerd op de server.
    ```bash
    npm install
    ```
+
+### Docker installatie
+Het project kan ook via Docker gedraaid worden:
+```bash
+docker-compose up -d --build
+```
 
 ## 3. Configuratie (.env)
 
@@ -35,92 +43,79 @@ CONTACT_EMAIL=Chiromeeuwen@outlook.com
 - `PORT`: De poort waarop de server draait (standaard 3000).
 - `SESSION_SECRET`: Gebruikt voor het beveiligen van adminsessies.
 - `EMAIL_PASSWORD`: Het wachtwoord van het e-mailaccount voor het verzenden van e-mails.
-- `CONTACT_EMAIL`: Het e-mailadres waarop contactberichten en wekelijkse updates worden ontvangen (standaard Chiromeeuwen@outlook.com).
+- `CONTACT_EMAIL`: Het e-mailadres waarop contactberichten en wekelijkse updates worden ontvangen.
 
-## 4. Starten van de Applicatie
+## 4. Starten en Updaten
 
-Om de server te starten:
-
+### Starten
 ```bash
 npm start
 ```
-Of direct via Node:
-```bash
-node server.js
-```
 
-De website is nu bereikbaar via `http://localhost:3000` (of de ingestelde poort).
+### Updaten
+Gebruik de meegeleverde scripts voor veilig updaten:
+- `./update.sh`: Volledige update inclusief database migraties en docker rebuild.
+- `./softUpdate.sh`: Snelle update zonder docker rebuild.
+- `./downgrade.sh`: Terugrollen naar de vorige versie (indien backup aanwezig).
 
 ## 5. Admin Beheer (Command Line)
-
-De hoofd-administrator ('Admin') is een speciaal account dat niet zichtbaar is in de gebruikerslijst op het dashboard. Dit account kan niet verwijderd worden via de website.
 
 ### Admin Toevoegen (Eerste keer)
 ```bash
 node scripts/manage_admin.js add Admin <wachtwoord>
 ```
-*Opmerking:* De gebruiker 'Admin' is speciaal en wordt verborgen in de GUI.
 
 ### Extra Admins/Leiding Toevoegen
-Je kan extra admins of leiding toevoegen via het **Admin Dashboard** op de website.
+Je kan extra admins of leiding toevoegen via het **Admin Dashboard**.
 Of via de command line:
 ```bash
 node scripts/manage_admin.js add <gebruikersnaam> <wachtwoord>
 ```
 
-### Admin Verwijderen
-```bash
-node scripts/manage_admin.js remove <gebruikersnaam>
-```
-
 ## 6. Functionaliteiten voor de Admin
 
-Eenmaal ingelogd op `/auth/login`, heeft de admin toegang tot:
+### 6.1 Dashboard & Instellingen
+- **Registratie Toggle:** Zet inschrijvingen op de site aan of uit met één klik.
+- **Navigatie Beheer:** Verberg of toon specifieke pagina's in het menu.
+- **Thema Kleuren:** Pas de kleuren van de website aan via de instellingen.
+- **Site Opties:** Schakel het contactformulier uit, beheer games zichtbaarheid, etc.
 
-- **Leidingshoekje:**
-  - Een interne feed voor alle leiding.
-  - Plaats berichten, polls en formulieren.
-  - Upload documenten (PDF, Word).
-- **Gebruikers Beheer:**
-  - Beheer accounts voor andere leiding en admins.
-  - *Let op: Het hoofdaccount 'Admin' is hier onzichtbaar.*
-- **Pagina's Bewerken:** Teksten aanpassen op Home, Praktisch, Afdelingen, etc.
-- **Leiding Beheer:**
-  - Toevoegen/verwijderen van leiding info voor de publieke site.
-- **Kalender Beheer:** Toevoegen van activiteiten.
-- **Bestanden & Foto's:**
-  - Uploaden van afbeeldingen naar de server.
-- **Inschrijvingen:**
-  - **Overzicht & Zoeken:** Bekijk inschrijvingen per werkjaar (via het archief in de zijbalk) of zoek op naam/email.
-  - **Beheer Periodes:** Start eenvoudig een nieuw inschrijvingsjaar via de knop "Nieuwe Periode".
-  - **Export:** Exporteer ledenlijsten naar Excel of PDF (per jaar of volledig archief).
-- **Danger Zone:**
-  - **Maak Backup:** Handmatige trigger voor systeembackup.
-  - **Reset Website:** Verwijdert alle content (teksten, events, leden, inschrijvingen) én alle geüploade media.
+### 6.2 Inschrijvingen (Ledenbeheer)
+- **Overzicht & Filters:** Filter op werkjaar, zoek op naam of sorteer de lijst.
+- **Export:** Exporteer naar Excel (voor ledenlijsten) of PDF (voor kampboekjes).
+- **Periodebeheer:** Start eenvoudig een nieuw werkjaar. Oude gegevens blijven bewaard in het archief.
+- **Email Tool:** Verzend gepersonaliseerde e-mails naar specifieke groepen (leden, leiding, of alles) van een bepaald werkjaar.
 
-## 7. Mappenstructuur
+### 6.3 Spelendatabank
+- **Beheer:** Voeg spelen toe met uitleg, benodigdheden, intensiteit en tags.
+- **Media:** Upload bijlages (PDF, afbeeldingen) bij spelen.
+- **Zoeken:** Uitgebreide zoekfunctie op tags, groepen en intensiteit.
 
-- `/config`: Database en paspoort configuratie.
-- `/controllers`: Logica van de applicatie.
-- `/models`: Database definities.
-- `/public`: Statische bestanden.
-- `/routes`: URL definities.
-- `/views`: De HTML/EJS templates.
-- `/scripts`: Beheertools.
+### 6.4 Financiële Tool
+- **Structuur:** Werk met mappen (bv. "Kamp 2024") en transacties.
+- **Status:** Houd bij of items al betaald zijn.
+- **Export:** Genereer Excel-overzichten per map of van alle openstaande (niet-betaalde) items.
 
-## 8. Veiligheid & Backups
+### 6.5 Formulieren & Custom Pagina's
+- **Form Builder:** Maak complexe formulieren met verschillende veldtypes.
+- **Eetdag Export:** Speciale functie voor eetdagen om bestellingen direct op printbare briefjes (3 per A4) te exporteren.
+- **Custom Pages:** Bouw eigen informatieve pagina's met een visuele editor, inclusief banners en navbar-integratie.
 
-Het is belangrijk om regelmatig backups te maken.
+### 6.6 GDPR & Veiligheid
+- **Gegevensverwijdering:** Ingebouwde tools om oude inschrijvingen en persoonlijke data veilig te verwijderen conform de privacywetgeving.
+- **Afbeeldingen:** Automatische compressie van geüploade afbeeldingen om opslagruimte te besparen.
 
-### Automatische Backup Maken
+## 7. Backups
+
+Het systeem maakt regelmatig backups, maar je kunt ze ook handmatig triggeren.
+
+### Handmatige Backup
 ```bash
 npm run backup
 ```
 
-Dit script:
-1. Maakt een map `backups/` aan.
-2. Maakt daarin een submap met de datum en tijd.
-3. Kopieert `database.sqlite`, `sessions.sqlite`, de map `public/uploads` en `public/feed_uploads` naar deze locatie.
+Dit script kopieert de database en alle uploads naar de map `backups/` met een tijdstempel.
+
 # Gebruikersbeheer & Groepen Handleiding
 
 In het ChiroSite systeem is het beheer van gebruikers en hun toegang tot specifieke delen van het "Leidingshoekje" (de feed) gestructureerd via **Gebruikers** en **Groepen**.
