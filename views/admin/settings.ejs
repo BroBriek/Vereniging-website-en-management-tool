@@ -63,6 +63,15 @@
                                 <small class="text-muted">Indien ingeschakeld, kan alle leiding formulieren maken en bekijken (niet beperkt tot media/admin).</small>
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch custom-switch p-0">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-check-label fw-bold" for="disable_quote_of_the_month">Quote van de maand uitschakelen</label>
+                                    <input class="form-check-input ms-0" type="checkbox" id="disable_quote_of_the_month" name="disable_quote_of_the_month" <%= settings.disable_quote_of_the_month ? 'checked' : '' %>>
+                                </div>
+                                <small class="text-muted">Verbergt de "Quote van de maand" in de feed.</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

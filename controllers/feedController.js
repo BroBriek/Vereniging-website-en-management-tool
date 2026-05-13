@@ -217,7 +217,8 @@ exports.searchUsers = async (req, res) => {
 
 exports.getFeed = async (req, res) => {
     try {
-        const quoteOfTheMonth = await quoteController.getQuoteOfTheMonth();
+        const disableQuote = SettingsService.get('disable_quote_of_the_month');
+        const quoteOfTheMonth = disableQuote ? null : await quoteController.getQuoteOfTheMonth();
         const slug = req.params.slug || null;
         const allGroups = await getAccessibleGroups(req.user);
         let activeGroup = null;
@@ -372,6 +373,7 @@ exports.getFeed = async (req, res) => {
             groups: allGroups, 
             activeGroup,
             limit,
+            disableQuote,
             quoteOfTheMonth,
             birthdayLeaders,
             allUsers,
