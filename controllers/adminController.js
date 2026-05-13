@@ -282,17 +282,26 @@ exports.getRegistrations = async (req, res) => {
         const { Op } = require('sequelize');
         const currentPeriod = await PeriodService.getCurrentPeriod();
         
-        // 1. Get all unique periods from DB
+        // 1. Get all unique periods from DB with counts
         const periodsData = await Registration.findAll({
-            attributes: [[sequelize.fn('DISTINCT', sequelize.col('period')), 'period']],
+            attributes: [
+                'period',
+                [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+            ],
+            group: ['period'],
             order: [['period', 'DESC']],
             raw: true
         });
-        const allPeriods = periodsData.map(p => p.period).filter(p => p); // Remove nulls if any
-        
+
+        // Map to objects with period and count
+        let allPeriods = periodsData.map(p => ({
+            period: p.period,
+            count: parseInt(p.count) || 0
+        })).filter(p => p.period);
+
         // Ensure current period is in the list even if no registrations yet
-        if (!allPeriods.includes(currentPeriod)) {
-            allPeriods.unshift(currentPeriod);
+        if (!allPeriods.some(p => p.period === currentPeriod)) {
+            allPeriods.unshift({ period: currentPeriod, count: 0 });
         }
 
         // 2. Determine filter settings
@@ -350,6 +359,8 @@ exports.getRegistrations = async (req, res) => {
         const regState = await SystemState.findOne({ where: { key: 'is_registration_open' } });
         const isRegistrationOpen = regState ? regState.value === 'true' : true; // Default to true if not set
 
+        const totalRegistrations = allPeriods.reduce((sum, p) => sum + p.count, 0);
+
         res.render('admin/registrations', { 
             title: 'Inschrijvingen', 
             registrations, 
@@ -357,6 +368,7 @@ exports.getRegistrations = async (req, res) => {
             currentPeriod, // The system's active period
             selectedPeriod, // The period being viewed
             allPeriods,
+            totalRegistrations,
             searchQuery,
             sortField,
             sortDirection,
