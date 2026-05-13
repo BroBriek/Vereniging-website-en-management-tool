@@ -7,12 +7,28 @@ const formController = require('../controllers/formController');
 const { ensureAuthenticated, ensureAdmin, ensureMedia } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { compressGenericImage } = require('../middleware/imageCompression');
+const SettingsService = require('../services/SettingsService');
 
 router.use(ensureAuthenticated);
 
+// Permission middleware for forms
+const checkFormPermission = (req, res, next) => {
+    if (req.user.role === 'admin' || req.user.role === 'media' || SettingsService.get('allow_all_forms_access')) {
+        return next();
+    }
+    res.redirect('/admin');
+};
+
+const checkAdminDashboardAccess = (req, res, next) => {
+    if (req.user.role === 'admin' || req.user.role === 'media' || SettingsService.get('allow_all_forms_access')) {
+        return next();
+    }
+    res.redirect('/');
+};
+
 // Conditional Access for Registrations
 const checkViewRegistrationsPermission = (req, res, next) => {
-    if (req.user.role === 'admin' || process.env.ENABLE_PUBLIC_REGISTRATIONS_VIEW === 'true') {
+    if (req.user.role === 'admin' || SettingsService.get('enable_public_registrations_view')) {
         return next();
     }
     res.redirect('/');
@@ -24,7 +40,7 @@ router.get('/registrations/export', checkViewRegistrationsPermission, adminContr
 router.get('/registrations/export-pdf', checkViewRegistrationsPermission, adminController.exportRegistrationsPDF);
 
 // --- Routes accessible by both Admin and Media ---
-router.get('/', ensureMedia, adminController.getDashboard);
+router.get('/', checkAdminDashboardAccess, adminController.getDashboard);
 router.get('/info', ensureMedia, adminController.getInfo);
 
 // Page Content Editors
@@ -58,17 +74,17 @@ router.delete('/uploads/:filename', ensureMedia, uploadController.deleteUpload);
 router.post('/api/upload-image', ensureMedia, upload.single('image'), compressGenericImage, uploadController.uploadImageApi);
 
 // Form Builder
-router.get('/forms', ensureMedia, formController.getForms);
-router.get('/forms/create', ensureMedia, formController.getCreateForm);
-router.post('/forms', ensureMedia, upload.single('bannerImage'), compressGenericImage, formController.postCreateForm);
-router.get('/forms/:id/edit', ensureMedia, formController.getEditForm);
-router.post('/forms/:id/edit', ensureMedia, upload.single('bannerImage'), compressGenericImage, formController.postEditForm);
-router.post('/forms/:id/delete', ensureMedia, formController.postDeleteForm);
-router.get('/forms/:id/responses', ensureMedia, formController.getResponses);
-router.get('/forms/:id/responses/export', ensureMedia, formController.exportResponses);
-router.get('/forms/:id/responses/export-eetdag', ensureMedia, formController.exportEetdagPDF);
-router.put('/forms/responses/:id', ensureMedia, formController.updateResponse);
-router.delete('/forms/responses/:id', ensureMedia, formController.deleteResponse);
+router.get('/forms', checkFormPermission, formController.getForms);
+router.get('/forms/create', checkFormPermission, formController.getCreateForm);
+router.post('/forms', checkFormPermission, upload.single('bannerImage'), compressGenericImage, formController.postCreateForm);
+router.get('/forms/:id/edit', checkFormPermission, formController.getEditForm);
+router.post('/forms/:id/edit', checkFormPermission, upload.single('bannerImage'), compressGenericImage, formController.postEditForm);
+router.post('/forms/:id/delete', checkFormPermission, formController.postDeleteForm);
+router.get('/forms/:id/responses', checkFormPermission, formController.getResponses);
+router.get('/forms/:id/responses/export', checkFormPermission, formController.exportResponses);
+router.get('/forms/:id/responses/export-eetdag', checkFormPermission, formController.exportEetdagPDF);
+router.put('/forms/responses/:id', checkFormPermission, formController.updateResponse);
+router.delete('/forms/responses/:id', checkFormPermission, formController.deleteResponse);
 
 // --- Routes ONLY for Admin ---
 router.use(ensureAdmin);
@@ -110,6 +126,11 @@ router.delete('/users/:id', adminController.deleteUser);
 router.get('/users/:id/edit', adminController.getEditUser);
 router.put('/users/:id', adminController.updateUser);
 router.put('/users/:id/toggle-status', adminController.toggleUserStatus);
+
+// Site Settings
+router.get('/settings', adminController.getSettings);
+router.post('/settings', adminController.postSettings);
+router.post('/settings/reset', adminController.resetSettings);
 
 // Registrations Management (Admins only for these actions)
 router.post('/registrations/new-period', adminController.startNewPeriod);

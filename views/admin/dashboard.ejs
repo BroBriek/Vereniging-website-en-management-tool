@@ -2,184 +2,201 @@
 <div class="row">
     <div class="col-12 mb-4">
         <h1>Admin Dashboard</h1>
-<div class="alert alert-primary shadow-sm border-0">
-  <p class="mb-0 fs-5">Welkom, <strong><%= capitalizeName(user.username) %></strong>! Beheer hier de website en ledenadministratie.</p>
-</div>
+        <div class="alert alert-primary shadow-sm border-0">
+            <p class="mb-0 fs-5">Welkom, <strong><%= capitalizeName(user.username) %></strong>! Beheer hier de website en ledenadministratie.</p>
+        </div>
     </div>
 
     <!-- Row 1: Website Management (Blue) -->
-    <div class="col-12 mb-3">
-        <h3>Website Beheer</h3>
-    </div>
-
-    <div class="col-md-4 mb-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <h3 class="card-title"><i class="bi bi-calendar-event"></i></h3>
-                <p>Beheer de kalender en evenementen.</p>
-                <a href="/admin/events" class="btn btn-primary w-100">Kalender</a>
-            </div>
+    <% if (user.role === 'admin' || user.role === 'media') { %>
+        <div class="col-12 mb-3">
+            <h3>Website Beheer</h3>
         </div>
-    </div>
 
-    <div class="col-md-4 mb-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <h3 class="card-title"><i class="bi bi-person-badge"></i></h3>
-                <p>Voeg leiding info toe voor de 'Leiding' pagina.</p>
-                <a href="/admin/leaders" class="btn btn-primary w-100">Leiding Info</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 mb-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <h3 class="card-title"><i class="bi bi-images"></i></h3>
-                <p>Upload afbeeldingen voor gebruik op pagina's.</p>
-                <a href="/admin/uploads" class="btn btn-primary w-100">Bestanden & Foto's</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Row 2: Admin Tools (Green) -->
-    <div class="col-12 mb-3 mt-2">
-        <h3>Administratie</h3>
-    </div>
-
-    <% if (user.role === 'admin') { %>
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 border-success">
-            <div class="card-body text-center text-success">
-                <h3 class="card-title"><i class="bi bi-people-fill"></i></h3>
-                <p>Beheer accounts voor leiding en admins.</p>
-                <a href="/admin/users" class="btn btn-success w-100">Gebruikers Beheren</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 border-success">
-            <div class="card-body text-center text-success">
-                <h3 class="card-title"><i class="bi bi-collection-fill"></i></h3>
-                <p>Beheer groepen voor het leidingshoekje.</p>
-                <a href="/admin/feedgroups" class="btn btn-success w-100">Leidingshoekjes</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 border-success">
-            <div class="card-body text-center text-success">
-                <h3 class="card-title"><i class="bi bi-clipboard-data"></i></h3>
-                <p>Bekijk wie zich heeft ingeschreven en exporteer.</p>
-                <a href="/admin/registrations" class="btn btn-success w-100">Inschrijvingen</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 border-success">
-            <div class="card-body text-center text-success">
-                <h3 class="card-title"><i class="bi bi-piggy-bank"></i></h3>
-                <p>Financieel beheer en transacties.</p>
-                <a href="/admin/finance" class="btn btn-success w-100">Financiën</a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 border-success">
-            <div class="card-body text-center text-success">
-                <h3 class="card-title"><i class="bi bi-envelope-fill"></i></h3>
-                <p>Stuur emails naar leiding, leden of ouders.</p>
-                <a href="/admin/email" class="btn btn-success w-100">Email Tool</a>
-            </div>
-        </div>
-    </div>
-    <% } %>
-
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 border-success">
-            <div class="card-body text-center text-success">
-                <h3 class="card-title"><i class="bi bi-layout-text-window-reverse"></i></h3>
-                <p>Maak en beheer formulieren voor de website.</p>
-                <a href="/admin/forms" class="btn btn-success w-100">Formulieren</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Advanced Tools (Orange) -->
-    <% if (user.username === 'admin' && user.role === 'admin') { %>
-    <div class="col-12 mb-3 mt-2">
-        <h3>Geavanceerde Tools</h3>
-    </div>
-
-    <div class="col-md-4 mb-4">
-        <div class="card h-100 border-warning">
-            <div class="card-body text-center" style="color: #ff9800;">
-                <h3 class="card-title"><i class="bi bi-tools"></i></h3>
-                <p>Beheer bestanden, database, logs en notificaties.</p>
-                <a href="/admin/maintenance" class="btn w-100" style="background-color: #ff9800; color: white;">Onderhoudstools</a>
-            </div>
-        </div>
-    </div>
-    <% } %>
-
-    <!-- Help & Pages -->
-    <div class="col-md-12 mb-4">
-        <div class="alert alert-info d-flex align-items-center">
-            <i class="bi bi-info-circle-fill fs-4 me-3"></i>
-            <div>
-                <strong>Hulp nodig?</strong>
-                <br>
-                Bekijk de <a href="/admin/info" class="alert-link">documentatie</a> om te leren hoe je de site aanpast.
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-12 mt-4">
-        <h3>Pagina's Bewerken</h3>
-        <div class="list-group">
-            <a href="/admin/page/home" class="list-group-item list-group-item-action">Home</a>
-            <a href="/admin/page/practical" class="list-group-item list-group-item-action">Praktisch</a>
-            <a href="/admin/page/departments" class="list-group-item list-group-item-action">Afdelingen</a>
-            <a href="/admin/page/shirts" class="list-group-item list-group-item-action">T-Shirts</a>
-            <a href="/admin/page/register" class="list-group-item list-group-item-action">Inschrijven (Info tekst)</a>
-        </div>
-    </div>
-
-    <div class="col-md-12 mt-5">
-        <% if (user.username === 'admin' && user.role === 'admin') { %>
-        <div class="card border-danger">
-            <div class="card-header bg-danger text-white">
-                <h3 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Danger Zone</h3>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <form action="/admin/danger/backup" method="POST">
-                            <button type="submit" class="btn btn-outline-dark w-100 p-3">
-                                <i class="bi bi-hdd-fill fs-4 d-block mb-2"></i>
-                                Maak Backup
-                            </button>
-                        </form>
-                        <small class="text-muted d-block text-center mt-2">Maakt een volledige backup van database en foto's.</small>
-                    </div>
-                    <div class="col-md-6">
-                        <button type="button" class="btn btn-danger w-100 p-3" data-bs-toggle="modal" data-bs-target="#resetWebsiteModal">
-                            <i class="bi bi-radioactive fs-4 d-block mb-2"></i>
-                            Reset Website
-                        </button>
-                        <small class="text-muted d-block text-center mt-2">Wist alles (Events, Leiding, Inschrijvingen, Teksten) behalve accounts & bestanden.</small>
-                    </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title"><i class="bi bi-calendar-event"></i></h3>
+                    <p>Beheer de kalender en evenementen.</p>
+                    <a href="/admin/events" class="btn btn-primary w-100">Kalender</a>
                 </div>
             </div>
         </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title"><i class="bi bi-person-badge"></i></h3>
+                    <p>Voeg leiding info toe voor de 'Leiding' pagina.</p>
+                    <a href="/admin/leaders" class="btn btn-primary w-100">Leiding Info</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h3 class="card-title"><i class="bi bi-images"></i></h3>
+                    <p>Upload afbeeldingen voor gebruik op pagina's.</p>
+                    <a href="/admin/uploads" class="btn btn-primary w-100">Bestanden & Foto's</a>
+                </div>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- Row 2: Admin Tools (Green) -->
+    <% if (user.role === 'admin' || user.role === 'media' || settings.allow_all_forms_access) { %>
+        <div class="col-12 mb-3 mt-2">
+            <h3>Administratie</h3>
+        </div>
+
+        <% if (user.role === 'admin') { %>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center text-success">
+                        <h3 class="card-title"><i class="bi bi-people-fill"></i></h3>
+                        <p>Beheer accounts voor leiding en admins.</p>
+                        <a href="/admin/users" class="btn btn-success w-100">Gebruikers Beheren</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center text-success">
+                        <h3 class="card-title"><i class="bi bi-collection-fill"></i></h3>
+                        <p>Beheer groepen voor het leidingshoekje.</p>
+                        <a href="/admin/feedgroups" class="btn btn-success w-100">Leidingshoekjes</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center text-success">
+                        <h3 class="card-title"><i class="bi bi-clipboard-data"></i></h3>
+                        <p>Bekijk wie zich heeft ingeschreven en exporteer.</p>
+                        <a href="/admin/registrations" class="btn btn-success w-100">Inschrijvingen</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center text-success">
+                        <h3 class="card-title"><i class="bi bi-piggy-bank"></i></h3>
+                        <p>Financieel beheer en transacties.</p>
+                        <a href="/admin/finance" class="btn btn-success w-100">Financiën</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center text-success">
+                        <h3 class="card-title"><i class="bi bi-gear-fill"></i></h3>
+                        <p>Pas website instellingen en thema kleuren aan.</p>
+                        <a href="/admin/settings" class="btn btn-success w-100">Site Instellingen</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center text-success">
+                        <h3 class="card-title"><i class="bi bi-envelope-fill"></i></h3>
+                        <p>Stuur emails naar leiding, leden of ouders.</p>
+                        <a href="/admin/email" class="btn btn-success w-100">Email Tool</a>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+
+        <% if (user.role === 'admin' || user.role === 'media' || settings.allow_all_forms_access) { %>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center text-success">
+                        <h3 class="card-title"><i class="bi bi-layout-text-window-reverse"></i></h3>
+                        <p>Maak en beheer formulieren voor de website.</p>
+                        <a href="/admin/forms" class="btn btn-success w-100">Formulieren</a>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    <% } %>
+
+    <!-- Advanced Tools (Orange) -->
+    <% if (user.username === 'admin' && user.role === 'admin') { %>
+        <div class="col-12 mb-3 mt-2">
+            <h3>Geavanceerde Tools</h3>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-warning">
+                <div class="card-body text-center" style="color: #ff9800;">
+                    <h3 class="card-title"><i class="bi bi-tools"></i></h3>
+                    <p>Beheer bestanden, database, logs en notificaties.</p>
+                    <a href="/admin/maintenance" class="btn w-100" style="background-color: #ff9800; color: white;">Onderhoudstools</a>
+                </div>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- Help & Pages -->
+    <% if (user.role === 'admin' || user.role === 'media') { %>
+        <div class="col-md-12 mb-4">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                <div>
+                    <strong>Hulp nodig?</strong>
+                    <br>
+                    Bekijk de <a href="/admin/info" class="alert-link">documentatie</a> om te leren hoe je de site aanpast.
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 mt-4">
+            <h3>Pagina's Bewerken</h3>
+            <div class="list-group">
+                <a href="/admin/page/home" class="list-group-item list-group-item-action">Home</a>
+                <a href="/admin/page/practical" class="list-group-item list-group-item-action">Praktisch</a>
+                <a href="/admin/page/departments" class="list-group-item list-group-item-action">Afdelingen</a>
+                <a href="/admin/page/shirts" class="list-group-item list-group-item-action">T-Shirts</a>
+                <a href="/admin/page/register" class="list-group-item list-group-item-action">Inschrijven (Info tekst)</a>
+            </div>
+        </div>
+    <% } %>
+
+    <div class="col-md-12 mt-5">
+        <% if (user.username === 'admin' && user.role === 'admin') { %>
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Danger Zone</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <form action="/admin/danger/backup" method="POST">
+                                <button type="submit" class="btn btn-outline-dark w-100 p-3">
+                                    <i class="bi bi-hdd-fill fs-4 d-block mb-2"></i>
+                                    Maak Backup
+                                </button>
+                            </form>
+                            <small class="text-muted d-block text-center mt-2">Maakt een volledige backup van database en foto's.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-danger w-100 p-3" data-bs-toggle="modal" data-bs-target="#resetWebsiteModal">
+                                <i class="bi bi-radioactive fs-4 d-block mb-2"></i>
+                                Reset Website
+                            </button>
+                            <small class="text-muted d-block text-center mt-2">Wist alles (Events, Leiding, Inschrijvingen, Teksten) behalve accounts & bestanden.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         <% } %>
     </div>
 </div>
-
 
 <!-- Reset Website Modal -->
 <div class="modal fade" id="resetWebsiteModal" tabindex="-1" aria-labelledby="resetWebsiteModalLabel" aria-hidden="true">
@@ -216,14 +233,6 @@
   </div>
 </div>
 
-<% if (typeof success !== 'undefined' && success) { %>
-    <script>
-        // Simple toast or alert logic if needed via query params, but server renders it usually in header or dashboard top.
-        // Wait, I see 'dashboard.ejs' doesn't handle success/error messages explicitly in the code I read before?
-        // Let me check 'views/partials/header.ejs' or if dashboard handles it.
-    </script>
-<% } %>
-
 <div class="mt-3">
     <% if (typeof query !== 'undefined' && query.success) { %>
         <div class="alert alert-success"><%= query.success %></div>
@@ -232,19 +241,7 @@
         <div class="alert alert-danger"><%= query.error %></div>
     <% } %>
 </div>
-<!-- Note: Since I redirect with query params, I need to parse them. 
-     Usually express doesn't pass query to view automatically unless I do `res.locals.query = req.query` in middleware.
-     But I see `res.render` calls passing specific objects.
-     
-     Let's check server.js middleware:
-     `app.use((req, res, next) => { res.locals.user = req.user || null; next(); });`
-     It doesn't pass query.
-     
-     I will add a script to read URL params for alerts, OR I should change my controller redirects to render with message.
-     But redirects are cleaner (Post/Redirect/Get pattern).
-     
-     Let's add a small JS snippet to show alerts from URL params.
--->
+
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const successMsg = urlParams.get('success');

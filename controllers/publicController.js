@@ -421,17 +421,19 @@ const nodemailer = require('nodemailer');
 const { sendMail } = require('../config/mailer');
 const PeriodService = require('../services/PeriodService');
 
+const SettingsService = require('../services/SettingsService');
+
 exports.getContact = (req, res) => {
     res.render('public/contact', { 
         title: 'Contact - Chiro Vreugdeland Meeuwen', 
         description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen. Stel je vragen of geef feedback.',
-        contactFormDisabled: process.env.DISABLE_CONTACT_FORM === 'true',
+        contactFormDisabled: SettingsService.get('disable_contact_form'),
         recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY
     });
 };
 
 exports.postContact = async (req, res) => {
-    if (process.env.DISABLE_CONTACT_FORM === 'true') {
+    if (SettingsService.get('disable_contact_form')) {
         return res.render('public/contact', { 
             title: 'Contact - Chiro Vreugdeland Meeuwen', 
             description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen. Stel je vragen of geef feedback.',

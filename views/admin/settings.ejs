@@ -1,0 +1,160 @@
+<%- include('../partials/header') %>
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-gear-fill me-2"></i>Site Instellingen</h1>
+            <a href="/admin" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Dashboard</a>
+        </div>
+
+        <div class="alert alert-info shadow-sm mb-4">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            Hier kan je algemene instellingen van de website aanpassen. Deze instellingen overschrijven de standaard configuratie.
+        </div>
+
+        <form action="/admin/settings" method="POST">
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-toggle-on me-2"></i>Functionaliteiten</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch custom-switch p-0">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-check-label fw-bold" for="disable_contact_form">Contactformulier uitschakelen</label>
+                                    <input class="form-check-input ms-0" type="checkbox" id="disable_contact_form" name="disable_contact_form" <%= settings.disable_contact_form ? 'checked' : '' %>>
+                                </div>
+                                <small class="text-muted">Als dit aan staat, kunnen bezoekers geen berichten sturen via de contactpagina.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch custom-switch p-0">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-check-label fw-bold" for="show_games_to_all">Spelendatabank voor iedereen</label>
+                                    <input class="form-check-input ms-0" type="checkbox" id="show_games_to_all" name="show_games_to_all" <%= settings.show_games_to_all ? 'checked' : '' %>>
+                                </div>
+                                <small class="text-muted">Bepaalt of de spelendatabank zichtbaar is voor niet-ingelogde gebruikers.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch custom-switch p-0">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-check-label fw-bold" for="enable_public_registrations_view">Ledenlijst publiek voor leiding</label>
+                                    <input class="form-check-input ms-0" type="checkbox" id="enable_public_registrations_view" name="enable_public_registrations_view" <%= settings.enable_public_registrations_view ? 'checked' : '' %>>
+                                </div>
+                                <small class="text-muted">Indien ingeschakeld, kunnen alle leiding (ook zonder admin rechten) de ledenlijst bekijken.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch custom-switch p-0">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-check-label fw-bold" for="allow_all_forms_access">Formulieren beheer voor alle leiding</label>
+                                    <input class="form-check-input ms-0" type="checkbox" id="allow_all_forms_access" name="allow_all_forms_access" <%= settings.allow_all_forms_access ? 'checked' : '' %>>
+                                </div>
+                                <small class="text-muted">Indien ingeschakeld, kan alle leiding formulieren maken en bekijken (niet beperkt tot media/admin).</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-header bg-success text-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-palette-fill me-2"></i>Thema Kleuren</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label for="theme_color_primary" class="form-label fw-bold">Primair (Chiro Rood)</label>
+                            <div class="d-flex gap-2">
+                                <input type="color" class="form-control form-control-color" id="theme_color_primary" name="theme_color_primary" value="<%= settings.theme_color_primary %>" title="Kies kleur">
+                                <input type="text" class="form-control" value="<%= settings.theme_color_primary %>" oninput="document.getElementById('theme_color_primary').value = this.value">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="theme_color_secondary" class="form-label fw-bold">Secundair (Chiro Blauw)</label>
+                            <div class="d-flex gap-2">
+                                <input type="color" class="form-control form-control-color" id="theme_color_secondary" name="theme_color_secondary" value="<%= settings.theme_color_secondary %>" title="Kies kleur">
+                                <input type="text" class="form-control" value="<%= settings.theme_color_secondary %>" oninput="document.getElementById('theme_color_secondary').value = this.value">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="theme_color_accent" class="form-label fw-bold">Accent (Chiro Geel)</label>
+                            <div class="d-flex gap-2">
+                                <input type="color" class="form-control form-control-color" id="theme_color_accent" name="theme_color_accent" value="<%= settings.theme_color_accent %>" title="Kies kleur">
+                                <input type="text" class="form-control" value="<%= settings.theme_color_accent %>" oninput="document.getElementById('theme_color_accent').value = this.value">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="theme_color_neutral" class="form-label fw-bold">Neutraal (Chiro Bruin)</label>
+                            <div class="d-flex gap-2">
+                                <input type="color" class="form-control form-control-color" id="theme_color_neutral" name="theme_color_neutral" value="<%= settings.theme_color_neutral %>" title="Kies kleur">
+                                <input type="text" class="form-control" value="<%= settings.theme_color_neutral %>" oninput="document.getElementById('theme_color_neutral').value = this.value">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="theme_color_bg" class="form-label fw-bold">Achtergrond Kleur</label>
+                            <div class="d-flex gap-2">
+                                <input type="color" class="form-control form-control-color" id="theme_color_bg" name="theme_color_bg" value="<%= settings.theme_color_bg %>" title="Kies kleur">
+                                <input type="text" class="form-control" value="<%= settings.theme_color_bg %>" oninput="document.getElementById('theme_color_bg').value = this.value">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="theme_color_text" class="form-label fw-bold">Tekst Kleur</label>
+                            <div class="d-flex gap-2">
+                                <input type="color" class="form-control form-control-color" id="theme_color_text" name="theme_color_text" value="<%= settings.theme_color_text %>" title="Kies kleur">
+                                <input type="text" class="form-control" value="<%= settings.theme_color_text %>" oninput="document.getElementById('theme_color_text').value = this.value">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 mt-5">
+                <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">
+                    <i class="bi bi-save me-2"></i>Instellingen Opslaan
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-lg px-4" data-bs-toggle="modal" data-bs-target="#resetSettingsModal">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>Herstel Standaardwaarden
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reset Modal -->
+<div class="modal fade" id="resetSettingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Instellingen Resetten</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Weet je zeker dat je alle instellingen wilt herstellen naar de standaardwaarden uit het .env bestand?</p>
+                <p class="text-danger small">Deze actie kan niet ongedaan gemaakt worden.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuleren</button>
+                <form action="/admin/settings/reset" method="POST">
+                    <button type="submit" class="btn btn-danger">Ja, Herstel Alles</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-switch .form-check-input {
+        width: 3rem;
+        height: 1.5rem;
+        cursor: pointer;
+    }
+    .form-control-color {
+        width: 60px;
+        padding: 0;
+        height: 38px;
+    }
+</style>
+
+<%- include('../partials/footer') %>

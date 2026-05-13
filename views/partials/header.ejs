@@ -61,9 +61,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --chiro-red: <%= settings.theme_color_primary %>;
+            --chiro-blue: <%= settings.theme_color_secondary %>;
+            --chiro-yellow: <%= settings.theme_color_accent %>;
+            --chiro-brown: <%= settings.theme_color_neutral %>;
+            --bg-color: <%= settings.theme_color_bg %>;
+            --text-color: <%= settings.theme_color_text %>;
+        }
+    </style>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#db3e41">
+    <meta name="theme-color" content="<%= settings.theme_color_primary %>">
     <link rel="apple-touch-icon" href="/favicon.png">
 </head>
 <body>
@@ -94,7 +104,7 @@
                                 <%= capitalizeName(user.username.split(' ')[0]) %>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-2 mt-2" aria-labelledby="userDropdown">
-                                <% if (user.role === 'admin' || user.role === 'media') { %>
+                                <% if (user.role === 'admin' || user.role === 'media' || settings.allow_all_forms_access) { %>
                                     <li><h6 class="dropdown-header text-uppercase small fw-bold opacity-50">Beheer</h6></li>
                                     <li><a class="dropdown-item rounded-3 py-2" href="/admin"><i class="bi bi-speedometer2 me-2 text-primary"></i> Dashboard</a></li>
                                     <li><hr class="dropdown-divider opacity-10"></li>

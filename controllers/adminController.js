@@ -9,8 +9,51 @@ const PeriodService = require('../services/PeriodService');
 const PhoneService = require('../services/PhoneService');
 const { sendMail } = require('../config/mailer');
 
+const SettingsService = require('../services/SettingsService');
+
 exports.getDashboard = (req, res) => {
     res.render('admin/dashboard', { title: 'Admin Dashboard', user: req.user });
+};
+
+exports.getSettings = async (req, res) => {
+    res.render('admin/settings', { 
+        title: 'Site Instellingen', 
+        user: req.user,
+        settings: SettingsService.getAll()
+    });
+};
+
+exports.postSettings = async (req, res) => {
+    try {
+        const settings = {
+            disable_contact_form: req.body.disable_contact_form === 'on',
+            show_games_to_all: req.body.show_games_to_all === 'on',
+            enable_public_registrations_view: req.body.enable_public_registrations_view === 'on',
+            allow_all_forms_access: req.body.allow_all_forms_access === 'on',
+            theme_color_primary: req.body.theme_color_primary,
+            theme_color_secondary: req.body.theme_color_secondary,
+            theme_color_accent: req.body.theme_color_accent,
+            theme_color_neutral: req.body.theme_color_neutral,
+            theme_color_bg: req.body.theme_color_bg,
+            theme_color_text: req.body.theme_color_text
+        };
+
+        await SettingsService.setMany(settings);
+        res.redirect('/admin/settings?success=Instellingen succesvol bijgewerkt');
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        res.redirect('/admin/settings?error=Kon instellingen niet opslaan');
+    }
+};
+
+exports.resetSettings = async (req, res) => {
+    try {
+        await SettingsService.reset();
+        res.redirect('/admin/settings?success=Instellingen hersteld naar standaardwaarden');
+    } catch (error) {
+        console.error('Error resetting settings:', error);
+        res.redirect('/admin/settings?error=Kon instellingen niet herstellen');
+    }
 };
 
 exports.getEditPage = async (req, res) => {
