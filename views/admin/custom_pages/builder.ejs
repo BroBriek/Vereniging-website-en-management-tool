@@ -95,6 +95,25 @@
     .item-preview:hover .drag-handle {
         display: block;
     }
+    .item-preview.dragging {
+        opacity: 0.5;
+        border: 2px dashed #db3e41;
+    }
+    .move-handle {
+        position: absolute;
+        left: 5px;
+        top: 10px;
+        cursor: grab;
+        color: #adb5bd;
+        z-index: 101;
+        background: white;
+        padding: 2px;
+        border-radius: 4px;
+        border: 1px solid #eee;
+    }
+    .move-handle:hover {
+        color: #db3e41;
+    }
     .empty-state {
         display: flex;
         flex-direction: column;
@@ -527,9 +546,12 @@
                     break;
             }
 
-            const itemClass = parentPath === '' ? 'item-preview border-bottom mb-3 pb-3' : 'nested-item';
+            const itemClass = parentPath === '' ? 'item-preview border-bottom mb-3 pb-3' : 'nested-item position-relative mb-2 p-2 border rounded bg-white';
             html += `
-                <div class="${itemClass}">
+                <div class="${itemClass}" draggable="true" ondragstart="handleCompDragStart(event, '${path}')" ondragend="handleDragEnd(event)">
+                    <div class="move-handle">
+                        <i class="bi bi-grip-vertical"></i>
+                    </div>
                     <div class="item-actions">
                         <button type="button" class="btn btn-sm btn-light border" onclick="moveComp('${path}', -1)" ${index === 0 ? 'disabled' : ''}><i class="bi bi-arrow-up"></i></button>
                         <button type="button" class="btn btn-sm btn-light border" onclick="moveComp('${path}', 1)" ${index === compArray.length - 1 ? 'disabled' : ''}><i class="bi bi-arrow-down"></i></button>
@@ -934,36 +956,91 @@
     function handleDragStart(e, type) { 
         e.dataTransfer.setData('type', type); 
     }
+
+    function handleCompDragStart(e, path) {
+        e.stopPropagation();
+        e.dataTransfer.setData('sourcePath', path);
+        e.dataTransfer.effectAllowed = 'move';
+        e.target.classList.add('dragging');
+    }
+
+    function handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    }
+
     function handleDragOver(e) { 
         e.preventDefault(); 
         e.stopPropagation();
         const target = e.target.closest('.column-box') || e.target.closest('.builder-main');
         if (target) {
-            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            document.querySelectorAll('.drag-over').forEach(el => {
+                if (el !== target) el.classList.remove('drag-over');
+            });
             target.classList.add('drag-over');
         }
     }
+
     function handleDragLeave(e) {
         e.preventDefault();
         e.stopPropagation();
         const target = e.target.closest('.column-box') || e.target.closest('.builder-main');
-        if (target) target.classList.remove('drag-over');
+        // Only remove if we're actually leaving the container, not entering a child
+        if (target && !target.contains(e.relatedTarget)) {
+            target.classList.remove('drag-over');
+        }
     }
+
     function handleDrop(e) {
         e.preventDefault();
         e.stopPropagation();
-        const type = e.dataTransfer.getData('type');
-        if (!type) return;
         
         document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
 
+        const type = e.dataTransfer.getData('type');
+        const sourcePath = e.dataTransfer.getData('sourcePath');
+        
         const columnBox = e.target.closest('.column-box');
-        if (columnBox) {
-            const path = columnBox.dataset.path;
-            addComponent(type, path);
-        } else {
-            addComponent(type);
+        const targetPath = columnBox ? columnBox.dataset.path : '';
+
+        if (sourcePath) {
+            // Moving an existing component
+            moveComponent(sourcePath, targetPath);
+        } else if (type) {
+            // Adding a new component
+            addComponent(type, targetPath);
         }
+    }
+
+    function moveComponent(sourcePath, targetPath) {
+        if (sourcePath === targetPath) return;
+        
+        // Prevent dropping into itself or its own children
+        if (targetPath.startsWith(sourcePath)) {
+            alert("Je kan een component niet in zichzelf slepen!");
+            return;
+        }
+
+        const sourceParts = sourcePath.split('.');
+        const sourceIndex = parseInt(sourceParts.pop());
+        const sourceParentPath = sourceParts.join('.');
+        const sourceArray = sourceParentPath ? getCompByPath(sourceParentPath) : components;
+
+        const compToMove = sourceArray[sourceIndex];
+
+        // Add to new location first
+        const targetArray = targetPath ? getCompByPath(targetPath) : components;
+        targetArray.push(compToMove);
+
+        // Then remove from old location
+        // IMPORTANT: If we're moving within the same array, we need to be careful with indices
+        if (sourceArray === targetArray) {
+            sourceArray.splice(sourceIndex, 1);
+        } else {
+            sourceArray.splice(sourceIndex, 1);
+        }
+
+        renderComponents();
     }
 
     function handleCompImageUpload(input) {
