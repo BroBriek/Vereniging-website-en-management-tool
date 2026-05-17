@@ -50,7 +50,7 @@
                         %>
                         <div class="row g-4 my-4">
                             <% comp.cols.forEach(col => { %>
-                                <div class="col-md" style="flex: 0 0 <%= col.width %>%; max-width: <%= col.width %>%;">
+                                <div class="col" style="flex: 0 1 calc(<%= col.width %>% - 0.5px); max-width: <%= col.width %>%; width: <%= col.width %>%;">
                                     <% (col.content || []).forEach(child => { %>
                                         <% renderComponent(child) %>
                                     <% }) %>
