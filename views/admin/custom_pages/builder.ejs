@@ -348,7 +348,7 @@
                 <i class="bi bi-image text-info"></i> Afbeelding
             </div>
             <div class="draggable-item" onclick="addComponent('columns')" draggable="true" ondragstart="handleDragStart(event, 'columns')">
-                <i class="bi bi-columns-gap text-danger"></i> Twee Kolommen
+                <i class="bi bi-columns-gap text-danger"></i> Kolommen
             </div>
             <div class="draggable-item" onclick="addComponent('button')" draggable="true" ondragstart="handleDragStart(event, 'button')">
                 <i class="bi bi-link-45deg text-warning"></i> Knop/Link
@@ -846,23 +846,21 @@
 
     function adjustColInputs(count) {
         const container = document.getElementById('colWidthContainer');
-        const currentInputs = container.querySelectorAll('.col-width-input').length;
         const target = parseInt(count);
-        
-        if (target > currentInputs) {
-            for (let i = currentInputs; i < target; i++) {
-                const div = document.createElement('div');
-                div.className = 'mb-2';
-                div.innerHTML = `
-                    <label class="form-label small">Breedte Kolom ${i+1} (%)</label>
-                    <input type="number" class="form-control form-control-sm col-width-input" value="${Math.round(100/target)}" data-index="${i}">
-                `;
-                container.appendChild(div);
-            }
-        } else if (target < currentInputs) {
-            for (let i = currentInputs; i > target; i--) {
-                container.lastElementChild.remove();
-            }
+        if (isNaN(target) || target < 1) return;
+
+        // Reset all widths to be equal when count changes for better UX
+        const newWidth = Math.floor(100 / target);
+        container.innerHTML = '';
+        for (let i = 0; i < target; i++) {
+            const div = document.createElement('div');
+            div.className = 'mb-2';
+            const width = (i === target - 1) ? (100 - (newWidth * (target - 1))) : newWidth;
+            div.innerHTML = `
+                <label class="form-label small">Breedte Kolom ${i+1} (%)</label>
+                <input type="number" class="form-control form-control-sm col-width-input" value="${width}" data-index="${i}">
+            `;
+            container.appendChild(div);
         }
     }
 
@@ -884,10 +882,16 @@
             const count = parseInt(document.getElementById('editColCount').value);
             const inputs = document.querySelectorAll('.col-width-input');
             const newCols = [];
+            let totalWidth = 0;
             for (let i = 0; i < count; i++) {
                 const width = parseInt(inputs[i].value);
+                totalWidth += width;
                 const oldContent = (comp.cols[i] && comp.cols[i].content) ? comp.cols[i].content : [];
                 newCols.push({ width, content: oldContent });
+            }
+            
+            if (totalWidth !== 100 && !confirm(`De kolommen tellen op tot ${totalWidth}% in plaats van 100%. Dit kan de weergave verstoren. Doorgaan?`)) {
+                return;
             }
             comp.cols = newCols;
         } else if (comp.type === 'spacer') {
