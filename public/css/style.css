@@ -455,6 +455,24 @@ body.navbar-open {
 .pt-6 { padding-top: 4rem; }
 .my-6 { margin-top: 4rem; margin-bottom: 4rem; }
 
+/* Quill Alignment Classes */
+.ql-align-center {
+    text-align: center;
+}
+.ql-align-right {
+    text-align: right;
+}
+.ql-align-justify {
+    text-align: justify;
+}
+
+.rich-text-content {
+    line-height: 1.7;
+    font-size: 1.1rem;
+}
+.rich-text-content p {
+    margin-bottom: 1.5rem;
+}
 
 /* Compact Table Styles for Admin Dashboard */
 .table {
@@ -508,7 +526,7 @@ body.navbar-open {
 }
 
 /* Responsive images in user-generated content (posts, comments, events, etc) */
-.card-text img, .comment-text img, #modalEventDesc img, .rich-content img {
+.card-text img, .comment-text img, #modalEventDesc img, .rich-content img, .rich-text-content img {
     max-width: 100%;
     height: auto;
     border-radius: 0.8rem;
