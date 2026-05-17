@@ -131,6 +131,11 @@
         margin: 20px 0;
         cursor: default;
         transition: box-shadow 0.2s;
+        max-width: 100%;
+    }
+    .resizable-wrapper img {
+        max-width: 100%;
+        height: auto !important;
     }
     .item-preview:hover .resizable-wrapper {
         outline: 1px dashed #db3e41;
@@ -188,6 +193,8 @@
         width: 100%;
         position: relative;
         margin: 15px 0;
+        flex-wrap: nowrap;
+        overflow-x: auto;
     }
     .column-box {
         min-height: 120px;
@@ -196,7 +203,9 @@
         padding: 15px;
         border: 1px dashed #dee2e6;
         position: relative;
-        transition: all 0.2s;
+        transition: width 0.1s ease;
+        overflow: hidden;
+        flex-shrink: 0;
     }
     .column-box.drag-over {
         background: rgba(219, 62, 65, 0.05);
@@ -612,7 +621,12 @@
         startWidth = rect.width;
         const comp = getCompByPath(path);
         startLeftWidth = comp.cols[colIdx].width;
-        startRightWidth = comp.cols[colIdx + 1].width;
+        
+        // Store all starting widths for proportional distribution
+        comp.cols.forEach((col, i) => {
+            col._startWidth = col.width;
+        });
+
         document.addEventListener('mousemove', handleInteraction);
         document.addEventListener('mouseup', stopInteraction);
     }
@@ -658,24 +672,52 @@
             const dx = e.clientX - startX;
             const percentageDelta = (dx / startWidth) * 100;
             
-            let newLeftWidth = Math.round(startLeftWidth + percentageDelta);
-            let newRightWidth = Math.round(startRightWidth - percentageDelta);
+            let newTargetWidth = startLeftWidth + percentageDelta;
             
             // Constrain
-            if (newLeftWidth >= 10 && newRightWidth >= 10) {
-                comp.cols[activeColIdx].width = newLeftWidth;
-                comp.cols[activeColIdx + 1].width = newRightWidth;
+            if (newTargetWidth < 10) newTargetWidth = 10;
+            if (newTargetWidth > 90) newTargetWidth = 90;
+            
+            const actualDelta = newTargetWidth - startLeftWidth;
+            comp.cols[activeColIdx].width = parseFloat(newTargetWidth.toFixed(1));
+            
+            // Distribute the inverse of actualDelta among ALL OTHER columns
+            const othersIndices = comp.cols.map((_, i) => i).filter(i => i !== activeColIdx);
+            const othersStartTotal = comp.cols.reduce((sum, c, i) => i !== activeColIdx ? sum + c._startWidth : sum, 0);
+            
+            if (othersStartTotal > 0) {
+                othersIndices.forEach(idx => {
+                    const ratio = comp.cols[idx]._startWidth / othersStartTotal;
+                    const shareOfDelta = actualDelta * ratio;
+                    comp.cols[idx].width = parseFloat(Math.max(5, comp.cols[idx]._startWidth - shareOfDelta).toFixed(1));
+                });
+            } else {
+                // Should not happen if at least one other column exists
+                const share = actualDelta / othersIndices.length;
+                othersIndices.forEach(idx => {
+                    comp.cols[idx].width = parseFloat(Math.max(5, comp.cols[idx]._startWidth - share).toFixed(1));
+                });
+            }
 
-                const container = document.getElementById(`columns-${activeInteractPath}`);
-                if (container) {
-                    const boxes = container.querySelectorAll('.column-box');
-                    boxes[activeColIdx].style.width = comp.cols[activeColIdx].width + '%';
-                    boxes[activeColIdx + 1].style.width = comp.cols[activeColIdx + 1].width + '%';
-                    
-                    // Update text indicators
-                    boxes[activeColIdx].querySelector('small').innerHTML = `<i class="bi bi-layout-sidebar"></i> Kolom ${activeColIdx + 1} (${comp.cols[activeColIdx].width}%)`;
-                    boxes[activeColIdx + 1].querySelector('small').innerHTML = `<i class="bi bi-layout-sidebar"></i> Kolom ${activeColIdx + 2} (${comp.cols[activeColIdx + 1].width}%)`;
-                }
+            // Normalize to exactly 100%
+            let currentTotal = comp.cols.reduce((sum, c) => sum + c.width, 0);
+            if (Math.abs(100 - currentTotal) > 0.01) {
+                const diff = 100 - currentTotal;
+                // Add diff to the next column or the first other one
+                const adjIdx = othersIndices[0];
+                comp.cols[adjIdx].width = parseFloat((comp.cols[adjIdx].width + diff).toFixed(1));
+            }
+
+            const container = document.getElementById(`columns-${activeInteractPath}`);
+            if (container) {
+                const boxes = container.querySelectorAll('.column-box');
+                comp.cols.forEach((col, i) => {
+                    boxes[i].style.width = col.width + '%';
+                    const small = boxes[i].querySelector('small');
+                    if (small) {
+                        small.innerHTML = `<i class="bi bi-layout-sidebar"></i> Kolom ${i + 1} (${col.width}%)`;
+                    }
+                });
             }
         } else if (interactionType === 'spacer-resize') {
             const dy = e.clientY - startY;
@@ -821,7 +863,7 @@
                         ${comp.cols.map((col, i) => `
                             <div class="mb-2">
                                 <label class="form-label small">Breedte Kolom ${i+1} (%)</label>
-                                <input type="number" class="form-control form-control-sm col-width-input" value="${col.width}" data-index="${i}">
+                                <input type="number" step="0.1" class="form-control form-control-sm col-width-input" value="${col.width}" data-index="${i}" oninput="handleColWidthInput(this)">
                             </div>
                         `).join('')}
                     </div>
@@ -872,17 +914,53 @@
         if (isNaN(target) || target < 1) return;
 
         // Reset all widths to be equal when count changes for better UX
-        const newWidth = Math.floor(100 / target);
+        const newWidth = 100 / target;
         container.innerHTML = '';
         for (let i = 0; i < target; i++) {
             const div = document.createElement('div');
             div.className = 'mb-2';
-            const width = (i === target - 1) ? (100 - (newWidth * (target - 1))) : newWidth;
+            const width = parseFloat(newWidth.toFixed(1));
             div.innerHTML = `
                 <label class="form-label small">Breedte Kolom ${i+1} (%)</label>
-                <input type="number" class="form-control form-control-sm col-width-input" value="${width}" data-index="${i}">
+                <input type="number" step="0.1" class="form-control form-control-sm col-width-input" value="${width}" data-index="${i}" oninput="handleColWidthInput(this)">
             `;
             container.appendChild(div);
+        }
+    }
+
+    function handleColWidthInput(input) {
+        const inputs = Array.from(document.querySelectorAll('.col-width-input'));
+        const changedIndex = parseInt(input.dataset.index);
+        let newValue = parseFloat(input.value);
+        if (isNaN(newValue)) return;
+        
+        if (newValue > 95) { newValue = 95; input.value = 95; }
+        if (newValue < 5) { newValue = 5; input.value = 5; }
+
+        const otherInputs = inputs.filter((_, i) => i !== changedIndex);
+        if (otherInputs.length === 0) return;
+
+        const remainingWidth = 100 - newValue;
+        const currentOtherTotal = otherInputs.reduce((sum, inp) => sum + parseFloat(inp.value || 0), 0);
+
+        if (currentOtherTotal > 0) {
+            otherInputs.forEach(inp => {
+                const ratio = parseFloat(inp.value) / currentOtherTotal;
+                inp.value = (remainingWidth * ratio).toFixed(1);
+            });
+        } else {
+            const share = remainingWidth / otherInputs.length;
+            otherInputs.forEach(inp => {
+                inp.value = share.toFixed(1);
+            });
+        }
+
+        // Final normalization to ensure exactly 100
+        let total = inputs.reduce((sum, inp) => sum + parseFloat(inp.value), 0);
+        if (Math.abs(100 - total) > 0.01) {
+            const diff = 100 - total;
+            const firstOther = otherInputs[0];
+            firstOther.value = (parseFloat(firstOther.value) + diff).toFixed(1);
         }
     }
 
@@ -904,16 +982,10 @@
             const count = parseInt(document.getElementById('editColCount').value);
             const inputs = document.querySelectorAll('.col-width-input');
             const newCols = [];
-            let totalWidth = 0;
             for (let i = 0; i < count; i++) {
-                const width = parseInt(inputs[i].value);
-                totalWidth += width;
+                const width = parseFloat(inputs[i].value);
                 const oldContent = (comp.cols[i] && comp.cols[i].content) ? comp.cols[i].content : [];
                 newCols.push({ width, content: oldContent });
-            }
-            
-            if (totalWidth !== 100 && !confirm(`De kolommen tellen op tot ${totalWidth}% in plaats van 100%. Dit kan de weergave verstoren. Doorgaan?`)) {
-                return;
             }
             comp.cols = newCols;
         } else if (comp.type === 'spacer') {
