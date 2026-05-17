@@ -19,6 +19,20 @@
 <div class="row justify-content-center">
     <div class="col-lg-10">
         <div class="custom-page-content">
+            <% if (user && user.role === 'admin') { %>
+                <div class="admin-edit-badge mb-4 d-flex justify-content-between align-items-center p-3 bg-light rounded-4 border">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-shield-check text-primary fs-4 me-3"></i>
+                        <div>
+                            <div class="fw-bold">Admin Weergave</div>
+                            <div class="small text-muted">Alleen zichtbaar voor jou.</div>
+                        </div>
+                    </div>
+                    <a href="/admin/custom-pages/<%= page.id %>/edit" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-pencil-square me-2"></i>Bewerk Pagina
+                    </a>
+                </div>
+            <% } %>
             <% 
             function renderComponent(comp) { 
                 switch(comp.type) { 
@@ -81,17 +95,9 @@
         </div>
     </div>
 </div>
-
 <style>
     .text-shadow {
         text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    }
-    .rich-text-content {
-        line-height: 1.7;
-        font-size: 1.1rem;
-    }
-    .rich-text-content p {
-        margin-bottom: 1.5rem;
     }
     .custom-page-content {
         background: white;
