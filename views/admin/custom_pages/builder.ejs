@@ -99,6 +99,9 @@
         opacity: 0.5;
         border: 2px dashed #db3e41;
     }
+    .item-preview.drag-over-item, .nested-item.drag-over-item {
+        border-top: 3px solid #db3e41 !important;
+    }
     .move-handle {
         position: absolute;
         left: 5px;
@@ -563,7 +566,7 @@
 
             const itemClass = parentPath === '' ? 'item-preview border-bottom mb-3 pb-3' : 'nested-item position-relative mb-2 p-2 border rounded bg-white';
             html += `
-                <div class="${itemClass}" draggable="true" ondragstart="handleCompDragStart(event, '${path}')" ondragend="handleDragEnd(event)">
+                <div class="${itemClass}" draggable="true" data-path="${path}" ondragstart="handleCompDragStart(event, '${path}')" ondragend="handleDragEnd(event)" ondragover="handleItemDragOver(event)" ondragleave="handleItemDragLeave(event)" ondrop="handleDrop(event)">
                     <div class="move-handle">
                         <i class="bi bi-grip-vertical"></i>
                     </div>
@@ -745,13 +748,13 @@
         renderComponents();
     }
 
-    function addComponent(type, path = null) {
+    function addComponent(type, path = null, index = -1) {
         let newComp = { type };
         if (type === 'header') { newComp.text = 'Nieuwe Titel'; newComp.level = 2; }
         if (type === 'text') { newComp.text = 'Klik om tekst te bewerken...'; }
         if (type === 'button') { newComp.text = 'Klik Hier'; newComp.url = ''; newComp.align = 'start'; }
         if (type === 'image') { newComp.url = ''; newComp.width = '300px'; newComp.height = 'auto'; newComp.rotation = 0; }
-        if (type === 'columns') { 
+        if (type === 'columns') {
             newComp.cols = [
                 { width: 50, content: [] },
                 { width: 50, content: [] }
@@ -760,7 +763,7 @@
         if (type === 'spacer') {
             newComp.height = 50;
         }
-        
+
         let targetArray;
         let newIndex;
         if (path) {
@@ -769,19 +772,23 @@
                 console.error('Target is not an array:', path, targetArray);
                 return;
             }
+        } else {
+            targetArray = components;
+        }
+
+        if (index >= 0) {
+            targetArray.splice(index, 0, newComp);
+            newIndex = index;
+        } else {
             targetArray.push(newComp);
             newIndex = targetArray.length - 1;
-        } else {
-            components.push(newComp);
-            newIndex = components.length - 1;
         }
-        
+
         renderComponents();
         const newPath = path ? `${path}.${newIndex}` : `${newIndex}`;
         // Timeout to ensure DOM is ready and avoid conflicts with drag-and-drop state
         setTimeout(() => editComp(newPath), 50);
     }
-
     function editComp(path) {
         editingPath = path;
         const comp = getCompByPath(path);
@@ -1045,6 +1052,7 @@
     function handleDragEnd(e) {
         e.target.classList.remove('dragging');
         document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        document.querySelectorAll('.drag-over-item').forEach(el => el.classList.remove('drag-over-item'));
     }
 
     function handleDragOver(e) { 
@@ -1069,32 +1077,78 @@
         }
     }
 
+    function handleItemDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const target = e.currentTarget;
+        document.querySelectorAll('.drag-over-item').forEach(el => {
+            if (el !== target) el.classList.remove('drag-over-item');
+        });
+        // Clear container highlights when over a specific item
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        target.classList.add('drag-over-item');
+    }
+
+    function handleItemDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.currentTarget.classList.remove('drag-over-item');
+    }
+
     function handleDrop(e) {
         e.preventDefault();
         e.stopPropagation();
         
         document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        document.querySelectorAll('.drag-over-item').forEach(el => el.classList.remove('drag-over-item'));
 
         const type = e.dataTransfer.getData('type');
         const sourcePath = e.dataTransfer.getData('sourcePath');
         
         const columnBox = e.target.closest('.column-box');
-        const targetPath = columnBox ? columnBox.dataset.path : '';
+        const nestedItem = e.target.closest('.nested-item');
+        const topLevelItem = e.target.closest('.item-preview');
+        const builderMain = e.target.closest('.builder-main');
+        
+        let targetPath = '';
+        let targetIndex = -1;
+
+        if (nestedItem) {
+            // Dropped on an item inside a column - reorder here
+            const itemPath = nestedItem.dataset.path;
+            const parts = itemPath.split('.');
+            targetIndex = parseInt(parts.pop());
+            targetPath = parts.join('.');
+        } else if (columnBox) {
+            // Dropped inside a column (but not on an item) - add to column
+            targetPath = columnBox.dataset.path;
+        } else if (topLevelItem) {
+            // Dropped on a top-level item - reorder at top level
+            const itemPath = topLevelItem.dataset.path;
+            const parts = itemPath.split('.');
+            targetIndex = parseInt(parts.pop());
+            targetPath = parts.join('.');
+        } else if (builderMain) {
+            // Dropped in the main area (not on an item) - add to end of page
+            targetPath = '';
+        } else {
+            return;
+        }
 
         if (sourcePath) {
             // Moving an existing component
-            moveComponent(sourcePath, targetPath);
+            moveComponent(sourcePath, targetPath, targetIndex);
         } else if (type) {
             // Adding a new component
-            addComponent(type, targetPath);
+            addComponent(type, targetPath, targetIndex);
         }
     }
 
-    function moveComponent(sourcePath, targetPath) {
-        if (sourcePath === targetPath) return;
+    function moveComponent(sourcePath, targetPath, targetIndex = -1) {
+        if (sourcePath === targetPath && targetIndex === -1) return;
         
         // Prevent dropping into itself or its own children
-        if (targetPath.startsWith(sourcePath)) {
+        if (targetPath && targetPath.startsWith(sourcePath)) {
             alert("Je kan een component niet in zichzelf slepen!");
             return;
         }
@@ -1106,16 +1160,33 @@
 
         const compToMove = sourceArray[sourceIndex];
 
-        // Add to new location first
         const targetArray = targetPath ? getCompByPath(targetPath) : components;
-        targetArray.push(compToMove);
 
-        // Then remove from old location
-        // IMPORTANT: If we're moving within the same array, we need to be careful with indices
         if (sourceArray === targetArray) {
+            if (sourceIndex === targetIndex) return;
+            
+            // Reordering in same array
             sourceArray.splice(sourceIndex, 1);
+            
+            let finalTargetIndex = targetIndex;
+            if (finalTargetIndex === -1) {
+                targetArray.push(compToMove);
+            } else {
+                // If we move from after to before, targetIndex is fine
+                // If we move from before to after, targetIndex shifted because we spliced
+                if (sourceIndex < targetIndex) {
+                    finalTargetIndex--;
+                }
+                targetArray.splice(finalTargetIndex, 0, compToMove);
+            }
         } else {
+            // Moving to different array
             sourceArray.splice(sourceIndex, 1);
+            if (targetIndex === -1) {
+                targetArray.push(compToMove);
+            } else {
+                targetArray.splice(targetIndex, 0, compToMove);
+            }
         }
 
         renderComponents();
