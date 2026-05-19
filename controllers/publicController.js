@@ -20,14 +20,14 @@ const getContent = async (slug) => {
 exports.getCalendarICS = async (req, res) => {
     try {
         const { token } = req.query;
-        let whereClause = { isPrivate: false };
+        let whereClause = { isPrivate: false, isArchived: false };
         let calName = 'Chiro Vreugdeland';
         let foundUserId = null;
 
         if (token) {
             const user = await User.findOne({ where: { calendarToken: token, isActive: true } });
             if (user) {
-                whereClause = {}; // All events
+                whereClause = { isArchived: false }; // All non-archived events (public + private)
                 calName = `Chiro Leidingskalender (${user.username})`;
                 foundUserId = user.id;
             }
@@ -234,6 +234,7 @@ exports.getCalendar = async (req, res) => {
         const events = await Event.findAll({ 
             where: {
                 isPrivate: false,
+                isArchived: false,
                 [Op.or]: [
                     { date: { [Op.gte]: today } },
                     { 

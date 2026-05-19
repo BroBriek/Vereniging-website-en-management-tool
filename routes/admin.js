@@ -60,6 +60,8 @@ router.get('/events', ensureMedia, adminController.getEvents);
 router.post('/events', ensureMedia, adminController.postEvent);
 router.put('/events/:id', ensureMedia, adminController.updateEvent);
 router.delete('/events/:id', ensureMedia, adminController.deleteEvent);
+router.post('/events/:id/archive', ensureMedia, adminController.archiveEvent);
+router.post('/events/:id/unarchive', ensureMedia, adminController.unarchiveEvent);
 
 // Upload Manager
 router.get('/uploads', ensureMedia, uploadController.getUploads);

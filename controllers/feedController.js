@@ -100,6 +100,7 @@ exports.getCalendar = async (req, res) => {
 
         const events = await Event.findAll({ 
             where: {
+                isArchived: false,
                 [Op.or]: [
                     { date: { [Op.gte]: today } },
                     { 

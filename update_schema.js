@@ -130,6 +130,10 @@ async function updateSchema() {
             await sequelize.query('ALTER TABLE Events ADD COLUMN isPrivate BOOLEAN DEFAULT 0;');
             console.log('Added Events.isPrivate');
         }
+        if (!await columnExists('Events', 'isArchived')) {
+            await sequelize.query('ALTER TABLE Events ADD COLUMN isArchived BOOLEAN DEFAULT 0;');
+            console.log('Added Events.isArchived');
+        }
 
         // --- CustomPages Table (Create if not exists) ---
         // sequelize.sync() usually handles table creation, but let's be sure.
