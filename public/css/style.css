@@ -361,6 +361,26 @@ input:focus, textarea:focus, select:focus {
 .calendar-day { font-size: 1.8rem; font-weight: 700; display: block; line-height: 1; }
 .calendar-month { font-size: 0.9rem; font-weight: 500; text-transform: uppercase; }
 
+/* Event Modal Styles */
+.event-description-container {
+    line-height: 1.6;
+    color: #444;
+}
+
+.event-description-container blockquote {
+    border-left: 4px solid var(--chiro-red);
+    padding-left: 1rem;
+    color: #666;
+    font-style: italic;
+}
+
+@media (max-width: 767px) {
+    #eventModal .border-end {
+        border-end: none !important;
+        border-bottom: 1px solid #dee2e6;
+    }
+}
+
 /* Responsive Adjustments */
 @media (max-width: 991px) {
     .navbar-collapse {

@@ -8,6 +8,7 @@ const Event = sequelize.define('Event', {
   startTime: { type: DataTypes.STRING, allowNull: true }, // Format "HH:mm"
   endTime: { type: DataTypes.STRING, allowNull: true },   // Format "HH:mm"
   description: { type: DataTypes.TEXT },
+  attachments: { type: DataTypes.TEXT, defaultValue: '[]' },
   isPrivate: { type: DataTypes.BOOLEAN, defaultValue: false },
   isArchived: { type: DataTypes.BOOLEAN, defaultValue: false }
 });

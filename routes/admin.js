@@ -57,8 +57,8 @@ router.delete('/leaders/:id', ensureMedia, adminController.deleteLeader);
 
 // Event CRUD
 router.get('/events', ensureMedia, adminController.getEvents);
-router.post('/events', ensureMedia, adminController.postEvent);
-router.put('/events/:id', ensureMedia, adminController.updateEvent);
+router.post('/events', ensureMedia, upload.array('attachments', 5), adminController.postEvent);
+router.put('/events/:id', ensureMedia, upload.array('attachments', 5), adminController.updateEvent);
 router.delete('/events/:id', ensureMedia, adminController.deleteEvent);
 router.post('/events/:id/archive', ensureMedia, adminController.archiveEvent);
 router.post('/events/:id/unarchive', ensureMedia, adminController.unarchiveEvent);

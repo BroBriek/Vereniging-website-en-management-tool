@@ -100,23 +100,50 @@
 <!-- Event Modal -->
 <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-light border-0">
-                <h5 class="modal-title text-uppercase fw-bold text-danger" id="modalEventDate"></h5>
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 pb-0 pe-4 pt-4">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body px-4 pb-5 pt-2">
-                <div id="modalPrivateBadge" class="mb-2 d-none">
-                    <span class="badge bg-info text-white rounded-pill">EXCLUSIEF VOOR LEIDING</span>
-                </div>
-                <h2 class="mb-4 text-primary" id="modalEventTitle"></h2>
-                <div class="p-4 bg-light rounded-3 border-start border-4 border-warning fs-5">
-                    <!-- Content will be injected as HTML -->
-                    <div id="modalEventDesc"></div>
+            <div class="modal-body p-0">
+                <div class="container-fluid">
+                    <div class="row g-0">
+                        <!-- Date Sidebar -->
+                        <div class="col-md-4 bg-light p-4 d-flex flex-column align-items-center justify-content-center text-center border-end">
+                            <div class="calendar-date-badge mb-3 shadow-sm" id="modalDateBadge" style="width: 80px; height: 80px;">
+                                <span class="calendar-day fs-2" id="modalDay"></span>
+                                <span class="calendar-month fs-6" id="modalMonth"></span>
+                            </div>
+                            <div id="modalFullDate" class="fw-bold text-muted small mb-3"></div>
+                            <div id="modalTimeInfo" class="text-primary small">
+                                <i class="bi bi-clock me-1"></i> <span id="modalTimeText"></span>
+                            </div>
+                            <div id="modalPrivateBadge" class="mt-4 d-none">
+                                <span class="badge bg-info text-white rounded-pill px-3 py-2 shadow-sm" style="font-family: var(--font-heading); font-size: 0.7rem;">LEIDING ONLY</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Content Area -->
+                        <div class="col-md-8 p-4 p-lg-5">
+                            <h2 class="display-6 fw-bold mb-4 text-chiro-red" id="modalEventTitle" style="font-family: var(--font-heading);"></h2>
+                            
+                            <div class="event-description-container mb-5 fs-5">
+                                <div id="modalEventDesc"></div>
+                            </div>
+                            
+                            <div id="modalAttachmentsSection" class="d-none">
+                                <h5 class="fw-bold mb-3 d-flex align-items-center">
+                                    <i class="bi bi-paperclip me-2 text-primary"></i> Bijlagen
+                                </h5>
+                                <div id="modalAttachmentsList" class="list-group list-group-flush rounded-3 border">
+                                    <!-- Attachments will be injected here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer border-0 justify-content-center pb-4">
-                <button type="button" class="btn btn-chiro" data-bs-dismiss="modal">Sluiten</button>
+            <div class="modal-footer border-0 justify-content-center pb-4 pt-0 bg-white">
+                <button type="button" class="btn btn-chiro px-4 rounded-pill shadow-sm" data-bs-dismiss="modal">Sluiten</button>
             </div>
         </div>
     </div>
@@ -132,26 +159,40 @@
         // Format date for modal
         const [y, m, d] = event.date.split('-').map(Number);
         const dateObj = new Date(y, m - 1, d);
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        let formattedDate = dateObj.toLocaleDateString('nl-BE', options);
-
+        const monthNames = ["JAN", "FEB", "MRT", "APR", "MEI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
+        const fullMonthNames = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
+        
+        document.getElementById('modalDay').textContent = dateObj.getDate();
+        document.getElementById('modalMonth').textContent = monthNames[dateObj.getMonth()];
+        
+        let fullDateText = `${dateObj.getDate()} ${fullMonthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
         if (event.endDate && event.endDate !== event.date) {
             const [ey, em, ed] = event.endDate.split('-').map(Number);
             const endDateObj = new Date(ey, em - 1, ed);
-            const endFormatted = endDateObj.toLocaleDateString('nl-BE', options);
-            formattedDate = `Van ${formattedDate} <br> tot en met ${endFormatted}`;
+            fullDateText += ` t/m ${endDateObj.getDate()} ${fullMonthNames[endDateObj.getMonth()]} ${endDateObj.getFullYear()}`;
         }
+        document.getElementById('modalFullDate').textContent = fullDateText;
 
+        // Time info
+        const timeInfo = document.getElementById('modalTimeInfo');
         if (event.startTime) {
-            formattedDate += `<br><span class="text-muted"><i class="bi bi-clock me-1"></i> ${event.startTime}`;
-            if (event.endTime) {
-                formattedDate += ` - ${event.endTime}`;
-            }
-            formattedDate += `</span>`;
+            let timeText = event.startTime;
+            if (event.endTime) timeText += ` - ${event.endTime}`;
+            document.getElementById('modalTimeText').textContent = timeText;
+            timeInfo.classList.remove('d-none');
+        } else {
+            timeInfo.classList.add('d-none');
         }
         
-        document.getElementById('modalEventDate').innerHTML = formattedDate;
+        // Badge color
+        const badge = document.getElementById('modalDateBadge');
+        const badgeColor = event.isPrivate ? 'var(--chiro-blue)' : 'var(--chiro-red)';
+        const shadowColor = event.isPrivate ? '#143862' : '#a82b2e';
+        badge.style.backgroundColor = badgeColor;
+        badge.style.boxShadow = `0 4px 0 ${shadowColor}`;
+
         document.getElementById('modalEventTitle').textContent = event.title;
+        document.getElementById('modalEventTitle').style.color = badgeColor;
         
         const privateBadge = document.getElementById('modalPrivateBadge');
         if (event.isPrivate) {
@@ -163,6 +204,39 @@
         // Use innerHTML to render HTML tags from the description
         document.getElementById('modalEventDesc').innerHTML = event.description || '<span class="text-muted fst-italic">Geen beschrijving beschikbaar.</span>';
         
+        // Handle Attachments
+        const attachmentsSection = document.getElementById('modalAttachmentsSection');
+        const attachmentsList = document.getElementById('modalAttachmentsList');
+        attachmentsList.innerHTML = '';
+        
+        let attachments = [];
+        try {
+            attachments = typeof event.attachments === 'string' ? JSON.parse(event.attachments) : (event.attachments || []);
+        } catch (e) {
+            console.error('Error parsing attachments:', e);
+        }
+
+        if (attachments && attachments.length > 0) {
+            attachmentsSection.classList.remove('d-none');
+            attachments.forEach(att => {
+                const a = document.createElement('a');
+                a.href = att.path;
+                a.className = 'list-group-item list-group-item-action d-flex align-items-center py-3 border-start-0 border-end-0';
+                a.target = '_blank';
+                a.innerHTML = `
+                    <i class="bi bi-file-earmark-arrow-down fs-4 me-3 text-primary"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold text-dark">${att.name}</div>
+                        <small class="text-muted">Klik om te openen / downloaden</small>
+                    </div>
+                    <i class="bi bi-chevron-right text-muted small"></i>
+                `;
+                attachmentsList.appendChild(a);
+            });
+        } else {
+            attachmentsSection.classList.add('d-none');
+        }
+
         const myModal = new bootstrap.Modal(document.getElementById('eventModal'));
         myModal.show();
     }
