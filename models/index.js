@@ -18,6 +18,7 @@ const SystemState = require('./SystemState');
 const CalendarAccess = require('./CalendarAccess');
 const Game = require('./Game');
 const CustomPage = require('./CustomPage');
+const MigrationService = require('../services/MigrationService');
 
 // Associations
 
@@ -100,9 +101,12 @@ const syncDatabase = async () => {
       await sequelize.query('PRAGMA foreign_keys = OFF');
     }
 
+    // Run manual migrations for SQLite
+    if (sequelize.getDialect() === 'sqlite') {
+      await MigrationService.run(sequelize);
+    }
+
     // In SQLite, .sync({ alter: true }) is very fragile on complex tables like Users.
-    // If the schema already matches the model (verified by manual inspection),
-    // we should use standard .sync() to avoid problematic shadow-table migrations.
     console.log('Syncing database models...');
     await sequelize.sync();
 
