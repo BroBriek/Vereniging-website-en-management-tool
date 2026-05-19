@@ -21,7 +21,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="/admin/events" method="POST">
+                <form action="/admin/events" method="POST" enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="fw-bold">Titel</label>
@@ -52,6 +52,11 @@
                         <div class="col-md-12 mb-3">
                             <label class="fw-bold">Beschrijving</label>
                             <textarea class="form-control rich-editor" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold">Bijlagen / Documenten</label>
+                            <input type="file" class="form-control" name="attachments" multiple>
+                            <small class="text-muted">Max. 5 bestanden tegelijk.</small>
                         </div>
                     </div>
                     <div class="text-end mt-3">
@@ -199,7 +204,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="editForm" method="POST">
+                <form id="editForm" method="POST" enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label>Titel</label>
@@ -231,6 +236,17 @@
                             <label>Beschrijving</label>
                             <textarea class="form-control rich-editor" name="description" id="editDescription" rows="2"></textarea>
                         </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold">Nieuwe Bijlagen</label>
+                            <input type="file" class="form-control" name="attachments" multiple>
+                            <small class="text-muted">Laat leeg om huidige bijlagen te behouden (tenzij je ze hieronder verwijdert).</small>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold">Huidige Bijlagen</label>
+                            <div id="existingAttachmentsList" class="list-group">
+                                <!-- Existing attachments will be listed here -->
+                            </div>
+                        </div>
                     </div>
                     <div class="text-end">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
@@ -256,6 +272,31 @@
         
         const descField = document.getElementById('editDescription');
         descField.value = event.description || '';
+
+        // Handle existing attachments
+        const attachmentsList = document.getElementById('existingAttachmentsList');
+        attachmentsList.innerHTML = '';
+        let attachments = [];
+        try {
+            attachments = typeof event.attachments === 'string' ? JSON.parse(event.attachments) : (event.attachments || []);
+        } catch (e) {
+            console.error('Error parsing attachments:', e);
+        }
+
+        attachments.forEach((att, index) => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item d-flex justify-content-between align-items-center';
+            item.innerHTML = `
+                <span>${att.name}</span>
+                <div>
+                    <input type="hidden" name="existingAttachments" value='${JSON.stringify(att)}'>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            attachmentsList.appendChild(item);
+        });
         
         // Handle Quill editor update if it exists
         const modalEl = document.getElementById('editModal');

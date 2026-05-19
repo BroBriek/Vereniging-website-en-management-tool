@@ -266,7 +266,22 @@ exports.postEvent = async (req, res) => {
         const finalEndDate = endDate && endDate.trim() !== '' ? endDate : null;
         const finalStartTime = startTime && startTime.trim() !== '' ? startTime : null;
         const finalEndTime = endTime && endTime.trim() !== '' ? endTime : null;
-        await Event.create({ title, date, endDate: finalEndDate, startTime: finalStartTime, endTime: finalEndTime, description, isPrivate });
+
+        const attachments = req.files ? req.files.map(f => ({
+            name: f.originalname,
+            path: `/uploads/${f.filename}`
+        })) : [];
+
+        await Event.create({ 
+            title, 
+            date, 
+            endDate: finalEndDate, 
+            startTime: finalStartTime, 
+            endTime: finalEndTime, 
+            description, 
+            isPrivate,
+            attachments: JSON.stringify(attachments)
+        });
         res.redirect('/admin/events');
     } catch (error) {
         console.error('Error creating event:', error);
@@ -276,14 +291,39 @@ exports.postEvent = async (req, res) => {
 
 exports.updateEvent = async (req, res) => {
     try {
-        const { title, date, endDate, startTime, endTime, description } = req.body;
+        const { title, date, endDate, startTime, endTime, description, existingAttachments } = req.body;
         const isPrivate = req.body.isPrivate === 'on';
         const finalEndDate = endDate && endDate.trim() !== '' ? endDate : null;
         const finalStartTime = startTime && startTime.trim() !== '' ? startTime : null;
         const finalEndTime = endTime && endTime.trim() !== '' ? endTime : null;
+        
         const event = await Event.findByPk(req.params.id);
         if (event) {
-            await event.update({ title, date, endDate: finalEndDate, startTime: finalStartTime, endTime: finalEndTime, description, isPrivate });
+            let attachments = [];
+            if (existingAttachments) {
+                attachments = Array.isArray(existingAttachments) 
+                    ? existingAttachments.map(a => JSON.parse(a))
+                    : [JSON.parse(existingAttachments)];
+            }
+
+            if (req.files && req.files.length > 0) {
+                const newAttachments = req.files.map(f => ({
+                    name: f.originalname,
+                    path: `/uploads/${f.filename}`
+                }));
+                attachments = [...attachments, ...newAttachments];
+            }
+
+            await event.update({ 
+                title, 
+                date, 
+                endDate: finalEndDate, 
+                startTime: finalStartTime, 
+                endTime: finalEndTime, 
+                description, 
+                isPrivate,
+                attachments: JSON.stringify(attachments)
+            });
         }
         res.redirect('/admin/events');
     } catch (error) {
