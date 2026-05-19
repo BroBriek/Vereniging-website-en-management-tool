@@ -108,6 +108,11 @@
                         </td>
                         <td class="text-end">
                             <div class="btn-group">
+                                <form action="/admin/events/<%= event.id %>/archive" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Archiveren">
+                                        <i class="bi bi-archive"></i>
+                                    </button>
+                                </form>
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
                                     <i class="bi bi-pencil"></i>
                                 </button>
@@ -163,6 +168,13 @@
                         </td>
                         <td class="text-end">
                             <div class="btn-group">
+                                <% if (event.isArchived) { %>
+                                    <form action="/admin/events/<%= event.id %>/unarchive" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Dearchiveren">
+                                            <i class="bi bi-arrow-up-circle"></i>
+                                        </button>
+                                    </form>
+                                <% } %>
                                 <button type="button" class="btn btn-sm btn-outline-primary" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
                                     <i class="bi bi-pencil"></i>
                                 </button>

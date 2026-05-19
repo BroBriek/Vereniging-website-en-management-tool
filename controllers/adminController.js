@@ -219,7 +219,7 @@ exports.getEvents = async (req, res) => {
 
     allEvents.forEach(event => {
         const referenceDate = new Date(`${event.endDate || event.date}T00:00:00`);
-        if (referenceDate < cutoff) {
+        if (event.isArchived || referenceDate < cutoff) {
             archivedEvents.push(event);
         } else {
             activeEvents.push(event);
@@ -227,6 +227,35 @@ exports.getEvents = async (req, res) => {
     });
 
     res.render('admin/events', { title: 'Beheer Kalender', activeEvents, archivedEvents, user: req.user });
+};
+
+exports.archiveEvent = async (req, res) => {
+    try {
+        const event = await Event.findByPk(req.params.id);
+        if (event) {
+            await event.update({ isArchived: true });
+        }
+        res.redirect('/admin/events');
+    } catch (error) {
+        console.error('Error archiving event:', error);
+        res.redirect('/admin/events?error=Kon evenement niet archiveren');
+    }
+};
+
+exports.unarchiveEvent = async (req, res) => {
+    try {
+        const event = await Event.findByPk(req.params.id);
+        if (event) {
+            // Note: If the event is older than 3 months, it will still show as archived in the view
+            // unless we also update the date, but usually unarchive means "I want to see it now".
+            // However, the current logic is dynamic. We might want to clear the manual archive flag.
+            await event.update({ isArchived: false });
+        }
+        res.redirect('/admin/events');
+    } catch (error) {
+        console.error('Error unarchiving event:', error);
+        res.redirect('/admin/events?error=Kon evenement niet dearchiveren');
+    }
 };
 
 exports.postEvent = async (req, res) => {
