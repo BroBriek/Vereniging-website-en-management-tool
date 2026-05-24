@@ -64,14 +64,16 @@
                                                 <a href="/admin/forms/<%= form.id %>/responses" class="btn btn-outline-success" title="Antwoorden">
                                                     <i class="bi bi-chat-left-dots"></i>
                                                 </a>
-                                                <a href="/admin/forms/<%= form.id %>/edit" class="btn btn-outline-primary" title="Bewerken">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <form action="/admin/forms/<%= form.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Weet je zeker dat je dit formulier wilt verwijderen? Alle antwoorden gaan ook verloren!');">
-                                                    <button type="submit" class="btn btn-outline-danger" title="Verwijderen">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
+                                                <% if (user.role === 'admin' || user.role === 'media' || form.creatorId === user.id) { %>
+                                                    <a href="/admin/forms/<%= form.id %>/edit" class="btn btn-outline-primary" title="Bewerken">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <form action="/admin/forms/<%= form.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Weet je zeker dat je dit formulier wilt verwijderen? Alle antwoorden gaan ook verloren!');">
+                                                        <button type="submit" class="btn btn-outline-danger" title="Verwijderen">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                <% } %>
                                             </div>
                                         </td>
                                     </tr>
@@ -131,14 +133,16 @@
                                 <a href="/admin/forms/<%= form.id %>/responses" class="btn btn-outline-success btn-sm flex-grow-1">
                                     <i class="bi bi-chat-left-dots"></i> Antwoorden
                                 </a>
-                                <a href="/admin/forms/<%= form.id %>/edit" class="btn btn-outline-primary btn-sm flex-grow-1">
-                                    <i class="bi bi-pencil"></i> Bewerken
-                                </a>
-                                <form action="/admin/forms/<%= form.id %>/delete" method="POST" class="d-inline flex-grow-1" onsubmit="return confirm('Weet je zeker dat je dit formulier wilt verwijderen? Alle antwoorden gaan ook verloren!');">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">
-                                        <i class="bi bi-trash"></i> Wissen
-                                    </button>
-                                </form>
+                                <% if (user.role === 'admin' || user.role === 'media' || form.creatorId === user.id) { %>
+                                    <a href="/admin/forms/<%= form.id %>/edit" class="btn btn-outline-primary btn-sm flex-grow-1">
+                                        <i class="bi bi-pencil"></i> Bewerken
+                                    </a>
+                                    <form action="/admin/forms/<%= form.id %>/delete" method="POST" class="d-inline flex-grow-1" onsubmit="return confirm('Weet je zeker dat je dit formulier wilt verwijderen? Alle antwoorden gaan ook verloren!');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                            <i class="bi bi-trash"></i> Wissen
+                                        </button>
+                                    </form>
+                                <% } %>
                             </div>
                         </div>
                     </div>
