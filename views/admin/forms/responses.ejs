@@ -125,6 +125,7 @@
 </style>
 
 <div class="row">
+    <% const canEditResponses = user.role === 'admin' || user.role === 'media' || form.creatorId === user.id; %>
     <div class="col-12 mb-4">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
@@ -135,7 +136,7 @@
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
             <div>
                 <h1 class="mb-0">Antwoorden: <%= form.title %></h1>
-                <p class="text-muted mb-0"><%= responses.length %> antwoorden ontvangen. <span class="text-primary small d-none d-md-inline"><i class="bi bi-info-circle"></i> Klik op een cel om deze aan te passen.</span></p>
+                <p class="text-muted mb-0"><%= responses.length %> antwoorden ontvangen. <% if (canEditResponses) { %><span class="text-primary small d-none d-md-inline"><i class="bi bi-info-circle"></i> Klik op een cel om deze aan te passen.</span><% } %></p>
             </div>
             <div class="d-flex flex-wrap gap-2 align-items-center w-100 w-lg-auto">
                 <div class="search-container">
@@ -196,7 +197,7 @@
                                         </td>
                                         <td data-label="Bijnaam">
                                             <div class="editable-cell" 
-                                                 onclick="startEdit(this, '<%= resp.id %>', 'nickname', 'short_text', [])"
+                                                 <% if (canEditResponses) { %>onclick="startEdit(this, '<%= resp.id %>', 'nickname', 'short_text', [])"<% } %>
                                                  data-raw-value="<%= resp.nickname || '' %>">
                                                 <span><%- resp.nickname || '<span class="text-muted fst-italic">Niet ingesteld</span>' %></span>
                                             </div>
@@ -218,16 +219,18 @@
                                         %>
                                             <td data-label="<%= f.label %>">
                                                 <div class="editable-cell" 
-                                                     onclick="startEdit(this, '<%= resp.id %>', '<%= f.id %>', '<%= f.type %>', <%= JSON.stringify(f.options || []) %>)"
+                                                     <% if (canEditResponses) { %>onclick="startEdit(this, '<%= resp.id %>', '<%= f.id %>', '<%= f.type %>', <%= JSON.stringify(f.options || []) %>)"<% } %>
                                                      data-raw-value="<%= typeof answer === 'object' ? JSON.stringify(answer) : answer %>">
                                                     <span><%- displayValue %></span>
                                                 </div>
                                             </td>
                                         <% }) %>
                                         <td class="text-end pe-4" data-label="Acties">
-                                            <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="deleteResponse('<%= resp.id %>')" title="Verwijder dit antwoord">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
+                                            <% if (canEditResponses) { %>
+                                                <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="deleteResponse('<%= resp.id %>')" title="Verwijder dit antwoord">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            <% } %>
                                         </td>
                                     </tr>
                                 <% }) %>

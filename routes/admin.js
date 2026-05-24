@@ -10,6 +10,8 @@ const upload = require('../middleware/upload');
 const { compressGenericImage } = require('../middleware/imageCompression');
 const SettingsService = require('../services/SettingsService');
 
+const { Form, FormResponse } = require('../models');
+
 router.use(ensureAuthenticated);
 
 // Permission middleware for forms
@@ -18,6 +20,39 @@ const checkFormPermission = (req, res, next) => {
         return next();
     }
     res.redirect('/admin');
+};
+
+// Check if user has permission to mutate (edit/delete) a form or its responses
+const checkFormMutationPermission = async (req, res, next) => {
+    if (req.user.role === 'admin' || req.user.role === 'media') {
+        return next();
+    }
+    
+    try {
+        const id = req.params.id;
+        let form;
+        
+        // If the URL contains 'responses', the ID refers to a FormResponse
+        if (req.path.includes('/responses/')) {
+            const response = await FormResponse.findByPk(id);
+            if (response) {
+                form = await Form.findByPk(response.formId);
+            }
+        } else {
+            form = await Form.findByPk(id);
+        }
+
+        if (form && form.creatorId === req.user.id) {
+            return next();
+        }
+    } catch (e) {
+        console.error('Permission check error:', e);
+    }
+
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+        return res.status(403).json({ success: false, error: 'Geen toestemming' });
+    }
+    res.redirect('/admin/forms?error=Geen toestemming');
 };
 
 const checkAdminDashboardAccess = (req, res, next) => {
@@ -80,14 +115,14 @@ router.post('/api/upload-image', ensureMedia, upload.single('image'), compressGe
 router.get('/forms', checkFormPermission, formController.getForms);
 router.get('/forms/create', checkFormPermission, formController.getCreateForm);
 router.post('/forms', checkFormPermission, upload.single('bannerImage'), compressGenericImage, formController.postCreateForm);
-router.get('/forms/:id/edit', checkFormPermission, formController.getEditForm);
-router.post('/forms/:id/edit', checkFormPermission, upload.single('bannerImage'), compressGenericImage, formController.postEditForm);
-router.post('/forms/:id/delete', checkFormPermission, formController.postDeleteForm);
+router.get('/forms/:id/edit', checkFormMutationPermission, formController.getEditForm);
+router.post('/forms/:id/edit', checkFormMutationPermission, upload.single('bannerImage'), compressGenericImage, formController.postEditForm);
+router.post('/forms/:id/delete', checkFormMutationPermission, formController.postDeleteForm);
 router.get('/forms/:id/responses', checkFormPermission, formController.getResponses);
 router.get('/forms/:id/responses/export', checkFormPermission, formController.exportResponses);
 router.get('/forms/:id/responses/export-eetdag', checkFormPermission, formController.exportEetdagPDF);
-router.put('/forms/responses/:id', checkFormPermission, formController.updateResponse);
-router.post('/forms/responses/:id', checkFormPermission, formController.deleteResponse);
+router.put('/forms/responses/:id', checkFormMutationPermission, formController.updateResponse);
+router.post('/forms/responses/:id', checkFormMutationPermission, formController.deleteResponse);
 
 // Custom Page Builder
 router.get('/custom-pages', ensureMedia, customPageController.getCustomPages);
