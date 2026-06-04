@@ -573,6 +573,10 @@ exports.sendTestNotification = async (req, res) => {
 };
 
 // ==================== Backup Management ====================
+const isValidBackupName = (name) => {
+    return typeof name === 'string' && /^[a-zA-Z0-9._-]+$/.test(name);
+};
+
 exports.getBackups = (req, res) => {
     try {
         if (req.user.username !== 'admin') {
@@ -642,8 +646,8 @@ exports.deleteBackup = (req, res) => {
         const { name } = req.body;
         if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
         
-        // Security: validate name is just a folder name, not path traversal
-        if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+        // Security: validate name is just a folder name, not path traversal or shell injection
+        if (!isValidBackupName(name)) {
             return res.status(403).json({ error: 'Ongeldige backup naam' });
         }
         
@@ -671,7 +675,7 @@ exports.getBackupContent = (req, res) => {
         if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
 
         // Security check
-        if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+        if (!isValidBackupName(name)) {
             return res.status(403).json({ error: 'Ongeldige backup naam' });
         }
 
@@ -726,7 +730,7 @@ exports.restoreBackup = async (req, res) => {
         }
 
         // Security check
-        if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+        if (!isValidBackupName(name)) {
             return res.status(403).json({ error: 'Ongeldige backup naam' });
         }
 
@@ -819,7 +823,7 @@ exports.downloadBackup = (req, res) => {
 
         if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
 
-        if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+        if (!isValidBackupName(name)) {
             return res.status(403).json({ error: 'Ongeldige backup naam' });
         }
 
