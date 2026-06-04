@@ -105,8 +105,9 @@ let activePreviewBlobUrl = null;
 async function openFilePreview(url, name) {
     const modalEl = document.getElementById('filePreviewModal');
     if (!modalEl) {
-        console.warn('filePreviewModal not found, navigating directly to:', url);
-        window.location.href = url;
+        console.warn('filePreviewModal not found, navigating to download endpoint:', url);
+        const downloadUrl = `/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
+        window.location.href = downloadUrl;
         return false;
     }
 

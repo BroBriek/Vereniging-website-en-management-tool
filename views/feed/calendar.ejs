@@ -220,9 +220,13 @@
             attachmentsSection.classList.remove('d-none');
             attachments.forEach(att => {
                 const a = document.createElement('a');
-                a.href = att.path;
+                a.href = `/download?path=${encodeURIComponent(att.path)}&name=${encodeURIComponent(att.name)}`;
                 a.className = 'list-group-item list-group-item-action d-flex align-items-center py-3 border-start-0 border-end-0';
-                a.target = '_blank';
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    openFilePreview(att.path, att.name);
+                    return false;
+                };
                 a.innerHTML = `
                     <i class="bi bi-file-earmark-arrow-down fs-4 me-3 text-primary"></i>
                     <div class="flex-grow-1">
