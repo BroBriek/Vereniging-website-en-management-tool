@@ -199,7 +199,13 @@
                                             <div class="editable-cell" 
                                                  <% if (canEditResponses) { %>onclick="startEdit(this, '<%= resp.id %>', 'nickname', 'short_text', [])"<% } %>
                                                  data-raw-value="<%= resp.nickname || '' %>">
-                                                <span><%- resp.nickname || '<span class="text-muted fst-italic">Niet ingesteld</span>' %></span>
+                                                <span>
+                                                    <% if (resp.nickname) { %>
+                                                        <%= resp.nickname %>
+                                                    <% } else { %>
+                                                        <span class="text-muted fst-italic">Niet ingesteld</span>
+                                                    <% } %>
+                                                </span>
                                             </div>
                                         </td>
                                         <% questionFields.forEach(f => { 
@@ -221,7 +227,13 @@
                                                 <div class="editable-cell" 
                                                      <% if (canEditResponses) { %>onclick="startEdit(this, '<%= resp.id %>', '<%= f.id %>', '<%= f.type %>', <%= JSON.stringify(f.options || []) %>)"<% } %>
                                                      data-raw-value="<%= typeof answer === 'object' ? JSON.stringify(answer) : answer %>">
-                                                    <span><%- displayValue %></span>
+                                                     <span>
+                                                         <% if (f.type === 'pricing') { %>
+                                                             <%- displayValue %>
+                                                         <% } else { %>
+                                                             <%= displayValue %>
+                                                         <% } %>
+                                                     </span>
                                                 </div>
                                             </td>
                                         <% }) %>

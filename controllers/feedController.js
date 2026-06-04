@@ -7,6 +7,21 @@ const http = require('http');
 const { Op } = require('sequelize');
 const NotificationService = require('../services/NotificationService');
 const SettingsService = require('../services/SettingsService');
+const sanitizeHtml = require('sanitize-html');
+
+const sanitizeRichText = (html) => {
+    if (!html) return '';
+    return sanitizeHtml(html, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'iframe' ]),
+        allowedAttributes: {
+            ...sanitizeHtml.defaults.allowedAttributes,
+            'img': [ 'src', 'alt', 'width', 'height', 'style', 'class' ],
+            'iframe': [ 'src', 'width', 'height', 'frameborder', 'allowfullscreen' ],
+            'a': [ 'href', 'target', 'rel', 'class', 'style' ],
+            '*': [ 'style', 'class' ]
+        }
+    });
+};
 
 // View Helpers
 const getAvatarColor = (username) => {
@@ -400,6 +415,7 @@ const extractMentions = (text) => {
 exports.postCreatePost = async (req, res) => {
     try {
         const { content, form_schema } = req.body;
+        const cleanContent = sanitizeRichText(content);
         const attachments = req.files ? req.files.map(f => ({
             path: `/feed_uploads/${f.filename}`,
             originalName: f.originalname,
@@ -482,11 +498,11 @@ exports.postCreatePost = async (req, res) => {
             if (!allowed) return res.redirect('/feed?error=Geen toegang');
         }
 
-        const newPost = await Post.create({ content, attachments, poll, form, authorId: req.user.id, groupId: group ? group.id : null });
+        const newPost = await Post.create({ content: cleanContent, attachments, poll, form, authorId: req.user.id, groupId: group ? group.id : null });
 
         // Send Notifications via NotificationService
         (async () => {
-            const plainContent = stripHtml(content);
+            const plainContent = stripHtml(cleanContent);
             const messageData = {
                 title: 'Nieuw Bericht in Leidingshoekje',
                 body: `${req.user.username}: ${plainContent.substring(0, 40)}${plainContent.length > 40 ? '...' : ''}`,
@@ -503,7 +519,7 @@ exports.postCreatePost = async (req, res) => {
             }
 
             // 2. Mention Notifications
-            const mentionedUsernames = extractMentions(content);
+            const mentionedUsernames = extractMentions(cleanContent);
             if (mentionedUsernames.length > 0) {
                 const mentionedUsers = await User.findAll({
                     where: {
@@ -514,7 +530,7 @@ exports.postCreatePost = async (req, res) => {
 
                 const mentionMessage = {
                     title: 'Je bent genoemd in een bericht',
-                    body: `${req.user.username} noemde je: "${stripHtml(content).substring(0, 30)}..."`,
+                    body: `${req.user.username} noemde je: "${stripHtml(cleanContent).substring(0, 30)}..."`,
                     url: group ? `/feed/group/${group.slug}#post-${newPost.id}` : `/feed#post-${newPost.id}`,
                     type: 'mention'
                 };
@@ -1099,6 +1115,7 @@ exports.deletePost = async (req, res) => {
 exports.updatePost = async (req, res) => {
     try {
         const { content, removed_attachments } = req.body;
+        const cleanContent = sanitizeRichText(content);
         const post = await Post.findByPk(req.params.id);
         if (!post) return res.redirect('/feed?error=Post niet gevonden');
 
@@ -1173,7 +1190,7 @@ exports.updatePost = async (req, res) => {
             }
         }
 
-        await post.update({ content, attachments: currentAttachments, poll });
+        await post.update({ content: cleanContent, attachments: currentAttachments, poll });
         
         let group = null;
         if (post.groupId) group = await FeedGroup.findByPk(post.groupId);

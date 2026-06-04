@@ -75,6 +75,46 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="<%= settings.theme_color_primary %>">
     <link rel="apple-touch-icon" href="/favicon.png">
+    <% if (locals.csrfToken) { %>
+    <meta name="csrf-token" content="<%= csrfToken %>">
+    <script>
+        (function() {
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (token && options.method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(options.method.toUpperCase())) {
+                    options.headers = options.headers || {};
+                    if (options.headers instanceof Headers) {
+                        options.headers.set('X-CSRF-Token', token);
+                    } else if (Array.isArray(options.headers)) {
+                        let hasCsrf = false;
+                        for (let i = 0; i < options.headers.length; i++) {
+                            if (options.headers[i][0].toLowerCase() === 'x-csrf-token') {
+                                hasCsrf = true;
+                                break;
+                            }
+                        }
+                        if (!hasCsrf) {
+                            options.headers.push(['X-CSRF-Token', token]);
+                        }
+                    } else {
+                        let hasCsrf = false;
+                        for (const key in options.headers) {
+                            if (key.toLowerCase() === 'x-csrf-token') {
+                                hasCsrf = true;
+                                break;
+                            }
+                        }
+                        if (!hasCsrf) {
+                            options.headers['X-CSRF-Token'] = token;
+                        }
+                    }
+                }
+                return originalFetch(url, options);
+            };
+        })();
+    </script>
+    <% } %>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">

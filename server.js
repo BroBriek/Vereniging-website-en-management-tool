@@ -13,6 +13,7 @@ const webpush = require('web-push');
 const SettingsService = require('./services/SettingsService');
 const CustomPageService = require('./services/CustomPageService');
 const BackupService = require('./services/BackupService');
+const logMonitor = require('./services/LogMonitorService');
 
 const LOGS_DIR = path.join(__dirname, 'logs');
 fs.mkdirSync(LOGS_DIR, { recursive: true });
@@ -116,18 +117,91 @@ app.use(methodOverride(function (req, res) {
   }
 }));
 
+// Trust proxy (required for secure session cookies over HTTPS behind reverse proxies on VPS)
+app.set('trust proxy', 1);
+
 // Sessions
+if (!process.env.SESSION_SECRET) {
+  throw new Error('FATAL: SESSION_SECRET is not configured in the environment.');
+}
+
 app.use(session({
   store: new SQLiteStore({ db: 'sessions.sqlite', dir: '.' }),
-  secret: process.env.SESSION_SECRET || 'secret_chiro_key_change_me',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: null } // Session cookie (expires on browser close)
+  cookie: {
+    maxAge: null, // Session cookie (expires on browser close)
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  }
 }));
 
 // Passport Middleware
 app.use(passport.initialize());
 app.use(passport.session());
+
+const crypto = require('crypto');
+
+// CSRF Generation & Auto-Injection Middleware
+app.use((req, res, next) => {
+  if (!req.session) return next();
+
+  // Generate CSRF token if not already exists in the session
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  
+  // Expose token to all views
+  res.locals.csrfToken = req.session.csrfToken;
+
+  // Intercept res.send to auto-inject CSRF query param and hidden input to POST forms
+  const originalSend = res.send;
+  res.send = function (body) {
+    if (typeof body === 'string' && body.includes('</form>') && req.session && req.session.csrfToken) {
+      body = body.replace(/(<form\b[^>]*method=["']?post["']?[^>]*>)/gi, (formTag) => {
+        const actionMatch = formTag.match(/action=["']([^"']*)["']/i);
+        const csrfInput = `<input type="hidden" name="_csrf" value="${req.session.csrfToken}">`;
+        
+        if (actionMatch) {
+          const originalAction = actionMatch[1];
+          const separator = originalAction.includes('?') ? '&' : '?';
+          const newAction = `${originalAction}${separator}_csrf=${req.session.csrfToken}`;
+          const updatedFormTag = formTag.replace(/action=["']([^"']*)["']/i, `action="${newAction}"`);
+          return `${updatedFormTag}${csrfInput}`;
+        } else {
+          const updatedFormTag = formTag.replace(/(<form\b)/i, `$1 action="?_csrf=${req.session.csrfToken}"`);
+          return `${updatedFormTag}${csrfInput}`;
+        }
+      });
+    }
+    return originalSend.call(this, body);
+  };
+  
+  next();
+});
+
+// CSRF Validation Middleware
+function csrfProtection(req, res, next) {
+  if (['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(req.method)) {
+    return next();
+  }
+
+  const token = (req.body && req.body._csrf) ||
+                (req.query && req.query._csrf) ||
+                req.headers['x-csrf-token'] ||
+                req.headers['x-xsrf-token'];
+
+  if (!token || !req.session || token !== req.session.csrfToken) {
+    console.warn(`CSRF Validation Failed for ${req.method} ${req.originalUrl}`);
+    return res.status(403).send('Forbidden: Invalid or missing CSRF token');
+  }
+
+  next();
+}
+
+app.use(csrfProtection);
 
 // Global Variables & Alert Middleware
 app.use((req, res, next) => {
@@ -188,6 +262,21 @@ app.use((req, res, next) => {
   next();
 });
 
+const rateLimit = require('express-rate-limit');
+
+const loginLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // Limit each IP to 5 login requests per windowMs
+  message: 'Te veel inlogpogingen vanaf dit IP-adres, probeer het na een minuut opnieuw.',
+  handler: (req, res, next, options) => {
+    return res.redirect('/auth/login?error=' + encodeURIComponent(options.message));
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.post('/auth/login', loginLimiter);
+
 // Routes
 app.use('/', require('./routes/index'));
 app.use('/auth', require('./routes/auth'));
@@ -196,6 +285,17 @@ app.use('/admin', require('./routes/admin'));
 app.use('/feed', require('./routes/feed'));
 app.use('/quotes', require('./routes/quote'));
 app.use('/games', require('./routes/game'));
+
+// Multer Error Handling Middleware
+app.use((err, req, res, next) => {
+  if (err.name === 'MulterError' || (err.message && err.message.includes('Ongeldig bestandstype'))) {
+    const referrer = req.get('Referrer') || '/';
+    const cleanReferrer = referrer.replace(/([?&])(error|success)=[^&]*/g, '').replace(/[\?&]$/, '');
+    const cleanSeparator = cleanReferrer.includes('?') ? '&' : '?';
+    return res.redirect(cleanReferrer + cleanSeparator + 'error=' + encodeURIComponent(err.message));
+  }
+  next(err);
+});
 
 // 404 handler
 app.use((req, res) => {
@@ -220,8 +320,6 @@ app.use((err, req, res, next) => {
       user: req.user || null
   });
 });
-
-const logMonitor = require('./services/LogMonitorService');
 
 // Start Server
 const PORT = process.env.PORT || 3000;
