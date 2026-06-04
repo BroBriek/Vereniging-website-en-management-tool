@@ -46,7 +46,7 @@
                     <% if (post.attachments && post.attachments.length > 0) { %>
                         <div class="mt-3 d-flex flex-wrap gap-2">
                             <% post.attachments.forEach(file => { %>
-                                <a href="<%= file.path %>" onclick="openFilePreview('<%= file.path %>', '<%= file.originalName %>'); return false;" class="btn btn-light btn-sm border text-primary">
+                                <a href="/download?path=<%= encodeURIComponent(file.path) %>&name=<%= encodeURIComponent(file.originalName) %>" onclick="openFilePreview('<%= file.path %>', '<%= file.originalName %>'); return false;" class="btn btn-light btn-sm border text-primary">
                                     <i class="bi bi-file-earmark-text me-1"></i> <%= file.originalName %>
                                 </a>
                             <% }) %>

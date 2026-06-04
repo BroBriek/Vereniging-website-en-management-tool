@@ -508,7 +508,7 @@
                             <div class="row g-3 mt-2">
                                 <% game.attachments.forEach(file => { %>
                                     <div class="col-md-6 col-lg-4">
-                                        <a href="<%= file.path %>" target="_blank" class="attachment-btn h-100 mb-0">
+                                        <a href="/download?path=<%= encodeURIComponent(file.path) %>&name=<%= encodeURIComponent(file.originalName) %>" onclick="openFilePreview('<%= file.path %>', '<%= file.originalName %>'); return false;" class="attachment-btn h-100 mb-0">
                                             <div class="me-3 fs-3">
                                                 <% if (file.mimeType.includes('image')) { %>
                                                     <i class="bi bi-image text-primary"></i>
@@ -578,7 +578,7 @@
                 <div class="sidebar-card d-none d-lg-block">
                     <h6 class="text-uppercase small fw-800 text-muted mb-4 letter-spacing-1">Bijlagen (<%= game.attachments.length %>)</h6>
                     <% game.attachments.forEach(file => { %>
-                        <a href="<%= file.path %>" target="_blank" class="attachment-btn">
+                        <a href="/download?path=<%= encodeURIComponent(file.path) %>&name=<%= encodeURIComponent(file.originalName) %>" onclick="openFilePreview('<%= file.path %>', '<%= file.originalName %>'); return false;" class="attachment-btn">
                             <div class="me-3 fs-4">
                                 <% if (file.mimeType.includes('image')) { %>
                                     <i class="bi bi-image text-primary"></i>

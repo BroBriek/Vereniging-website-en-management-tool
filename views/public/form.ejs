@@ -217,40 +217,7 @@
     </div>
 </div>
 
-<!-- File Preview Modal -->
-<div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content rounded-4 border-0 shadow" style="height: 90vh;">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-playful text-truncate" id="previewFileName" style="max-width: 80%;">Bestand</h5>
-        <div class="d-flex gap-2">
-            <a id="previewDownloadBtn" href="#" class="btn btn-primary btn-sm rounded-pill">
-                <i class="bi bi-download"></i> Download
-            </a>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
-        </div>
-      </div>
-      <div class="modal-body p-0 h-100 position-relative bg-light">
-        <div id="previewLoader" class="position-absolute top-50 start-50 translate-middle text-center">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2 text-muted">Laden...</p>
-        </div>
-        <iframe id="previewFrame" src="" class="w-100 h-100 border-0 rounded-bottom-4 d-none"></iframe>
-        <div id="previewImageContainer" class="w-100 h-100 d-none d-flex align-items-center justify-content-center bg-white rounded-bottom-4 overflow-auto">
-            <img id="previewImage" src="" class="img-fluid" style="max-height: 100%; object-fit: contain;">
-        </div>
-        <div id="previewError" class="d-none position-absolute top-50 start-50 translate-middle text-center p-4 w-100">
-            <i class="bi bi-file-earmark-x display-1 text-muted"></i>
-            <h5 class="mt-3">Voorbeeld niet beschikbaar</h5>
-            <p class="text-muted mb-3">Dit bestandstype kan niet worden weergegeven in de browser of we kunnen er niet bij.</p>
-            <a id="previewErrorDownloadBtn" href="#" class="btn btn-primary rounded-pill mt-2">
-                <i class="bi bi-download"></i> Download Bestand
-            </a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+
 
 <script>
     // triggerDownload and openFilePreview are now provided by /js/download-helper.js
