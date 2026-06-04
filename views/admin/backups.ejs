@@ -1,0 +1,532 @@
+<%- include('../partials/header') %>
+
+<style>
+  .backup-card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+    background: white;
+    overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+
+  .backup-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.12);
+  }
+
+  .stat-widget {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid #edf2f7;
+    background: white;
+    transition: transform 0.2s;
+  }
+
+  .stat-widget:hover {
+    transform: translateY(-2px);
+  }
+
+  .stat-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #10b981;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  .custom-modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    z-index: 1050;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .custom-modal-backdrop.show { display: flex; }
+  
+  .custom-modal-backdrop .modal-dialog {
+    pointer-events: auto;
+    position: relative;
+    z-index: 1051;
+  }
+</style>
+
+<div class="container-fluid px-4 py-4">
+    <!-- Header Section -->
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h1 class="h2 fw-bold mb-1 text-success">
+                <i class="bi bi-archive-fill text-success me-2"></i>Backup Beheer
+            </h1>
+            <p class="text-muted mb-0">Beheer systeemkopieën, bekijk hun inhoud en herstel de website naar eerdere staten.</p>
+        </div>
+        <div class="col-auto">
+            <span class="badge bg-success text-white px-3 py-2 rounded-pill fw-bold">BEHEERDER</span>
+        </div>
+    </div>
+
+    <!-- Warning / Alert Banner -->
+    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-4">
+        <i class="bi bi-exclamation-triangle-fill fs-4 text-warning me-3"></i>
+        <div>
+            <strong>Let op bij het herstellen:</strong> Het terugzetten van een backup vervangt de huidige database (inclusief alle gebruikers, evenementen, inschrijvingen) en alle geüploade media door de bestanden uit de backup.
+        </div>
+    </div>
+
+    <!-- Statistics Panel -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-widget shadow-sm">
+                <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-archive"></i></div>
+                <div class="small text-muted text-uppercase fw-bold mb-1">Totaal Backups</div>
+                <div class="h3 fw-bold mb-0" id="stat-total-count">-</div>
+                <div class="small text-muted">Lokaal opgeslagen</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-widget shadow-sm">
+                <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="bi bi-clock-history"></i></div>
+                <div class="small text-muted text-uppercase fw-bold mb-1">Laatste Backup</div>
+                <div class="h3 fw-bold mb-0" id="stat-last-backup">-</div>
+                <div class="small text-muted" id="stat-last-backup-relative">Geen data</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-widget shadow-sm">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-hdd-fill"></i></div>
+                <div class="small text-muted text-uppercase fw-bold mb-1">Opslaglocatie</div>
+                <div class="h4 fw-bold mb-1 text-truncate">/backups</div>
+                <div class="small text-muted">Systeem map</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Toolbar -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-light">
+        <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <h5 class="fw-bold mb-1">Backup Acties</h5>
+                <p class="text-muted small mb-0">Maak een nieuwe kopie of upload een extern `.back` bestand.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-success fw-bold shadow-sm" onclick="document.getElementById('backup-upload-input').click()">
+                    <i class="bi bi-upload me-2"></i>Upload .back
+                </button>
+                <input type="file" id="backup-upload-input" class="d-none" accept=".back" onchange="triggerUploadBackup(this)">
+                
+                <button class="btn btn-success fw-bold shadow-sm px-4" onclick="createBackup()">
+                    <i class="bi bi-plus-circle me-2"></i>Maak Nieuwe Backup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup List Grid -->
+    <h4 class="fw-bold mb-3">Beschikbare Backups</h4>
+    <div id="backup-list" class="row g-4">
+        <div class="col-12 text-center py-5">
+            <div class="loading-spinner mx-auto mb-3"></div>
+            <p class="text-muted">Backups laden...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Backdrops and Dialogs -->
+<div class="custom-modal-backdrop" id="modal-backdrop">
+    <!-- Backup File Content View Modal -->
+    <div class="modal-dialog bg-white rounded-4 shadow-lg overflow-hidden" id="backup-content-modal" style="width: 100%; max-width: 800px; display: none;">
+        <div class="modal-header bg-light border-bottom px-4 py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">Backup Inhoud: <span id="backup-name-display" class="text-success"></span></h5>
+            <button class="btn-close" onclick="closeBackupContentModal()"></button>
+        </div>
+        <div class="modal-body p-4" id="backup-files-list" style="max-height: 60vh; overflow-y: auto; font-family: monospace;">
+            <!-- Content dynamically loaded here -->
+        </div>
+        <div class="modal-footer bg-light border-top px-4 py-3">
+            <button class="btn btn-secondary px-4 rounded-3" onclick="closeBackupContentModal()">Sluiten</button>
+        </div>
+    </div>
+</div>
+
+<!-- Password Confirmation Modal (Replaces browser prompt) -->
+<div class="modal fade" id="passwordConfirmModal" tabindex="-1" aria-labelledby="passwordConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+            <div class="modal-header bg-warning text-dark border-0 py-3 px-4">
+                <h5 class="modal-title fw-bold" id="passwordConfirmModalLabel">
+                    <i class="bi bi-shield-lock-fill me-2"></i>Wachtwoord Vereist
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex align-items-start mb-3">
+                    <div class="text-warning fs-3 me-3"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                    <div>
+                        <p class="fw-bold mb-1">Kritieke Actie Bevestigen</p>
+                        <p id="password-confirm-message" class="text-muted small mb-0">Voer je wachtwoord in om de actie te voltooien.</p>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label for="modal-password-input" class="form-label small fw-bold text-muted text-uppercase">Jouw Beheerderswachtwoord</label>
+                    <input type="password" class="form-control form-control-lg rounded-3 border-2" id="modal-password-input" placeholder="Wachtwoord" required>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-3 bg-light d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary px-4 rounded-3 fw-bold" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" class="btn btn-warning px-4 rounded-3 fw-bold text-dark" id="confirm-password-btn">Actie Uitvoeren</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  const csrfToken = '<%= csrfToken %>';
+  let backupsData = [];
+  let passwordConfirmAction = null; // 'restore' or 'upload'
+  let activeBackupName = null;
+  let activeUploadFile = null;
+  let confirmModalInstance = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadBackups();
+
+    // Init bootstrap confirmation modal instance
+    confirmModalInstance = new bootstrap.Modal(document.getElementById('passwordConfirmModal'));
+
+    // Handle password modal confirmation button
+    document.getElementById('confirm-password-btn').addEventListener('click', () => {
+        const password = document.getElementById('modal-password-input').value;
+        if (!password) {
+            alert('Wachtwoord is verplicht');
+            return;
+        }
+
+        // Hide modal
+        confirmModalInstance.hide();
+
+        if (passwordConfirmAction === 'restore') {
+            executeRestoreBackup(activeBackupName, password);
+        } else if (passwordConfirmAction === 'upload') {
+            executeUploadBackup(activeUploadFile, password);
+        }
+    });
+
+    // Handle backdrop clicks to close detail viewer
+    const backdrop = document.getElementById('modal-backdrop');
+    backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+            hideModals();
+        }
+    });
+
+    document.querySelectorAll('.modal-dialog').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    });
+  });
+
+  // ===== LOAD BACKUPS =====
+  function loadBackups() {
+    fetch('/admin/api/backups')
+      .then(r => r.json())
+      .then(data => {
+          backupsData = data.backups || [];
+          updateStats();
+          displayBackups(backupsData);
+      })
+      .catch(err => {
+          document.getElementById('backup-list').innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-danger shadow-sm">Fout bij laden van backups: ${err.message}</div>
+            </div>`;
+      });
+  }
+
+  function updateStats() {
+      const totalCountEl = document.getElementById('stat-total-count');
+      const lastBackupEl = document.getElementById('stat-last-backup');
+      const lastBackupRelativeEl = document.getElementById('stat-last-backup-relative');
+
+      totalCountEl.textContent = backupsData.length;
+
+      if (backupsData.length > 0) {
+          const latest = backupsData[0]; // Already sorted descending by backend
+          const createdDate = new Date(latest.created);
+          lastBackupEl.textContent = createdDate.toLocaleDateString('nl-BE', { day: '2-digit', month: 'short' });
+          lastBackupRelativeEl.textContent = timeAgo(createdDate);
+      } else {
+          lastBackupEl.textContent = '-';
+          lastBackupRelativeEl.textContent = 'Geen data';
+      }
+  }
+
+  function displayBackups(backups) {
+      let html = '';
+      if (backups.length === 0) {
+          html = '<div class="col-12 text-center py-5 text-muted"><i class="bi bi-folder-x fs-1 d-block mb-3 opacity-50"></i>Geen backups gevonden</div>';
+      } else {
+          backups.forEach(b => {
+              const createdDate = new Date(b.created);
+              html += `
+                <div class="col-md-6 col-xl-4">
+                    <div class="card backup-card">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="stat-icon bg-success bg-opacity-10 text-success mb-0 me-3">
+                                    <i class="bi bi-archive-fill"></i>
+                                </div>
+                                <div class="flex-grow-1 text-truncate">
+                                    <h6 class="fw-bold mb-1 text-truncate" title="${escapeHtml(b.name)}">${escapeHtml(b.name)}</h6>
+                                    <small class="text-muted d-block"><i class="bi bi-calendar-event me-1"></i>${createdDate.toLocaleString('nl-NL')}</small>
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2 d-flex">
+                                <button class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-3" onclick="viewBackupContent('${b.name}')">Inhoud</button>
+                                <a href="/admin/api/backups/download?name=${encodeURIComponent(b.name)}" class="btn btn-sm btn-outline-primary rounded-3" title="Download .back"><i class="bi bi-download"></i></a>
+                                <button class="btn btn-sm btn-warning flex-grow-1 fw-bold rounded-3" onclick="triggerRestoreBackup('${b.name}')">Herstel</button>
+                                <button class="btn btn-sm btn-outline-danger rounded-3" onclick="deleteBackup('${b.name}')"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              `;
+          });
+      }
+      document.getElementById('backup-list').innerHTML = html;
+  }
+
+  // ===== CREATE BACKUP =====
+  function createBackup() {
+    showAlert('info', 'Nieuwe backup wordt aangemaakt... moment geduld.');
+    fetch('/admin/api/backups/create', { 
+        method: 'POST',
+        headers: {
+            'X-CSRF-Token': csrfToken
+        }
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', 'Backup succesvol aangemaakt!');
+                loadBackups();
+            } else {
+                showAlert('error', data.error || 'Aanmaken mislukt');
+            }
+        })
+        .catch(err => showAlert('error', 'Fout bij aanmaken: ' + err.message));
+  }
+
+  // ===== RESTORE BACKUP FLOW =====
+  function triggerRestoreBackup(name) {
+      if (!confirm(`⚠️ WAARSCHUWING: Weet je zeker dat je de huidige website wilt overschrijven met backup '${name}'?`)) {
+          return;
+      }
+      activeBackupName = name;
+      passwordConfirmAction = 'restore';
+      document.getElementById('password-confirm-message').textContent = `Dit zal de database en geüploade media overschrijven met de bestanden uit de backup: '${name}'.`;
+      document.getElementById('modal-password-input').value = '';
+      confirmModalInstance.show();
+  }
+
+  function executeRestoreBackup(name, password) {
+      showAlert('info', 'Restoring backup... De verbinding kan tijdelijk worden verbroken.');
+      
+      fetch('/admin/api/backups/restore', {
+          method: 'POST',
+          headers: { 
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': csrfToken
+          },
+          body: JSON.stringify({ name, password })
+      })
+      .then(r => r.json())
+      .then(data => {
+          if (data.success) {
+              showAlert('success', data.message);
+              loadBackups();
+          } else {
+              showAlert('error', data.error);
+          }
+      })
+      .catch(err => showAlert('error', 'Fout bij herstellen: ' + err.message));
+  }
+
+  // ===== UPLOAD BACKUP FLOW =====
+  function triggerUploadBackup(input) {
+      if (!input.files || input.files.length === 0) return;
+      const file = input.files[0];
+      
+      activeUploadFile = file;
+      passwordConfirmAction = 'upload';
+      document.getElementById('password-confirm-message').textContent = `Voer je wachtwoord in om de backup '${file.name}' te uploaden en DIRECT te herstellen.`;
+      document.getElementById('modal-password-input').value = '';
+      confirmModalInstance.show();
+      
+      // Clear file input so it can trigger again on change
+      input.value = '';
+  }
+
+  function executeUploadBackup(file, password) {
+      const formData = new FormData();
+      formData.append('backup', file);
+      formData.append('password', password);
+      formData.append('_csrf', csrfToken);
+
+      showAlert('info', 'Backup wordt geüpload en uitgepakt... Dit kan even duren.');
+
+      fetch('/admin/api/backups/upload', {
+          method: 'POST',
+          headers: {
+              'X-CSRF-Token': csrfToken
+          },
+          body: formData
+      })
+      .then(r => r.json())
+      .then(data => {
+          if (data.success) {
+              showAlert('success', 'Backup succesvol geüpload en hersteld!');
+              loadBackups();
+          } else {
+              showAlert('error', data.error || 'Upload mislukt');
+          }
+      })
+      .catch(err => showAlert('error', 'Upload fout: ' + err.message));
+  }
+
+  // ===== DELETE BACKUP =====
+  function deleteBackup(name) {
+    if (!confirm(`Weet je zeker dat je backup '${name}' definitief wilt verwijderen?`)) return;
+    fetch('/admin/api/backups/delete', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({ name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Backup verwijderd');
+            loadBackups();
+        } else {
+            showAlert('error', data.error || 'Verwijderen mislukt');
+        }
+    })
+    .catch(err => showAlert('error', 'Fout bij verwijderen: ' + err.message));
+  }
+
+  // ===== VIEW BACKUP FILE DETAILS =====
+  function viewBackupContent(name) {
+    document.getElementById('backup-name-display').textContent = name;
+    showModal('backup-content-modal');
+    const container = document.getElementById('backup-files-list');
+    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-success"></div></div>';
+
+    fetch(`/admin/api/backups/content?name=${encodeURIComponent(name)}`)
+        .then(r => r.json())
+        .then(data => {
+            let html = '<div class="list-group list-group-flush border rounded-3 overflow-hidden">';
+            if (!data.contents || data.contents.length === 0) {
+                html += '<div class="list-group-item text-center py-4 text-muted">Geen bestanden gevonden in deze backup</div>';
+            } else {
+                data.contents.forEach(f => {
+                    html += `
+                        <div class="list-group-item d-flex justify-content-between py-2 align-items-center">
+                            <span class="text-truncate me-3"><i class="bi bi-file-earmark-code me-2 text-muted"></i>${escapeHtml(f.path)}</span>
+                            <span class="badge bg-light text-dark font-monospace">${formatBytes(f.size)}</span>
+                        </div>`;
+                });
+            }
+            container.innerHTML = html + '</div>';
+        })
+        .catch(err => {
+            container.innerHTML = `<div class="alert alert-danger">Kon inhoud niet laden: ${err.message}</div>`;
+        });
+  }
+
+  // ===== UTILITY FUNCTIONS =====
+  function showModal(id) {
+      document.getElementById('modal-backdrop').classList.add('show');
+      document.getElementById(id).style.display = 'block';
+      document.body.style.overflow = 'hidden';
+  }
+
+  function hideModals() {
+      document.getElementById('modal-backdrop').classList.remove('show');
+      document.querySelectorAll('.modal-dialog').forEach(m => m.style.display = 'none');
+      document.body.style.overflow = 'auto';
+  }
+
+  function closeBackupContentModal() {
+      hideModals();
+  }
+
+  function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  function timeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    let interval = Math.floor(seconds / 31536000);
+
+    if (interval >= 1) return interval === 1 ? '1 jaar geleden' : `${interval} jaar geleden`;
+    interval = Math.floor(seconds / 2592000);
+    if (interval >= 1) return interval === 1 ? '1 maand geleden' : `${interval} maand geleden`;
+    interval = Math.floor(seconds / 86400);
+    if (interval >= 1) return interval === 1 ? '1 dag geleden' : `${interval} dagen geleden`;
+    interval = Math.floor(seconds / 3600);
+    if (interval >= 1) return interval === 1 ? '1 uur geleden' : `${interval} uur geleden`;
+    interval = Math.floor(seconds / 60);
+    if (interval >= 1) return interval === 1 ? '1 minuut geleden' : `${interval} minuten geleden`;
+    return 'zo-even';
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function showAlert(type, message) {
+    const alert = document.createElement('div');
+    const bgClass = type === 'error' ? 'danger' : (type === 'success' ? 'success' : 'info');
+    alert.className = `alert alert-${bgClass} alert-dismissible fade show shadow-lg position-fixed top-0 start-50 translate-middle-x mt-4`;
+    alert.style.zIndex = '2000';
+    alert.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="bi bi-${type === 'success' ? 'check-circle' : 'info-circle'}-fill me-2 fs-5"></i> 
+            <span>${message}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Sluiten"></button>
+        </div>`;
+    document.body.appendChild(alert);
+    setTimeout(() => {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+    }, 5000);
+  }
+</script>
+
+<%- include('../partials/footer') %>

@@ -155,6 +155,7 @@ router.get('/api/notification-users', maintenanceController.getNotificationTest)
 router.post('/api/notification-send', maintenanceController.sendTestNotification);
 
 // Backup Tools
+router.get('/backups', maintenanceController.getBackupTool);
 router.get('/api/backups', maintenanceController.getBackups);
 router.post('/api/backups/create', maintenanceController.createBackup);
 router.post('/api/backups/delete', maintenanceController.deleteBackup);
