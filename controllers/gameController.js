@@ -4,6 +4,21 @@ const path = require('path');
 const fs = require('fs');
 
 const SettingsService = require('../services/SettingsService');
+const sanitizeHtml = require('sanitize-html');
+
+const sanitizeRichText = (html) => {
+    if (!html) return '';
+    return sanitizeHtml(html, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'iframe' ]),
+        allowedAttributes: {
+            ...sanitizeHtml.defaults.allowedAttributes,
+            'img': [ 'src', 'alt', 'width', 'height', 'style', 'class' ],
+            'iframe': [ 'src', 'width', 'height', 'frameborder', 'allowfullscreen' ],
+            'a': [ 'href', 'target', 'rel', 'class', 'style' ],
+            '*': [ 'style', 'class' ]
+        }
+    });
+};
 
 exports.getGames = async (req, res) => {
     try {
@@ -96,6 +111,8 @@ exports.getAddGame = (req, res) => {
 exports.postAddGame = async (req, res) => {
     try {
         const { title, description, howItWorks, supplies, duration, type, groups, intensity, tags, minPlayers, maxPlayers } = req.body;
+        const cleanHowItWorks = sanitizeRichText(howItWorks);
+        const cleanSupplies = sanitizeRichText(supplies);
         const attachments = req.files ? req.files.map(f => ({
             path: `/game_uploads/${f.filename}`,
             originalName: f.originalname,
@@ -108,8 +125,8 @@ exports.postAddGame = async (req, res) => {
         await Game.create({
             title,
             description,
-            howItWorks,
-            supplies,
+            howItWorks: cleanHowItWorks,
+            supplies: cleanSupplies,
             duration: parseInt(duration),
             type,
             groups: groupArray,
@@ -164,6 +181,8 @@ exports.postEditGame = async (req, res) => {
         }
 
         const { title, description, howItWorks, supplies, duration, type, groups, intensity, tags, minPlayers, maxPlayers, removed_attachments } = req.body;
+        const cleanHowItWorks = sanitizeRichText(howItWorks);
+        const cleanSupplies = sanitizeRichText(supplies);
         
         let currentAttachments = game.attachments || [];
         if (removed_attachments) {
@@ -186,8 +205,8 @@ exports.postEditGame = async (req, res) => {
         await game.update({
             title,
             description,
-            howItWorks,
-            supplies,
+            howItWorks: cleanHowItWorks,
+            supplies: cleanSupplies,
             duration: parseInt(duration),
             type,
             groups: groupArray,
