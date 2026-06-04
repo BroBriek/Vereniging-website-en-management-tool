@@ -121,13 +121,28 @@ app.use(methodOverride(function (req, res) {
 app.set('trust proxy', 1);
 
 // Sessions
-if (!process.env.SESSION_SECRET) {
-  throw new Error('FATAL: SESSION_SECRET is not configured in the environment.');
+let sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  const secretPath = path.join(__dirname, '.session_secret');
+  try {
+    if (fs.existsSync(secretPath)) {
+      sessionSecret = fs.readFileSync(secretPath, 'utf8').trim();
+      console.warn('⚠️ WARNING: SESSION_SECRET environment variable is missing. Loaded persistent fallback secret from .session_secret.');
+    } else {
+      sessionSecret = require('crypto').randomBytes(32).toString('hex');
+      fs.writeFileSync(secretPath, sessionSecret, 'utf8');
+      console.warn('⚠️ WARNING: SESSION_SECRET environment variable is missing. Generated new persistent fallback secret and saved to .session_secret.');
+    }
+  } catch (err) {
+    console.error('❌ Failed to handle persistent fallback session secret:', err);
+    sessionSecret = require('crypto').randomBytes(32).toString('hex');
+    console.warn('⚠️ WARNING: SESSION_SECRET environment variable is missing. Using temporary in-memory fallback secret.');
+  }
 }
 
 app.use(session({
   store: new SQLiteStore({ db: 'sessions.sqlite', dir: '.' }),
-  secret: process.env.SESSION_SECRET,
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   cookie: {
