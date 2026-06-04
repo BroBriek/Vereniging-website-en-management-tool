@@ -180,6 +180,16 @@
                     </div>
                 </div>
             </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center text-success">
+                        <h3 class="card-title"><i class="bi bi-archive-fill"></i></h3>
+                        <p>Maak, download en herstel backups.</p>
+                        <a href="/admin/backups" class="btn btn-success w-100">Backup Beheer</a>
+                    </div>
+                </div>
+            </div>
         <% } %>
 
         <% if (user.role === 'admin' || user.role === 'media' || settings.allow_all_forms_access) { %>

@@ -570,16 +570,14 @@ exports.sendTestNotification = async (req, res) => {
         console.error('Send notification error:', error);
         res.status(500).json({ error: error.message });
     }
-};
-
-// ==================== Backup Management ====================
+}// ==================== Backup Management ====================
 const isValidBackupName = (name) => {
     return typeof name === 'string' && /^[a-zA-Z0-9._-]+$/.test(name);
 };
 
 exports.getBackups = (req, res) => {
     try {
-        if (req.user.username !== 'admin') {
+        if (req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Geen toegang' });
         }
 
@@ -618,7 +616,7 @@ exports.getBackups = (req, res) => {
 
 exports.createBackup = (req, res) => {
     try {
-        if (req.user.username !== 'admin') {
+        if (req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Geen toegang' });
         }
 
@@ -639,7 +637,7 @@ exports.createBackup = (req, res) => {
 
 exports.deleteBackup = (req, res) => {
     try {
-        if (req.user.username !== 'admin') {
+        if (req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Geen toegang' });
         }
 
@@ -667,7 +665,7 @@ exports.deleteBackup = (req, res) => {
 
 exports.getBackupContent = (req, res) => {
     try {
-        if (req.user.username !== 'admin') {
+        if (req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Geen toegang' });
         }
 
@@ -715,9 +713,9 @@ exports.restoreBackup = async (req, res) => {
     try {
         const { name, password } = req.body;
         
-        // Only the 'admin' user is allowed to restore backups
-        if (req.user.username !== 'admin') {
-            return res.status(403).json({ error: 'Alleen de hoofdbeheerder kan backups herstellen.' });
+        // Only an 'admin' role user is allowed to restore backups
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Alleen beheerder(s) kunnen backups herstellen.' });
         }
 
         if (!name) return res.status(400).json({ error: 'Backup naam ontbreekt' });
@@ -750,26 +748,72 @@ exports.restoreBackup = async (req, res) => {
             if (!fs.existsSync(dir)) return;
             for (const entry of fs.readdirSync(dir)) {
                 const entryPath = path.join(dir, entry);
-                const stats = fs.lstatSync(entryPath);
-                if (stats.isDirectory()) {
-                    fs.rmSync(entryPath, { recursive: true, force: true });
+                try {
+                    const stats = fs.lstatSync(entryPath);
+                    if (stats.isDirectory()) {
+                        fs.rmSync(entryPath, { recursive: true, force: true });
+                    } else {
+                        fs.unlinkSync(entryPath);
+                    }
+                } catch (unlinkErr) {
+                    console.error(`Warning: Could not remove ${entryPath} during restore cleanup:`, unlinkErr.message);
+                }
+            }
+        };
+
+        const copyDirectoryRobust = (src, dest) => {
+            if (!fs.existsSync(src)) return;
+            fs.mkdirSync(dest, { recursive: true });
+            const entries = fs.readdirSync(src, { withFileTypes: true });
+
+            for (const entry of entries) {
+                const srcPath = path.join(src, entry.name);
+                const destPath = path.join(dest, entry.name);
+
+                if (entry.isDirectory()) {
+                    copyDirectoryRobust(srcPath, destPath);
                 } else {
-                    fs.unlinkSync(entryPath);
+                    try {
+                        fs.copyFileSync(srcPath, destPath);
+                    } catch (copyErr) {
+                        console.error(`Warning: Could not copy ${srcPath} to ${destPath}:`, copyErr.message);
+                    }
                 }
             }
         };
         
         // Restore Database
-        const backupDb = path.join(backupPath, 'database.sqlite');
-        if (fs.existsSync(backupDb)) {
-            fs.copyFileSync(backupDb, dbFile);
+        try {
+            const backupDb = path.join(backupPath, 'database.sqlite');
+            if (fs.existsSync(backupDb)) {
+                if (sequelize && sequelize.connectionManager && sequelize.connectionManager.pool) {
+                    try {
+                        console.log('Draining and destroying active database connection pool for restore...');
+                        await sequelize.connectionManager.pool.drain();
+                        await sequelize.connectionManager.pool.destroyAllNow();
+                        console.log('Database connection pool cleared.');
+                    } catch (poolErr) {
+                        console.error('Warning: Error draining connection pool:', poolErr);
+                    }
+                }
+                fs.copyFileSync(backupDb, dbFile);
+            }
+        } catch (dbErr) {
+            console.error('Error restoring database file:', dbErr);
         }
 
-        // Restore Sessions (if exists)
-        const backupSessions = path.join(backupPath, 'sessions.sqlite');
-        if (fs.existsSync(backupSessions)) {
-            fs.copyFileSync(backupSessions, sessionFile);
+        // Restore Sessions (explicitly skipped to keep active admin session & CSRF token alive)
+        // Overwriting sessions.sqlite would immediately log out the admin doing the restore and invalidate their CSRF token.
+        /*
+        try {
+            const backupSessions = path.join(backupPath, 'sessions.sqlite');
+            if (fs.existsSync(backupSessions)) {
+                fs.copyFileSync(backupSessions, sessionFile);
+            }
+        } catch (sessionErr) {
+            console.error('Error restoring sessions file:', sessionErr);
         }
+        */
         
         // Sync database to ensure schema is up to date safely
         try {
@@ -781,27 +825,39 @@ exports.restoreBackup = async (req, res) => {
         }
 
         // Restore Uploads
-        const backupUploads = path.join(backupPath, 'uploads');
-        if (fs.existsSync(backupUploads)) {
-            fs.mkdirSync(uploadsDir, { recursive: true });
-            emptyDirectory(uploadsDir);
-            fs.cpSync(backupUploads, uploadsDir, { recursive: true });
+        try {
+            const backupUploads = path.join(backupPath, 'uploads');
+            if (fs.existsSync(backupUploads)) {
+                fs.mkdirSync(uploadsDir, { recursive: true });
+                emptyDirectory(uploadsDir);
+                copyDirectoryRobust(backupUploads, uploadsDir);
+            }
+        } catch (uploadsErr) {
+            console.error('Error restoring uploads folder:', uploadsErr);
         }
 
         // Restore Feed Uploads
-        const backupFeedUploads = path.join(backupPath, 'feed_uploads');
-        if (fs.existsSync(backupFeedUploads)) {
-            fs.mkdirSync(feedUploadsDir, { recursive: true });
-            emptyDirectory(feedUploadsDir);
-            fs.cpSync(backupFeedUploads, feedUploadsDir, { recursive: true });
+        try {
+            const backupFeedUploads = path.join(backupPath, 'feed_uploads');
+            if (fs.existsSync(backupFeedUploads)) {
+                fs.mkdirSync(feedUploadsDir, { recursive: true });
+                emptyDirectory(feedUploadsDir);
+                copyDirectoryRobust(backupFeedUploads, feedUploadsDir);
+            }
+        } catch (feedUploadsErr) {
+            console.error('Error restoring feed uploads folder:', feedUploadsErr);
         }
 
         // Restore Game Uploads
-        const backupGameUploads = path.join(backupPath, 'game_uploads');
-        if (fs.existsSync(backupGameUploads)) {
-            fs.mkdirSync(gameUploadsDir, { recursive: true });
-            emptyDirectory(gameUploadsDir);
-            fs.cpSync(backupGameUploads, gameUploadsDir, { recursive: true });
+        try {
+            const backupGameUploads = path.join(backupPath, 'game_uploads');
+            if (fs.existsSync(backupGameUploads)) {
+                fs.mkdirSync(gameUploadsDir, { recursive: true });
+                emptyDirectory(gameUploadsDir);
+                copyDirectoryRobust(backupGameUploads, gameUploadsDir);
+            }
+        } catch (gameUploadsErr) {
+            console.error('Error restoring game uploads folder:', gameUploadsErr);
         }
 
         res.json({ success: true, message: 'Backup succesvol teruggezet. De site is hersteld naar de geselecteerde staat.' });
@@ -816,8 +872,8 @@ exports.downloadBackup = (req, res) => {
     try {
         const { name } = req.query;
         
-        // Only the 'admin' user is allowed to download backups
-        if (req.user.username !== 'admin') {
+        // Only an 'admin' role user is allowed to download backups
+        if (req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Geen toegang' });
         }
 
@@ -861,10 +917,10 @@ exports.uploadBackup = async (req, res) => {
     try {
         const { password } = req.body;
         
-        // Only the 'admin' user is allowed to upload backups
-        if (req.user.username !== 'admin') {
+        // Only an 'admin' role user is allowed to upload backups
+        if (req.user.role !== 'admin') {
             if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-            return res.status(403).json({ error: 'Alleen de hoofdbeheerder kan backups uploaden.' });
+            return res.status(403).json({ error: 'Alleen een beheerder kan backups uploaden.' });
         }
 
         if (!req.file) return res.status(400).json({ error: 'Geen bestand geüpload' });
@@ -901,12 +957,7 @@ exports.uploadBackup = async (req, res) => {
                 return res.status(500).json({ error: 'Uitpakken mislukt: ' + error.message });
             }
 
-            // The unzip output might tell us what was created, or we can look for the folder.
-            // If it was created with our downloadBackup, it contains a folder with the backup name.
-            // We need to identify that folder to restore it.
-            // Extract folder name from stdout or just look at what changed.
-            // Simpler: find the most recently modified directory in backups/
-            
+            // Find the most recently modified directory in backups/
             const folders = fs.readdirSync(backupDir, { withFileTypes: true })
                 .filter(dirent => dirent.isDirectory())
                 .map(dirent => ({
@@ -922,9 +973,7 @@ exports.uploadBackup = async (req, res) => {
             const latestFolder = folders[0].name;
             
             // Now trigger restore using this folder
-            // We can call restoreBackup internal logic or just reuse the code
             req.body.name = latestFolder;
-            // Password already verified
             return exports.restoreBackup(req, res);
         });
 
@@ -948,6 +997,26 @@ exports.getMaintenanceTools = async (req, res) => {
         });
     } catch (error) {
         console.error('Maintenance tools error:', error);
+        res.status(500).render('error', {
+            title: 'Fout',
+            message: 'Er ging iets mis',
+            user: req.user
+        });
+    }
+};
+
+exports.getBackupTool = async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.redirect('/');
+        }
+        
+        res.render('admin/backups', { 
+            title: 'Backup Beheer',
+            user: req.user 
+        });
+    } catch (error) {
+        console.error('Backup tool error:', error);
         res.status(500).render('error', {
             title: 'Fout',
             message: 'Er ging iets mis',

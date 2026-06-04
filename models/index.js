@@ -117,6 +117,10 @@ const syncDatabase = async () => {
       { where: { paid: null } }
     );
 
+    // Ensure all usernames in the database are lowercase (critical for login verification stability)
+    console.log('Ensuring all usernames are lowercase...');
+    await sequelize.query("UPDATE Users SET username = LOWER(username);");
+
     if (sequelize.getDialect() === 'sqlite') {
       await sequelize.query('PRAGMA foreign_keys = ON');
     }
