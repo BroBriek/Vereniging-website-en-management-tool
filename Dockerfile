@@ -17,7 +17,9 @@ RUN apt-get update && \
       libwebp-dev \
       libvips-dev \
       libsqlite3-dev \
-      sqlite3 && \
+      sqlite3 \
+      zip \
+      unzip && \
     rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
