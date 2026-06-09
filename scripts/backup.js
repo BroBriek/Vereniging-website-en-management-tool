@@ -64,4 +64,18 @@ if (fs.existsSync(feedUploadsDir)) {
     console.log('⚠️ Feed Uploads folder not found (skipping).');
 }
 
+// 5. Backup Game Uploads
+const gameUploadsDir = path.join(rootDir, 'public/game_uploads');
+const targetGameUploadsDir = path.join(targetDir, 'game_uploads');
+if (fs.existsSync(gameUploadsDir)) {
+    try {
+        fs.cpSync(gameUploadsDir, targetGameUploadsDir, { recursive: true });
+        console.log('✅ Game Uploads folder backed up.');
+    } catch (err) {
+        console.error('❌ Error backing up game uploads:', err.message);
+    }
+} else {
+    console.log('⚠️ Game Uploads folder not found (skipping).');
+}
+
 console.log('\n🎉 Backup completed successfully!');
