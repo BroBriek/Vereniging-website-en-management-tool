@@ -739,7 +739,6 @@ exports.restoreBackup = async (req, res) => {
 
         const rootDir = path.join(__dirname, '..');
         const dbFile = path.join(rootDir, 'database.sqlite');
-        const sessionFile = path.join(rootDir, 'sessions.sqlite');
         const uploadsDir = path.join(rootDir, 'public', 'uploads');
         const feedUploadsDir = path.join(rootDir, 'public', 'feed_uploads');
         const gameUploadsDir = path.join(rootDir, 'public', 'game_uploads');
@@ -783,39 +782,57 @@ exports.restoreBackup = async (req, res) => {
         };
         
         // Restore Database
-        try {
-            const backupDb = path.join(backupPath, 'database.sqlite');
-            if (fs.existsSync(backupDb)) {
-                if (sequelize && sequelize.connectionManager && sequelize.connectionManager.pool) {
-                    try {
-                        console.log('Draining and destroying active database connection pool for restore...');
-                        await sequelize.connectionManager.pool.drain();
-                        await sequelize.connectionManager.pool.destroyAllNow();
-                        console.log('Database connection pool cleared.');
-                    } catch (poolErr) {
-                        console.error('Warning: Error draining connection pool:', poolErr);
-                    }
-                }
-                fs.copyFileSync(backupDb, dbFile);
+        // We must drain and destroy all pool connections before replacing the SQLite file
+        // on disk, otherwise existing connections keep stale file handles and the app
+        // enters a broken / inconsistent state.
+        //
+        // IMPORTANT: We do NOT use sequelize.close() because that method permanently
+        // replaces the instance-level getConnection() with a throwing stub and there
+        // is no official API to re-open it. Instead we:
+        //   1. Drain the pool  (wait for in-flight queries to finish)
+        //   2. DestroyAllNow   (close every idle socket)
+        //   3. Copy the backup file
+        //   4. Re-initialize the pool via initPools()  (new pool, original prototype
+        //      getConnection() is unaffected because we never called close())
+        const backupDb = path.join(backupPath, 'database.sqlite');
+        if (fs.existsSync(backupDb)) {
+            try {
+                console.log('Draining database connection pool for restore...');
+                await sequelize.connectionManager.pool.drain();
+                await sequelize.connectionManager.pool.destroyAllNow();
+                console.log('Database connection pool drained and destroyed.');
+            } catch (drainErr) {
+                console.error('Warning: Error draining connection pool:', drainErr.message);
             }
-        } catch (dbErr) {
-            console.error('Error restoring database file:', dbErr);
+
+            try {
+                fs.copyFileSync(backupDb, dbFile);
+                // Also remove any leftover WAL / SHM journal files from the old database
+                // so they do not corrupt the freshly restored file.
+                const walFile = dbFile + '-wal';
+                const shmFile = dbFile + '-shm';
+                if (fs.existsSync(walFile)) fs.unlinkSync(walFile);
+                if (fs.existsSync(shmFile)) fs.unlinkSync(shmFile);
+                console.log('Database file restored.');
+            } catch (dbErr) {
+                console.error('Error copying backup database file:', dbErr);
+            }
+
+            // Re-initialize the pool so the app can make new connections to the
+            // freshly restored database file.
+            try {
+                sequelize.connectionManager.initPools();
+                console.log('Database connection pool re-initialized after restore.');
+            } catch (reinitErr) {
+                console.error('Error re-initializing connection pool after restore:', reinitErr);
+            }
         }
 
         // Restore Sessions (explicitly skipped to keep active admin session & CSRF token alive)
-        // Overwriting sessions.sqlite would immediately log out the admin doing the restore and invalidate their CSRF token.
-        /*
-        try {
-            const backupSessions = path.join(backupPath, 'sessions.sqlite');
-            if (fs.existsSync(backupSessions)) {
-                fs.copyFileSync(backupSessions, sessionFile);
-            }
-        } catch (sessionErr) {
-            console.error('Error restoring sessions file:', sessionErr);
-        }
-        */
-        
-        // Sync database to ensure schema is up to date safely
+        // Overwriting sessions.sqlite would immediately log out the admin doing the restore
+        // and invalidate their CSRF token.
+
+        // Sync database schema to ensure any new model columns exist in the restored DB
         try {
             const { syncDatabase } = require('../models');
             await syncDatabase();
@@ -925,7 +942,6 @@ exports.uploadBackup = async (req, res) => {
 
         if (!req.file) return res.status(400).json({ error: 'Geen bestand geüpload' });
         if (!password) {
-            // Clean up uploaded file if password missing
             if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
             return res.status(400).json({ error: 'Wachtwoord ontbreekt' });
         }
@@ -941,39 +957,91 @@ exports.uploadBackup = async (req, res) => {
         if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
 
         const uploadedPath = req.file.path;
-        const tempZipName = `upload-${Date.now()}.zip`;
-        const tempZipPath = path.join(backupDir, tempZipName);
+        const extractTimestamp = Date.now();
+        const tempZipPath = path.join(backupDir, `upload-${extractTimestamp}.zip`);
+        // We extract into a uniquely-named temp folder so we can reliably find the
+        // backup folder inside it regardless of how many backups already exist.
+        const tempExtractDir = path.join(backupDir, `temp-extract-${extractTimestamp}`);
 
-        // Move to backups dir and rename to .zip for unzip command
+        // Move uploaded file to backups dir as a .zip
         fs.renameSync(uploadedPath, tempZipPath);
 
-        // Unzip into backups dir
-        exec(`unzip -o "${tempZipPath}" -d "${backupDir}"`, async (error, stdout, stderr) => {
-            // Cleanup zip
-            if (fs.existsSync(tempZipPath)) fs.unlinkSync(tempZipPath);
+        // Extract into the isolated temp folder
+        exec(`unzip -o "${tempZipPath}" -d "${tempExtractDir}"`, async (error, stdout, stderr) => {
+            // Always clean up the zip file
+            if (fs.existsSync(tempZipPath)) {
+                try { fs.unlinkSync(tempZipPath); } catch (e) { /* ignore */ }
+            }
 
             if (error) {
                 console.error('Unzip failed:', error);
+                // Clean up temp extract dir too
+                if (fs.existsSync(tempExtractDir)) {
+                    try { fs.rmSync(tempExtractDir, { recursive: true, force: true }); } catch (e) { /* ignore */ }
+                }
                 return res.status(500).json({ error: 'Uitpakken mislukt: ' + error.message });
             }
 
-            // Find the most recently modified directory in backups/
-            const folders = fs.readdirSync(backupDir, { withFileTypes: true })
-                .filter(dirent => dirent.isDirectory())
-                .map(dirent => ({
-                    name: dirent.name,
-                    time: fs.statSync(path.join(backupDir, dirent.name)).mtime.getTime()
-                }))
-                .sort((a, b) => b.time - a.time);
+            // The zip was created with: zip -r "backup-name" "backup-name"
+            // so the extracted structure is: tempExtractDir/backup-name/{database.sqlite, uploads/, ...}
+            // Find the backup folder inside the temp extract dir.
+            let backupFolderName = null;
+            try {
+                const entries = fs.readdirSync(tempExtractDir, { withFileTypes: true })
+                    .filter(d => d.isDirectory());
 
-            if (folders.length === 0) {
-                return res.status(500).json({ error: 'Geen backup folder gevonden na uitpakken' });
+                // Prefer a folder that contains database.sqlite (definitive backup marker)
+                for (const entry of entries) {
+                    const candidateDb = path.join(tempExtractDir, entry.name, 'database.sqlite');
+                    if (fs.existsSync(candidateDb)) {
+                        backupFolderName = entry.name;
+                        break;
+                    }
+                }
+
+                // Fallback: just use the first directory found
+                if (!backupFolderName && entries.length > 0) {
+                    backupFolderName = entries[0].name;
+                }
+            } catch (readErr) {
+                console.error('Error reading extracted backup folder:', readErr);
             }
 
-            const latestFolder = folders[0].name;
-            
-            // Now trigger restore using this folder
-            req.body.name = latestFolder;
+            if (!backupFolderName) {
+                if (fs.existsSync(tempExtractDir)) {
+                    try { fs.rmSync(tempExtractDir, { recursive: true, force: true }); } catch (e) { /* ignore */ }
+                }
+                return res.status(500).json({ error: 'Geen geldige backup folder gevonden in het geüploade bestand' });
+            }
+
+            const extractedBackupPath = path.join(tempExtractDir, backupFolderName);
+
+            // Move the backup folder out of the temp dir and into the proper backups directory.
+            // If a backup with the same name already exists, append a timestamp to avoid collision.
+            let finalBackupName = backupFolderName;
+            let finalBackupPath = path.join(backupDir, finalBackupName);
+            if (fs.existsSync(finalBackupPath)) {
+                finalBackupName = `${backupFolderName}-restored-${extractTimestamp}`;
+                finalBackupPath = path.join(backupDir, finalBackupName);
+            }
+
+            try {
+                fs.renameSync(extractedBackupPath, finalBackupPath);
+            } catch (moveErr) {
+                console.error('Error moving extracted backup to final location:', moveErr);
+                if (fs.existsSync(tempExtractDir)) {
+                    try { fs.rmSync(tempExtractDir, { recursive: true, force: true }); } catch (e) { /* ignore */ }
+                }
+                return res.status(500).json({ error: 'Kon backup niet verplaatsen: ' + moveErr.message });
+            }
+
+            // Clean up the now-empty temp extract dir
+            if (fs.existsSync(tempExtractDir)) {
+                try { fs.rmSync(tempExtractDir, { recursive: true, force: true }); } catch (e) { /* ignore */ }
+            }
+
+            // Trigger restore using the known backup folder name
+            req.body.name = finalBackupName;
             return exports.restoreBackup(req, res);
         });
 

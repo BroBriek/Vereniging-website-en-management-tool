@@ -161,7 +161,31 @@ router.post('/api/backups/create', maintenanceController.createBackup);
 router.post('/api/backups/delete', maintenanceController.deleteBackup);
 router.get('/api/backups/content', maintenanceController.getBackupContent);
 router.get('/api/backups/download', maintenanceController.downloadBackup);
-router.post('/api/backups/upload', upload.single('backup'), maintenanceController.uploadBackup);
+// Dedicated multer instance for backup uploads — accepts .back files and returns JSON errors
+const multer = require('multer');
+const backupUpload = multer({
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => cb(null, 'public/uploads/'),
+        filename: (req, file, cb) => cb(null, 'backup-upload-' + Date.now() + '.back')
+    }),
+    limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB — backups can be large
+    fileFilter: (req, file, cb) => {
+        const ext = require('path').extname(file.originalname).toLowerCase();
+        if (ext !== '.back' && ext !== '.zip') {
+            return cb(new Error('Alleen .back bestanden zijn toegestaan voor backup uploads.'));
+        }
+        cb(null, true);
+    }
+});
+
+router.post('/api/backups/upload', (req, res, next) => {
+    backupUpload.single('backup')(req, res, (err) => {
+        if (err) {
+            return res.status(400).json({ error: err.message });
+        }
+        next();
+    });
+}, maintenanceController.uploadBackup);
 router.post('/api/backups/restore', maintenanceController.restoreBackup);
 
 // Email Tool
