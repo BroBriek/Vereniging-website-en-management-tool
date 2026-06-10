@@ -81,6 +81,11 @@ class MigrationService {
                     await sequelize.query("ALTER TABLE Users ADD COLUMN dismissedAnnouncements TEXT DEFAULT '[]';");
                     console.log('Added Users.dismissedAnnouncements');
                 }
+
+                if (!await columnExists('Users', 'firstLogin')) {
+                    await sequelize.query('ALTER TABLE Users ADD COLUMN firstLogin BOOLEAN DEFAULT 1;');
+                    console.log('Added Users.firstLogin');
+                }
             } catch (usersErr) {
                 console.error('Error migrating Users table schema:', usersErr);
             }

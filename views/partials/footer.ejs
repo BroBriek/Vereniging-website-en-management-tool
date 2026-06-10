@@ -96,6 +96,91 @@
       </div>
     </div>
 
+    <% if (typeof user !== 'undefined' && user && user.firstLogin && typeof settings !== 'undefined' && settings.first_login_message && settings.first_login_message.trim() !== '') { %>
+    <!-- First Login Welcome Modal -->
+    <div class="modal fade" id="firstLoginWelcomeModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="firstLoginWelcomeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 30px; overflow: hidden; border: 5px solid var(--chiro-yellow) !important;">
+                <div class="modal-header text-white border-0 py-4 px-4 position-relative" style="background: linear-gradient(135deg, var(--chiro-blue) 0%, #2980b9 100%);">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 55px; height: 55px;">
+                            <i class="bi bi-balloon-fill animate-balloon" style="font-size: 2rem; color: var(--chiro-yellow) !important; display: inline-block;"></i>
+                        </div>
+                        <div>
+                            <h4 class="modal-title font-playful mb-0 text-white" id="firstLoginWelcomeModalLabel" style="font-weight: 700; font-family: var(--font-heading);">Welkom <%= capitalizeName(user.username) %>!</h4>
+                            <small class="text-white-50" style="font-family: var(--font-body); font-size: 1.1rem;">Jouw eerste keer hier? We helpen je graag op weg!</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body p-4 p-md-5" style="background-color: #fffdf9; font-family: var(--font-body); font-size: 1.3rem; line-height: 1.7; color: var(--text-color);">
+                    <div class="welcome-text-content">
+                        <%- settings.first_login_message %>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 py-3 bg-light d-flex justify-content-end">
+                    <button type="button" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm font-playful" id="dismissFirstLoginBtn" style="background-color: var(--chiro-red); border-color: var(--chiro-red); font-size: 1.2rem; transition: all 0.2s ease;">
+                        <i class="bi bi-check-circle-fill me-2"></i>Aan de slag!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .animate-balloon {
+            animation: balloonWiggle 2s ease-in-out infinite;
+        }
+        @keyframes balloonWiggle {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(5deg); }
+        }
+        #dismissFirstLoginBtn:hover {
+            transform: scale(1.05);
+            background-color: #c0392b !important;
+            border-color: #c0392b !important;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const welcomeModalEl = document.getElementById('firstLoginWelcomeModal');
+            if (welcomeModalEl) {
+                const welcomeModal = new bootstrap.Modal(welcomeModalEl);
+                welcomeModal.show();
+
+                const dismissBtn = document.getElementById('dismissFirstLoginBtn');
+                if (dismissBtn) {
+                    dismissBtn.addEventListener('click', function() {
+                        dismissBtn.disabled = true;
+                        dismissBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Laden...';
+                        
+                        fetch('/account/dismiss-first-login', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-Token': '<%= csrfToken %>'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                welcomeModal.hide();
+                            } else {
+                                console.error('Failed to dismiss first login popup');
+                                welcomeModal.hide(); // Hide anyway to not block the user
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error dismiss first login:', err);
+                            welcomeModal.hide(); // Hide anyway to not block the user
+                        });
+                    });
+                }
+            }
+        });
+    </script>
+    <% } %>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/download-helper.js?v=1.0.1"></script>
     <script src="/js/rich-editor.js?v=1.2"></script>

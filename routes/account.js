@@ -20,5 +20,6 @@ router.post('/profile-picture/delete', accountController.deleteProfilePicture);
 router.post('/notifications/preferences', accountController.updateNotificationPreferences);
 router.post('/secondary-account', accountController.updateSecondaryAccount);
 router.get('/switch', accountController.switchAccount);
+router.post('/dismiss-first-login', accountController.dismissFirstLogin);
 
 module.exports = router;
