@@ -2699,5 +2699,206 @@ async function fixImage(btn, url) {
 }
 </script>
 
+<% if (typeof announcement !== 'undefined' && announcement) { %>
+    <!-- Premium Announcement Pop-up Dialog -->
+    <dialog id="announcementPopup" class="announcement-popup-dialog" closedby="any" aria-labelledby="announcementPopupTitle">
+        <div class="announcement-popup-header">
+            <h3 class="announcement-popup-title" id="announcementPopupTitle">
+                <i class="bi bi-bell-fill text-warning me-2 animate-bounce"></i><%= announcement.title %>
+            </h3>
+        </div>
+        <div class="announcement-popup-body rich-text-content">
+            <%- announcement.content %>
+        </div>
+        <div class="announcement-popup-footer">
+            <button type="button" class="btn btn-primary btn-close-announcement rounded-pill px-5 py-2.5 fw-bold" onclick="dismissAnnouncement(<%= announcement.id %>)">
+                Sluiten
+            </button>
+        </div>
+    </dialog>
+
+    <style>
+        /* Backdrop blur and Glassmorphism for modern browsers */
+        dialog.announcement-popup-dialog {
+            border: none;
+            border-radius: 24px;
+            padding: 0;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(25px) saturate(190%);
+            -webkit-backdrop-filter: blur(25px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            outline: none;
+            overflow: hidden;
+            animation: announcementFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        dialog.announcement-popup-dialog::backdrop {
+            background-color: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            animation: backdropFadeIn 0.3s ease forwards;
+        }
+
+        .announcement-popup-header {
+            background: linear-gradient(135deg, var(--chiro-red) 0%, #b81423 100%);
+            color: white;
+            padding: 1.75rem 1.5rem;
+            position: relative;
+        }
+        
+        .announcement-popup-title {
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 700;
+            margin: 0;
+            font-size: 1.45rem;
+            line-height: 1.3;
+            display: flex;
+            align-items: center;
+        }
+
+        .announcement-popup-body {
+            padding: 2rem 1.5rem;
+            color: #2c3e50;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .announcement-popup-footer {
+            padding: 1.25rem 1.5rem 1.75rem;
+            display: flex;
+            justify-content: center;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .btn-close-announcement {
+            background: linear-gradient(135deg, var(--chiro-red) 0%, #b81423 100%);
+            border: none;
+            color: white;
+            box-shadow: 0 4px 15px rgba(219, 0, 41, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-close-announcement:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(219, 0, 41, 0.45);
+            background: linear-gradient(135deg, #b81423 0%, #900f1a 100%);
+            color: white;
+        }
+
+        .btn-close-announcement:active {
+            transform: translateY(0);
+        }
+
+        /* Animations */
+        @keyframes announcementFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes backdropFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+        .animate-bounce {
+            animation: bounce 2s infinite;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const popupId = <%= announcement.id %>;
+            const hasDismissed = localStorage.getItem('dismissed_announcement_' + popupId);
+            const popup = document.getElementById('announcementPopup');
+
+            if (!hasDismissed && popup) {
+                // Show modal after a brief delay for smoother loading transition
+                setTimeout(() => {
+                    popup.showModal();
+                }, 500);
+            }
+
+            // Click outside to close fallback for browsers without full dialog support
+            if (popup && !('closedBy' in HTMLDialogElement.prototype)) {
+                popup.addEventListener('click', (event) => {
+                    if (event.target !== popup) return;
+                    const rect = popup.getBoundingClientRect();
+                    const isDialogContent = (
+                        rect.top <= event.clientY &&
+                        event.clientY <= rect.top + rect.height &&
+                        rect.left <= event.clientX &&
+                        event.clientX <= rect.left + rect.width
+                    );
+                    if (!isDialogContent) {
+                        dismissAnnouncement(popupId);
+                    }
+                });
+            }
+        });
+
+        function dismissAnnouncement(id) {
+            localStorage.setItem('dismissed_announcement_' + id, 'true');
+            const popup = document.getElementById('announcementPopup');
+            if (popup) {
+                popup.close();
+            }
+
+            // Sync with backend database to persist dismissal across devices
+            fetch('/feed/announcements/' + id + '/dismiss', {
+                method: 'POST'
+            }).catch(err => console.error('Failed to sync dismissal with database:', err));
+        }
+    </script>
+<% } %>
+
+<!-- Sync database dismissal records to localStorage on page load -->
+<% if (user) { %>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                let dbDismissed = [];
+                <% if (user.dismissedAnnouncements) { %>
+                    <% if (Array.isArray(user.dismissedAnnouncements)) { %>
+                        dbDismissed = <%- JSON.stringify(user.dismissedAnnouncements) %>;
+                    <% } else if (typeof user.dismissedAnnouncements === 'string') { %>
+                        dbDismissed = <%- user.dismissedAnnouncements %>;
+                    <% } %>
+                <% } %>
+                
+                if (Array.isArray(dbDismissed)) {
+                    dbDismissed.forEach(id => {
+                        localStorage.setItem('dismissed_announcement_' + id, 'true');
+                    });
+                }
+            } catch (error) {
+                console.error('Error syncing dismissed announcements from DB to localStorage:', error);
+            }
+        });
+    </script>
+<% } %>
+
 <script src="/js/mention.js"></script>
 <%- include('../partials/footer') %>

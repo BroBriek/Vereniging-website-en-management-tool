@@ -18,6 +18,7 @@ const SystemState = require('./SystemState');
 const CalendarAccess = require('./CalendarAccess');
 const Game = require('./Game');
 const CustomPage = require('./CustomPage');
+const Announcement = require('./Announcement');
 const MigrationService = require('../services/MigrationService');
 
 // Associations
@@ -25,6 +26,10 @@ const MigrationService = require('../services/MigrationService');
 // CustomPage Associations
 User.hasMany(CustomPage, { foreignKey: 'creatorId', as: 'customPages' });
 CustomPage.belongsTo(User, { foreignKey: 'creatorId', as: 'creator' });
+
+// Announcement Associations
+User.hasMany(Announcement, { foreignKey: 'creatorId', as: 'announcements' });
+Announcement.belongsTo(User, { foreignKey: 'creatorId', as: 'creator' });
 
 // Game Associations
 User.hasMany(Game, { foreignKey: 'authorId', as: 'games', onDelete: 'CASCADE', hooks: true });
@@ -152,5 +157,6 @@ module.exports = {
   SystemState,
   CalendarAccess,
   Game,
-  CustomPage
+  CustomPage,
+  Announcement
 };

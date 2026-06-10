@@ -76,6 +76,11 @@ class MigrationService {
                     await sequelize.query("ALTER TABLE Users ADD COLUMN notificationPreferences TEXT DEFAULT '{\"mention\":true,\"comment\":true,\"reaction\":true,\"newPost\":true,\"birthday\":true}';");
                     console.log('Added Users.notificationPreferences');
                 }
+
+                if (!await columnExists('Users', 'dismissedAnnouncements')) {
+                    await sequelize.query("ALTER TABLE Users ADD COLUMN dismissedAnnouncements TEXT DEFAULT '[]';");
+                    console.log('Added Users.dismissedAnnouncements');
+                }
             } catch (usersErr) {
                 console.error('Error migrating Users table schema:', usersErr);
             }

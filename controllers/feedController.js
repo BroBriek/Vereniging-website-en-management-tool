@@ -1,4 +1,4 @@
-const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess, Leader, Event } = require('../models');
+const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess, Leader, Event, Announcement } = require('../models');
 const quoteController = require('./quoteController');
 const path = require('path');
 const fs = require('fs');
@@ -382,6 +382,37 @@ exports.getFeed = async (req, res) => {
             return leaderMMDD === todayMMDD;
         });
 
+        // Fetch latest active announcement for the current user's role
+        const announcement = await Announcement.findOne({
+            where: {
+                isActive: true,
+                target: {
+                    [Op.or]: req.user.role === 'admin' ? ['all', 'admin'] : ['all']
+                }
+            },
+            order: [['createdAt', 'DESC']]
+        });
+
+        let activeAnnouncement = null;
+        if (announcement) {
+            let dismissedIds = [];
+            if (req.user.dismissedAnnouncements) {
+                if (Array.isArray(req.user.dismissedAnnouncements)) {
+                    dismissedIds = req.user.dismissedAnnouncements;
+                } else if (typeof req.user.dismissedAnnouncements === 'string') {
+                    try {
+                        dismissedIds = JSON.parse(req.user.dismissedAnnouncements);
+                    } catch (e) {
+                        dismissedIds = [];
+                    }
+                }
+            }
+            dismissedIds = dismissedIds.map(id => Number(id));
+            if (!dismissedIds.includes(Number(announcement.id))) {
+                activeAnnouncement = announcement;
+            }
+        }
+
         res.render('feed/index', { 
             title: activeGroup ? activeGroup.name : 'Leidingshoekje', 
             posts, 
@@ -394,6 +425,7 @@ exports.getFeed = async (req, res) => {
             birthdayLeaders,
             allUsers,
             allNormalGroups,
+            announcement: activeAnnouncement,
             capitalizeName: (name) => name.charAt(0).toUpperCase() + name.slice(1),
             ...viewHelpers
         });
@@ -1518,3 +1550,45 @@ exports.getPost = async (req, res) => {
         res.status(500).json({ success: false, error: 'Interne serverfout' });
     }
 };
+
+exports.postDismissAnnouncement = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const announcementId = Number(id);
+        if (isNaN(announcementId)) {
+            return res.status(400).json({ success: false, error: 'Ongeldige ID' });
+        }
+
+        let dismissedIds = [];
+        if (req.user.dismissedAnnouncements) {
+            if (Array.isArray(req.user.dismissedAnnouncements)) {
+                dismissedIds = req.user.dismissedAnnouncements;
+            } else if (typeof req.user.dismissedAnnouncements === 'string') {
+                try {
+                    dismissedIds = JSON.parse(req.user.dismissedAnnouncements);
+                } catch (e) {
+                    dismissedIds = [];
+                }
+            }
+        }
+
+        dismissedIds = dismissedIds.map(x => Number(x));
+
+        if (!dismissedIds.includes(announcementId)) {
+            dismissedIds.push(announcementId);
+            
+            const user = await User.findByPk(req.user.id);
+            if (user) {
+                user.dismissedAnnouncements = dismissedIds;
+                user.changed('dismissedAnnouncements', true);
+                await user.save();
+            }
+        }
+
+        return res.json({ success: true });
+    } catch (error) {
+        console.error('Error dismissing announcement in DB:', error);
+        return res.status(500).json({ success: false, error: 'Server Error' });
+    }
+};
+

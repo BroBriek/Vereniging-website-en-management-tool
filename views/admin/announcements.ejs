@@ -1,0 +1,355 @@
+<%- include('../partials/header') %>
+
+<style>
+    /* Premium Announcement Page styling */
+    .premium-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        background-color: white;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .premium-card-header {
+        background-color: var(--chiro-blue);
+        color: white;
+        padding: 1.25rem 1.5rem;
+        font-family: 'Fredoka', sans-serif;
+        font-weight: 600;
+        font-size: 1.15rem;
+        border: none;
+    }
+    
+    /* Dialog Glassmorphic styling */
+    .glass-dialog-preview {
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        overflow: hidden;
+        width: 100%;
+        max-width: 450px;
+        margin: 0 auto;
+    }
+    .glass-dialog-header {
+        background: linear-gradient(135deg, var(--chiro-red) 0%, #b81423 100%);
+        color: white;
+        padding: 1.5rem;
+        position: relative;
+        font-family: 'Fredoka', sans-serif;
+    }
+    .glass-dialog-title {
+        font-weight: 700;
+        margin: 0;
+        font-size: 1.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .glass-dialog-body {
+        padding: 1.75rem 1.5rem;
+        color: #333;
+        font-size: 1.05rem;
+        line-height: 1.6;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .glass-dialog-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        display: flex;
+        justify-content: center;
+    }
+    
+    /* Real Overlay style for test mode */
+    dialog.announcement-test-dialog {
+        border: none;
+        border-radius: 24px;
+        padding: 0;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(25px) saturate(190%);
+        -webkit-backdrop-filter: blur(25px) saturate(190%);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        outline: none;
+        overflow: hidden;
+    }
+    dialog.announcement-test-dialog::backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+    
+    /* Custom Scrollbar for list and preview */
+    .glass-dialog-body::-webkit-scrollbar {
+        width: 6px;
+    }
+    .glass-dialog-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .glass-dialog-body::-webkit-scrollbar-thumb {
+        background-color: rgba(0,0,0,0.15);
+        border-radius: 10px;
+    }
+
+    .badge-admin {
+        background-color: var(--chiro-blue);
+        color: white;
+    }
+    .badge-all {
+        background-color: var(--chiro-yellow);
+        color: #333;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="font-playful text-primary"><i class="bi bi-megaphone-fill me-2"></i>Aankondigingen Beheer</h1>
+    <div>
+        <a href="/admin/info" class="btn btn-info text-white me-2" title="Algemene Hulp & Info">
+            <i class="bi bi-info-circle"></i> Info
+        </a>
+        <a href="/admin" class="btn btn-secondary rounded-pill px-4">Terug naar Dashboard</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Creator Form -->
+    <div class="col-lg-7">
+        <div class="card premium-card h-100">
+            <div class="premium-card-header d-flex justify-content-between align-items-center">
+                <span>Nieuwe Aankondiging Maken</span>
+                <i class="bi bi-plus-circle-fill"></i>
+            </div>
+            <div class="card-body p-4">
+                <form action="/admin/announcements" method="POST" id="announcementForm">
+                    <div class="mb-3">
+                        <label for="announcementTitle" class="form-label fw-bold small text-muted text-uppercase">Titel</label>
+                        <input type="text" class="form-control form-control-lg border-2 rounded-3" id="announcementTitle" name="title" placeholder="Bijv. Update van de leidingswerking" required>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="announcementTarget" class="form-label fw-bold small text-muted text-uppercase">Doelgroep</label>
+                            <select class="form-select border-2 rounded-3" id="announcementTarget" name="target">
+                                <option value="all">Alle gebruikers (Leiding & Admins)</option>
+                                <option value="admin">Enkel Administrators</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check form-switch p-3 w-100 rounded-3 border-2 bg-light d-flex align-items-center justify-content-between px-3 border" style="height: calc(3.5rem + 2px);">
+                                <label class="form-check-label fw-bold text-muted text-uppercase small mb-0" for="sendNotification">Stuur notificatie</label>
+                                <input class="form-check-input shadow-none ms-0 mt-0" type="checkbox" name="sendNotification" id="sendNotification" checked>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="announcementContent" class="form-label fw-bold small text-muted text-uppercase">Inhoud</label>
+                        <textarea class="form-control rich-editor" name="content" id="announcementContent" rows="8" placeholder="Schrijf hier wat de gebruikers te zien krijgen..."></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success btn-lg rounded-pill px-4 flex-fill"><i class="bi bi-send-fill me-2"></i>Aankondiging Publiceren</button>
+                        <button type="button" class="btn btn-outline-primary btn-lg rounded-pill px-4" id="btnTestRealPopup"><i class="bi bi-fullscreen me-2"></i>Test Pop-up</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Live Adaptive Preview -->
+    <div class="col-lg-5">
+        <div class="card premium-card h-100 bg-light border-0">
+            <div class="premium-card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span>Live Pop-up Voorbeeld</span>
+                <span class="badge bg-danger rounded-pill px-2">Adaptive Preview</span>
+            </div>
+            <div class="card-body p-4 d-flex align-items-center justify-content-center">
+                <div class="glass-dialog-preview">
+                    <div class="glass-dialog-header">
+                        <div class="glass-dialog-title" id="preview-title">
+                            <i class="bi bi-bell-fill text-warning me-1"></i> Titel van de aankondiging
+                        </div>
+                    </div>
+                    <div class="glass-dialog-body" id="preview-body">
+                        Inhoud van de aankondiging...
+                    </div>
+                    <div class="glass-dialog-footer">
+                        <button type="button" class="btn btn-primary rounded-pill px-5 py-2 fw-bold" style="background: linear-gradient(135deg, var(--chiro-red) 0%, #b81423 100%); border: none;">Sluiten</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- History Section -->
+<div class="card premium-card mt-5">
+    <div class="premium-card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <span>Gepubliceerde Aankondigingen</span>
+        <i class="bi bi-clock-history"></i>
+    </div>
+    <div class="card-body p-4">
+        <% if (announcements && announcements.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Titel</th>
+                            <th>Doelgroep</th>
+                            <th>Notificatie</th>
+                            <th>Auteur</th>
+                            <th>Status</th>
+                            <th class="text-end">Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% announcements.forEach(a => { %>
+                            <tr>
+                                <td class="text-muted"><%= new Date(a.createdAt).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
+                                <td><strong><%= a.title %></strong></td>
+                                <td>
+                                    <% if (a.target === 'admin') { %>
+                                        <span class="badge badge-admin rounded-pill px-3">Admins</span>
+                                    <% } else { %>
+                                        <span class="badge badge-all rounded-pill px-3">Iedereen</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (a.sendNotification) { %>
+                                        <span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Ja</span>
+                                    <% } else { %>
+                                        <span class="text-muted"><i class="bi bi-x-circle me-1"></i> Nee</span>
+                                    <% } %>
+                                </td>
+                                <td><%= a.creator ? capitalizeName(a.creator.username) : 'Onbekend' %></td>
+                                <td>
+                                    <% if (a.isActive) { %>
+                                        <span class="badge bg-success rounded-pill px-3">Actief</span>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary rounded-pill px-3">Gedeactiveerd</span>
+                                    <% } %>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <form action="/admin/announcements/<%= a.id %>/toggle" method="POST">
+                                            <button type="submit" class="btn btn-outline-secondary rounded-pill-start px-3">
+                                                <%= a.isActive ? 'Deactiveren' : 'Activeren' %>
+                                            </button>
+                                        </form>
+                                        <form action="/admin/announcements/<%= a.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze aankondiging wilt verwijderen?')">
+                                            <button type="submit" class="btn btn-outline-danger rounded-pill-end px-3">
+                                                Verwijderen
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <p class="text-muted text-center my-4">Er zijn nog geen aankondigingen gemaakt.</p>
+        <% } %>
+    </div>
+</div>
+
+<!-- Test Dialog Modal Element (rendered offscreen) -->
+<dialog id="announcementTestPopup" class="announcement-test-dialog" closedby="any" aria-labelledby="testDialogTitle">
+    <div class="glass-dialog-header">
+        <h3 class="glass-dialog-title" id="testDialogTitle">
+            <i class="bi bi-bell-fill text-warning me-1"></i> <span id="test-popup-title-text">Titel</span>
+        </h3>
+    </div>
+    <div class="glass-dialog-body" id="test-popup-body-text">
+        Inhoud...
+    </div>
+    <div class="glass-dialog-footer">
+        <button type="button" class="btn btn-primary rounded-pill px-5 py-2 fw-bold" onclick="document.getElementById('announcementTestPopup').close()" style="background: linear-gradient(135deg, var(--chiro-red) 0%, #b81423 100%); border: none;">Sluiten</button>
+    </div>
+</dialog>
+
+<script src="/js/rich-editor.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const titleInput = document.getElementById('announcementTitle');
+        const previewTitle = document.getElementById('preview-title');
+        const previewBody = document.getElementById('preview-body');
+        const testDialog = document.getElementById('announcementTestPopup');
+        const testTitleText = document.getElementById('test-popup-title-text');
+        const testBodyText = document.getElementById('test-popup-body-text');
+        const btnTestRealPopup = document.getElementById('btnTestRealPopup');
+
+        // Update Title Preview
+        titleInput.addEventListener('input', () => {
+            const titleValue = titleInput.value.trim() || 'Titel van de aankondiging';
+            previewTitle.innerHTML = `<i class="bi bi-bell-fill text-warning me-1"></i> ${titleValue}`;
+        });
+
+        // Hook into Quill Editor
+        function hookQuill() {
+            const quillContainer = document.querySelector('.ql-container');
+            if (quillContainer) {
+                const quill = Quill.find(quillContainer);
+                if (quill) {
+                    quill.on('text-change', () => {
+                        const content = quill.root.innerHTML;
+                        if (content === '<p><br></p>' || !content.trim()) {
+                            previewBody.innerHTML = 'Inhoud van de aankondiging...';
+                        } else {
+                            previewBody.innerHTML = content;
+                        }
+                    });
+                    return;
+                }
+            }
+            setTimeout(hookQuill, 100);
+        }
+        hookQuill();
+
+        // Test real pop-up triggering
+        btnTestRealPopup.addEventListener('click', () => {
+            const currentTitle = titleInput.value.trim() || 'Titel van de aankondiging';
+            const quillContainer = document.querySelector('.ql-container');
+            let currentBody = 'Inhoud van de aankondiging...';
+            
+            if (quillContainer) {
+                const quill = Quill.find(quillContainer);
+                if (quill && quill.root.innerHTML !== '<p><br></p>') {
+                    currentBody = quill.root.innerHTML;
+                }
+            }
+
+            testTitleText.innerHTML = currentTitle;
+            testBodyText.innerHTML = currentBody;
+
+            // Trigger Modal Dialog
+            testDialog.showModal();
+        });
+
+        // Fallback for click-outside close for old browsers
+        if (!('closedBy' in HTMLDialogElement.prototype)) {
+            testDialog.addEventListener('click', (event) => {
+                if (event.target !== testDialog) return;
+                const rect = testDialog.getBoundingClientRect();
+                const isDialogContent = (
+                    rect.top <= event.clientY &&
+                    event.clientY <= rect.top + rect.height &&
+                    rect.left <= event.clientX &&
+                    event.clientX <= rect.left + rect.width
+                );
+                if (!isDialogContent) {
+                    testDialog.close();
+                }
+            });
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>

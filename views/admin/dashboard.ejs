@@ -171,6 +171,18 @@
                 </div>
             </div>
 
+            <% if (user.username === 'admin') { %>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 border-success">
+                        <div class="card-body text-center text-success">
+                            <h3 class="card-title"><i class="bi bi-megaphone-fill"></i></h3>
+                            <p>Maak en beheer pop-up aankondigingen voor de feed.</p>
+                            <a href="/admin/announcements" class="btn btn-success w-100">Aankondigingen</a>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
             <div class="col-md-4 mb-4">
                 <div class="card h-100 border-success">
                     <div class="card-body text-center text-success">
