@@ -5,6 +5,7 @@ const uploadController = require('../controllers/uploadController');
 const maintenanceController = require('../controllers/maintenanceController');
 const formController = require('../controllers/formController');
 const customPageController = require('../controllers/customPageController');
+const announcementController = require('../controllers/announcementController');
 const { ensureAuthenticated, ensureAdmin, ensureMedia } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { compressGenericImage } = require('../middleware/imageCompression');
@@ -241,5 +242,18 @@ router.get('/feedgroups', adminController.getFeedGroups);
 router.post('/feedgroups', adminController.postFeedGroup);
 router.put('/feedgroups/:id', adminController.updateFeedGroup);
 router.delete('/feedgroups/:id', adminController.deleteFeedGroup);
+
+// Announcements (strictly restricted to the user named 'admin')
+const ensureAdminUsername = (req, res, next) => {
+    if (req.isAuthenticated() && req.user.username === 'admin') {
+        return next();
+    }
+    res.redirect('/');
+};
+
+router.get('/announcements', ensureAdminUsername, announcementController.getAnnouncements);
+router.post('/announcements', ensureAdminUsername, announcementController.postAnnouncement);
+router.post('/announcements/:id/toggle', ensureAdminUsername, announcementController.postToggleAnnouncement);
+router.delete('/announcements/:id', ensureAdminUsername, announcementController.deleteAnnouncement);
 
 module.exports = router;

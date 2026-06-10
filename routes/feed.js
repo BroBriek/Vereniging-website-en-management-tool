@@ -28,5 +28,6 @@ router.post('/comment/:id/update', feedController.updateComment);
 router.post('/comment/:id/delete', feedController.deleteComment);
 router.post('/api/fix-image', feedController.fixImageApi);
 router.post('/respond', feedController.postResponse);
+router.post('/announcements/:id/dismiss', feedController.postDismissAnnouncement);
 
 module.exports = router;

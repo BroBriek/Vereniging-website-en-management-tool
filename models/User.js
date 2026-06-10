@@ -47,6 +47,10 @@ const User = sequelize.define('User', {
       birthday: true
     }
   },
+  dismissedAnnouncements: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  },
   profilePicture: {
     type: DataTypes.STRING,
     allowNull: true

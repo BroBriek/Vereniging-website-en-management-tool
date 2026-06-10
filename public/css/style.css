@@ -604,5 +604,47 @@ body.navbar-open {
     display: block;
 }
 
+/* Fix for buttons inside forms inside a Bootstrap btn-group */
+.btn-group > form {
+    display: contents !important;
+}
+
+.btn-group > form > .btn {
+    position: relative;
+    flex: 1 1 auto;
+}
+
+.btn-group > form > .btn:hover {
+    z-index: 1;
+}
+
+.btn-group > form > .btn:focus,
+.btn-group > form > .btn:active {
+    z-index: 2;
+}
+
+.btn-group > form:not(:first-child) > .btn {
+    margin-left: -1px;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+.btn-group > form:not(:last-child) > .btn {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+/* Fix sizes for buttons inside forms in small/large button groups */
+.btn-group-sm > form > .btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+}
+
+.btn-group-lg > form > .btn {
+    padding: 0.5rem 1rem !important;
+    font-size: 1.25rem !important;
+}
+
+
 
 
