@@ -2021,11 +2021,29 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if(replyFormContainer) replyFormContainer.classList.add('d-none');
                             }
                         } else {
-                            form.insertAdjacentHTML('beforebegin', data.html);
-                            // Re-run features for newly inserted comment
-                            // Find the just-inserted element (sibling before form)
-                            const newComment = form.previousElementSibling;
-                            if (newComment) initPostFeatures(newComment);
+                            const wrapper = form.parentElement.querySelector('.comments-section-wrapper');
+                            if (wrapper) {
+                                const collapseEl = wrapper.querySelector('#hidden-comments-' + postId);
+                                let newComment;
+                                if (collapseEl) {
+                                    collapseEl.insertAdjacentHTML('beforeend', data.html);
+                                    newComment = collapseEl.lastElementChild;
+                                    if (!collapseEl.classList.contains('show')) {
+                                        const toggleBtn = wrapper.querySelector('[data-bs-target="#hidden-comments-' + postId + '"]');
+                                        if (toggleBtn) {
+                                            toggleBtn.click();
+                                        }
+                                    }
+                                } else {
+                                    wrapper.insertAdjacentHTML('beforeend', data.html);
+                                    newComment = wrapper.lastElementChild;
+                                }
+                                if (newComment) initPostFeatures(newComment);
+                            } else {
+                                form.insertAdjacentHTML('beforebegin', data.html);
+                                const newComment = form.previousElementSibling;
+                                if (newComment) initPostFeatures(newComment);
+                            }
                         }
 
                         const postCard = document.getElementById('post-' + postId);
