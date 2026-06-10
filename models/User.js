@@ -67,6 +67,10 @@ const User = sequelize.define('User', {
   secondaryUserId: {
     type: DataTypes.INTEGER,
     allowNull: true
+  },
+  firstLogin: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 });
 

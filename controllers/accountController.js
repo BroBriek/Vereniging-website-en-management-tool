@@ -390,3 +390,17 @@ exports.switchAccount = async (req, res) => {
         res.redirect('/account/settings');
     }
 };
+
+exports.dismissFirstLogin = async (req, res) => {
+    try {
+        const user = await User.findByPk(req.user.id);
+        if (user) {
+            user.firstLogin = false;
+            await user.save();
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error dismissing first login:', err);
+        res.status(500).json({ error: 'Kon eerste aanmelding niet markeren' });
+    }
+};

@@ -97,7 +97,8 @@ exports.postSettings = async (req, res) => {
             theme_color_accent: req.body.theme_color_accent,
             theme_color_neutral: req.body.theme_color_neutral,
             theme_color_bg: req.body.theme_color_bg,
-            theme_color_text: req.body.theme_color_text
+            theme_color_text: req.body.theme_color_text,
+            first_login_message: req.body.first_login_message || ''
         };
 
         await SettingsService.setMany(settings);
