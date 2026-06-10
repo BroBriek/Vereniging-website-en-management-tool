@@ -119,6 +119,9 @@ window.initializeRichEditors = function(elements) {
             quill.on('text-change', function(delta, oldDelta, source) {
                 textarea.value = quill.root.innerHTML;
 
+                // Dispatch input event to notify any live preview listeners
+                textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
                 // Handle both 'user' and other sources just in case some browsers report differently
                 handleAutoLink(delta);
                 handleMention(delta);

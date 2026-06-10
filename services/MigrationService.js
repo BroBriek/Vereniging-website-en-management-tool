@@ -207,6 +207,38 @@ class MigrationService {
                 console.error('Error migrating FinanceItems table schema:', financeItemsErr);
             }
 
+            // --- Announcements Table ---
+            try {
+                if (!await columnExists('Announcements', 'hasSurvey')) {
+                    await sequelize.query('ALTER TABLE Announcements ADD COLUMN hasSurvey BOOLEAN DEFAULT 0;');
+                    console.log('Added Announcements.hasSurvey');
+                }
+                if (!await columnExists('Announcements', 'surveyQuestion')) {
+                    await sequelize.query('ALTER TABLE Announcements ADD COLUMN surveyQuestion TEXT;');
+                    console.log('Added Announcements.surveyQuestion');
+                }
+                if (!await columnExists('Announcements', 'surveyType')) {
+                    await sequelize.query('ALTER TABLE Announcements ADD COLUMN surveyType TEXT;');
+                    console.log('Added Announcements.surveyType');
+                }
+                if (!await columnExists('Announcements', 'surveyQuestions')) {
+                    await sequelize.query('ALTER TABLE Announcements ADD COLUMN surveyQuestions TEXT;');
+                    console.log('Added Announcements.surveyQuestions');
+                }
+            } catch (announcementsErr) {
+                console.error('Error migrating Announcements table schema:', announcementsErr);
+            }
+
+            // --- SurveyResponses Table ---
+            try {
+                if (!await columnExists('SurveyResponses', 'answers')) {
+                    await sequelize.query('ALTER TABLE SurveyResponses ADD COLUMN answers TEXT;');
+                    console.log('Added SurveyResponses.answers');
+                }
+            } catch (surveyResponsesErr) {
+                console.error('Error migrating SurveyResponses table schema:', surveyResponsesErr);
+            }
+
             console.log('Automatic schema update completed.');
         } catch (error) {
             console.error('Error during automatic schema update:', error);

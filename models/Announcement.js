@@ -28,6 +28,35 @@ const Announcement = sequelize.define('Announcement', {
   creatorId: {
     type: DataTypes.INTEGER,
     allowNull: true
+  },
+  hasSurvey: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  surveyQuestion: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  surveyType: {
+    type: DataTypes.STRING, // 'score' or 'text'
+    allowNull: true
+  },
+  surveyQuestions: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    get() {
+      const rawValue = this.getDataValue('surveyQuestions');
+      if (!rawValue) return null;
+      if (typeof rawValue === 'string') {
+        try {
+          return JSON.parse(rawValue);
+        } catch (e) {
+          return [];
+        }
+      }
+      return rawValue;
+    }
   }
 });
 

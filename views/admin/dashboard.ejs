@@ -171,17 +171,7 @@
                 </div>
             </div>
 
-            <% if (user.username === 'admin') { %>
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 border-success">
-                        <div class="card-body text-center text-success">
-                            <h3 class="card-title"><i class="bi bi-megaphone-fill"></i></h3>
-                            <p>Maak en beheer pop-up aankondigingen voor de feed.</p>
-                            <a href="/admin/announcements" class="btn btn-success w-100">Aankondigingen</a>
-                        </div>
-                    </div>
-                </div>
-            <% } %>
+
 
             <div class="col-md-4 mb-4">
                 <div class="card h-100 border-success">
@@ -229,6 +219,16 @@
                     <h3 class="card-title"><i class="bi bi-tools"></i></h3>
                     <p>Beheer bestanden, database, logs en notificaties.</p>
                     <a href="/admin/maintenance" class="btn w-100" style="background-color: #ff9800; color: white;">Onderhoudstools</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-warning">
+                <div class="card-body text-center" style="color: #ff9800;">
+                    <h3 class="card-title"><i class="bi bi-megaphone-fill"></i></h3>
+                    <p>Maak en beheer pop-up aankondigingen voor de feed.</p>
+                    <a href="/admin/maintenance?tab=announcements" class="btn w-100" style="background-color: #ff9800; color: white;">Aankondigingen</a>
                 </div>
             </div>
         </div>

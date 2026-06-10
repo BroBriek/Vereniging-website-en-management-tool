@@ -19,6 +19,7 @@ const CalendarAccess = require('./CalendarAccess');
 const Game = require('./Game');
 const CustomPage = require('./CustomPage');
 const Announcement = require('./Announcement');
+const SurveyResponse = require('./SurveyResponse');
 const MigrationService = require('../services/MigrationService');
 
 // Associations
@@ -30,6 +31,12 @@ CustomPage.belongsTo(User, { foreignKey: 'creatorId', as: 'creator' });
 // Announcement Associations
 User.hasMany(Announcement, { foreignKey: 'creatorId', as: 'announcements' });
 Announcement.belongsTo(User, { foreignKey: 'creatorId', as: 'creator' });
+
+// SurveyResponse Associations
+Announcement.hasMany(SurveyResponse, { foreignKey: 'announcementId', as: 'surveyResponses', onDelete: 'CASCADE' });
+SurveyResponse.belongsTo(Announcement, { foreignKey: 'announcementId', as: 'announcement' });
+User.hasMany(SurveyResponse, { foreignKey: 'userId', as: 'surveyResponses', onDelete: 'CASCADE' });
+SurveyResponse.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Game Associations
 User.hasMany(Game, { foreignKey: 'authorId', as: 'games', onDelete: 'CASCADE', hooks: true });
@@ -158,5 +165,6 @@ module.exports = {
   CalendarAccess,
   Game,
   CustomPage,
-  Announcement
+  Announcement,
+  SurveyResponse
 };

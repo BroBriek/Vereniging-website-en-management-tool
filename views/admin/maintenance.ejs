@@ -210,6 +210,9 @@
                 <button class="nav-link" onclick="switchTab(event, 'notifications')">
                     <i class="bi bi-bell"></i> Notificaties
                 </button>
+                <button class="nav-link" onclick="switchTab(event, 'announcements')">
+                    <i class="bi bi-megaphone"></i> Aankondigingen
+                </button>
             </div>
         </div>
 
@@ -386,6 +389,11 @@
                         </div>
                     </div>
 
+                    <!-- Announcements Tab -->
+                    <div id="announcements" class="tab-content d-none">
+                        <%- include('announcements') %>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -431,10 +439,22 @@
     
     // Activate target
     const target = document.getElementById(tabName);
-    target.classList.remove('d-none');
-    target.classList.add('active');
+    if (target) {
+        target.classList.remove('d-none');
+        target.classList.add('active');
+    }
     
-    if (event) event.target.classList.add('active');
+    // Highlight sidebar button
+    let sidebarBtn = event ? event.target : null;
+    if (!sidebarBtn) {
+        sidebarBtn = Array.from(document.querySelectorAll('.nav-link')).find(btn => {
+            const oc = btn.getAttribute('onclick');
+            return oc && oc.includes(`'${tabName}'`);
+        });
+    }
+    if (sidebarBtn) {
+        sidebarBtn.classList.add('active');
+    }
     
     if (tabName === 'file-explorer' && currentFolder === '') loadFileExplorer();
     else if (tabName === 'database' && selectedTable === null) loadTables();
@@ -992,7 +1012,14 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    loadFileExplorer();
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab') || 'file-explorer';
+    switchTab(null, activeTab);
+
+    const successMsg = urlParams.get('success');
+    const errorMsg = urlParams.get('error');
+    if (successMsg) showAlert('success', successMsg);
+    if (errorMsg) showAlert('danger', errorMsg);
 
     // Close modals when clicking backdrop ONLY (not the dialogs)
     const backdrop = document.getElementById('modal-backdrop');
