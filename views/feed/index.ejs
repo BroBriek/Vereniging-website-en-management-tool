@@ -331,6 +331,59 @@
         color: white;
         border-color: #3498db;
     }
+
+    /* Floating Pull to Refresh */
+    .pull-to-refresh-indicator {
+        position: fixed;
+        top: -60px;
+        left: 50%;
+        transform: translate(-50%, 0) scale(0);
+        width: 45px;
+        height: 45px;
+        background-color: white;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08);
+        z-index: 10050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease, top 0.1s ease;
+        will-change: transform, top, opacity;
+        opacity: 0;
+    }
+
+    .ptr-icon-wrapper {
+        position: relative;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ptr-icon {
+        width: 22px;
+        height: 22px;
+        color: #db3e41;
+        transition: transform 0.1s linear;
+        transform: rotate(0deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
+
+    .ptr-spinner {
+        width: 20px;
+        height: 20px;
+        color: #db3e41 !important;
+        border-width: 2px;
+    }
+
+    /* Prevent default browser overscroll on the body to avoid browser native refresh interference */
+    body {
+        overscroll-behavior-y: contain;
+    }
 </style>
 
 <div id="polaroid-overlay" class="polaroid-overlay d-none" onclick="closePolaroid()">
@@ -364,6 +417,14 @@ function autoResize(element) {
 </script>
 
 <div class="container mt-4" style="max-width: 800px;">
+
+    <!-- Floating Pull to Refresh Indicator -->
+    <div id="pull-to-refresh-indicator" class="pull-to-refresh-indicator">
+        <div class="ptr-icon-wrapper">
+            <i class="bi bi-arrow-down ptr-icon" id="ptr-icon-arrow"></i>
+            <div class="spinner-border ptr-spinner d-none" id="ptr-spinner-loading" role="status"></div>
+        </div>
+    </div>
 
     <% if (typeof birthdayLeaders !== 'undefined' && birthdayLeaders.length > 0) { %>
         <div class="alert birthday-alert alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
@@ -2198,6 +2259,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 feedTimeline.innerHTML = data.html;
                 feedTimeline.style.opacity = '1';
                 if (spinner) spinner.classList.add('d-none');
+                hideRefreshIndicators();
 
                 initPostFeatures(document);
                 if (window.initializeRichEditors) window.initializeRichEditors();
@@ -2220,6 +2282,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error("Search failed", err);
                 feedTimeline.style.opacity = '1';
                 if (spinner) spinner.classList.add('d-none');
+                hideRefreshIndicators();
             });
     }
 
@@ -2285,57 +2348,135 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Pull to Refresh ---
-    const p2rThreshold = 150;
+    const indicator = document.getElementById('pull-to-refresh-indicator');
+    const ptrArrow = document.getElementById('ptr-icon-arrow');
+    const ptrSpinner = document.getElementById('ptr-spinner-loading');
+    
+    const p2rThreshold = 100; // Pull down 100px to refresh
     let touchStartY = 0;
+    let touchStartX = 0;
     let isPulling = false;
-    const feedTimeline = document.querySelector('.feed-timeline');
-    const spinner = document.getElementById('refresh-spinner');
+    let isRefreshing = false;
 
     document.addEventListener('touchstart', (e) => {
-        if (window.scrollY === 0) {
+        // Only trigger pull to refresh if window is scrolled to the top,
+        // we aren't already refreshing, and no Bootstrap modal is currently open.
+        if (window.scrollY === 0 && !isRefreshing && !document.querySelector('.modal.show')) {
             touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
             isPulling = false;
         }
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
-        if (touchStartY === 0) return;
+        if (touchStartY === 0 || isRefreshing) return;
+        
         const touchY = e.touches[0].clientY;
+        const touchX = e.touches[0].clientX;
         const dy = touchY - touchStartY;
+        const dx = touchX - touchStartX;
+
+        // If the user scrolls horizontally more than vertically, do not trigger pulling
+        if (!isPulling && Math.abs(dx) > Math.abs(dy)) {
+            touchStartY = 0;
+            return;
+        }
 
         if (window.scrollY === 0 && dy > 0) {
             isPulling = true;
-            const translateY = Math.min(dy * 0.5, p2rThreshold); 
-            if (feedTimeline) feedTimeline.style.transform = `translateY(${translateY}px)`;
-            if (dy > p2rThreshold && spinner) spinner.classList.remove('d-none');
+            
+            // Prevent native browser overscroll/refresh behavior
+            if (e.cancelable) {
+                e.preventDefault();
+            }
+
+            // Calculate progress and pull visual details
+            const progress = Math.min(dy / p2rThreshold, 1.5);
+            
+            // Show indicator
+            indicator.style.display = 'flex';
+            // Start showing indicator opacity
+            indicator.style.opacity = Math.min(progress, 1);
+            
+            // Calculate top position: start at -50px, pull down to 40px
+            const topPos = -50 + (Math.min(progress, 1.2) * 90);
+            indicator.style.top = `${topPos}px`;
+            
+            // Scale in the indicator
+            indicator.style.transform = `translate(-50%, 0) scale(${Math.min(progress, 1)})`;
+            
+            // Rotate the arrow icon (up to 180 degrees)
+            const rotation = Math.min(progress * 180, 180);
+            ptrArrow.style.transform = `rotate(${rotation}deg)`;
+            
+            if (dy >= p2rThreshold) {
+                ptrArrow.classList.add('text-danger');
+            } else {
+                ptrArrow.classList.remove('text-danger');
+            }
         }
-    }, { passive: true });
+    }, { passive: false }); // CRITICAL: must be passive: false to allow e.preventDefault()!
 
     document.addEventListener('touchend', (e) => {
-        if (!isPulling) return;
+        if (!isPulling || isRefreshing) return;
         
         const touchY = e.changedTouches[0].clientY;
         const dy = touchY - touchStartY;
         
-        if (window.scrollY === 0 && dy > p2rThreshold) {
+        if (window.scrollY === 0 && dy >= p2rThreshold) {
+            // Trigger refresh!
+            isRefreshing = true;
+            
+            // Animate indicator to active/holding position
+            indicator.style.top = '40px';
+            indicator.style.opacity = '1';
+            indicator.style.transform = 'translate(-50%, 0) scale(1)';
+            
+            // Hide arrow, show spinner
+            ptrArrow.classList.add('d-none');
+            ptrSpinner.classList.remove('d-none');
+            
             if (currentSearchQuery) {
                 performSearch(currentSearchQuery);
             } else {
                 refreshFeed();
             }
         } else {
-            if (feedTimeline) feedTimeline.style.transform = '';
-            if (spinner) spinner.classList.add('d-none');
+            // Cancel and slide back up
+            resetPullIndicator();
         }
         
         touchStartY = 0;
+        touchStartX = 0;
         isPulling = false;
     });
 
-    function refreshFeed() {
-        if (spinner) spinner.classList.remove('d-none');
-        if (feedTimeline) feedTimeline.style.transform = 'translateY(0)';
+    function resetPullIndicator() {
+        indicator.style.top = '-60px';
+        indicator.style.opacity = '0';
+        indicator.style.transform = 'translate(-50%, 0) scale(0)';
+        
+        setTimeout(() => {
+            if (!isRefreshing) {
+                indicator.style.display = 'none';
+                ptrArrow.classList.remove('d-none');
+                ptrSpinner.classList.add('d-none');
+                ptrArrow.style.transform = 'rotate(0deg)';
+                ptrArrow.classList.remove('text-danger');
+            }
+        }, 300);
+    }
 
+    function hideRefreshIndicators() {
+        isRefreshing = false;
+        resetPullIndicator();
+        
+        // Also hide the old search/general spinner if it is visible
+        const spinner = document.getElementById('refresh-spinner');
+        if (spinner) spinner.classList.add('d-none');
+    }
+
+    function refreshFeed() {
         const currentUrl = new URL(window.location.href);
         currentUrl.searchParams.set('ajax', 'true');
         currentUrl.searchParams.set('offset', 0);
@@ -2350,7 +2491,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (feedTimeline) {
                     feedTimeline.innerHTML = data.html;
-                    feedTimeline.style.transform = '';
                 }
                 
                 initPostFeatures(document);
@@ -2358,9 +2498,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 currentOffset = <%= typeof limit !== 'undefined' ? limit : 10 %>; 
                 
-                if (spinner) spinner.classList.add('d-none');
+                hideRefreshIndicators();
                 
-                 if (data.hasMore) {
+                if (data.hasMore) {
                     if (container) container.classList.remove('d-none');
                     if (loadMoreBtn) {
                         loadMoreBtn.classList.remove('d-none');
@@ -2372,6 +2512,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(err => {
                 console.error("Refresh failed", err);
+                hideRefreshIndicators();
                 window.location.reload();
             });
     }
