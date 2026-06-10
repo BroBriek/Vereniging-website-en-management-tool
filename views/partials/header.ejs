@@ -129,25 +129,26 @@
                         const hiddenPages = (settings.hidden_nav_pages || '').split(',').map(p => p.trim()).filter(p => p);
                         const isHidden = (path) => hiddenPages.includes(path);
                     %>
-                    <% if (!isHidden('/home')) { %><li class="nav-item"><a class="nav-link" href="/home">Home</a></li><% } %>
-                    <% if (!isHidden('/praktisch')) { %><li class="nav-item"><a class="nav-link" href="/praktisch">Praktisch</a></li><% } %>
-                    <% if (!isHidden('/afdelingen')) { %><li class="nav-item"><a class="nav-link" href="/afdelingen">Afdelingen</a></li><% } %>
-                    <% if (!isHidden('/leiding')) { %><li class="nav-item"><a class="nav-link" href="/leiding">Leiding</a></li><% } %>
+                    <% if (!isHidden('/home')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/home">Home</a></li><% } %>
+                    <% if (!isHidden('/praktisch')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/praktisch">Praktisch</a></li><% } %>
+                    <% if (!isHidden('/afdelingen')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/afdelingen">Afdelingen</a></li><% } %>
+                    <% if (!isHidden('/leiding')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/leiding">Leiding</a></li><% } %>
                     <% if (!isHidden('/kalender')) { %>
-                        <li class="nav-item"><a class="nav-link" href="<%= user ? '/feed/calendar' : '/kalender' %>"><%= user ? 'Leidingskalender' : 'Kalender' %></a></li>
+                        <li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="<%= user ? '/feed/calendar' : '/kalender' %>"><%= user ? 'Leidingskalender' : 'Kalender' %></a></li>
                     <% } %>
-                    <% if (!isHidden('/t-shirts')) { %><li class="nav-item"><a class="nav-link" href="/t-shirts">T-Shirts</a></li><% } %>
-                    <% if (!isHidden('/inschrijven')) { %><li class="nav-item"><a class="nav-link" href="/inschrijven">Inschrijven</a></li><% } %>
-                    <% if (!isHidden('/contact')) { %><li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li><% } %>
+                    <% if (!isHidden('/t-shirts')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/t-shirts">T-Shirts</a></li><% } %>
+                    <% if (!isHidden('/inschrijven')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/inschrijven">Inschrijven</a></li><% } %>
+                    <% if (!isHidden('/contact')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/contact">Contact</a></li><% } %>
                     
                     <% if (typeof navbarPages !== 'undefined' && navbarPages.length > 0) { %>
                         <% navbarPages.forEach(p => { %>
-                            <li class="nav-item"><a class="nav-link" href="/p/<%= p.slug %>"><%= p.title %></a></li>
+                            <li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/p/<%= p.slug %>"><%= p.title %></a></li>
                         <% }) %>
                     <% } %>
 
                     <% if (user) { %>
-                        <li class="nav-item dropdown ms-lg-3 mt-3 mt-lg-0">
+                        <!-- Desktop Dropdown (lg and up) -->
+                        <li class="nav-item dropdown ms-lg-3 mt-3 mt-lg-0 d-none d-lg-block">
                             <a class="nav-user-pill dropdown-toggle d-inline-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <% if (user.profilePicture) { %>
                                     <img src="<%= user.profilePicture %>" class="rounded-circle me-2 flex-shrink-0 border border-2 border-white" style="width: 28px; height: 28px; object-fit: cover;" alt="<%= user.username %>">
@@ -191,6 +192,96 @@
                                 <li><hr class="dropdown-divider opacity-10"></li>
                                 <li><a class="dropdown-item rounded-3 py-2 text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i> Uitloggen</a></li>
                             </ul>
+                        </li>
+
+                        <!-- Mobile Dropdown Menu (only visible on mobile/tablet, i.e., d-lg-none) -->
+                        <li class="nav-item d-lg-none w-100">
+                            <!-- Mobile User Menu styled like the dropdown menu -->
+                            <div class="dropdown-menu d-block position-static border-0 shadow-lg rounded-4 p-3 mb-3">
+                                <!-- User Info Header -->
+                                <div class="d-flex align-items-center px-2 pb-3 mb-2 border-bottom opacity-75">
+                                    <% if (user.profilePicture) { %>
+                                        <img src="<%= user.profilePicture %>" class="rounded-circle me-2 flex-shrink-0 border border-2 border-white" style="width: 32px; height: 32px; object-fit: cover;" alt="<%= user.username %>">
+                                    <% } else { %>
+                                        <i class="bi bi-person-circle me-2 fs-5 text-primary"></i>
+                                    <% } %>
+                                    <div>
+                                        <span class="fw-bold text-dark"><%= capitalizeName(user.username.split(' ')[0]) %></span>
+                                        <span class="badge bg-primary ms-2 text-uppercase font-playful" style="font-size: 0.7rem;"><%= user.role === 'leader' ? 'Leiding' : (user.role === 'admin' ? 'Admin' : capitalizeName(user.role)) %></span>
+                                    </div>
+                                </div>
+
+                                <!-- User Navigation Links -->
+                                <% if (user.role === 'admin' || user.role === 'media' || settings.allow_all_forms_access || settings.move_menu_to_dashboard) { %>
+                                    <h6 class="dropdown-header text-uppercase small fw-bold opacity-50 px-2 mt-2">Beheer</h6>
+                                    <a class="dropdown-item rounded-3 py-2" href="/admin"><i class="bi bi-speedometer2 me-2 text-primary"></i> Dashboard</a>
+                                    <% if (!settings.move_menu_to_dashboard) { %>
+                                        <hr class="dropdown-divider opacity-10">
+                                    <% } %>
+                                <% } %>
+                                
+                                <% if (!settings.move_menu_to_dashboard) { %>
+                                    <h6 class="dropdown-header text-uppercase small fw-bold opacity-50 px-2 mt-2">Persoonlijk</h6>
+                                    <% if (typeof enablePublicRegistrations !== 'undefined' && enablePublicRegistrations) { %>
+                                        <a class="dropdown-item rounded-3 py-2" href="/admin/registrations"><i class="bi bi-people me-2 text-success"></i> Ledenlijst</a>
+                                    <% } %>
+                                    <a class="dropdown-item rounded-3 py-2" href="/feed"><i class="bi bi-chat-left-text me-2 text-warning"></i> Leidingshoekje</a>
+                                    <% if (showGamesToAll || (user && user.username === 'admin')) { %>
+                                        <a class="dropdown-item rounded-3 py-2" href="/games"><i class="bi bi-controller me-2 text-info"></i> Spelendatabank</a>
+                                    <% } %>
+                                    <a class="dropdown-item rounded-3 py-2" href="/feed/calendar"><i class="bi bi-calendar3 me-2 text-danger"></i> Leidingskalender</a>
+                                    <a class="dropdown-item rounded-3 py-2" href="/account/settings"><i class="bi bi-gear me-2 text-secondary"></i> Instellingen</a>
+                                <% } %>
+
+                                <% if (originalAdminId || (user.username === 'admin' && user.secondaryUserId)) { %>
+                                    <% if (!settings.move_menu_to_dashboard) { %>
+                                        <hr class="dropdown-divider opacity-10">
+                                    <% } %>
+                                    <a class="dropdown-item rounded-3 py-2 text-primary fw-bold" href="/account/switch">
+                                        <i class="bi bi-arrow-left-right me-2"></i> 
+                                        <%= originalAdminId ? 'Terug naar Admin' : 'Switch naar Test Account' %>
+                                    </a>
+                                <% } %>
+
+                                <hr class="dropdown-divider opacity-10">
+                                <a class="dropdown-item rounded-3 py-2 text-danger" href="/auth/logout"><i class="bi bi-box-arrow-right me-2"></i> Uitloggen</a>
+                            </div>
+
+                            <!-- Mobile Folded Regular Pages -->
+                            <div class="mb-3">
+                                <button class="btn btn-light w-100 py-3 rounded-4 shadow-sm border text-start d-flex justify-content-between align-items-center" 
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#mobileRegularPages" 
+                                        aria-expanded="false" 
+                                        aria-controls="mobileRegularPages">
+                                    <span class="font-playful text-primary"><i class="bi bi-grid-fill me-2"></i> Hoofdpagina's</span>
+                                    <i class="bi bi-chevron-down text-muted"></i>
+                                </button>
+                                <div class="collapse mt-2" id="mobileRegularPages">
+                                    <!-- Folded pages styled exactly like the logged-in dropdown menu -->
+                                    <div class="dropdown-menu d-block position-static border-0 shadow-lg rounded-4 p-2">
+                                        <% if (!isHidden('/home')) { %><a class="dropdown-item rounded-3 py-2" href="/home"><i class="bi bi-house-door me-2 text-danger"></i> Home</a><% } %>
+                                        <% if (!isHidden('/praktisch')) { %><a class="dropdown-item rounded-3 py-2" href="/praktisch"><i class="bi bi-info-circle me-2 text-primary"></i> Praktisch</a><% } %>
+                                        <% if (!isHidden('/afdelingen')) { %><a class="dropdown-item rounded-3 py-2" href="/afdelingen"><i class="bi bi-people me-2 text-success"></i> Afdelingen</a><% } %>
+                                        <% if (!isHidden('/leiding')) { %><a class="dropdown-item rounded-3 py-2" href="/leiding"><i class="bi bi-person-badge me-2 text-warning"></i> Leiding</a><% } %>
+                                        <% if (!isHidden('/kalender')) { %>
+                                            <a class="dropdown-item rounded-3 py-2" href="<%= user ? '/feed/calendar' : '/kalender' %>">
+                                                <i class="bi bi-calendar3 me-2 text-info"></i> <%= user ? 'Leidingskalender' : 'Kalender' %>
+                                            </a>
+                                        <% } %>
+                                        <% if (!isHidden('/t-shirts')) { %><a class="dropdown-item rounded-3 py-2" href="/t-shirts"><i class="bi bi-tag me-2 text-secondary"></i> T-Shirts</a><% } %>
+                                        <% if (!isHidden('/inschrijven')) { %><a class="dropdown-item rounded-3 py-2" href="/inschrijven"><i class="bi bi-pencil-square me-2 text-primary"></i> Inschrijven</a><% } %>
+                                        <% if (!isHidden('/contact')) { %><a class="dropdown-item rounded-3 py-2" href="/contact"><i class="bi bi-envelope me-2 text-success"></i> Contact</a><% } %>
+                                        
+                                        <% if (typeof navbarPages !== 'undefined' && navbarPages.length > 0) { %>
+                                            <% navbarPages.forEach(p => { %>
+                                                <a class="dropdown-item rounded-3 py-2" href="/p/<%= p.slug %>"><i class="bi bi-file-earmark me-2 text-secondary"></i> <%= p.title %></a>
+                                            <% }) %>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
                         </li>
                     <% } %>
                 </ul>
@@ -251,9 +342,13 @@
             });
             
             // Also close menu when clicking on a link (useful for hash links if any)
-            var navLinks = navbarCollapse.querySelectorAll('.nav-link:not(.dropdown-toggle)');
+            var navLinks = navbarCollapse.querySelectorAll('.nav-link:not(.dropdown-toggle), .dropdown-item');
             navLinks.forEach(function(link) {
                 link.addEventListener('click', function() {
+                    // Do not close if it is a toggle link or trigger (like collapse button)
+                    if (link.hasAttribute('data-bs-toggle') || link.closest('[data-bs-toggle="collapse"]')) {
+                        return;
+                    }
                     var bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
                     if (bsCollapse) {
                         bsCollapse.hide();
