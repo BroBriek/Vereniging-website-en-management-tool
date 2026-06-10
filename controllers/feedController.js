@@ -1,4 +1,4 @@
-const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess, Leader, Event, Announcement } = require('../models');
+const { Post, Comment, User, PostResponse, Like, FeedGroup, UserGroupAccess, Leader, Event, Announcement, SurveyResponse } = require('../models');
 const quoteController = require('./quoteController');
 const path = require('path');
 const fs = require('fs');
@@ -390,10 +390,19 @@ exports.getFeed = async (req, res) => {
                     [Op.or]: req.user.role === 'admin' ? ['all', 'admin'] : ['all']
                 }
             },
+            include: [
+                {
+                    model: SurveyResponse,
+                    as: 'surveyResponses'
+                }
+            ],
             order: [['createdAt', 'DESC']]
         });
 
         let activeAnnouncement = null;
+        let surveyStats = null;
+        let userSurveyResponse = null;
+
         if (announcement) {
             let dismissedIds = [];
             if (req.user.dismissedAnnouncements) {
@@ -410,6 +419,26 @@ exports.getFeed = async (req, res) => {
             dismissedIds = dismissedIds.map(id => Number(id));
             if (!dismissedIds.includes(Number(announcement.id))) {
                 activeAnnouncement = announcement;
+
+                if (announcement.hasSurvey) {
+                    const responses = announcement.surveyResponses || [];
+                    userSurveyResponse = responses.find(r => r.userId === req.user.id) || null;
+
+                    const totalCount = responses.length;
+                    let targetCount = 0;
+                    if (announcement.target === 'admin') {
+                        targetCount = await User.count({ where: { role: 'admin', isActive: true } });
+                    } else {
+                        targetCount = await User.count({ where: { isActive: true } });
+                    }
+                    const percentage = targetCount > 0 ? Math.round((totalCount / targetCount) * 100) : 0;
+
+                    surveyStats = {
+                        totalCount,
+                        targetCount,
+                        percentage
+                    };
+                }
             }
         }
 
@@ -426,6 +455,8 @@ exports.getFeed = async (req, res) => {
             allUsers,
             allNormalGroups,
             announcement: activeAnnouncement,
+            surveyStats,
+            userSurveyResponse,
             capitalizeName: (name) => name.charAt(0).toUpperCase() + name.slice(1),
             ...viewHelpers
         });
@@ -1591,4 +1622,80 @@ exports.postDismissAnnouncement = async (req, res) => {
         return res.status(500).json({ success: false, error: 'Server Error' });
     }
 };
+
+exports.postSurveyResponse = async (req, res) => {
+    const { id } = req.params;
+    const { score, feedback, answers } = req.body;
+    try {
+        const announcementId = Number(id);
+        if (isNaN(announcementId)) {
+            return res.status(400).json({ success: false, error: 'Ongeldige ID' });
+        }
+
+        const announcement = await Announcement.findByPk(announcementId);
+        if (!announcement || !announcement.hasSurvey) {
+            return res.status(404).json({ success: false, error: 'Aankondiging of survey niet gevonden' });
+        }
+
+        const existingResponse = await SurveyResponse.findOne({
+            where: {
+                announcementId,
+                userId: req.user.id
+            }
+        });
+
+        if (existingResponse) {
+            return res.status(400).json({ success: false, error: 'Je hebt al gereageerd op deze survey' });
+        }
+
+        // Extract values for backwards-compatible fields
+        let fallbackScore = score !== undefined && score !== null && score !== '' ? Number(score) : null;
+        let fallbackFeedback = feedback || null;
+
+        if (answers) {
+            const firstAnswer = answers["0"] || answers[0];
+            if (firstAnswer) {
+                if (firstAnswer.score !== undefined) {
+                    fallbackScore = Number(firstAnswer.score);
+                }
+                if (firstAnswer.feedback !== undefined) {
+                    fallbackFeedback = firstAnswer.feedback;
+                }
+            }
+        }
+
+        const surveyResponse = await SurveyResponse.create({
+            announcementId,
+            userId: req.user.id,
+            answers: answers || null,
+            score: fallbackScore,
+            feedback: fallbackFeedback
+        });
+
+        const totalResponsesCount = await SurveyResponse.count({ where: { announcementId } });
+        
+        let targetCount = 0;
+        if (announcement.target === 'admin') {
+            targetCount = await User.count({ where: { role: 'admin', isActive: true } });
+        } else {
+            targetCount = await User.count({ where: { isActive: true } });
+        }
+
+        const percentage = targetCount > 0 ? Math.round((totalResponsesCount / targetCount) * 100) : 0;
+
+        return res.json({ 
+            success: true, 
+            surveyResponse,
+            stats: {
+                totalCount: totalResponsesCount,
+                targetCount,
+                percentage
+            }
+        });
+    } catch (error) {
+        console.error('Error posting survey response:', error);
+        return res.status(500).json({ success: false, error: 'Server Error' });
+    }
+};
+
 

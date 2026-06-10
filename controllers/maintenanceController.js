@@ -1059,9 +1059,23 @@ exports.getMaintenanceTools = async (req, res) => {
             return res.redirect('/');
         }
         
+        const { Announcement, SurveyResponse } = require('../models');
+        const announcements = await Announcement.findAll({
+            include: [
+                { model: User, as: 'creator', attributes: ['id', 'username'] },
+                { 
+                    model: SurveyResponse, 
+                    as: 'surveyResponses',
+                    include: [{ model: User, as: 'user', attributes: ['id', 'username'] }]
+                }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+        
         res.render('admin/maintenance', { 
             title: 'Onderhoudstools',
-            user: req.user 
+            user: req.user,
+            announcements
         });
     } catch (error) {
         console.error('Maintenance tools error:', error);

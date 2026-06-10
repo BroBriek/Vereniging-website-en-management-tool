@@ -252,6 +252,7 @@ const ensureAdminUsername = (req, res, next) => {
 };
 
 router.get('/announcements', ensureAdminUsername, announcementController.getAnnouncements);
+router.get('/announcements/:id/export', ensureAdminUsername, announcementController.exportAnnouncementSurveyExcel);
 router.post('/announcements', ensureAdminUsername, announcementController.postAnnouncement);
 router.post('/announcements/:id/toggle', ensureAdminUsername, announcementController.postToggleAnnouncement);
 router.delete('/announcements/:id', ensureAdminUsername, announcementController.deleteAnnouncement);

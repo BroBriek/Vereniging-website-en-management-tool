@@ -29,5 +29,6 @@ router.post('/comment/:id/delete', feedController.deleteComment);
 router.post('/api/fix-image', feedController.fixImageApi);
 router.post('/respond', feedController.postResponse);
 router.post('/announcements/:id/dismiss', feedController.postDismissAnnouncement);
+router.post('/announcements/:id/survey', feedController.postSurveyResponse);
 
 module.exports = router;
