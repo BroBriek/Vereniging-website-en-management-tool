@@ -317,12 +317,23 @@ window.initializeRichEditors = function(elements) {
                 const input = document.createElement('input');
                 input.setAttribute('type', 'file');
                 input.setAttribute('accept', 'image/*');
+                
+                // Hide it off-screen but keep it in the DOM flow for iOS Safari compliance
+                input.style.position = 'absolute';
+                input.style.top = '-9999px';
+                input.style.left = '-9999px';
+                input.style.visibility = 'hidden';
+                
+                document.body.appendChild(input);
                 input.click();
 
                 input.onchange = () => {
                     const file = input.files[0];
                     if (file) {
                         uploadFile(file, quill);
+                    }
+                    if (input.parentNode) {
+                        document.body.removeChild(input);
                     }
                 };
             }
