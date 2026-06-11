@@ -93,6 +93,38 @@ window.initializeRichEditors = function(elements) {
                 }
             });
 
+            // Create a persistent hidden file input for this editor instance to bypass iOS standalone PWA limitations
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.style.position = 'absolute';
+            fileInput.style.top = '-9999px';
+            fileInput.style.left = '-9999px';
+            fileInput.style.visibility = 'hidden';
+            document.body.appendChild(fileInput);
+
+            fileInput.onchange = () => {
+                const file = fileInput.files[0];
+                if (file) {
+                    uploadFile(file, quill);
+                }
+                fileInput.value = ''; // Reset to allow uploading the same file again
+            };
+
+            // Intercept click on the toolbar image button directly in the capture phase
+            // to bypass any event wrapping or microtasks introduced by Quill.
+            const toolbarModule = quill.getModule('toolbar');
+            if (toolbarModule && toolbarModule.container) {
+                const imageButton = toolbarModule.container.querySelector('.ql-image');
+                if (imageButton) {
+                    imageButton.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        fileInput.click();
+                    }, true); // Use capture phase
+                }
+            }
+
             // Set container to position relative for mention list positioning
             container.style.position = 'relative';
 
