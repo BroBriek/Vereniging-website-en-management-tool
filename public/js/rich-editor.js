@@ -328,7 +328,8 @@ window.initializeRichEditors = function(elements) {
                     // Show a placeholder or loading state if needed
                     const range = quillInstance.getSelection() || { index: quillInstance.getLength() };
                     
-                    const response = await fetch('/admin/api/upload-image', {
+                    const uploadUrl = window.location.pathname.startsWith('/admin') ? '/admin/api/upload-image' : '/feed/api/upload-image';
+                    const response = await fetch(uploadUrl, {
                         method: 'POST',
                         body: formData
                     });

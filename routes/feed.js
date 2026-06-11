@@ -27,6 +27,7 @@ router.post('/comment/:id/like', feedController.toggleCommentLike);
 router.post('/comment/:id/update', feedController.updateComment);
 router.post('/comment/:id/delete', feedController.deleteComment);
 router.post('/api/fix-image', feedController.fixImageApi);
+router.post('/api/upload-image', upload.single('image'), compressFeedImage, feedController.uploadImageApi);
 router.post('/respond', feedController.postResponse);
 router.post('/announcements/:id/dismiss', feedController.postDismissAnnouncement);
 router.post('/announcements/:id/survey', feedController.postSurveyResponse);

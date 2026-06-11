@@ -1698,4 +1698,14 @@ exports.postSurveyResponse = async (req, res) => {
     }
 };
 
+exports.uploadImageApi = (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Geen afbeelding geüpload' });
+    }
+    // Return the URL for the editor
+    res.json({ 
+        url: `/feed_uploads/${req.file.filename}` 
+    });
+};
+
 
