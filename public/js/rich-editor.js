@@ -103,10 +103,10 @@ window.initializeRichEditors = function(elements) {
             fileInput.style.visibility = 'hidden';
             document.body.appendChild(fileInput);
 
-            fileInput.onchange = () => {
+            fileInput.onchange = async () => {
                 const file = fileInput.files[0];
                 if (file) {
-                    uploadFile(file, quill);
+                    await uploadFile(file, quill);
                 }
                 fileInput.value = ''; // Reset to allow uploading the same file again
             };
@@ -360,10 +360,10 @@ window.initializeRichEditors = function(elements) {
                 document.body.appendChild(input);
                 input.click();
 
-                input.onchange = () => {
+                input.onchange = async () => {
                     const file = input.files[0];
                     if (file) {
-                        uploadFile(file, quill);
+                        await uploadFile(file, quill);
                     }
                     if (input.parentNode) {
                         document.body.removeChild(input);
