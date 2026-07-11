@@ -1332,11 +1332,11 @@ exports.getGroupFiles = async (req, res) => {
         const group = await FeedGroup.findOne({ where: { slug } });
         const allowed = await ensureAccessToGroup(req.user, group);
         if (!allowed) return res.status(403).send('Geen toegang');
-        const posts = await Post.findAll({ where: { groupId: group.id } });
+        const posts = await Post.findAll({ where: { groupId: group.id }, order: [['createdAt', 'DESC']] });
         const files = [];
         posts.forEach(p => {
             if (Array.isArray(p.attachments)) {
-                p.attachments.forEach(a => files.push({ path: a.path, originalName: a.originalName, postId: p.id }));
+                p.attachments.forEach(a => files.push({ path: a.path, originalName: a.originalName, postId: p.id, createdAt: p.createdAt }));
             }
         });
         res.render('feed/files', { title: 'Bestanden', files, group, user: req.user });

@@ -95,6 +95,19 @@ User.beforeUpdate(async (user) => {
   }
 });
 
+// Ensure JSON columns never get saved as empty strings (causes JSON.parse crash in SQLite)
+User.beforeSave((user) => {
+  if (!user.pushSubscriptions || (typeof user.pushSubscriptions === 'string' && user.pushSubscriptions.trim() === '')) {
+    user.pushSubscriptions = [];
+  }
+  if (!user.notificationPreferences || (typeof user.notificationPreferences === 'string' && user.notificationPreferences.trim() === '')) {
+    user.notificationPreferences = { mention: true, comment: true, reaction: true, newPost: true, birthday: true };
+  }
+  if (!user.dismissedAnnouncements || (typeof user.dismissedAnnouncements === 'string' && user.dismissedAnnouncements.trim() === '')) {
+    user.dismissedAnnouncements = [];
+  }
+});
+
 User.prototype.validatePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
