@@ -17,20 +17,50 @@
         <p class="mt-3 text-muted">Nog geen bestanden geüpload in deze groep.</p>
       </div>
     <% } else { %>
+      <!-- Search bar and filter controls -->
+      <div class="px-4 pt-3 pb-2">
+        <div class="row g-2 align-items-center">
+          <div class="col-12 col-md-6 col-lg-5">
+            <div class="position-relative">
+              <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 14px; pointer-events: none;"></i>
+              <input type="text" id="filesSearchInput" class="form-control rounded-pill ps-5 border-light shadow-sm" placeholder="Zoek bestanden..." autocomplete="off">
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-lg-4">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-funnel text-muted"></i>
+              <select id="filesSortSelect" class="form-select form-select-sm rounded-pill border-light shadow-sm" style="max-width: 280px;">
+                <option value="newest" selected>Nieuwste eerst</option>
+                <option value="oldest">Oudste eerst</option>
+                <option value="name-asc">Naam (A → Z)</option>
+                <option value="name-desc">Naam (Z → A)</option>
+                <option value="type-asc">Type (A → Z)</option>
+                <option value="type-desc">Type (Z → A)</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-12 col-lg-3">
+            <span id="filesResultCount" class="text-muted small"></span>
+          </div>
+        </div>
+      </div>
+
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0" id="filesTable">
           <thead class="bg-light">
             <tr>
               <th class="ps-4">Naam</th>
               <th>Type</th>
+              <th>Datum</th>
               <th class="text-end pe-4">Acties</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="filesTableBody">
             <% files.forEach(f => { 
                 const ext = f.originalName.split('.').pop().toUpperCase();
+                const uploadDate = f.createdAt ? new Date(f.createdAt) : null;
             %>
-              <tr>
+              <tr data-name="<%= f.originalName.toLowerCase() %>" data-ext="<%= ext.toLowerCase() %>" data-date="<%= uploadDate ? uploadDate.toISOString() : '' %>">
                 <td class="ps-4">
                   <a href="/download?path=<%= encodeURIComponent(f.path) %>&name=<%= encodeURIComponent(f.originalName) %>" onclick="openFilePreview('<%= f.path %>', '<%= f.originalName %>'); return false;" class="text-decoration-none fw-medium text-dark d-flex align-items-center">
                     <i class="bi bi-file-earmark-<%= ['PDF','JPG','JPEG','PNG','DOC','DOCX'].includes(ext) ? 'text' : 'code' %> me-3 fs-5 text-primary"></i>
@@ -38,6 +68,13 @@
                   </a>
                 </td>
                 <td><span class="badge bg-light text-dark border"><%= ext %></span></td>
+                <td class="text-muted small text-nowrap">
+                  <% if (uploadDate) { %>
+                    <%= uploadDate.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                  <% } else { %>
+                    —
+                  <% } %>
+                </td>
                 <td class="text-end pe-4">
                   <div class="btn-group">
                     <button class="btn btn-sm btn-outline-primary rounded-start-pill px-3" onclick="openFilePreview('<%= f.path %>', '<%= f.originalName %>')">
@@ -53,6 +90,12 @@
           </tbody>
         </table>
       </div>
+
+      <!-- No results message (hidden by default) -->
+      <div id="filesNoResults" class="p-4 text-center d-none">
+        <i class="bi bi-search display-4 text-muted opacity-25"></i>
+        <p class="mt-2 text-muted">Geen bestanden gevonden die overeenkomen met je zoekopdracht.</p>
+      </div>
     <% } %>
   </div>
 </div>
@@ -60,5 +103,108 @@
 <script>
 // triggerDownload and openFilePreview are now provided by /js/download-helper.js
 </script>
+
+<% if (files.length > 0) { %>
+<script>
+(function() {
+  const searchInput = document.getElementById('filesSearchInput');
+  const sortSelect = document.getElementById('filesSortSelect');
+  const tbody = document.getElementById('filesTableBody');
+  const noResults = document.getElementById('filesNoResults');
+  const resultCount = document.getElementById('filesResultCount');
+  const totalFiles = <%= files.length %>;
+
+  function getRows() {
+    return Array.from(tbody.querySelectorAll('tr'));
+  }
+
+  function updateResultCount(visibleCount) {
+    if (searchInput.value.trim()) {
+      resultCount.textContent = visibleCount + ' van ' + totalFiles + ' bestanden';
+    } else {
+      resultCount.textContent = totalFiles + ' bestanden';
+    }
+  }
+
+  function filterRows() {
+    const query = searchInput.value.trim().toLowerCase();
+    const rows = getRows();
+    let visible = 0;
+
+    rows.forEach(row => {
+      const name = row.getAttribute('data-name') || '';
+      const ext = row.getAttribute('data-ext') || '';
+      const match = !query || name.includes(query) || ext.includes(query);
+      row.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    noResults.classList.toggle('d-none', visible > 0);
+    document.getElementById('filesTable').classList.toggle('d-none', visible === 0);
+    updateResultCount(visible);
+  }
+
+  function sortRows() {
+    const sortBy = sortSelect.value;
+    const rows = getRows();
+
+    rows.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest': {
+          const dA = a.getAttribute('data-date') || '';
+          const dB = b.getAttribute('data-date') || '';
+          return dB.localeCompare(dA);
+        }
+        case 'oldest': {
+          const dA = a.getAttribute('data-date') || '';
+          const dB = b.getAttribute('data-date') || '';
+          return dA.localeCompare(dB);
+        }
+        case 'name-asc': {
+          const nA = a.getAttribute('data-name') || '';
+          const nB = b.getAttribute('data-name') || '';
+          return nA.localeCompare(nB, 'nl');
+        }
+        case 'name-desc': {
+          const nA = a.getAttribute('data-name') || '';
+          const nB = b.getAttribute('data-name') || '';
+          return nB.localeCompare(nA, 'nl');
+        }
+        case 'type-asc': {
+          const eA = a.getAttribute('data-ext') || '';
+          const eB = b.getAttribute('data-ext') || '';
+          return eA.localeCompare(eB, 'nl') || (a.getAttribute('data-name') || '').localeCompare(b.getAttribute('data-name') || '', 'nl');
+        }
+        case 'type-desc': {
+          const eA = a.getAttribute('data-ext') || '';
+          const eB = b.getAttribute('data-ext') || '';
+          return eB.localeCompare(eA, 'nl') || (a.getAttribute('data-name') || '').localeCompare(b.getAttribute('data-name') || '', 'nl');
+        }
+        default:
+          return 0;
+      }
+    });
+
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+  }
+
+  // Debounced search for performance
+  let searchTimeout;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(filterRows, 150);
+  });
+
+  sortSelect.addEventListener('change', () => {
+    sortRows();
+    filterRows();
+  });
+
+  // Initial count
+  updateResultCount(totalFiles);
+})();
+</script>
+<% } %>
 
 <%- include('../partials/footer') %>
