@@ -1,14 +1,14 @@
 <%- include('../partials/header') %>
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Kalender Beheren</h1>
-    <div class="d-flex gap-2">
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addEventModal">
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+    <h1 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Kalender Beheren</h1>
+    <div class="d-flex gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end">
+        <button class="btn btn-success flex-grow-1 flex-sm-grow-0 rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#addEventModal">
             <i class="bi bi-plus-circle me-1"></i> Activiteit Toevoegen
         </button>
-        <a href="/admin/info" class="btn btn-info text-white" title="Algemene Hulp & Info">
+        <a href="/admin/info" class="btn btn-info text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Algemene Hulp & Info">
             <i class="bi bi-info-circle"></i>
         </a>
-        <a href="/admin" class="btn btn-secondary">Terug</a>
+        <a href="/admin" class="btn btn-secondary rounded-pill px-3">Terug</a>
     </div>
 </div>
 
@@ -23,27 +23,27 @@
             <div class="modal-body">
                 <form action="/admin/events" method="POST" enctype="multipart/form-data">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label class="fw-bold">Titel</label>
                             <input type="text" class="form-control" name="title" required placeholder="bv. Zondagse Vergadering">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <label class="fw-bold">Begindatum</label>
                             <input type="date" class="form-control" name="date" required>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <label class="fw-bold">Einddatum (optioneel)</label>
                             <input type="date" class="form-control" name="endDate">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <label class="fw-bold">Startuur (optioneel)</label>
                             <input type="time" class="form-control" name="startTime">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <label class="fw-bold">Einduur (optioneel)</label>
                             <input type="time" class="form-control" name="endTime">
                         </div>
-                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                        <div class="col-12 col-md-6 mb-3 d-flex align-items-end">
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="isPrivate" id="isPrivate">
                                 <label class="form-check-label" for="isPrivate">Alleen voor leiding (interne kalender)</label>
@@ -70,7 +70,54 @@
 </div>
 
 <h3>Geplande Activiteiten</h3>
-<div class="table-responsive mb-4">
+<!-- Mobile Layout for Active Events -->
+<div class="d-md-none mb-4">
+    <% if (activeEvents.length === 0) { %>
+        <div class="text-center text-muted py-4 card shadow-sm border-0 rounded-4 mb-3">
+            <div class="card-body">Geen geplande activiteiten gevonden.</div>
+        </div>
+    <% } else { %>
+        <% activeEvents.forEach(event => { %>
+            <div class="card shadow-sm border-0 rounded-4 mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge <%= event.isPrivate ? 'bg-warning text-dark' : 'bg-info text-white' %> rounded-pill px-3">
+                            <%= event.isPrivate ? 'Leiding' : 'Publiek' %>
+                        </span>
+                        <div class="text-muted small fw-bold">
+                            <i class="bi bi-calendar3 me-1"></i><%= event.date %>
+                            <% if (event.endDate && event.endDate !== event.date) { %>
+                                <span>t/m <%= event.endDate %></span>
+                            <% } %>
+                        </div>
+                    </div>
+                    <h5 class="card-title fw-bold mb-3"><%= event.title %></h5>
+                    <% if (event.startTime || event.endTime) { %>
+                        <p class="card-text text-muted small mb-3">
+                            <i class="bi bi-clock me-1"></i>
+                            <%= event.startTime || '00:00' %> <%= event.endTime ? 't/m ' + event.endTime : '' %>
+                        </p>
+                    <% } %>
+                    <div class="d-flex justify-content-end gap-2 border-top pt-2 mt-2">
+                        <form action="/admin/events/<%= event.id %>/archive" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-3" title="Archiveren">
+                                <i class="bi bi-archive me-1"></i> Archiveren
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
+                            <i class="bi bi-pencil me-1"></i> Bewerken
+                        </button>
+                        <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-trash me-1"></i> Wis</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    <% } %>
+</div>
+
+<div class="d-none d-md-block table-responsive mb-4">
     <table class="table table-striped align-middle">
         <thead>
             <tr>
@@ -135,7 +182,48 @@
 
 <% if (archivedEvents.length > 0) { %>
     <h3>Gearchiveerde Activiteiten</h3>
-    <div class="table-responsive mb-4">
+    <!-- Mobile Layout for Archived Events -->
+    <div class="d-md-none mb-4">
+        <% archivedEvents.forEach(event => { %>
+            <div class="card shadow-sm border-0 rounded-4 mb-3 bg-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-secondary text-white rounded-pill px-3">Gearchiveerd</span>
+                        <div class="text-muted small fw-bold">
+                            <i class="bi bi-calendar3 me-1"></i><%= event.date %>
+                            <% if (event.endDate && event.endDate !== event.date) { %>
+                                <span>t/m <%= event.endDate %></span>
+                            <% } %>
+                        </div>
+                    </div>
+                    <h5 class="card-title fw-bold text-muted mb-3"><%= event.title %></h5>
+                    <% if (event.startTime || event.endTime) { %>
+                        <p class="card-text text-muted small mb-3">
+                            <i class="bi bi-clock me-1"></i>
+                            <%= event.startTime || '00:00' %> <%= event.endTime ? 't/m ' + event.endTime : '' %>
+                        </p>
+                    <% } %>
+                    <div class="d-flex justify-content-end gap-2 border-top pt-2 mt-2">
+                        <% if (event.isArchived) { %>
+                            <form action="/admin/events/<%= event.id %>/unarchive" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3" title="Dearchiveren">
+                                    <i class="bi bi-arrow-up-circle me-1"></i> Dearchiveren
+                                </button>
+                            </form>
+                        <% } %>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
+                            <i class="bi bi-pencil me-1"></i> Bewerken
+                        </button>
+                        <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-trash me-1"></i> Wis</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+
+    <div class="d-none d-md-block table-responsive mb-4">
         <table class="table table-striped align-middle">
             <thead>
                 <tr>
@@ -206,27 +294,27 @@
             <div class="modal-body">
                 <form id="editForm" method="POST" enctype="multipart/form-data">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label>Titel</label>
                             <input type="text" class="form-control" name="title" id="editTitle" required>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <label>Begindatum</label>
                             <input type="date" class="form-control" name="date" id="editDate" required>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <label>Einddatum (optioneel)</label>
                             <input type="date" class="form-control" name="endDate" id="editEndDate">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <label>Startuur (optioneel)</label>
                             <input type="time" class="form-control" name="startTime" id="editStartTime">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-3">
                             <label>Einduur (optioneel)</label>
                             <input type="time" class="form-control" name="endTime" id="editEndTime">
                         </div>
-                        <div class="col-md-3 mb-3 d-flex align-items-end">
+                        <div class="col-12 col-md-3 mb-3 d-flex align-items-end">
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="isPrivate" id="editIsPrivate">
                                 <label class="form-check-label" for="editIsPrivate">Alleen voor leiding</label>
