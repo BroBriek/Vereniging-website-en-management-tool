@@ -78,13 +78,15 @@ function closePolaroid() {
 </script>
 
 <%- include('../partials/header') %>
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Gebruikers Beheren</h1>
-    <div>
-        <a href="/admin/info" class="btn btn-info text-white me-2" title="Algemene Hulp & Info">
-            <i class="bi bi-info-circle"></i> Algemene Info
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+    <h1 class="mb-0">Gebruikers Beheren</h1>
+    <div class="d-flex gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end">
+        <a href="/admin" class="btn btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
+            <i class="bi bi-arrow-left me-1"></i> <span class="d-none d-sm-inline">Terug naar Dashboard</span><span class="d-inline d-sm-none">Terug</span>
         </a>
-        <a href="/admin" class="btn btn-secondary">Terug</a>
+        <a href="/admin/info" class="btn btn-info text-white rounded-pill px-3" title="Algemene Hulp & Info">
+            <i class="bi bi-info-circle me-1"></i> Info
+        </a>
     </div>
 </div>
 
