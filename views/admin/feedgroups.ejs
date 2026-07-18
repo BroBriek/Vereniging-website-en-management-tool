@@ -172,7 +172,8 @@ function openEditModal(id, name, year, desc, isEvent) {
     const form = document.getElementById('editGroupForm');
     // Ensure ID is valid before setting action
     if (id) {
-        form.action = '/admin/feedgroups/' + id;
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        form.action = '/admin/feedgroups/' + id + (token ? '?_csrf=' + token : '');
     }
     
     document.getElementById('editName').value = name;

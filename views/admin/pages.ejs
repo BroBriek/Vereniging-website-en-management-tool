@@ -297,7 +297,8 @@
 
     function confirmDelete(id, title) {
         document.getElementById('deletePageTitle').innerText = title;
-        document.getElementById('deleteForm').action = '/admin/custom-pages/' + id + '/delete';
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        document.getElementById('deleteForm').action = '/admin/custom-pages/' + id + '/delete' + (token ? '?_csrf=' + token : '');
         new bootstrap.Modal(document.getElementById('deleteModal')).show();
     }
 </script>
