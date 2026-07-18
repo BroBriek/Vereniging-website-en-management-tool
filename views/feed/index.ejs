@@ -2529,7 +2529,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confirm('Weet je zeker dat je dit event wilt verwijderen? Alle posts in dit event gaan ook verloren.')) {
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = `/feed/group/${id}/delete`;
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            form.action = `/feed/group/${id}/delete` + (token ? `?_csrf=${token}` : '');
+            if (token) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_csrf';
+                csrfInput.value = token;
+                form.appendChild(csrfInput);
+            }
             document.body.appendChild(form);
             form.submit();
         }

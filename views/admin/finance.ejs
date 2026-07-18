@@ -617,7 +617,8 @@
         const paid = btn.getAttribute('data-item-paid');
 
         const form = document.getElementById('editForm');
-        form.action = `/admin/finance/item/${id}?_method=PUT`;
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        form.action = `/admin/finance/item/${id}?_method=PUT` + (token ? `&_csrf=${token}` : '');
         
         document.getElementById('editName').value = name;
         

@@ -351,7 +351,8 @@
 <script>
     function openEditModal(event) {
         const form = document.getElementById('editForm');
-        form.action = `/admin/events/${event.id}?_method=PUT`;
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        form.action = `/admin/events/${event.id}?_method=PUT` + (token ? `&_csrf=${token}` : '');
         
         document.getElementById('editTitle').value = event.title;
         document.getElementById('editDate').value = event.date;
