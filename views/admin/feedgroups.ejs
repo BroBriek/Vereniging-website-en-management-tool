@@ -1,4 +1,19 @@
 <%- include('../partials/header') %>
+<style>
+  .user-list-item:hover {
+      background-color: #f8f9fa !important;
+      border-color: #3498db !important;
+  }
+  .user-list-item.selected {
+      background-color: #e3f2fd;
+  }
+  .transition-all {
+      transition: all 0.2s ease;
+  }
+  .cursor-pointer {
+      cursor: pointer;
+  }
+</style>
 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
   <h1 class="mb-0">Leidingshoekjes beheren</h1>
   <div class="d-flex gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end">
@@ -14,7 +29,16 @@
 <%
   const normalGroups = groups.filter(g => !g.isEvent);
   const eventGroups = groups.filter(g => g.isEvent);
+  
+  const groupMap = {};
+  groups.forEach(g => {
+    groupMap[g.id] = (g.members || []).map(m => m.id);
+  });
 %>
+
+<script>
+  const groupMembers = <%- JSON.stringify(groupMap) %>;
+</script>
 
 <!-- Add Page Modal -->
 <div class="modal fade" id="addPageModal" tabindex="-1" aria-hidden="true">
@@ -40,10 +64,48 @@
               <input type="text" name="description" class="form-control" placeholder="Omschrijving">
             </div>
           </div>
-          <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="newGroupIsEvent" name="isEvent">
-            <label class="form-check-label" for="newGroupIsEvent">Dit is een event</label>
+          
+          <hr>
+          
+          <h5 class="fw-bold mb-3"><i class="bi bi-people-fill me-2"></i> Toegang Beheren</h5>
+          
+          <div class="mb-3">
+            <label class="form-label small text-muted">Klik op een groep om alle leden te selecteren</label>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <% groups.forEach(g => { %>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill group-shortcut-btn" 
+                        data-group-id="<%= g.id %>" 
+                        onclick="toggleGroupUsers('create', <%= g.id %>)">
+                  + <%= g.name %>
+                </button>
+              <% }) %>
+            </div>
           </div>
+
+          <div class="mb-3">
+            <label class="form-label small text-muted d-flex justify-content-between">
+              Selecteer gebruikers die toegang hebben tot dit hoekje
+              <span class="text-primary cursor-pointer" onclick="clearUserSelection('create')">Wis alles</span>
+            </label>
+            <div class="input-group input-group-sm mb-2">
+              <span class="input-group-text bg-white border border-end-0 rounded-start-pill"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control border border-start-0 rounded-end-pill user-search-input" 
+                     data-target="create-user-list" placeholder="Zoek gebruiker..." onkeyup="filterUserList(this)">
+            </div>
+            <div id="create-user-list" class="border rounded-4 p-1 bg-white overflow-auto" style="max-height: 250px; border-color: #dee2e6 !important;">
+              <% allUsers.forEach(u => { %>
+                <div class="user-list-item d-flex align-items-center justify-content-between p-2 mb-1 rounded cursor-pointer transition-all" 
+                     onclick="toggleUserCheckbox(this)" data-username="<%= u.username.toLowerCase() %>" style="border: 1px solid transparent;">
+                  <label class="form-check-label mb-0 ms-2 fw-medium cursor-pointer" for="create_user_<%= u.id %>">
+                    <%= capitalizeName(u.username) %>
+                  </label>
+                  <input class="form-check-input me-2" type="checkbox" name="userIds[]" value="<%= u.id %>" 
+                         id="create_user_<%= u.id %>" onclick="event.stopPropagation(); updateGroupButtonStates('create');">
+                </div>
+              <% }) %>
+            </div>
+          </div>
+
           <div class="text-end mt-3">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
             <button type="submit" class="btn btn-success">Opslaan & Toevoegen</button>
@@ -77,7 +139,7 @@
           <td class="d-none d-sm-table-cell"><%= g.year || '' %></td>
           <td class="text-end">
             <div class="btn-group">
-              <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('<%= g.id %>', '<%= g.name %>', '<%= g.year || '' %>', '<%= g.description || '' %>', <%= g.isEvent ? 'true' : 'false' %>)" title="Bewerken">
+              <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('<%= g.id %>', '<%= g.name %>', '<%= g.year || '' %>', '<%= g.description || '' %>', <%= g.isEvent ? 'true' : 'false' %>, <%= JSON.stringify((g.members || []).map(m => m.id)) %>)" title="Bewerken">
                 <i class="bi bi-pencil"></i>
               </button>
               <form action="/admin/feedgroups/<%= g.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Verwijderen?');" style="display:inline;">
@@ -115,7 +177,7 @@
             <td class="d-none d-sm-table-cell"><%= g.year || '' %></td>
             <td class="text-end">
               <div class="btn-group">
-                <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('<%= g.id %>', '<%= g.name %>', '<%= g.year || '' %>', '<%= g.description || '' %>', <%= g.isEvent ? 'true' : 'false' %>)" title="Bewerken">
+                <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('<%= g.id %>', '<%= g.name %>', '<%= g.year || '' %>', '<%= g.description || '' %>', <%= g.isEvent ? 'true' : 'false' %>, <%= JSON.stringify((g.members || []).map(m => m.id)) %>)" title="Bewerken">
                   <i class="bi bi-pencil"></i>
                 </button>
                 <form action="/admin/feedgroups/<%= g.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Verwijderen?');" style="display:inline;">
@@ -132,7 +194,7 @@
 
 <!-- Edit Modal -->
 <div class="modal fade" id="editGroupModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Groep Bewerken</h5>
@@ -153,10 +215,48 @@
             <label>Omschrijving</label>
             <input type="text" name="description" id="editDesc" class="form-control">
           </div>
-          <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="editIsEvent" name="isEvent">
-            <label class="form-check-label" for="editIsEvent">Dit is een event</label>
+
+          <hr>
+          
+          <h5 class="fw-bold mb-3"><i class="bi bi-people-fill me-2"></i> Toegang Beheren</h5>
+          
+          <div class="mb-3">
+            <label class="form-label small text-muted">Klik op een groep om alle leden te selecteren</label>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <% groups.forEach(g => { %>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill group-shortcut-btn" 
+                        data-group-id="<%= g.id %>" 
+                        onclick="toggleGroupUsers('edit', <%= g.id %>)">
+                  + <%= g.name %>
+                </button>
+              <% }) %>
+            </div>
           </div>
+
+          <div class="mb-3">
+            <label class="form-label small text-muted d-flex justify-content-between">
+              Selecteer gebruikers die toegang hebben tot dit hoekje
+              <span class="text-primary cursor-pointer" onclick="clearUserSelection('edit')">Wis alles</span>
+            </label>
+            <div class="input-group input-group-sm mb-2">
+              <span class="input-group-text bg-white border border-end-0 rounded-start-pill"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control border border-start-0 rounded-end-pill user-search-input" 
+                     data-target="edit-user-list" placeholder="Zoek gebruiker..." onkeyup="filterUserList(this)">
+            </div>
+            <div id="edit-user-list" class="border rounded-4 p-1 bg-white overflow-auto" style="max-height: 250px; border-color: #dee2e6 !important;">
+              <% allUsers.forEach(u => { %>
+                <div class="user-list-item d-flex align-items-center justify-content-between p-2 mb-1 rounded cursor-pointer transition-all" 
+                     onclick="toggleUserCheckbox(this)" data-username="<%= u.username.toLowerCase() %>" style="border: 1px solid transparent;">
+                  <label class="form-check-label mb-0 ms-2 fw-medium cursor-pointer" for="edit_user_<%= u.id %>">
+                    <%= capitalizeName(u.username) %>
+                  </label>
+                  <input class="form-check-input me-2" type="checkbox" name="userIds[]" value="<%= u.id %>" 
+                         id="edit_user_<%= u.id %>" onclick="event.stopPropagation(); updateGroupButtonStates('edit');">
+                </div>
+              <% }) %>
+            </div>
+          </div>
+
           <div class="text-end">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
             <button type="submit" class="btn btn-primary">Opslaan</button>
@@ -168,9 +268,88 @@
 </div>
 
 <script>
-function openEditModal(id, name, year, desc, isEvent) {
+function filterUserList(input) {
+    const query = input.value.toLowerCase();
+    const targetId = input.getAttribute('data-target');
+    const container = document.getElementById(targetId);
+    if (!container) return;
+
+    const items = container.querySelectorAll('.user-list-item');
+    items.forEach(item => {
+        const username = item.getAttribute('data-username');
+        if (username.includes(query)) {
+            item.classList.remove('d-none');
+        } else {
+            item.classList.add('d-none');
+        }
+    });
+}
+
+function toggleUserCheckbox(row) {
+    const cb = row.querySelector('input[type="checkbox"]');
+    if (cb) {
+        cb.checked = !cb.checked;
+        const modalType = cb.id.startsWith('create') ? 'create' : 'edit';
+        updateGroupButtonStates(modalType);
+    }
+}
+
+function clearUserSelection(modalType) {
+    const container = document.getElementById(`${modalType}-user-list`);
+    if (!container) return;
+    const cbs = container.querySelectorAll('input[type="checkbox"]');
+    cbs.forEach(cb => cb.checked = false);
+    updateGroupButtonStates(modalType);
+}
+
+function toggleGroupUsers(modalType, groupId) {
+    const userIds = groupMembers[groupId] || [];
+    const container = document.getElementById(`${modalType}-user-list`);
+    if (!container) return;
+
+    let allSelected = true;
+    userIds.forEach(uid => {
+        const cb = document.getElementById(`${modalType}_user_${uid}`);
+        if (cb && !cb.checked) allSelected = false;
+    });
+
+    userIds.forEach(uid => {
+        const cb = document.getElementById(`${modalType}_user_${uid}`);
+        if (cb) cb.checked = !allSelected;
+    });
+
+    updateGroupButtonStates(modalType);
+}
+
+function updateGroupButtonStates(modalType) {
+    const modal = document.querySelector(modalType === 'create' ? '#addPageModal' : '#editGroupModal');
+    if (!modal) return;
+
+    const btns = modal.querySelectorAll('.group-shortcut-btn');
+    btns.forEach(btn => {
+        const gid = btn.getAttribute('data-group-id');
+        const uids = groupMembers[gid] || [];
+        
+        if (uids.length === 0) return;
+
+        let allChecked = true;
+        uids.forEach(uid => {
+            const cb = document.getElementById(`${modalType}_user_${uid}`);
+            if (!cb || !cb.checked) allChecked = false;
+        });
+
+        if (allChecked) {
+            btn.classList.add('active');
+            btn.innerHTML = `<i class="bi bi-check-lg"></i> ${btn.innerText.replace('+ ', '').replace('✓ ', '')}`;
+        } else {
+            btn.classList.remove('active');
+            btn.innerHTML = `+ ${btn.innerText.replace('+ ', '').replace('✓ ', '')}`;
+        }
+    });
+}
+
+function openEditModal(id, name, year, desc, isEvent, memberIds) {
     const form = document.getElementById('editGroupForm');
-    // Ensure ID is valid before setting action
     if (id) {
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         form.action = '/admin/feedgroups/' + id + (token ? '?_csrf=' + token : '');
@@ -179,11 +358,40 @@ function openEditModal(id, name, year, desc, isEvent) {
     document.getElementById('editName').value = name;
     document.getElementById('editYear').value = year;
     document.getElementById('editDesc').value = desc;
-    document.getElementById('editIsEvent').checked = isEvent === true || isEvent === 'true';
+    
+    // Clear search input and show all users
+    const editSearchInput = document.querySelector('[data-target="edit-user-list"]');
+    if (editSearchInput) {
+        editSearchInput.value = '';
+        filterUserList(editSearchInput);
+    }
+
+    // Set checked state for members
+    const editUserList = document.getElementById('edit-user-list');
+    if (editUserList) {
+        const checkboxes = editUserList.querySelectorAll('input[name="userIds[]"]');
+        checkboxes.forEach(cb => {
+            const uid = parseInt(cb.value);
+            cb.checked = memberIds && memberIds.includes(uid);
+        });
+    }
+    
+    updateGroupButtonStates('edit');
     
     const modal = new bootstrap.Modal(document.getElementById('editGroupModal'));
     modal.show();
 }
+
+// Reset create modal search and checkboxes when showing
+document.getElementById('addPageModal').addEventListener('show.bs.modal', function () {
+    const createSearchInput = document.querySelector('[data-target="create-user-list"]');
+    if (createSearchInput) {
+        createSearchInput.value = '';
+        filterUserList(createSearchInput);
+    }
+    clearUserSelection('create');
+    updateGroupButtonStates('create');
+});
 </script>
 
 <%- include('../partials/footer') %>

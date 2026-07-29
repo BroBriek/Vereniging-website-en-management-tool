@@ -857,19 +857,57 @@ exports.toggleUserStatus = async (req, res) => {
 };
 
 exports.getFeedGroups = async (req, res) => {
-    const groups = await FeedGroup.findAll({ order: [['year', 'DESC'], ['name', 'ASC']] });
-    res.render('admin/feedgroups', { title: 'Leidingshoekjes', groups, user: req.user });
+    try {
+        const groups = await FeedGroup.findAll({
+            include: [{
+                model: User,
+                as: 'members',
+                attributes: ['id', 'username']
+            }],
+            order: [['year', 'DESC'], ['name', 'ASC']]
+        });
+        const allUsers = await User.findAll({
+            where: {
+                isActive: true,
+                username: { [require('sequelize').Op.ne]: 'admin' }
+            },
+            attributes: ['id', 'username'],
+            order: [['username', 'ASC']]
+        });
+        res.render('admin/feedgroups', { title: 'Leidingshoekjes', groups, allUsers, user: req.user });
+    } catch (error) {
+        console.error('Error getting feed groups:', error);
+        res.redirect('/admin');
+    }
 };
 
 exports.postFeedGroup = async (req, res) => {
     try {
-        let { name, year, description } = req.body;
+        let { name, year, description, userIds } = req.body;
         name = (name || '').trim();
         const base = (name + (year ? '-' + year : '')).toLowerCase();
         const slug = base.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
         if (!name) return res.redirect('/admin/feedgroups?error=Naam vereist');
-        const isEvent = req.body.isEvent === 'on';
-        await FeedGroup.create({ name, year, description, slug, isEvent });
+        const isEvent = false;
+        const group = await FeedGroup.create({ name, year, description, slug, isEvent });
+
+        // Save access for selected users
+        const targetUserIds = new Set();
+        if (userIds) {
+            const ids = Array.isArray(userIds) ? userIds : [userIds];
+            ids.forEach(id => targetUserIds.add(parseInt(id)));
+        }
+
+        if (targetUserIds.size > 0) {
+            await UserGroupAccess.bulkCreate(
+                Array.from(targetUserIds).map(uid => ({
+                    userId: uid,
+                    feedGroupId: group.id,
+                    role: 'member'
+                }))
+            );
+        }
+
         res.redirect('/admin/feedgroups');
     } catch (error) {
         console.error('Error creating feed group:', error);
@@ -883,18 +921,37 @@ exports.postFeedGroup = async (req, res) => {
 exports.updateFeedGroup = async (req, res) => {
     try {
         const { id } = req.params;
-        let { name, year, description } = req.body;
+        let { name, year, description, userIds } = req.body;
         const group = await FeedGroup.findByPk(id);
         if (!group) return res.redirect('/admin/feedgroups?error=Niet gevonden');
 
         name = (name || '').trim();
         const base = (name + (year ? '-' + year : '')).toLowerCase();
         const slug = base.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-        const isEvent = req.body.isEvent === 'on';
+        const isEvent = group.isEvent || false;
 
         if (!name) return res.redirect('/admin/feedgroups?error=Naam vereist');
 
         await group.update({ name, year, description, slug, isEvent });
+
+        // Sync access
+        const targetUserIds = new Set();
+        if (userIds) {
+            const ids = Array.isArray(userIds) ? userIds : [userIds];
+            ids.forEach(id => targetUserIds.add(parseInt(id)));
+        }
+
+        await UserGroupAccess.destroy({ where: { feedGroupId: group.id } });
+        if (targetUserIds.size > 0) {
+            await UserGroupAccess.bulkCreate(
+                Array.from(targetUserIds).map(uid => ({
+                    userId: uid,
+                    feedGroupId: group.id,
+                    role: 'member'
+                }))
+            );
+        }
+
         res.redirect('/admin/feedgroups?success=Aangepast');
     } catch (error) {
         console.error('Error updating feed group:', error);
