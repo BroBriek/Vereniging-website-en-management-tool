@@ -140,13 +140,20 @@ if (!sessionSecret) {
   }
 }
 
+const REMEMBER_ME_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in ms
+
 app.use(session({
-  store: new SQLiteStore({ db: 'sessions.sqlite', dir: '.' }),
+  store: new SQLiteStore({
+    db: 'sessions.sqlite',
+    dir: '.',
+    // Keep sessions in the DB for up to 30 days so that "remember me" sessions survive
+    ttl: REMEMBER_ME_DURATION / 1000, // connect-sqlite3 expects seconds
+  }),
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: null, // Session cookie (expires on browser close)
+    maxAge: null, // Default: session cookie (expires on browser close); overridden to 30 days on login with "remember me"
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax'

@@ -1326,6 +1326,11 @@ function cancelAddUserOption(el) {
 }
 
 async function addUserPollOption(el, postId, pollIndex) {
+    if (window.currentUser && window.currentUser.username && window.currentUser.username.toLowerCase() === 'admin') {
+        if (!confirm('Weet je zeker dat je een optie wilt toevoegen aan deze poll?')) {
+            return;
+        }
+    }
     const container = el.closest('.user-add-option-container');
     const input = container.querySelector('input');
     const optionText = input.value.trim();
@@ -1514,6 +1519,11 @@ function addPollOptionToUI(pollWrapper, optionText, optionIndex, pollIndex, adde
 }
 
 async function togglePollVote(element, postId, pollIndex, index, allowMultiple) {
+    if (window.currentUser && window.currentUser.username && window.currentUser.username.toLowerCase() === 'admin') {
+        if (!confirm('Weet je zeker dat je op deze poll wilt stemmen?')) {
+            return;
+        }
+    }
     const container = element.closest('.poll-options-container');
     const allOptions = container.querySelectorAll('.poll-option-item');
     const isSelected = element.getAttribute('data-selected') === 'true';
@@ -1947,6 +1957,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event Delegation for Likes & Comments
     document.body.addEventListener('submit', async function(e) {
+        if (window.currentUser && window.currentUser.username && window.currentUser.username.toLowerCase() === 'admin') {
+            let actionText = '';
+            const actionAttr = e.target.getAttribute('action') || '';
+            if (e.target.matches('.like-form')) {
+                actionText = 'dit bericht of deze reactie leuk wilt vinden (liken)';
+            } else if (e.target.matches('.comment-form')) {
+                actionText = 'deze reactie wilt plaatsen';
+            } else if (actionAttr === '/feed/post') {
+                actionText = 'dit bericht wilt plaatsen';
+            } else if (actionAttr.includes('/feed/group/create-event')) {
+                actionText = 'dit event wilt aanmaken';
+            } else if (actionAttr.includes('/feed/group/') && actionAttr.endsWith('/update')) {
+                actionText = 'dit event/deze groep wilt bijwerken';
+            }
+
+            if (actionText && !confirm(`Weet je zeker dat je ${actionText}? Dit kan een melding sturen naar andere gebruikers.`)) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+        }
+
         if (e.target.matches('.like-form')) {
             e.preventDefault();
             const form = e.target;

@@ -13,13 +13,17 @@ exports.postLogin = (req, res, next) => {
     if (!user) { return res.redirect('/auth/login'); }
     req.logIn(user, (err) => {
       if (err) { return next(err); }
-      
+
+      const REMEMBER_ME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
       if (req.body.remember_me) {
-        // Set cookie to expire in 30 days
-        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
+        // Extend cookie AND tell the session it was modified so the store updates the expiry
+        req.session.cookie.maxAge = REMEMBER_ME_MS;
+        req.session.rememberMe = true; // flag so the store persists the extended TTL
       } else {
-        // If not checked, session cookie (expires when browser closes)
+        // Session cookie: expires when browser closes
         req.session.cookie.maxAge = null;
+        req.session.rememberMe = false;
       }
 
       // If returnTo existed in the old session, ensure it's cleared from the new one if it persisted
