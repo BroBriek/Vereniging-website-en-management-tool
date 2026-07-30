@@ -110,6 +110,9 @@ const viewHelpers = { getAvatarColor, getInitials, highlightMentions };
 
 exports.getCalendar = async (req, res) => {
     try {
+        if (req.user && req.user.role === 'kookmoeke') {
+            return res.redirect('/tetterhoekje');
+        }
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -144,43 +147,53 @@ exports.getCalendar = async (req, res) => {
 const getAccessibleGroups = async (user) => {
     const today = new Date().toISOString().split('T')[0];
 
-    // Admins see everything
+    const nonTetterCondition = {
+        [Op.or]: [
+            { isTetterhoekje: false },
+            { isTetterhoekje: null }
+        ]
+    };
+
+    // Admins see everything (excluding Tetterhoekje groups from the main feed view)
     if (user.role === 'admin') {
         return await FeedGroup.findAll({ 
+            where: nonTetterCondition,
             order: [['isEvent', 'ASC'], ['year', 'DESC'], ['name', 'ASC']] 
         });
     }
 
-    // Regular users see:
-    // 1. Events they created OR are a member of, IF today is between startDate and endDate
-    //    If startDate/endDate are null, they are considered "always active"
-    // 2. Normal groups they are a member of
+    // Regular users see normal groups and active events they belong to
     const groups = await FeedGroup.findAll({
         where: {
-            [Op.or]: [
+            [Op.and]: [
+                nonTetterCondition,
                 {
-                    [Op.and]: [
-                        { isEvent: true },
+                    [Op.or]: [
                         {
-                            [Op.or]: [
-                                { creatorId: user.id },
-                                { '$members.id$': user.id }
+                            [Op.and]: [
+                                { isEvent: true },
+                                {
+                                    [Op.or]: [
+                                        { creatorId: user.id },
+                                        { '$members.id$': user.id }
+                                    ]
+                                },
+                                {
+                                    [Op.or]: [
+                                        { startDate: { [Op.lte]: today }, endDate: { [Op.gte]: today } },
+                                        { startDate: null, endDate: { [Op.gte]: today } },
+                                        { startDate: { [Op.lte]: today }, endDate: null },
+                                        { startDate: null, endDate: null }
+                                    ]
+                                }
                             ]
                         },
-                        {
-                            [Op.or]: [
-                                { startDate: { [Op.lte]: today }, endDate: { [Op.gte]: today } },
-                                { startDate: null, endDate: { [Op.gte]: today } },
-                                { startDate: { [Op.lte]: today }, endDate: null },
-                                { startDate: null, endDate: null }
+                        { 
+                            [Op.and]: [
+                                { isEvent: false },
+                                { '$members.id$': user.id }
                             ]
                         }
-                    ]
-                },
-                { 
-                    [Op.and]: [
-                        { isEvent: false },
-                        { '$members.id$': user.id }
                     ]
                 }
             ]
@@ -200,6 +213,7 @@ const getAccessibleGroups = async (user) => {
 const ensureAccessToGroup = async (user, group) => {
     if (!group) return false;
     if (user.role === 'admin') return true;
+    if (group.isTetterhoekje) return user.role === 'kookmoeke';
     if (group.isEvent && group.creatorId === user.id) return true;
     const count = await UserGroupAccess.count({ where: { userId: user.id, feedGroupId: group.id } });
     return count > 0;
@@ -233,6 +247,9 @@ exports.searchUsers = async (req, res) => {
 
 exports.getFeed = async (req, res) => {
     try {
+        if (req.user && req.user.role === 'kookmoeke') {
+            return res.redirect('/tetterhoekje');
+        }
         const disableQuote = SettingsService.get('disable_quote_of_the_month');
         const quoteOfTheMonth = disableQuote ? null : await quoteController.getQuoteOfTheMonth();
         const slug = req.params.slug || null;
@@ -566,39 +583,81 @@ exports.postCreatePost = async (req, res) => {
         // Send Notifications via NotificationService
         (async () => {
             const plainContent = stripHtml(cleanContent);
-            const messageData = {
-                title: 'Nieuw Bericht in Leidingshoekje',
-                body: `${req.user.username}: ${plainContent.substring(0, 40)}${plainContent.length > 40 ? '...' : ''}`,
-                url: group ? `/feed/group/${group.slug}` : '/feed',
-                type: 'newPost'
-            };
+            const isTetter = group && group.isTetterhoekje;
 
-            // 1. Group/Global Notification
-            if (group) {
+            if (isTetter) {
+                const messageData = {
+                    title: 'Nieuw Bericht in Het Tetterhoekje',
+                    body: `${req.user.username}: ${plainContent.substring(0, 40)}${plainContent.length > 40 ? '...' : ''}`,
+                    url: `/tetterhoekje/group/${group.slug}`,
+                    type: 'newPost',
+                    isTetterhoekje: true
+                };
                 await NotificationService.sendGroupNotification(group.id, messageData);
+
+                const mentionedUsernames = extractMentions(cleanContent);
+                if (mentionedUsernames.length > 0) {
+                    const mentionedUsers = await User.findAll({
+                        where: {
+                            username: { [Op.in]: mentionedUsernames },
+                            id: { [Op.ne]: req.user.id },
+                            role: { [Op.in]: ['kookmoeke', 'admin'] }
+                        }
+                    });
+
+                    const mentionMessage = {
+                        title: 'Je bent genoemd in een bericht',
+                        body: `${req.user.username} noemde je: "${stripHtml(cleanContent).substring(0, 30)}..."`,
+                        url: `/tetterhoekje/group/${group.slug}#post-${newPost.id}`,
+                        type: 'mention',
+                        isTetterhoekje: true
+                    };
+
+                    await Promise.allSettled(mentionedUsers.map(u => NotificationService.sendIndividualNotification(u, mentionMessage)));
+                }
             } else {
-                const allUsers = await User.findAll();
-                await Promise.allSettled(allUsers.map(u => NotificationService.sendIndividualNotification(u, messageData)));
-            }
-
-            // 2. Mention Notifications
-            const mentionedUsernames = extractMentions(cleanContent);
-            if (mentionedUsernames.length > 0) {
-                const mentionedUsers = await User.findAll({
-                    where: {
-                        username: { [Op.in]: mentionedUsernames },
-                        id: { [Op.ne]: req.user.id } // Don't notify self
-                    }
-                });
-
-                const mentionMessage = {
-                    title: 'Je bent genoemd in een bericht',
-                    body: `${req.user.username} noemde je: "${stripHtml(cleanContent).substring(0, 30)}..."`,
-                    url: group ? `/feed/group/${group.slug}#post-${newPost.id}` : `/feed#post-${newPost.id}`,
-                    type: 'mention'
+                const messageData = {
+                    title: 'Nieuw Bericht in Leidingshoekje',
+                    body: `${req.user.username}: ${plainContent.substring(0, 40)}${plainContent.length > 40 ? '...' : ''}`,
+                    url: group ? `/feed/group/${group.slug}` : '/feed',
+                    type: 'newPost',
+                    isTetterhoekje: false
                 };
 
-                await Promise.allSettled(mentionedUsers.map(u => NotificationService.sendIndividualNotification(u, mentionMessage)));
+                // 1. Group/Global Notification
+                if (group) {
+                    await NotificationService.sendGroupNotification(group.id, messageData);
+                } else {
+                    const allUsers = await User.findAll({
+                        where: {
+                            isActive: true,
+                            role: { [Op.ne]: 'kookmoeke' }
+                        }
+                    });
+                    await Promise.allSettled(allUsers.map(u => NotificationService.sendIndividualNotification(u, messageData)));
+                }
+
+                // 2. Mention Notifications
+                const mentionedUsernames = extractMentions(cleanContent);
+                if (mentionedUsernames.length > 0) {
+                    const mentionedUsers = await User.findAll({
+                        where: {
+                            username: { [Op.in]: mentionedUsernames },
+                            id: { [Op.ne]: req.user.id },
+                            role: { [Op.ne]: 'kookmoeke' }
+                        }
+                    });
+
+                    const mentionMessage = {
+                        title: 'Je bent genoemd in een bericht',
+                        body: `${req.user.username} noemde je: "${stripHtml(cleanContent).substring(0, 30)}..."`,
+                        url: group ? `/feed/group/${group.slug}#post-${newPost.id}` : `/feed#post-${newPost.id}`,
+                        type: 'mention',
+                        isTetterhoekje: false
+                    };
+
+                    await Promise.allSettled(mentionedUsers.map(u => NotificationService.sendIndividualNotification(u, mentionMessage)));
+                }
             }
         })();
 
@@ -625,6 +684,7 @@ exports.postComment = async (req, res) => {
         const post = await Post.findByPk(postId);
         let group = null;
         if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
+        const isTetter = group && group.isTetterhoekje;
 
         // Send Notification if it's a reply
         (async () => {
@@ -638,15 +698,23 @@ exports.postComment = async (req, res) => {
 
                 if (parentComment && parentComment.author && parentComment.author.id !== req.user.id) {
                     const targetUser = parentComment.author;
-                                        const messageData = {
-                                            title: 'Nieuwe reactie',
-                                            body: `${req.user.username} reageerde op je: "${stripHtml(content).substring(0, 30)}"...`,
-                    
-                        url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`,
-                        type: 'comment'
-                    };
-                    await NotificationService.sendIndividualNotification(targetUser, messageData);
-                    notifiedUserIds.add(targetUser.id);
+                    if (!isTetter && targetUser.role === 'kookmoeke') {
+                        // Skip kookmoeke for Leidingshoekje comments
+                    } else if (isTetter && targetUser.role !== 'kookmoeke' && targetUser.role !== 'admin') {
+                        // Skip non-kookmoeke/non-admin for Tetterhoekje comments
+                    } else {
+                        const messageData = {
+                            title: 'Nieuwe reactie',
+                            body: `${req.user.username} reageerde op je: "${stripHtml(content).substring(0, 30)}"...`,
+                            url: isTetter 
+                                ? (group ? `/tetterhoekje/group/${group.slug}#post-${postId}` : `/tetterhoekje#post-${postId}`)
+                                : (group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`),
+                            type: 'comment',
+                            isTetterhoekje: !!isTetter
+                        };
+                        await NotificationService.sendIndividualNotification(targetUser, messageData);
+                        notifiedUserIds.add(targetUser.id);
+                    }
                 }
             }
 
@@ -655,14 +723,23 @@ exports.postComment = async (req, res) => {
                 if (!notifiedUserIds.has(post.authorId)) {
                     const postAuthor = await User.findByPk(post.authorId);
                     if (postAuthor) {
-                         const messageData = {
-                            title: 'Nieuwe reactie op je bericht',
-                            body: `${req.user.username} reageerde op je bericht.`,
-                            url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`,
-                            type: 'comment'
-                        };
-                        await NotificationService.sendIndividualNotification(postAuthor, messageData);
-                        notifiedUserIds.add(postAuthor.id);
+                        if (!isTetter && postAuthor.role === 'kookmoeke') {
+                            // Skip kookmoeke for Leidingshoekje comments
+                        } else if (isTetter && postAuthor.role !== 'kookmoeke' && postAuthor.role !== 'admin') {
+                            // Skip non-kookmoeke/non-admin for Tetterhoekje comments
+                        } else {
+                            const messageData = {
+                                title: 'Nieuwe reactie op je bericht',
+                                body: `${req.user.username} reageerde op je bericht.`,
+                                url: isTetter 
+                                    ? (group ? `/tetterhoekje/group/${group.slug}#post-${postId}` : `/tetterhoekje#post-${postId}`)
+                                    : (group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`),
+                                type: 'comment',
+                                isTetterhoekje: !!isTetter
+                            };
+                            await NotificationService.sendIndividualNotification(postAuthor, messageData);
+                            notifiedUserIds.add(postAuthor.id);
+                        }
                     }
                 }
             }
@@ -670,18 +747,27 @@ exports.postComment = async (req, res) => {
             // 3. Mention Notifications
             const mentionedUsernames = extractMentions(content);
             if (mentionedUsernames.length > 0) {
-                const mentionedUsers = await User.findAll({
-                    where: {
-                        username: { [Op.in]: mentionedUsernames },
-                        id: { [Op.ne]: req.user.id }
-                    }
-                });
+                const mentionedWhere = {
+                    username: { [Op.in]: mentionedUsernames },
+                    id: { [Op.ne]: req.user.id }
+                };
+
+                if (isTetter) {
+                    mentionedWhere.role = { [Op.in]: ['kookmoeke', 'admin'] };
+                } else {
+                    mentionedWhere.role = { [Op.ne]: 'kookmoeke' };
+                }
+
+                const mentionedUsers = await User.findAll({ where: mentionedWhere });
 
                 const mentionMessage = {
                     title: 'Je bent genoemd in een reactie',
                     body: `${req.user.username} noemde je: "${stripHtml(content).substring(0, 30)}..."`,
-                    url: group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`,
-                    type: 'mention'
+                    url: isTetter 
+                        ? (group ? `/tetterhoekje/group/${group.slug}#post-${postId}` : `/tetterhoekje#post-${postId}`)
+                        : (group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`),
+                    type: 'mention',
+                    isTetterhoekje: !!isTetter
                 };
 
                 await Promise.allSettled(mentionedUsers.map(u => NotificationService.sendIndividualNotification(u, mentionMessage)));
@@ -1119,16 +1205,26 @@ exports.toggleCommentLike = async (req, res) => {
             const post = await Post.findByPk(comment.postId);
             let group = null;
             if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
+            const isTetter = group && group.isTetterhoekje;
 
             // Send notification if liked (not unliked) and not own comment
             if (!existingLike && comment.author && comment.author.id !== req.user.id) {
-                 const messageData = {
-                    title: 'Nieuwe like',
-                    body: `${req.user.username} vond je reactie leuk: "${stripHtml(comment.content).substring(0, 30)}..."`,
-                    url: group ? `/feed/group/${group.slug}#post-${post.id}` : `/feed#post-${post.id}`,
-                    type: 'reaction'
-                };
-                NotificationService.sendIndividualNotification(comment.author, messageData);
+                if (!isTetter && comment.author.role === 'kookmoeke') {
+                    // Skip kookmoeke for Leidingshoekje
+                } else if (isTetter && comment.author.role !== 'kookmoeke' && comment.author.role !== 'admin') {
+                    // Skip non-kookmoeke/admin for Tetterhoekje
+                } else {
+                    const messageData = {
+                        title: 'Nieuwe like',
+                        body: `${req.user.username} vond je reactie leuk: "${stripHtml(comment.content).substring(0, 30)}..."`,
+                        url: isTetter 
+                            ? (group ? `/tetterhoekje/group/${group.slug}#post-${post.id}` : `/tetterhoekje#post-${post.id}`)
+                            : (group ? `/feed/group/${group.slug}#post-${post.id}` : `/feed#post-${post.id}`),
+                        type: 'reaction',
+                        isTetterhoekje: !!isTetter
+                    };
+                    NotificationService.sendIndividualNotification(comment.author, messageData);
+                }
             }
 
             if (req.xhr || req.headers.accept.indexOf('json') > -1) {

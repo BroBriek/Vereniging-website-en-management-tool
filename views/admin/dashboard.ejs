@@ -13,22 +13,46 @@
             <h3>Persoonlijk Menu</h3>
         </div>
 
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-body text-center">
-                    <h3 class="card-title"><i class="bi bi-chat-left-text"></i></h3>
-                    <p>Ga naar het leidingshoekje voor berichten en bestanden.</p>
-                    <a href="/feed" class="btn btn-primary w-100">Leidingshoekje</a>
+        <% if (user.role !== 'kookmoeke') { %>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h3 class="card-title"><i class="bi bi-chat-left-text text-primary"></i></h3>
+                        <p>Ga naar het leidingshoekje voor berichten en bestanden.</p>
+                        <a href="/feed" class="btn btn-primary w-100">Leidingshoekje</a>
+                    </div>
                 </div>
             </div>
-        </div>
+        <% } %>
+
+        <% if (user.role === 'kookmoeke' || user.role === 'admin') { %>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-warning">
+                    <div class="card-body text-center">
+                        <h3 class="card-title"><i class="bi bi-heart-fill text-warning"></i></h3>
+                        <p>Ga naar het exclusieve praathoekje voor kookmoekes.</p>
+                        <a href="/tetterhoekje" class="btn btn-warning text-dark font-playful fw-bold w-100">Het Tetterhoekje</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-primary">
+                    <div class="card-body text-center">
+                        <h3 class="card-title"><i class="bi bi-journal-bookmark-fill text-primary"></i></h3>
+                        <p>Maak inzendingen met foto's en verhalen in het kampboekje.</p>
+                        <a href="/kampboekje" class="btn btn-primary font-playful fw-bold w-100">Kamp boekje</a>
+                    </div>
+                </div>
+            </div>
+        <% } %>
 
         <div class="col-md-4 mb-4">
             <div class="card h-100">
                 <div class="card-body text-center">
                     <h3 class="card-title"><i class="bi bi-calendar3"></i></h3>
-                    <p>Bekijk de volledige leidingskalender.</p>
-                    <a href="/feed/calendar" class="btn btn-primary w-100">Leidingskalender</a>
+                    <p><%= (user && user.role === 'kookmoeke') ? 'Bekijk de kalender.' : 'Bekijk de volledige leidingskalender.' %></p>
+                    <a href="<%= (user && user.role === 'kookmoeke') ? '/kalender' : '/feed/calendar' %>" class="btn btn-primary w-100"><%= (user && user.role === 'kookmoeke') ? 'Kalender' : 'Leidingskalender' %></a>
                 </div>
             </div>
         </div>

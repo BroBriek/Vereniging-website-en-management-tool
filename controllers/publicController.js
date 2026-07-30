@@ -224,7 +224,7 @@ exports.getLeaders = async (req, res) => {
 };
 
 exports.getCalendar = async (req, res) => {
-    if (req.user) {
+    if (req.user && req.user.role !== 'kookmoeke') {
         return res.redirect('/feed/calendar');
     }
     try {

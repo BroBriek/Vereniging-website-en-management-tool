@@ -1,4 +1,8 @@
 <%- include('../partials/header') %>
+<% const feedPrefix = typeof isTetterhoekje !== 'undefined' && isTetterhoekje ? '/tetterhoekje' : '/feed'; %>
+<script>
+    const FEED_BASE_URL = '<%= feedPrefix %>';
+</script>
 
 <style>
     /* Modern Feed Styles */
@@ -464,12 +468,14 @@ function autoResize(element) {
     <div class="mb-4">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center align-items-start gap-3 mb-3">
             <div>
-                <h1 class="font-playful text-dark mb-0">Leidingshoekje</h1>
+                <h1 class="font-playful text-dark mb-0"><%= typeof feedTitle !== 'undefined' ? feedTitle : (typeof isTetterhoekje !== 'undefined' && isTetterhoekje ? 'Het Tetterhoekje' : 'Leidingshoekje') %></h1>
             </div>
             <div class="d-flex flex-wrap gap-2 w-100 w-md-auto">
-                <a href="/feed/calendar" class="btn btn-outline-danger btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center">
+                <% if (user.role !== 'kookmoeke' && (typeof isTetterhoekje === 'undefined' || !isTetterhoekje)) { %>
+                <a href="<%= feedPrefix %>/calendar" class="btn btn-outline-danger btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center">
                     <i class="bi bi-calendar3"></i> <span class="d-inline d-sm-none d-lg-inline">Kalender</span><span class="d-none d-sm-inline d-lg-none">Leidingskalender</span>
                 </a>
+                <% } %>
                 <% if (typeof disableQuote === 'undefined' || !disableQuote) { %>
                 <a href="/quotes" class="btn btn-outline-primary btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center">
                     <i class="bi bi-chat-quote-fill"></i> Quoteboekje
@@ -559,7 +565,7 @@ function autoResize(element) {
                             <div class="carousel-item <%= index === activeNormalChunkIndex ? 'active' : '' %>">
                                 <div class="carousel-nav-container">
                                     <% chunk.forEach(g => { %>
-                                        <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>">
+                                        <a href="<%= feedPrefix %>/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>">
                                             <span><%= g.name %></span>
                                             <% if (g.year) { %>
                                                 <small class="opacity-75" style="margin-top: 2px;"><%= g.year %></small>
@@ -582,7 +588,7 @@ function autoResize(element) {
             <% } else { %>
                 <div class="carousel-nav-container no-scrollbar">
                     <% normalGroups.forEach(g => { %>
-                        <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>">
+                        <a href="<%= feedPrefix %>/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>">
                             <span><%= g.name %></span>
                             <% if (g.year) { %>
                                 <small class="opacity-75" style="margin-top: 2px;"><%= g.year %></small>
@@ -611,7 +617,7 @@ function autoResize(element) {
                             <div class="carousel-item <%= index === activeEventChunkIndex ? 'active' : '' %>">
                                 <div class="carousel-nav-container">
                                     <% chunk.forEach(g => { %>
-                                        <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>" style="<%= (activeGroup && g.id === activeGroup.id) ? 'background-color: #3498db; box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); border-color: #3498db;' : 'border-color: #3498db; color: #2980b9;' %>">
+                                        <a href="<%= feedPrefix %>/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>" style="<%= (activeGroup && g.id === activeGroup.id) ? 'background-color: #3498db; box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); border-color: #3498db;' : 'border-color: #3498db; color: #2980b9;' %>">
                                             <i class="bi bi-calendar-event me-1"></i> <span><%= g.name %></span>
                                         </a>
                                     <% }) %>
@@ -631,7 +637,7 @@ function autoResize(element) {
             <% } else { %>
                 <div class="carousel-nav-container no-scrollbar">
                     <% eventGroups.forEach(g => { %>
-                        <a href="/feed/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>" style="<%= (activeGroup && g.id === activeGroup.id) ? 'background-color: #3498db; box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); border-color: #3498db;' : 'border-color: #3498db; color: #2980b9;' %>">
+                        <a href="<%= feedPrefix %>/group/<%= g.slug %>" class="nav-chip text-decoration-none <%= (activeGroup && g.id === activeGroup.id) ? 'active' : '' %>" style="<%= (activeGroup && g.id === activeGroup.id) ? 'background-color: #3498db; box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); border-color: #3498db;' : 'border-color: #3498db; color: #2980b9;' %>">
                             <i class="bi bi-calendar-event me-1"></i> <span><%= g.name %></span>
                         </a>
                     <% }) %>
@@ -641,7 +647,7 @@ function autoResize(element) {
 
         <% if (activeGroup) { %>
             <div class="text-center mb-4">
-                <a href="/feed/group/<%= activeGroup.slug %>/files" class="btn btn-light btn-sm text-muted rounded-pill border">
+                <a href="<%= feedPrefix %>/group/<%= activeGroup.slug %>/files" class="btn btn-light btn-sm text-muted rounded-pill border">
                     <i class="bi bi-folder-fill text-warning"></i> Bestanden van <%= activeGroup.name %>
                 </a>
             </div>
@@ -708,7 +714,7 @@ function autoResize(element) {
         <div class="card post-card border-primary">
             <div class="card-body">
                 <h5 class="card-title font-playful mb-3">Nieuw Bericht</h5>
-                <form action="/feed/post" method="POST" enctype="multipart/form-data">
+                <form action="<%= feedPrefix %>/post" method="POST" enctype="multipart/form-data">
                     <% if (activeGroup) { %>
                         <input type="hidden" name="groupId" value="<%= activeGroup.id %>">
                     <% } %>
@@ -863,7 +869,7 @@ function autoResize(element) {
                 <h5 class="modal-title font-playful" id="createEventModalLabel"><i class="bi bi-calendar-plus-fill me-2"></i> Nieuw Event Aanmaken</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/feed/group/create-event" method="POST" enctype="multipart/form-data">
+            <form action="<%= feedPrefix %>/group/create-event" method="POST" enctype="multipart/form-data">
                 <div class="modal-body p-4">
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -967,7 +973,7 @@ function autoResize(element) {
                 <h5 class="modal-title font-playful" id="editEventModalLabel"><i class="bi bi-pencil-fill me-2"></i> Event Bewerken</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/feed/group/<%= activeGroup.id %>/update" method="POST" enctype="multipart/form-data">
+            <form action="<%= feedPrefix %>/group/<%= activeGroup.id %>/update" method="POST" enctype="multipart/form-data">
                 <div class="modal-body p-4">
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -1066,7 +1072,7 @@ async function enableEditMode(id) {
 
     if (pollsContainer) {
         try {
-            const response = await fetch('/feed/post/' + id);
+            const response = await fetch(FEED_BASE_URL + '/post/' + id);
             const data = await response.json();
             if (data.success && data.post && data.post.poll) {
                 let polls = data.post.poll;
@@ -1355,7 +1361,7 @@ async function addUserPollOption(el, postId, pollIndex) {
 
     try {
         console.log(`Adding option "${optionText}" to post ${postId}, poll ${pollIndex}`);
-        const response = await fetch(`/feed/post/${postId}/poll/${pollIndex}/option`, {
+        const response = await fetch(`${FEED_BASE_URL}/post/${postId}/poll/${pollIndex}/option`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1565,7 +1571,7 @@ async function togglePollVote(element, postId, pollIndex, index, allowMultiple) 
     }
 
     try {
-        const response = await fetch('/feed/respond', {
+        const response = await fetch(FEED_BASE_URL + '/respond', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1597,7 +1603,7 @@ async function removePollOption(button, postId, pollIndex, optionIndex) {
     if (!confirm('Weet je zeker dat je deze optie wilt verwijderen?')) return;
 
     try {
-        const response = await fetch(`/feed/post/${postId}/poll/${pollIndex}/option/${optionIndex}`, {
+        const response = await fetch(`${FEED_BASE_URL}/post/${postId}/poll/${pollIndex}/option/${optionIndex}`, {
             method: 'DELETE',
             headers: {
                 'Accept': 'application/json',
@@ -2562,7 +2568,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const form = document.createElement('form');
             form.method = 'POST';
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            form.action = `/feed/group/${id}/delete` + (token ? `?_csrf=${token}` : '');
+            form.action = `${FEED_BASE_URL}/group/${id}/delete` + (token ? `?_csrf=${token}` : '');
             if (token) {
                 const csrfInput = document.createElement('input');
                 csrfInput.type = 'hidden';
@@ -2707,7 +2713,7 @@ async function fixImage(btn, url) {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>...';
     
     try {
-        const response = await fetch('/feed/api/fix-image', {
+        const response = await fetch(FEED_BASE_URL + '/api/fix-image', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: url })
@@ -3174,7 +3180,7 @@ async function fixImage(btn, url) {
                     });
 
                     try {
-                        const response = await fetch(`/feed/announcements/${popupId}/survey`, {
+                        const response = await fetch(`${FEED_BASE_URL}/announcements/${popupId}/survey`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -3287,7 +3293,7 @@ async function fixImage(btn, url) {
             }
 
             // Sync with backend database to persist dismissal across devices
-            fetch('/feed/announcements/' + id + '/dismiss', {
+            fetch(FEED_BASE_URL + '/announcements/' + id + '/dismiss', {
                 method: 'POST'
             }).catch(err => console.error('Failed to sync dismissal with database:', err));
         }

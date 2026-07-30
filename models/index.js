@@ -20,9 +20,14 @@ const Game = require('./Game');
 const CustomPage = require('./CustomPage');
 const Announcement = require('./Announcement');
 const SurveyResponse = require('./SurveyResponse');
+const KampboekjeEntry = require('./KampboekjeEntry');
 const MigrationService = require('../services/MigrationService');
 
 // Associations
+
+// Kampboekje Associations
+User.hasMany(KampboekjeEntry, { foreignKey: 'authorId', as: 'kampboekjeEntries', onDelete: 'CASCADE' });
+KampboekjeEntry.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
 
 // CustomPage Associations
 User.hasMany(CustomPage, { foreignKey: 'creatorId', as: 'customPages' });
@@ -166,5 +171,6 @@ module.exports = {
   Game,
   CustomPage,
   Announcement,
-  SurveyResponse
+  SurveyResponse,
+  KampboekjeEntry
 };

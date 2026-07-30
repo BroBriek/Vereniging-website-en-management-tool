@@ -796,7 +796,7 @@ exports.postUser = async (req, res) => {
         if (exists) {
             return res.redirect('/admin/users?error=Gebruikersnaam bestaat al');
         }
-        const newUser = await User.create({ username: name, password, role });
+        const newUser = await User.create({ username: name, password, role, firstLogin: role === 'kookmoeke' ? false : true });
 
         // Auto-assign to latest group if not admin
         if (role !== 'admin') {

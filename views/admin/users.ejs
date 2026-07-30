@@ -111,6 +111,7 @@ function closePolaroid() {
                     <label>Rol</label>
                     <select class="form-select" name="role">
                         <option value="leader">Leiding (Geen Admin)</option>
+                        <option value="kookmoeke">Kookmoeke</option>
                         <option value="media">Media (Website & Formulieren)</option>
                         <option value="admin">Administrator</option>
                     </select>
@@ -154,8 +155,10 @@ function closePolaroid() {
                         <div class="d-md-none small">
                             <% if(u.role === 'admin') { %>
                                 <span class="badge bg-danger">Admin</span>
+                            <% } else if(u.role === 'kookmoeke') { %>
+                                <span class="badge bg-warning text-dark"><i class="bi bi-heart-fill me-1"></i>Kookmoeke</span>
                             <% } else if(u.role === 'media') { %>
-                                <span class="badge bg-warning text-dark">Media</span>
+                                <span class="badge bg-secondary">Media</span>
                             <% } else { %>
                                 <span class="badge bg-info">Leiding</span>
                             <% } %>
@@ -164,8 +167,10 @@ function closePolaroid() {
                     <td class="d-none d-md-table-cell">
                         <% if(u.role === 'admin') { %>
                             <span class="badge bg-danger">Admin</span>
+                        <% } else if(u.role === 'kookmoeke') { %>
+                            <span class="badge bg-warning text-dark"><i class="bi bi-heart-fill me-1"></i>Kookmoeke</span>
                         <% } else if(u.role === 'media') { %>
-                            <span class="badge bg-warning text-dark">Media</span>
+                            <span class="badge bg-secondary">Media</span>
                         <% } else { %>
                             <span class="badge bg-info">Leiding</span>
                         <% } %>
