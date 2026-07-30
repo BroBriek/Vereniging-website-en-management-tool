@@ -96,7 +96,7 @@
       </div>
     </div>
 
-    <% if (typeof user !== 'undefined' && user && user.firstLogin && typeof settings !== 'undefined' && settings.first_login_message && settings.first_login_message.trim() !== '') { %>
+    <% if (typeof user !== 'undefined' && user && user.firstLogin && user.role !== 'kookmoeke' && typeof settings !== 'undefined' && settings.first_login_message && settings.first_login_message.trim() !== '') { %>
     <!-- First Login Welcome Modal -->
     <div class="modal fade" id="firstLoginWelcomeModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="firstLoginWelcomeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">

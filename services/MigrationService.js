@@ -244,6 +244,16 @@ class MigrationService {
                 console.error('Error migrating SurveyResponses table schema:', surveyResponsesErr);
             }
 
+            // --- FeedGroups Table ---
+            try {
+                if (!await columnExists('FeedGroups', 'isTetterhoekje')) {
+                    await sequelize.query('ALTER TABLE FeedGroups ADD COLUMN isTetterhoekje BOOLEAN DEFAULT 0;');
+                    console.log('Added FeedGroups.isTetterhoekje');
+                }
+            } catch (feedGroupsErr) {
+                console.error('Error migrating FeedGroups table schema:', feedGroupsErr);
+            }
+
             console.log('Automatic schema update completed.');
         } catch (error) {
             console.error('Error during automatic schema update:', error);

@@ -1,5 +1,6 @@
 const webpush = require('web-push');
 const { User, FeedGroup, UserGroupAccess } = require('../models');
+const { Op } = require('sequelize');
 const { sendMail } = require('../config/mailer');
 
 class NotificationService {
@@ -22,6 +23,25 @@ class NotificationService {
             if (!user) {
                 console.error(`NotificationService: User not found for ID ${userOrId}`);
                 return;
+            }
+
+            // Role & Source Separation Check:
+            // 1. Kookmoekes should ONLY receive notifications from Tetterhoekje and NOT from Leidingshoekje.
+            // 2. Non-kookmoekes/non-admins (e.g. leaders) should NOT receive notifications from Tetterhoekje.
+            const url = messageData.url || '';
+            const isTetterhoekje = messageData.isTetterhoekje === true || url.startsWith('/tetterhoekje');
+            const isLeidingshoekje = messageData.isTetterhoekje === false || url.startsWith('/feed');
+
+            if (user.role === 'kookmoeke') {
+                if (isLeidingshoekje || (!isTetterhoekje && url.startsWith('/feed'))) {
+                    console.log(`NotificationService: Skipping notification '${messageData.title}' for kookmoeke user ${user.username} (Leidingshoekje notification)`);
+                    return;
+                }
+            } else if (user.role !== 'admin') {
+                if (isTetterhoekje) {
+                    console.log(`NotificationService: Skipping Tetterhoekje notification '${messageData.title}' for user ${user.username} (Role: ${user.role})`);
+                    return;
+                }
             }
 
             // Check Preferences
@@ -74,36 +94,51 @@ class NotificationService {
             const group = await FeedGroup.findByPk(groupId);
             if (!group) return;
 
-            // 1. Get explicit members (users in UserGroupAccess for this group)
-            const members = await User.findAll({
-                include: [{
-                    model: FeedGroup,
-                    as: 'accessibleGroups',
-                    where: { id: groupId },
-                    required: true,
-                    attributes: []
-                }],
-                where: { isActive: true }
-            });
+            let users = [];
 
-            let users = members;
-
-            // 2. For events, we also notify all admins as they have implicit access 
-            // and were previously receiving these notifications.
-            // For normal groups, we stick to explicit members to maintain current behavior.
-            if (group.isEvent) {
-                const admins = await User.findAll({
-                    where: { role: 'admin', isActive: true }
+            if (group.isTetterhoekje) {
+                // Tetterhoekje group: notify all active kookmoekes and admins
+                users = await User.findAll({
+                    where: {
+                        isActive: true,
+                        role: { [Op.in]: ['kookmoeke', 'admin'] }
+                    }
                 });
-                
-                // Combine and unique by ID
-                const userMap = new Map();
-                members.forEach(u => userMap.set(u.id, u));
-                admins.forEach(u => userMap.set(u.id, u));
-                users = Array.from(userMap.values());
+                messageData.isTetterhoekje = true;
+            } else {
+                // 1. Get explicit members excluding kookmoekes
+                const members = await User.findAll({
+                    include: [{
+                        model: FeedGroup,
+                        as: 'accessibleGroups',
+                        where: { id: groupId },
+                        required: true,
+                        attributes: []
+                    }],
+                    where: {
+                        isActive: true,
+                        role: { [Op.ne]: 'kookmoeke' }
+                    }
+                });
+
+                users = members;
+
+                // 2. For events, we also notify all admins
+                if (group.isEvent) {
+                    const admins = await User.findAll({
+                        where: { role: 'admin', isActive: true }
+                    });
+                    
+                    // Combine and unique by ID
+                    const userMap = new Map();
+                    members.forEach(u => userMap.set(u.id, u));
+                    admins.forEach(u => userMap.set(u.id, u));
+                    users = Array.from(userMap.values());
+                }
+                messageData.isTetterhoekje = false;
             }
 
-            console.log(`NotificationService: Sending ${group.isEvent ? 'event' : 'group'} notification to ${users.length} users for group ${groupId}`);
+            console.log(`NotificationService: Sending ${group.isTetterhoekje ? 'Tetterhoekje' : (group.isEvent ? 'event' : 'group')} notification to ${users.length} users for group ${groupId}`);
 
             // Send to each user
             const notifications = users.map(user => this.sendIndividualNotification(user, messageData));
