@@ -481,9 +481,11 @@ function autoResize(element) {
                     <i class="bi bi-chat-quote-fill"></i> Quoteboekje
                 </a>
                 <% } %>
+                <% if (typeof isTetterhoekje === 'undefined' || !isTetterhoekje) { %>
                 <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center" data-bs-toggle="modal" data-bs-target="#createEventModal">
                     <i class="bi bi-calendar-plus-fill"></i> Nieuw Event
                 </button>
+                <% } %>
                 <% if (user.role === 'admin') { %>
                     <a href="/admin/feedgroups" class="btn btn-outline-dark btn-sm rounded-pill px-2 px-sm-3 flex-fill flex-md-grow-0 text-center">
                         <i class="bi bi-gear-fill"></i> Beheer
@@ -861,6 +863,7 @@ function autoResize(element) {
 
 
 
+<% if (typeof isTetterhoekje === 'undefined' || !isTetterhoekje) { %>
 <!-- Create Event Modal -->
 <div class="modal fade" id="createEventModal" tabindex="-1" aria-labelledby="createEventModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -963,6 +966,7 @@ function autoResize(element) {
         </div>
     </div>
 </div>
+<% } %>
 
 <!-- Edit Event Modal -->
 <% if (activeGroup && activeGroup.isEvent) { %>

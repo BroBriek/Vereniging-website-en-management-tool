@@ -3,12 +3,27 @@ const { Op } = require('sequelize');
 const sanitizeHtml = require('sanitize-html');
 
 const sanitizeOptions = {
-    allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'u', 's', 'blockquote', 'code', 'pre', 'span', 'h1', 'h2', 'h3', 'h4'],
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'iframe', 'h1', 'h2', 'h3', 'h4', 'span', 'u', 's', 'div' ]),
     allowedAttributes: {
-        'a': ['href', 'target', 'rel'],
-        'span': ['class', 'style']
+        ...sanitizeHtml.defaults.allowedAttributes,
+        'img': [ 'src', 'alt', 'title', 'width', 'height', 'style', 'class' ],
+        'iframe': [ 'src', 'width', 'height', 'frameborder', 'allowfullscreen' ],
+        'a': [ 'href', 'target', 'rel', 'class', 'style' ],
+        'span': [ 'class', 'style' ],
+        'div': [ 'class', 'style' ],
+        '*': [ 'style', 'class' ]
     },
-    allowedSchemes: ['http', 'https', 'mailto']
+    allowedSchemes: ['http', 'https', 'mailto', 'data']
+};
+
+const processInlineMedia = (html) => {
+    if (!html) return '';
+    const imgRegex = /<img\s+[^>]*src="([^"]+)"[^>]*>/gi;
+    return html.replace(imgRegex, (match, src) => {
+        if (match.includes('onclick=')) return match;
+        const filename = src.split('/').pop() || 'Foto';
+        return `<a href="${src}" onclick="openFilePreview('${src}', '${filename}'); return false;" class="d-inline-block text-decoration-none my-1">${match}</a>`;
+    });
 };
 
 const viewHelpers = {
@@ -25,6 +40,40 @@ const viewHelpers = {
         }
         const colors = ['#db3e41', '#28a745', '#007bff', '#fd7e14', '#6f42c1', '#e83e8c', '#17a2b8'];
         return colors[Math.abs(hash) % colors.length];
+    },
+    formatEntryContent: (content) => {
+        if (!content) return '';
+        if (/<[a-z][\s\S]*>/i.test(content)) {
+            return content;
+        }
+        return content.split('\n\n').map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`).join('');
+    },
+    extractPostMedia: (entryContent, rawImages) => {
+        let images = [];
+        if (rawImages) {
+            if (Array.isArray(rawImages)) {
+                images = [...rawImages];
+            } else if (typeof rawImages === 'string') {
+                try { images = JSON.parse(rawImages); } catch(e) { images = []; }
+            }
+        }
+
+        // Normalize attached image paths: replace /uploads/feed/ with /feed_uploads/
+        images = images.map(img => {
+            if (img && img.path) {
+                let p = img.path;
+                if (p.startsWith('/uploads/feed/')) p = p.replace('/uploads/feed/', '/feed_uploads/');
+                return { ...img, path: p };
+            }
+            return img;
+        });
+
+        let textContent = entryContent || '';
+        if (textContent.includes('/uploads/feed/')) {
+            textContent = textContent.replace(/\/uploads\/feed\//g, '/feed_uploads/');
+        }
+
+        return { textContent, images };
     }
 };
 
@@ -88,20 +137,36 @@ exports.getEntries = async (req, res) => {
 
 exports.createEntry = async (req, res) => {
     try {
-        const { title, content, campName, dayDate, category } = req.body;
+        let { title, content, campName, dayDate, category } = req.body;
 
-        if (!title || !content) {
-            return res.redirect('/kampboekje?error=Titel en verhaal zijn verplicht.');
-        }
+        let rawContent = (content || '').trim();
+        let cleanContent = sanitizeHtml(rawContent, sanitizeOptions);
+        cleanContent = processInlineMedia(cleanContent);
 
-        let cleanContent = sanitizeHtml(content.trim(), sanitizeOptions);
+        // Check if content has text or images
+        const textOnly = cleanContent.replace(/<[^>]*>/g, '').trim();
+        const hasInlineImage = cleanContent.includes('<img');
 
         let images = [];
         if (req.files && req.files.length > 0) {
             images = req.files.map(file => ({
-                path: '/uploads/feed/' + file.filename,
+                path: '/feed_uploads/' + file.filename,
                 originalName: file.originalname
             }));
+        }
+
+        const hasAttachedImages = images.length > 0;
+
+        if (!textOnly && !hasInlineImage && !hasAttachedImages) {
+            return res.redirect('/kampboekje?error=Voeg een verhaal of ten minste één foto toe.');
+        }
+
+        if (!title || !title.trim()) {
+            if (hasAttachedImages || hasInlineImage) {
+                title = category && category !== 'Algemeen' ? `Foto's - ${category}` : "Foto-album";
+            } else {
+                title = 'Kampboekje Inzending';
+            }
         }
 
         await KampboekjeEntry.create({
@@ -132,26 +197,51 @@ exports.updateEntry = async (req, res) => {
             return res.redirect('/kampboekje?error=Geen toestemming.');
         }
 
-        const { title, content, campName, dayDate, category } = req.body;
+        let { title, content, campName, dayDate, category, keepExistingImages } = req.body;
 
-        let cleanContent = sanitizeHtml(content.trim(), sanitizeOptions);
+        let rawContent = (content || '').trim();
+        let cleanContent = sanitizeHtml(rawContent, sanitizeOptions);
+        cleanContent = processInlineMedia(cleanContent);
 
-        let newImages = entry.images || [];
+        const textOnly = cleanContent.replace(/<[^>]*>/g, '').trim();
+        const hasInlineImage = cleanContent.includes('<img');
+
+        let currentImages = [];
+        if (keepExistingImages === 'true' || keepExistingImages === true || keepExistingImages === 'on') {
+            if (entry.images) {
+                if (Array.isArray(entry.images)) {
+                    currentImages = entry.images;
+                } else if (typeof entry.images === 'string') {
+                    try { currentImages = JSON.parse(entry.images); } catch(e) { currentImages = []; }
+                }
+            }
+        }
+
         if (req.files && req.files.length > 0) {
             const uploaded = req.files.map(file => ({
-                path: '/uploads/feed/' + file.filename,
+                path: '/feed_uploads/' + file.filename,
                 originalName: file.originalname
             }));
-            newImages = [...newImages, ...uploaded];
+            currentImages = [...currentImages, ...uploaded];
+        }
+
+        const hasAttachedImages = currentImages.length > 0;
+
+        if (!textOnly && !hasInlineImage && !hasAttachedImages) {
+            return res.redirect('/kampboekje?error=Voeg een verhaal of ten minste één foto toe.');
+        }
+
+        if (!title || !title.trim()) {
+            title = entry.title || (category && category !== 'Algemeen' ? `Foto's - ${category}` : "Foto-album");
         }
 
         await entry.update({
-            title: title ? title.trim() : entry.title,
+            title: title.trim(),
             content: cleanContent,
             campName: campName ? campName.trim() : entry.campName,
             dayDate: dayDate ? dayDate.trim() : entry.dayDate,
             category: category ? category.trim() : entry.category,
-            images: newImages
+            images: currentImages
         });
 
         res.redirect('/kampboekje?success=Entry bijgewerkt!');
@@ -194,3 +284,4 @@ exports.togglePin = async (req, res) => {
         res.redirect('/kampboekje?error=Kon pinstatus niet aanpassen.');
     }
 };
+

@@ -52,23 +52,92 @@
         font-weight: 600;
     }
 
+    /* Kampboekje Content & Rich Text Styling */
+    .entry-content-container {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        transition: max-height 0.3s ease;
+        line-height: 1.7;
+    }
+
+    .entry-content-container p {
+        margin-bottom: 0.75rem;
+    }
+
+    .entry-content-container p:last-child {
+        margin-bottom: 0;
+    }
+
+    .entry-content-container img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        margin: 0.5rem 0;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .entry-content-container img:hover {
+        transform: scale(1.01);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .entry-content-collapsed {
+        max-height: 220px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .entry-content-collapsed::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+        pointer-events: none;
+    }
+
+    /* Bottom Photo Grid Layout */
     .entry-image-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 10px;
+        gap: 12px;
+    }
+
+    .entry-image-grid.grid-1 {
+        grid-template-columns: 1fr;
+        max-width: 540px;
+    }
+
+    .entry-image-grid.grid-1 img {
+        height: 320px;
+    }
+
+    .entry-image-grid.grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .entry-image-grid.grid-2 img {
+        height: 220px;
     }
 
     .entry-image-grid img {
         width: 100%;
-        height: 160px;
+        height: 180px;
         object-fit: cover;
         border-radius: 0.75rem;
         cursor: pointer;
-        transition: opacity 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
     }
 
     .entry-image-grid img:hover {
-        opacity: 0.9;
+        opacity: 0.94;
+        transform: scale(1.02);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
     }
 </style>
 
@@ -164,6 +233,12 @@
         <% } else { %>
             <div class="row g-4">
                 <% entries.forEach(entry => { %>
+                    <% 
+                        const { textContent, images: allImages } = extractPostMedia(entry.content, entry.images);
+                        let rawText = (textContent || '').replace(/<[^>]*>/g, '').trim();
+                        let hasInlineImages = /<img\s+/i.test(textContent || '');
+                        let isPhotoOnly = rawText.length === 0 && (allImages.length > 0 || hasInlineImages);
+                    %>
                     <div class="col-12">
                         <div class="card entry-card p-4 <%= entry.isPinned ? 'pinned' : '' %>">
                             <!-- Top Badge & Actions Header -->
@@ -171,6 +246,9 @@
                                 <div class="d-flex align-items-center gap-2 flex-wrap">
                                     <% if (entry.isPinned) { %>
                                         <span class="badge bg-warning text-dark rounded-pill px-3 py-1"><i class="bi bi-pin-angle-fill me-1"></i> Vastgepind</span>
+                                    <% } %>
+                                    <% if (isPhotoOnly) { %>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-bold"><i class="bi bi-image-fill me-1"></i> Fotopost</span>
                                     <% } %>
                                     <span class="badge bg-info text-white badge-category"><%= entry.category || 'Algemeen' %></span>
                                     <span class="badge bg-light text-dark rounded-pill px-3 py-1"><i class="bi bi-geo-alt-fill me-1 text-primary"></i> <%= entry.campName %></span>
@@ -189,6 +267,9 @@
                                     <% } %>
 
                                     <% if (user.role === 'admin' || user.id === entry.authorId) { %>
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle" title="Bewerken" data-bs-toggle="modal" data-bs-target="#editEntryModal-<%= entry.id %>">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
                                         <form action="/kampboekje/<%= entry.id %>/delete" method="POST" onsubmit="return confirm('Entry definitief verwijderen?');" class="d-inline">
                                             <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" title="Verwijderen">
                                                 <i class="bi bi-trash"></i>
@@ -215,21 +296,98 @@
                                 </span>
                             </div>
 
-                            <!-- Content -->
-                            <div class="entry-content text-secondary mb-3 fs-6" style="white-space: pre-line; line-height: 1.6;"><%- entry.content %></div>
+                            <!-- Text Content (at top of post) -->
+                            <% if (textContent && textContent.trim().length > 0) { %>
+                                <div class="position-relative mb-3">
+                                    <div id="entry-content-<%= entry.id %>" class="entry-content-container text-secondary fs-6"><%- formatEntryContent(textContent) %></div>
+                                    <button id="read-more-btn-entry-<%= entry.id %>" class="btn btn-link btn-sm p-0 text-decoration-none d-none mt-2 fw-bold text-primary" onclick="toggleEntryContent('<%= entry.id %>')">
+                                        <span class="btn-text">Meer weergeven</span> <i class="bi bi-chevron-down ms-1 icon-chevron"></i>
+                                    </button>
+                                </div>
+                            <% } %>
 
-                            <!-- Image Gallery -->
-                            <% if (entry.images && entry.images.length > 0) { %>
-                                <div class="entry-image-grid mt-2">
-                                    <% entry.images.forEach(img => { %>
-                                        <a href="<%= img.path %>" target="_blank" title="<%= img.originalName %>">
-                                            <img src="<%= img.path %>" class="shadow-sm" alt="<%= img.originalName %>">
-                                        </a>
-                                    <% }) %>
+                            <!-- Attached & Uploaded Images Grid (at bottom of post) -->
+                            <% if (allImages && allImages.length > 0) { %>
+                                <div class="mt-3">
+                                    <div class="entry-image-grid <%= allImages.length === 1 ? 'grid-1' : (allImages.length === 2 ? 'grid-2' : '') %>">
+                                        <% allImages.forEach(img => { %>
+                                            <div class="position-relative overflow-hidden rounded-3 border shadow-sm">
+                                                <img src="<%= img.path %>" alt="<%= img.originalName || 'Foto' %>" title="<%= img.originalName || 'Klik om te vergroten' %>" onclick="openFilePreview('<%= img.path %>', '<%= img.originalName || 'Foto' %>')">
+                                            </div>
+                                        <% }) %>
+                                    </div>
                                 </div>
                             <% } %>
                         </div>
                     </div>
+
+                    <!-- Modal: Edit Entry -->
+                    <% if (user.role === 'admin' || user.id === entry.authorId) { %>
+                        <div class="modal fade" id="editEntryModal-<%= entry.id %>" tabindex="-1" aria-labelledby="editEntryModalLabel-<%= entry.id %>" aria-hidden="true">
+                            <div class="modal-dialog modal-lg modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4">
+                                    <div class="modal-header bg-primary text-white rounded-top-4">
+                                        <h5 class="modal-title font-playful fw-bold" id="editEntryModalLabel-<%= entry.id %>">
+                                            <i class="bi bi-pencil-square me-2"></i> Inzending Bewerken
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form action="/kampboekje/<%= entry.id %>/update" method="POST" enctype="multipart/form-data">
+                                        <div class="modal-body p-4">
+                                            <div class="row g-3">
+                                                <div class="col-md-8">
+                                                    <label class="form-label fw-bold">Titel</label>
+                                                    <input type="text" name="title" class="form-control rounded-3" value="<%= entry.title %>" placeholder="Optioneel bij fotoposts">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label fw-bold">Categorie</label>
+                                                    <select name="category" class="form-select rounded-3">
+                                                        <option value="Keuken" <%= entry.category === 'Keuken' ? 'selected' : '' %>>Keuken</option>
+                                                        <option value="Anekdote" <%= entry.category === 'Anekdote' ? 'selected' : '' %>>Anekdote</option>
+                                                        <option value="Recept" <%= entry.category === 'Recept' ? 'selected' : '' %>>Recept</option>
+                                                        <option value="Sfeer" <%= entry.category === 'Sfeer' ? 'selected' : '' %>>Sfeer</option>
+                                                        <option value="Algemeen" <%= entry.category === 'Algemeen' || !entry.category ? 'selected' : '' %>>Algemeen</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-bold">Kamp Naam / Jaar</label>
+                                                    <input type="text" name="campName" class="form-control rounded-3" value="<%= entry.campName %>">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label fw-bold">Dag / Datum</label>
+                                                    <input type="text" name="dayDate" class="form-control rounded-3" value="<%= entry.dayDate || '' %>" placeholder="bv. Dag 4 - 24 juli">
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="form-label fw-bold">Verhaal / Omschrijving</label>
+                                                    <textarea name="content" class="form-control rounded-3 rich-editor" rows="5" placeholder="Schrijf je verhaal met opmaak of voeg foto's toe..."><%= entry.content %></textarea>
+                                                </div>
+                                                <% if (allImages && allImages.length > 0) { %>
+                                                    <div class="col-12">
+                                                        <div class="form-check bg-light p-3 rounded-3 border">
+                                                            <input class="form-check-input" type="checkbox" name="keepExistingImages" value="true" id="keepImg-<%= entry.id %>" checked>
+                                                            <label class="form-check-label text-dark fw-medium" for="keepImg-<%= entry.id %>">
+                                                                Bestaande foto's (<%= allImages.length %>) behouden
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                <% } %>
+                                                <div class="col-12">
+                                                    <label class="form-label fw-bold">Extra foto's toevoegen</label>
+                                                    <input type="file" name="images" multiple class="form-control rounded-3" accept="image/*">
+                                                    <small class="text-muted d-block mt-1">Selecteer png, jpg of webp afbeeldingen.</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer bg-light rounded-bottom-4">
+                                            <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Annuleren</button>
+                                            <button type="submit" class="btn btn-primary rounded-pill px-4 font-playful">Wijzigingen Opslaan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+
                 <% }) %>
             </div>
         <% } %>
@@ -251,8 +409,8 @@
                 <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <label class="form-label fw-bold">Titel <span class="text-danger">*</span></label>
-                            <input type="text" name="title" class="form-control rounded-3" placeholder="bv. De legendarische pannenkoekenberg" required>
+                            <label class="form-label fw-bold">Titel</label>
+                            <input type="text" name="title" class="form-control rounded-3" placeholder="bv. De legendarische pannenkoekenberg (optioneel bij fotopost)">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Categorie</label>
@@ -273,13 +431,14 @@
                             <input type="text" name="dayDate" class="form-control rounded-3" placeholder="bv. Dag 4 - 24 juli">
                         </div>
                         <div class="col-12">
-                            <label class="form-label fw-bold">Verhaal / Omschrijving <span class="text-danger">*</span></label>
-                            <textarea name="content" class="form-control rounded-3" rows="5" placeholder="Schrijf hier het verhaal..." required style="resize: vertical;"></textarea>
+                            <label class="form-label fw-bold">Verhaal / Omschrijving</label>
+                            <textarea name="content" class="form-control rounded-3 rich-editor" rows="5" placeholder="Schrijf hier je verhaal met opmaak, of voeg foto's toe..."></textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">Foto's uploaden</label>
-                            <input type="file" name="images" multiple class="form-control rounded-3" accept="image/*">
-                            <small class="text-muted">Je kunt meerdere foto's tegelijk selecteren.</small>
+                            <input type="file" name="images" multiple class="form-control rounded-3" accept="image/*" id="modalKampboekjeImageInput" onchange="previewKampboekjeUploadImages(this)">
+                            <small class="text-muted d-block mt-1"><i class="bi bi-info-circle me-1"></i> Je kunt meerdere foto's (png, jpg, webp) selecteren, of alleen een fotopost maken!</small>
+                            <div id="kampboekjeImagePreviewContainer" class="d-flex flex-wrap gap-2 mt-3 d-none"></div>
                         </div>
                     </div>
                 </div>
@@ -291,5 +450,90 @@
         </div>
     </div>
 </div>
+
+<script>
+    function initKampboekjeTruncation() {
+        document.querySelectorAll('.entry-content-container').forEach(container => {
+            if (container.scrollHeight > 220 && !container.classList.contains('entry-content-expanded')) {
+                container.classList.add('entry-content-collapsed');
+                const id = container.id.replace('entry-content-', '');
+                const btn = document.getElementById('read-more-btn-entry-' + id);
+                if (btn) btn.classList.remove('d-none');
+            }
+        });
+    }
+
+    function toggleEntryContent(id) {
+        const container = document.getElementById('entry-content-' + id);
+        const btn = document.getElementById('read-more-btn-entry-' + id);
+        if (!container || !btn) return;
+
+        const isCollapsed = container.classList.contains('entry-content-collapsed');
+        const textSpan = btn.querySelector('.btn-text');
+        const icon = btn.querySelector('.icon-chevron');
+
+        if (isCollapsed) {
+            container.classList.remove('entry-content-collapsed');
+            container.classList.add('entry-content-expanded');
+            if (textSpan) textSpan.textContent = 'Minder weergeven';
+            if (icon) {
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            }
+        } else {
+            container.classList.remove('entry-content-expanded');
+            container.classList.add('entry-content-collapsed');
+            if (textSpan) textSpan.textContent = 'Meer weergeven';
+            if (icon) {
+                icon.classList.remove('bi-chevron-up');
+                icon.classList.add('bi-chevron-down');
+            }
+        }
+    }
+
+    function previewKampboekjeUploadImages(input) {
+        const container = document.getElementById('kampboekjeImagePreviewContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        if (input.files && input.files.length > 0) {
+            container.classList.remove('d-none');
+            Array.from(input.files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'rounded-3 border shadow-sm';
+                        img.style.width = '80px';
+                        img.style.height = '80px';
+                        img.style.objectFit = 'cover';
+                        container.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        } else {
+            container.classList.add('d-none');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.initializeRichEditors === 'function') {
+            window.initializeRichEditors();
+        }
+
+        document.querySelectorAll('.modal').forEach(modalEl => {
+            modalEl.addEventListener('shown.bs.modal', function () {
+                if (typeof window.initializeRichEditors === 'function') {
+                    window.initializeRichEditors(modalEl.querySelectorAll('.rich-editor:not(.rich-editor-initialized)'));
+                }
+            });
+        });
+
+        initKampboekjeTruncation();
+        window.addEventListener('resize', initKampboekjeTruncation);
+    });
+</script>
 
 <%- include('../partials/footer') %>
