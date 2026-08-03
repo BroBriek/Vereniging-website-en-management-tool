@@ -43,6 +43,10 @@ const FeedGroup = sequelize.define('FeedGroup', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  isTetterhoekje: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 });
 
 module.exports = FeedGroup;

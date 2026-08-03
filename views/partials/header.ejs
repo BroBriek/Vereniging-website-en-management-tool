@@ -134,7 +134,7 @@
                     <% if (!isHidden('/afdelingen')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/afdelingen">Afdelingen</a></li><% } %>
                     <% if (!isHidden('/leiding')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/leiding">Leiding</a></li><% } %>
                     <% if (!isHidden('/kalender')) { %>
-                        <li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="<%= user ? '/feed/calendar' : '/kalender' %>"><%= user ? 'Leidingskalender' : 'Kalender' %></a></li>
+                        <li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="<%= (user && user.role !== 'kookmoeke') ? '/feed/calendar' : '/kalender' %>"><%= (user && user.role !== 'kookmoeke') ? 'Leidingskalender' : 'Kalender' %></a></li>
                     <% } %>
                     <% if (!isHidden('/t-shirts')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/t-shirts">T-Shirts</a></li><% } %>
                     <% if (!isHidden('/inschrijven')) { %><li class="nav-item <%= user ? 'd-none d-lg-block' : '' %>"><a class="nav-link" href="/inschrijven">Inschrijven</a></li><% } %>
@@ -158,7 +158,7 @@
                                 <%= capitalizeName(user.username.split(' ')[0]) %>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-2 mt-2" aria-labelledby="userDropdown">
-                                <% if (user.role === 'admin' || user.role === 'media' || settings.allow_all_forms_access || settings.move_menu_to_dashboard) { %>
+                                <% if (user.role === 'admin' || user.role === 'media' || user.role === 'kookmoeke' || settings.allow_all_forms_access || settings.move_menu_to_dashboard) { %>
                                     <li><h6 class="dropdown-header text-uppercase small fw-bold opacity-50">Beheer</h6></li>
                                     <li><a class="dropdown-item rounded-3 py-2" href="/admin"><i class="bi bi-speedometer2 me-2 text-primary"></i> Dashboard</a></li>
                                     <% if (!settings.move_menu_to_dashboard) { %>
@@ -171,11 +171,17 @@
                                     <% if (typeof enablePublicRegistrations !== 'undefined' && enablePublicRegistrations) { %>
                                         <li><a class="dropdown-item rounded-3 py-2" href="/admin/registrations"><i class="bi bi-people me-2 text-success"></i> Ledenlijst</a></li>
                                     <% } %>
-                                    <li><a class="dropdown-item rounded-3 py-2" href="/feed"><i class="bi bi-chat-left-text me-2 text-warning"></i> Leidingshoekje</a></li>
+                                    <% if (user.role !== 'kookmoeke') { %>
+                                        <li><a class="dropdown-item rounded-3 py-2" href="/feed"><i class="bi bi-chat-left-text me-2 text-warning"></i> Leidingshoekje</a></li>
+                                    <% } %>
+                                    <% if (user.role === 'kookmoeke' || user.role === 'admin') { %>
+                                        <li><a class="dropdown-item rounded-3 py-2" href="/tetterhoekje"><i class="bi bi-heart-fill me-2 text-warning"></i> Het Tetterhoekje</a></li>
+                                        <li><a class="dropdown-item rounded-3 py-2" href="/kampboekje"><i class="bi bi-journal-bookmark-fill me-2 text-primary"></i> Kampboekje</a></li>
+                                    <% } %>
                                     <% if (showGamesToAll || (user && user.username === 'admin')) { %>
                                         <li><a class="dropdown-item rounded-3 py-2" href="/games"><i class="bi bi-controller me-2 text-info"></i> Spelendatabank</a></li>
                                     <% } %>
-                                    <li><a class="dropdown-item rounded-3 py-2" href="/feed/calendar"><i class="bi bi-calendar3 me-2 text-danger"></i> Leidingskalender</a></li>
+                                    <li><a class="dropdown-item rounded-3 py-2" href="<%= (user && user.role !== 'kookmoeke') ? '/feed/calendar' : '/kalender' %>"><i class="bi bi-calendar3 me-2 text-danger"></i> <%= (user && user.role !== 'kookmoeke') ? 'Leidingskalender' : 'Kalender' %></a></li>
                                     <li><a class="dropdown-item rounded-3 py-2" href="/account/settings"><i class="bi bi-gear me-2 text-secondary"></i> Instellingen</a></li>
                                 <% } %>
 
@@ -207,12 +213,14 @@
                                     <% } %>
                                     <div>
                                         <span class="fw-bold text-dark"><%= capitalizeName(user.username.split(' ')[0]) %></span>
-                                        <span class="badge bg-primary ms-2 text-uppercase font-playful" style="font-size: 0.7rem;"><%= user.role === 'leader' ? 'Leiding' : (user.role === 'admin' ? 'Admin' : capitalizeName(user.role)) %></span>
+                                        <span class="badge <%= user.role === 'kookmoeke' ? 'bg-warning text-dark' : 'bg-primary' %> ms-2 text-uppercase font-playful" style="font-size: 0.7rem;">
+                                            <%= user.role === 'leader' ? 'Leiding' : (user.role === 'admin' ? 'Admin' : (user.role === 'kookmoeke' ? 'Kookmoeke' : capitalizeName(user.role))) %>
+                                        </span>
                                     </div>
                                 </div>
 
                                 <!-- User Navigation Links -->
-                                <% if (user.role === 'admin' || user.role === 'media' || settings.allow_all_forms_access || settings.move_menu_to_dashboard) { %>
+                                <% if (user.role === 'admin' || user.role === 'media' || user.role === 'kookmoeke' || settings.allow_all_forms_access || settings.move_menu_to_dashboard) { %>
                                     <h6 class="dropdown-header text-uppercase small fw-bold opacity-50 px-2 mt-2">Beheer</h6>
                                     <a class="dropdown-item rounded-3 py-2" href="/admin"><i class="bi bi-speedometer2 me-2 text-primary"></i> Dashboard</a>
                                     <% if (!settings.move_menu_to_dashboard) { %>
@@ -225,11 +233,17 @@
                                     <% if (typeof enablePublicRegistrations !== 'undefined' && enablePublicRegistrations) { %>
                                         <a class="dropdown-item rounded-3 py-2" href="/admin/registrations"><i class="bi bi-people me-2 text-success"></i> Ledenlijst</a>
                                     <% } %>
-                                    <a class="dropdown-item rounded-3 py-2" href="/feed"><i class="bi bi-chat-left-text me-2 text-warning"></i> Leidingshoekje</a>
+                                    <% if (user.role !== 'kookmoeke') { %>
+                                        <a class="dropdown-item rounded-3 py-2" href="/feed"><i class="bi bi-chat-left-text me-2 text-warning"></i> Leidingshoekje</a>
+                                    <% } %>
+                                    <% if (user.role === 'kookmoeke' || user.role === 'admin') { %>
+                                        <a class="dropdown-item rounded-3 py-2" href="/tetterhoekje"><i class="bi bi-heart-fill me-2 text-warning"></i> Het Tetterhoekje</a>
+                                        <a class="dropdown-item rounded-3 py-2" href="/kampboekje"><i class="bi bi-journal-bookmark-fill me-2 text-primary"></i> Kampboekje</a>
+                                    <% } %>
                                     <% if (showGamesToAll || (user && user.username === 'admin')) { %>
                                         <a class="dropdown-item rounded-3 py-2" href="/games"><i class="bi bi-controller me-2 text-info"></i> Spelendatabank</a>
                                     <% } %>
-                                    <a class="dropdown-item rounded-3 py-2" href="/feed/calendar"><i class="bi bi-calendar3 me-2 text-danger"></i> Leidingskalender</a>
+                                    <a class="dropdown-item rounded-3 py-2" href="<%= (user && user.role !== 'kookmoeke') ? '/feed/calendar' : '/kalender' %>"><i class="bi bi-calendar3 me-2 text-danger"></i> <%= (user && user.role !== 'kookmoeke') ? 'Leidingskalender' : 'Kalender' %></a>
                                     <a class="dropdown-item rounded-3 py-2" href="/account/settings"><i class="bi bi-gear me-2 text-secondary"></i> Instellingen</a>
                                 <% } %>
 
@@ -266,8 +280,8 @@
                                         <% if (!isHidden('/afdelingen')) { %><a class="dropdown-item rounded-3 py-2" href="/afdelingen"><i class="bi bi-people me-2 text-success"></i> Afdelingen</a><% } %>
                                         <% if (!isHidden('/leiding')) { %><a class="dropdown-item rounded-3 py-2" href="/leiding"><i class="bi bi-person-badge me-2 text-warning"></i> Leiding</a><% } %>
                                         <% if (!isHidden('/kalender')) { %>
-                                            <a class="dropdown-item rounded-3 py-2" href="<%= user ? '/feed/calendar' : '/kalender' %>">
-                                                <i class="bi bi-calendar3 me-2 text-info"></i> <%= user ? 'Leidingskalender' : 'Kalender' %>
+                                            <a class="dropdown-item rounded-3 py-2" href="<%= (user && user.role !== 'kookmoeke') ? '/feed/calendar' : '/kalender' %>">
+                                                <i class="bi bi-calendar3 me-2 text-info"></i> <%= (user && user.role !== 'kookmoeke') ? 'Leidingskalender' : 'Kalender' %>
                                             </a>
                                         <% } %>
                                         <% if (!isHidden('/t-shirts')) { %><a class="dropdown-item rounded-3 py-2" href="/t-shirts"><i class="bi bi-tag me-2 text-secondary"></i> T-Shirts</a><% } %>

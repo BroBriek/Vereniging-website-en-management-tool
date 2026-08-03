@@ -54,5 +54,11 @@ module.exports = {
       }
       
       res.redirect('/home');
+  },
+  ensureKookmoekeOrAdmin: function(req, res, next) {
+      if (req.isAuthenticated() && (req.user.role === 'admin' || req.user.role === 'kookmoeke')) {
+          return next();
+      }
+      res.redirect('/');
   }
 };

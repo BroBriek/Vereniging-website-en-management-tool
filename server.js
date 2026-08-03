@@ -305,6 +305,8 @@ app.use('/auth', require('./routes/auth'));
 app.use('/account', require('./routes/account'));
 app.use('/admin', require('./routes/admin'));
 app.use('/feed', require('./routes/feed'));
+app.use('/tetterhoekje', require('./routes/tetterhoekje'));
+app.use('/kampboekje', require('./routes/kampboekje'));
 app.use('/quotes', require('./routes/quote'));
 app.use('/games', require('./routes/game'));
 
