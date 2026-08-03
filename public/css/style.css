@@ -19,12 +19,12 @@ body {
     color: var(--text-color);
     font-size: 1.2rem;
     line-height: 1.6;
-    padding-top: 90px;
+    padding-top: 67px;
 }
 
 @media (max-width: 991px) {
     body {
-        padding-top: 80px;
+        padding-top: 67px;
     }
 }
 
