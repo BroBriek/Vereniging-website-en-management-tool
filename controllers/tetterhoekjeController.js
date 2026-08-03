@@ -342,7 +342,7 @@ exports.postCreatePost = async (req, res) => {
         let attachments = [];
         if (req.files && req.files.length > 0) {
             attachments = req.files.map(file => ({
-                path: '/uploads/feed/' + file.filename,
+                path: '/feed_uploads/' + file.filename,
                 originalName: file.originalname,
                 mimeType: file.mimetype
             }));
@@ -429,7 +429,7 @@ exports.postCreateEvent = async (req, res) => {
         const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now();
         let bannerImage = null;
         if (req.file) {
-            bannerImage = '/uploads/feed/' + req.file.filename;
+            bannerImage = '/feed_uploads/' + req.file.filename;
         }
 
         const newEvent = await FeedGroup.create({

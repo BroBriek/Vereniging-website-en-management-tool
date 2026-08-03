@@ -1,16 +1,16 @@
 <%- include('../partials/header') %>
 <div class="row">
     <div class="col-12 mb-4">
-        <h1>Admin Dashboard</h1>
+        <h1><%= user.role === 'kookmoeke' ? 'Kookmoeke Dashboard' : 'Admin Dashboard' %></h1>
         <div class="alert alert-primary shadow-sm border-0">
-            <p class="mb-0 fs-5">Welkom, <strong><%= capitalizeName(user.username) %></strong>! Beheer hier de website en ledenadministratie.</p>
+            <p class="mb-0 fs-5">Welkom, <strong><%= capitalizeName(user.username) %></strong>! <%= user.role === 'kookmoeke' ? 'Bekijk en beheer hier je kookmoeke functies.' : 'Beheer hier de website en ledenadministratie.' %></p>
         </div>
     </div>
 
-    <!-- Row 1: Website Management (Blue) -->
-    <% if (settings.move_menu_to_dashboard) { %>
+    <!-- Row 1: Kookmoeke / Personal Menu -->
+    <% if (user.role === 'kookmoeke' || settings.move_menu_to_dashboard) { %>
         <div class="col-12 mb-3 mt-2">
-            <h3>Persoonlijk Menu</h3>
+            <h3><%= user.role === 'kookmoeke' ? 'Kookmoeke Menu' : 'Persoonlijk Menu' %></h3>
         </div>
 
         <% if (user.role !== 'kookmoeke') { %>
@@ -27,43 +27,47 @@
 
         <% if (user.role === 'kookmoeke' || user.role === 'admin') { %>
             <div class="col-md-4 mb-4">
-                <div class="card h-100 border-warning">
+                <div class="card h-100 border-warning shadow-sm">
                     <div class="card-body text-center">
                         <h3 class="card-title"><i class="bi bi-heart-fill text-warning"></i></h3>
-                        <p>Ga naar het exclusieve praathoekje voor kookmoekes.</p>
+                        <h5 class="fw-bold text-dark">Het Tetterhoekje</h5>
+                        <p class="text-muted">Ga naar het exclusieve praathoekje voor kookmoekes en leiding.</p>
                         <a href="/tetterhoekje" class="btn btn-warning text-dark font-playful fw-bold w-100">Het Tetterhoekje</a>
                     </div>
                 </div>
             </div>
 
             <div class="col-md-4 mb-4">
-                <div class="card h-100 border-primary">
+                <div class="card h-100 border-primary shadow-sm">
                     <div class="card-body text-center">
                         <h3 class="card-title"><i class="bi bi-journal-bookmark-fill text-primary"></i></h3>
-                        <p>Maak inzendingen met foto's en verhalen in het kampboekje.</p>
-                        <a href="/kampboekje" class="btn btn-primary font-playful fw-bold w-100">Kamp boekje</a>
+                        <h5 class="fw-bold text-dark">Kampboekje</h5>
+                        <p class="text-muted">Maak inzendingen met foto's en verhalen in het kampboekje.</p>
+                        <a href="/kampboekje" class="btn btn-primary font-playful fw-bold w-100">Kampboekje</a>
                     </div>
                 </div>
             </div>
         <% } %>
 
         <div class="col-md-4 mb-4">
-            <div class="card h-100">
+            <div class="card h-100 border-danger shadow-sm">
                 <div class="card-body text-center">
-                    <h3 class="card-title"><i class="bi bi-calendar3"></i></h3>
-                    <p><%= (user && user.role === 'kookmoeke') ? 'Bekijk de kalender.' : 'Bekijk de volledige leidingskalender.' %></p>
-                    <a href="<%= (user && user.role === 'kookmoeke') ? '/kalender' : '/feed/calendar' %>" class="btn btn-primary w-100"><%= (user && user.role === 'kookmoeke') ? 'Kalender' : 'Leidingskalender' %></a>
+                    <h3 class="card-title"><i class="bi bi-calendar3 text-danger"></i></h3>
+                    <h5 class="fw-bold text-dark">Kalender</h5>
+                    <p class="text-muted"><%= (user && user.role === 'kookmoeke') ? 'Bekijk de kalender.' : 'Bekijk de volledige leidingskalender.' %></p>
+                    <a href="<%= (user && user.role === 'kookmoeke') ? '/kalender' : '/feed/calendar' %>" class="btn btn-danger w-100"><%= (user && user.role === 'kookmoeke') ? 'Kalender' : 'Leidingskalender' %></a>
                 </div>
             </div>
         </div>
 
         <% if (settings.show_games_to_all || (user && user.role === 'admin')) { %>
             <div class="col-md-4 mb-4">
-                <div class="card h-100">
+                <div class="card h-100 border-info shadow-sm">
                     <div class="card-body text-center">
-                        <h3 class="card-title"><i class="bi bi-controller"></i></h3>
-                        <p>Inspiratie nodig? Check de spelendatabank.</p>
-                        <a href="/games" class="btn btn-primary w-100">Spelendatabank</a>
+                        <h3 class="card-title"><i class="bi bi-controller text-info"></i></h3>
+                        <h5 class="fw-bold text-dark">Spelendatabank</h5>
+                        <p class="text-muted">Inspiratie nodig? Check de spelendatabank.</p>
+                        <a href="/games" class="btn btn-info text-white w-100">Spelendatabank</a>
                     </div>
                 </div>
             </div>
@@ -71,22 +75,24 @@
 
         <% if (settings.enable_public_registrations_view || user.role === 'admin') { %>
             <div class="col-md-4 mb-4">
-                <div class="card h-100">
+                <div class="card h-100 border-success shadow-sm">
                     <div class="card-body text-center">
-                        <h3 class="card-title"><i class="bi bi-people"></i></h3>
-                        <p>Bekijk de lijst met alle ingeschreven leden.</p>
-                        <a href="/admin/registrations" class="btn btn-primary w-100">Ledenlijst</a>
+                        <h3 class="card-title"><i class="bi bi-people text-success"></i></h3>
+                        <h5 class="fw-bold text-dark">Ledenlijst</h5>
+                        <p class="text-muted">Bekijk de lijst met alle ingeschreven leden.</p>
+                        <a href="/admin/registrations" class="btn btn-success w-100">Ledenlijst</a>
                     </div>
                 </div>
             </div>
         <% } %>
 
         <div class="col-md-4 mb-4">
-            <div class="card h-100">
+            <div class="card h-100 border-secondary shadow-sm">
                 <div class="card-body text-center">
-                    <h3 class="card-title"><i class="bi bi-person-gear"></i></h3>
-                    <p>Pas je eigen profiel en wachtwoord aan.</p>
-                    <a href="/account/settings" class="btn btn-primary w-100">Mijn Instellingen</a>
+                    <h3 class="card-title"><i class="bi bi-person-gear text-secondary"></i></h3>
+                    <h5 class="fw-bold text-dark">Mijn Instellingen</h5>
+                    <p class="text-muted">Pas je eigen profiel en wachtwoord aan.</p>
+                    <a href="/account/settings" class="btn btn-secondary w-100">Mijn Instellingen</a>
                 </div>
             </div>
         </div>

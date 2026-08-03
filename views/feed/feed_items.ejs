@@ -42,15 +42,41 @@
                 <div id="post-text-container-<%= post.id %>" class="post-text-container">
                     <div class="card-text text-dark" style="font-size: 1.05rem; white-space: pre-line;"><%- highlightMentions(post.content) %></div>
 
-                    <!-- Attachments (Moved inside container) -->
+                    <!-- Attachments -->
                     <% if (post.attachments && post.attachments.length > 0) { %>
-                        <div class="mt-3 d-flex flex-wrap gap-2">
-                            <% post.attachments.forEach(file => { %>
-                                <a href="/download?path=<%= encodeURIComponent(file.path) %>&name=<%= encodeURIComponent(file.originalName) %>" onclick="openFilePreview('<%= file.path %>', '<%= file.originalName %>'); return false;" class="btn btn-light btn-sm border text-primary">
-                                    <i class="bi bi-file-earmark-text me-1"></i> <%= file.originalName %>
-                                </a>
-                            <% }) %>
-                        </div>
+                        <% 
+                            const isImageFile = (file) => {
+                                if (file.mimeType && file.mimeType.startsWith('image/')) return true;
+                                const name = file.originalName || file.path || '';
+                                return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name);
+                            };
+                            const imageFiles = post.attachments.filter(isImageFile);
+                            const otherFiles = post.attachments.filter(f => !isImageFile(f));
+                        %>
+
+                        <!-- Image Previews by Default -->
+                        <% if (imageFiles.length > 0) { %>
+                            <div class="row g-2 mt-2">
+                                <% imageFiles.forEach(img => { %>
+                                    <div class="<%= imageFiles.length === 1 ? 'col-12' : (imageFiles.length === 2 ? 'col-6' : 'col-6 col-md-4') %>">
+                                        <div class="position-relative overflow-hidden rounded-3 border shadow-sm bg-light" style="cursor: pointer;">
+                                            <img src="<%= img.path %>" class="img-fluid w-100" style="max-height: 280px; object-fit: cover; transition: transform 0.2s;" alt="<%= img.originalName %>" title="<%= img.originalName || 'Klik om te vergroten' %>" onclick="openFilePreview('<%= img.path %>', '<%= img.originalName %>')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        <% } %>
+
+                        <!-- Non-Image File Attachments -->
+                        <% if (otherFiles.length > 0) { %>
+                            <div class="mt-2 d-flex flex-wrap gap-2">
+                                <% otherFiles.forEach(file => { %>
+                                    <a href="/download?path=<%= encodeURIComponent(file.path) %>&name=<%= encodeURIComponent(file.originalName) %>" onclick="openFilePreview('<%= file.path %>', '<%= file.originalName %>'); return false;" class="btn btn-light btn-sm border text-primary">
+                                        <i class="bi bi-file-earmark-text me-1"></i> <%= file.originalName %>
+                                    </a>
+                                <% }) %>
+                            </div>
+                        <% } %>
                     <% } %>
 
                     <!-- Polls & Forms (Moved inside container) -->
@@ -244,8 +270,8 @@
                         </div>
                     <% } %>
                 </div>
-                <button id="read-more-btn-<%= post.id %>" class="btn btn-link btn-sm p-0 text-decoration-none d-none mt-1 fw-bold" onclick="expandPost('<%= post.id %>')">
-                    Meer weergeven <i class="bi bi-chevron-down"></i>
+                <button id="read-more-btn-<%= post.id %>" class="btn btn-link btn-sm p-0 text-decoration-none d-none mt-2 fw-bold text-primary" onclick="expandPost('<%= post.id %>')">
+                    <span class="btn-text">Meer weergeven</span> <i class="bi bi-chevron-down ms-1 icon-chevron"></i>
                 </button>
             </div>
 

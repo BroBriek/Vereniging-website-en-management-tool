@@ -132,6 +132,10 @@ async function openFilePreview(url, name) {
         activePreviewBlobUrl = null;
     }
 
+    if (typeof url === 'string' && url.startsWith('/uploads/feed/')) {
+        url = url.replace('/uploads/feed/', '/feed_uploads/');
+    }
+
     // Standalone check
     const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
 
@@ -173,10 +177,10 @@ async function openFilePreview(url, name) {
     img.src = '';
 
     // Determine type
-    const ext = name.split('.').pop().toLowerCase();
+    const ext = (name && name.includes('.')) ? name.split('.').pop().toLowerCase() : '';
     const isPDF = ext === 'pdf';
     const isOffice = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext);
-    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'heic', 'avif'].includes(ext) || (typeof url === 'string' && (url.startsWith('data:image/') || /\.(jpg|jpeg|png|gif|webp|svg|bmp|heic|avif)(\?.*)?$/i.test(url)));
 
     if (isImage) {
         img.src = url;

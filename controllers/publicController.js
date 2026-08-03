@@ -569,8 +569,15 @@ exports.getSitemapXml = (req, res) => {
 
 exports.downloadFile = (req, res) => {
     try {
+        let reqPath = req.query.path || '';
+        if (reqPath.startsWith('/uploads/feed/')) {
+            reqPath = reqPath.replace('/uploads/feed/', '/feed_uploads/');
+        } else if (reqPath.startsWith('uploads/feed/')) {
+            reqPath = reqPath.replace('uploads/feed/', 'feed_uploads/');
+        }
+
         const publicDir = path.join(__dirname, '..', 'public');
-        const filePath = path.join(publicDir, req.query.path);
+        const filePath = path.join(publicDir, reqPath);
         
         // Security: prevent path traversal
         const relative = path.relative(publicDir, filePath);

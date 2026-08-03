@@ -58,6 +58,30 @@
         font-weight: bold;
         font-size: 1rem;
     }
+    /* Truncation / Read More */
+    .post-content-container {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        transition: max-height 0.3s ease;
+    }
+
+    .post-content-collapsed {
+        max-height: 180px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .post-content-collapsed::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+        pointer-events: none;
+    }
 </style>
 
 <div class="row justify-content-center">
@@ -174,7 +198,12 @@
 
                         <!-- Content -->
                         <% if (post.content) { %>
-                            <div class="post-content mb-3" style="white-space: pre-line;"><%- post.content %></div>
+                            <div class="position-relative mb-3">
+                                <div id="tetter-content-<%= post.id %>" class="post-content-container text-secondary fs-6" style="white-space: pre-line; line-height: 1.6;"><%- post.content %></div>
+                                <button id="read-more-btn-tetter-<%= post.id %>" class="btn btn-link btn-sm p-0 text-decoration-none d-none mt-2 fw-bold text-primary" onclick="toggleTetterContent('<%= post.id %>')">
+                                    <span class="btn-text">Meer weergeven</span> <i class="bi bi-chevron-down ms-1 icon-chevron"></i>
+                                </button>
+                            </div>
                         <% } %>
 
                         <!-- Attachments Gallery -->
@@ -182,10 +211,17 @@
                             <div class="row g-2 mb-3">
                                 <% post.attachments.forEach(att => { %>
                                     <div class="col-md-6 col-lg-4">
-                                        <% if (att.mimeType && att.mimeType.startsWith('image/')) { %>
-                                            <img src="<%= att.path %>" class="img-fluid rounded-3 border shadow-sm w-100" style="max-height: 250px; object-fit: cover;" alt="<%= att.originalName %>">
+                                        <% 
+                                            const isImageAtt = (att.mimeType && att.mimeType.startsWith('image/')) ||
+                                                               (att.originalName && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(att.originalName)) ||
+                                                               (att.path && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(att.path));
+                                        %>
+                                        <% if (isImageAtt) { %>
+                                            <div class="position-relative overflow-hidden rounded-3 border shadow-sm bg-light" style="cursor: pointer;">
+                                                <img src="<%= att.path %>" class="img-fluid w-100" style="max-height: 250px; object-fit: cover; transition: transform 0.2s;" alt="<%= att.originalName || 'Foto' %>" title="<%= att.originalName || 'Klik om te vergroten' %>" onclick="openFilePreview('<%= att.path %>', '<%= att.originalName || 'Foto' %>')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                                            </div>
                                         <% } else { %>
-                                            <a href="<%= att.path %>" target="_blank" class="btn btn-outline-secondary btn-sm w-100 text-truncate text-start rounded-3">
+                                            <a href="<%= att.path %>" target="_blank" onclick="openFilePreview('<%= att.path %>', '<%= att.originalName || 'Bestand' %>'); return false;" class="btn btn-outline-secondary btn-sm w-100 text-truncate text-start rounded-3">
                                                 <i class="bi bi-paperclip me-1"></i> <%= att.originalName %>
                                             </a>
                                         <% } %>
@@ -248,5 +284,51 @@
 
     </div>
 </div>
+
+<script>
+    function initTetterTruncation() {
+        document.querySelectorAll('.post-content-container').forEach(container => {
+            if (container.scrollHeight > 185 && !container.classList.contains('post-content-expanded')) {
+                container.classList.add('post-content-collapsed');
+                const id = container.id.replace('tetter-content-', '');
+                const btn = document.getElementById('read-more-btn-tetter-' + id);
+                if (btn) btn.classList.remove('d-none');
+            }
+        });
+    }
+
+    function toggleTetterContent(id) {
+        const container = document.getElementById('tetter-content-' + id);
+        const btn = document.getElementById('read-more-btn-tetter-' + id);
+        if (!container || !btn) return;
+
+        const isCollapsed = container.classList.contains('post-content-collapsed');
+        const textSpan = btn.querySelector('.btn-text');
+        const icon = btn.querySelector('.icon-chevron');
+
+        if (isCollapsed) {
+            container.classList.remove('post-content-collapsed');
+            container.classList.add('post-content-expanded');
+            if (textSpan) textSpan.textContent = 'Minder weergeven';
+            if (icon) {
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            }
+        } else {
+            container.classList.remove('post-content-expanded');
+            container.classList.add('post-content-collapsed');
+            if (textSpan) textSpan.textContent = 'Meer weergeven';
+            if (icon) {
+                icon.classList.remove('bi-chevron-up');
+                icon.classList.add('bi-chevron-down');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initTetterTruncation();
+        window.addEventListener('resize', initTetterTruncation);
+    });
+</script>
 
 <%- include('../partials/footer') %>
