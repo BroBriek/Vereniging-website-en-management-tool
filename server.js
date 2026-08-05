@@ -153,8 +153,9 @@ app.use(session({
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
+  rolling: true, // Refresh cookie expiry on every request (prevents iOS ITP 7-day eviction)
   cookie: {
-    maxAge: null, // Default: session cookie (expires on browser close); overridden to 30 days on login with "remember me"
+    maxAge: 24 * 60 * 60 * 1000, // Default: 1 day; overridden to 30 days on login with "remember me"
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax'

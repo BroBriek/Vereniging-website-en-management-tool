@@ -21,8 +21,8 @@ exports.postLogin = (req, res, next) => {
         req.session.cookie.maxAge = REMEMBER_ME_MS;
         req.session.rememberMe = true; // flag so the store persists the extended TTL
       } else {
-        // Session cookie: expires when browser closes
-        req.session.cookie.maxAge = null;
+        // Short-lived persistent cookie: survives iOS PWA background suspension but expires after 1 day
+        req.session.cookie.maxAge = 24 * 60 * 60 * 1000; // 1 day
         req.session.rememberMe = false;
       }
 
