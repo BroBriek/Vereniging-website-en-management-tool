@@ -14,6 +14,7 @@ const SettingsService = require('./services/SettingsService');
 const CustomPageService = require('./services/CustomPageService');
 const BackupService = require('./services/BackupService');
 const logMonitor = require('./services/LogMonitorService');
+const onlineUserService = require('./services/OnlineUserService');
 
 const LOGS_DIR = path.join(__dirname, 'logs');
 fs.mkdirSync(LOGS_DIR, { recursive: true });
@@ -227,6 +228,7 @@ app.use(csrfProtection);
 
 // Global Variables & Alert Middleware
 app.use((req, res, next) => {
+  onlineUserService.recordActivity(req);
   res.locals.settings = SettingsService.getAll() || {};
   res.locals.navbarPages = CustomPageService.getNavbarPages();
   res.locals.user = req.user || null;

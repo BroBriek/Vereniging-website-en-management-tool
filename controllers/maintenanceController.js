@@ -7,6 +7,23 @@ const NotificationService = require('../services/NotificationService');
 
 const PUBLIC_PATH = path.join(__dirname, '..', 'public');
 
+// ==================== Online Users Stats ====================
+exports.getOnlineUsers = (req, res) => {
+    try {
+        if (!req.user || req.user.username !== 'admin' || req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const onlineUserService = require('../services/OnlineUserService');
+        const stats = onlineUserService.getOnlineUsers(5);
+
+        res.json(stats);
+    } catch (error) {
+        console.error('Error getting online users stats:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // ==================== Calendar Stats ====================
 exports.getCalendarStats = async (req, res) => {
     try {

@@ -140,6 +140,7 @@ router.use(ensureAdmin);
 
 // Maintenance Tools
 router.get('/maintenance', maintenanceController.getMaintenanceTools);
+router.get('/api/online-users', maintenanceController.getOnlineUsers);
 router.get('/api/calendar-stats', maintenanceController.getCalendarStats);
 router.get('/api/file-explorer', maintenanceController.getFileExplorer);
 router.get('/api/file-read', maintenanceController.readFile);
