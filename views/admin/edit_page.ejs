@@ -1,10 +1,15 @@
 <%- include('../partials/header') %>
 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
     <h1 class="mb-0">Bewerk Pagina: <%= slug %></h1>
-    <div class="d-flex gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end">
+    <div class="d-flex gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end flex-wrap">
         <a href="/admin/info" class="btn btn-info text-white rounded-pill px-3" title="Algemene Hulp & Info">
             <i class="bi bi-info-circle me-1"></i> Info
         </a>
+        <% if (slug === 'register') { %>
+            <a href="/admin/registrations" class="btn btn-primary rounded-pill px-3" title="Ledenlijst & Inschrijvingen">
+                <i class="bi bi-people-fill me-1"></i> Inschrijvingen / Ledenlijst
+            </a>
+        <% } %>
         <a href="/admin" class="btn btn-secondary rounded-pill px-3">Terug</a>
     </div>
 </div>
