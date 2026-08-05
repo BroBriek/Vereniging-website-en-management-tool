@@ -1,4 +1,5 @@
 const { Announcement, User, SurveyResponse } = require('../models');
+const { Op } = require('sequelize');
 const NotificationService = require('../services/NotificationService');
 const sanitizeHtml = require('sanitize-html');
 const ExcelJS = require('exceljs');
@@ -36,7 +37,9 @@ exports.postAnnouncement = async (req, res) => {
         if (surveyEnabled && req.body.surveyQuestions) {
             const rawQuestions = Array.isArray(req.body.surveyQuestions) 
                 ? req.body.surveyQuestions 
-                : [req.body.surveyQuestions];
+                : (typeof req.body.surveyQuestions === 'object' && req.body.surveyQuestions !== null)
+                    ? Object.values(req.body.surveyQuestions)
+                    : [req.body.surveyQuestions];
             
             formattedQuestions = rawQuestions
                 .filter(q => q && q.text && q.text.trim())
@@ -47,10 +50,12 @@ exports.postAnnouncement = async (req, res) => {
                 }));
         }
 
+        const targetArray = Array.isArray(target) ? target : [target || 'all'];
+
         const announcement = await Announcement.create({
             title,
             content: cleanContent,
-            target: target || 'all',
+            target: targetArray,
             sendNotification: shouldNotify,
             isActive: true,
             creatorId: req.user.id,
@@ -71,10 +76,10 @@ exports.postAnnouncement = async (req, res) => {
                 };
 
                 let targetUsers;
-                if (target === 'admin') {
-                    targetUsers = await User.findAll({ where: { role: 'admin', isActive: true } });
-                } else {
+                if (targetArray.includes('all')) {
                     targetUsers = await User.findAll({ where: { isActive: true } });
+                } else {
+                    targetUsers = await User.findAll({ where: { role: { [Op.in]: targetArray }, isActive: true } });
                 }
 
                 await Promise.allSettled(

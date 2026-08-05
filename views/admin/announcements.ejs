@@ -166,11 +166,29 @@
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label for="announcementTarget" class="form-label fw-bold small text-muted text-uppercase">Doelgroep</label>
-                            <select class="form-select border-2 rounded-3" id="announcementTarget" name="target">
-                                <option value="all">Alle gebruikers (Leiding & Admins)</option>
-                                <option value="admin">Enkel Administrators</option>
-                            </select>
+                            <label class="form-label fw-bold small text-muted text-uppercase">Doelgroep(en)</label>
+                            <div class="d-flex flex-wrap gap-2 pt-1">
+                                <div class="form-check form-check-inline me-2">
+                                    <input class="form-check-input target-checkbox" type="checkbox" name="target[]" id="targetAll" value="all" checked>
+                                    <label class="form-check-label fw-bold text-primary" for="targetAll">Iedereen</label>
+                                </div>
+                                <div class="form-check form-check-inline me-2">
+                                    <input class="form-check-input target-checkbox" type="checkbox" name="target[]" id="targetAdmin" value="admin">
+                                    <label class="form-check-label text-danger" for="targetAdmin">Admins</label>
+                                </div>
+                                <div class="form-check form-check-inline me-2">
+                                    <input class="form-check-input target-checkbox" type="checkbox" name="target[]" id="targetLeader" value="leader">
+                                    <label class="form-check-label text-success" for="targetLeader">Leiding</label>
+                                </div>
+                                <div class="form-check form-check-inline me-2">
+                                    <input class="form-check-input target-checkbox" type="checkbox" name="target[]" id="targetKookmoeke" value="kookmoeke">
+                                    <label class="form-check-label text-warning text-dark" for="targetKookmoeke">Kookmoekes</label>
+                                </div>
+                                <div class="form-check form-check-inline me-0">
+                                    <input class="form-check-input target-checkbox" type="checkbox" name="target[]" id="targetMedia" value="media">
+                                    <label class="form-check-label text-info text-dark" for="targetMedia">Media</label>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6 d-flex align-items-end">
                             <div class="form-check form-switch p-3 w-100 rounded-3 border-2 bg-light d-flex align-items-center justify-content-between px-3 border" style="height: calc(3.5rem + 2px);">
@@ -285,19 +303,40 @@
                                 <td class="text-muted"><%= new Date(a.createdAt).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
                                 <td>
                                     <strong><%= a.title %></strong>
-                                    <% if (a.hasSurvey) { %>
+                                    <% if (a.hasSurvey) { 
+                                        let qs = a.surveyQuestions;
+                                        if (qs && typeof qs === 'string') { try { qs = JSON.parse(qs); } catch(e) { qs = null; } }
+                                        const qCount = (qs && Array.isArray(qs)) ? qs.length : (a.surveyQuestion ? 1 : 0);
+                                    %>
                                         <br>
                                         <span class="badge bg-info-subtle text-info mt-1" style="font-size: 0.75rem;">
-                                            <i class="bi bi-patch-question-fill me-1"></i>Survey: "<%= a.surveyQuestion %>" (<%= a.surveyType === 'score' ? 'Score' : 'Feedback' %>)
+                                            <i class="bi bi-patch-question-fill me-1"></i>Survey: <%= qCount %> <%= qCount === 1 ? 'vraag' : 'vragen' %>
                                         </span>
                                     <% } %>
                                 </td>
                                 <td>
-                                    <% if (a.target === 'admin') { %>
-                                        <span class="badge badge-admin rounded-pill px-3">Admins</span>
-                                    <% } else { %>
-                                        <span class="badge badge-all rounded-pill px-3">Iedereen</span>
-                                    <% } %>
+                                    <div class="d-flex flex-wrap gap-1">
+                                    <% 
+                                        let targets = a.target;
+                                        if (!Array.isArray(targets)) {
+                                            try { targets = JSON.parse(targets); } catch(e) { targets = [targets]; }
+                                            if (!Array.isArray(targets)) targets = [targets];
+                                        }
+                                        targets.forEach(t => { 
+                                    %>
+                                        <% if (t === 'admin') { %>
+                                            <span class="badge bg-danger"><i class="bi bi-shield-lock-fill me-1"></i>Admins</span>
+                                        <% } else if (t === 'all') { %>
+                                            <span class="badge bg-primary"><i class="bi bi-globe me-1"></i>Iedereen</span>
+                                        <% } else if (t === 'leader') { %>
+                                            <span class="badge bg-success"><i class="bi bi-person-fill me-1"></i>Leiding</span>
+                                        <% } else if (t === 'kookmoeke') { %>
+                                            <span class="badge bg-warning text-dark"><i class="bi bi-egg-fried me-1"></i>Kookmoekes</span>
+                                        <% } else { %>
+                                            <span class="badge bg-info text-dark text-capitalize"><i class="bi bi-person-badge me-1"></i><%= t %></span>
+                                        <% } %>
+                                    <% }); %>
+                                    </div>
                                 </td>
                                 <td>
                                     <% if (a.sendNotification) { %>
@@ -505,7 +544,7 @@
 
 <script src="/js/rich-editor.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    function initAnnouncementUI() {
         const titleInput = document.getElementById('announcementTitle');
         const previewTitle = document.getElementById('preview-title');
         const previewBody = document.getElementById('preview-body');
@@ -552,20 +591,20 @@
                 </div>
             `;
             
-            // Add remove event listener
             row.querySelector('.btn-remove-question').addEventListener('click', () => {
                 row.remove();
                 renumberQuestions();
                 updateSurveyPreview();
             });
 
-            // Add change event listeners to update live preview
             row.querySelector('.question-text-input').addEventListener('input', updateSurveyPreview);
             row.querySelector('.question-type-select').addEventListener('change', updateSurveyPreview);
 
-            questionsContainer.appendChild(row);
-            renumberQuestions();
-            updateSurveyPreview();
+            if(questionsContainer) {
+                questionsContainer.appendChild(row);
+                renumberQuestions();
+                updateSurveyPreview();
+            }
         }
 
         function renumberQuestions() {
@@ -576,6 +615,7 @@
         }
 
         function buildQuestionsPreviewList(targetContainer) {
+            if(!targetContainer) return;
             targetContainer.innerHTML = '';
             const rows = document.querySelectorAll('#questionsContainer .question-row');
             
@@ -614,6 +654,7 @@
         }
 
         function updateSurveyPreview() {
+            if(!hasSurveyCheckbox || !surveyFieldsDiv || !previewSurveyWrapper) return;
             const hasSurvey = hasSurveyCheckbox.checked;
             const rows = document.querySelectorAll('#questionsContainer .question-row');
             
@@ -622,7 +663,6 @@
                 previewSurveyWrapper.style.display = 'block';
                 buildQuestionsPreviewList(previewSurveyQuestionsList);
 
-                // Reset progress bar in preview
                 const progressBar = document.getElementById('preview-survey-progress-bar');
                 const progressBadge = document.getElementById('preview-survey-progress-badge');
                 if (progressBar) progressBar.style.width = '0%';
@@ -633,33 +673,78 @@
             }
         }
 
-        hasSurveyCheckbox.addEventListener('change', () => {
-            if (hasSurveyCheckbox.checked && questionsContainer.children.length === 0) {
+        if(hasSurveyCheckbox) {
+            hasSurveyCheckbox.addEventListener('change', () => {
+                if (hasSurveyCheckbox.checked && questionsContainer && questionsContainer.children.length === 0) {
+                    createQuestionRow('', 'score');
+                }
+                updateSurveyPreview();
+            });
+        }
+
+        if(btnAddQuestion) {
+            btnAddQuestion.addEventListener('click', () => {
                 createQuestionRow('', 'score');
-            }
-            updateSurveyPreview();
-        });
+            });
+        }
 
-        btnAddQuestion.addEventListener('click', () => {
-            createQuestionRow('', 'score');
-        });
+        if(titleInput && previewTitle) {
+            titleInput.addEventListener('input', () => {
+                const titleValue = titleInput.value.trim() || 'Titel van de aankondiging';
+                previewTitle.innerHTML = `<i class="bi bi-bell-fill text-warning me-1"></i> ${titleValue}`;
+            });
+        }
 
-        // Update Title Preview
-        titleInput.addEventListener('input', () => {
-            const titleValue = titleInput.value.trim() || 'Titel van de aankondiging';
-            previewTitle.innerHTML = `<i class="bi bi-bell-fill text-warning me-1"></i> ${titleValue}`;
-        });
-
-        // Update Body Preview
         const contentInput = document.getElementById('announcementContent');
-        contentInput.addEventListener('input', () => {
-            const content = contentInput.value;
-            if (content === '<p><br></p>' || !content.trim()) {
-                previewBody.innerHTML = 'Inhoud van de aankondiging...';
-            } else {
-                previewBody.innerHTML = content;
-            }
-        });
+        if(contentInput && previewBody) {
+            // Also listen to change and keyup just in case
+            const updateBody = () => {
+                const content = contentInput.value;
+                if (content === '<p><br></p>' || !content.trim()) {
+                    previewBody.innerHTML = 'Inhoud van de aankondiging...';
+                } else {
+                    previewBody.innerHTML = content;
+                }
+            };
+            contentInput.addEventListener('input', updateBody);
+            contentInput.addEventListener('change', updateBody);
+            
+            // Periodically check for updates if quill doesn't fire events
+            setInterval(() => {
+                if(contentInput.value !== contentInput.dataset.lastValue) {
+                    contentInput.dataset.lastValue = contentInput.value;
+                    updateBody();
+                }
+            }, 500);
+        }
+
+        const targetCheckboxes = document.querySelectorAll('.target-checkbox');
+        const targetAll = document.getElementById('targetAll');
+        if (targetCheckboxes.length > 0 && targetAll) {
+            targetCheckboxes.forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    if (e.target.id === 'targetAll') {
+                        if (e.target.checked) {
+                            targetCheckboxes.forEach(other => {
+                                if (other.id !== 'targetAll') other.checked = false;
+                            });
+                        } else {
+                            // Prevent unchecking "Iedereen" if nothing else is selected
+                            const anyChecked = Array.from(targetCheckboxes).some(other => other.checked);
+                            if (!anyChecked) e.target.checked = true;
+                        }
+                    } else {
+                        if (e.target.checked) {
+                            targetAll.checked = false;
+                        } else {
+                            // If they uncheck the last specific role, check "Iedereen" again
+                            const anySpecificChecked = Array.from(targetCheckboxes).some(other => other.id !== 'targetAll' && other.checked);
+                            if (!anySpecificChecked) targetAll.checked = true;
+                        }
+                    }
+                });
+            });
+        }
 
         function buildTestWizard() {
             const container = testPopupSurveyWizard;
@@ -964,5 +1049,11 @@
                 }
             });
         }
-    });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAnnouncementUI);
+    } else {
+        initAnnouncementUI();
+    }
 </script>

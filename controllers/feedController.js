@@ -399,14 +399,34 @@ exports.getFeed = async (req, res) => {
             return leaderMMDD === todayMMDD;
         });
 
-        // Fetch latest active announcement for the current user's role
-        const announcement = await Announcement.findOne({
-            where: {
-                isActive: true,
-                target: {
-                    [Op.or]: req.user.role === 'admin' ? ['all', 'admin'] : ['all']
+        // Build list of dismissed announcement IDs for exclusion
+        let dismissedIds = [];
+        if (req.user.dismissedAnnouncements) {
+            if (Array.isArray(req.user.dismissedAnnouncements)) {
+                dismissedIds = req.user.dismissedAnnouncements;
+            } else if (typeof req.user.dismissedAnnouncements === 'string') {
+                try {
+                    dismissedIds = JSON.parse(req.user.dismissedAnnouncements);
+                } catch (e) {
+                    dismissedIds = [];
                 }
-            },
+            }
+        }
+        dismissedIds = dismissedIds.map(id => Number(id)).filter(id => !isNaN(id));
+
+        // Fetch latest active announcement that the user hasn't dismissed
+        const announcementWhere = {
+            isActive: true,
+            target: {
+                [Op.in]: ['all', req.user.role]
+            }
+        };
+        if (dismissedIds.length > 0) {
+            announcementWhere.id = { [Op.notIn]: dismissedIds };
+        }
+
+        const announcement = await Announcement.findOne({
+            where: announcementWhere,
             include: [
                 {
                     model: SurveyResponse,
@@ -421,41 +441,26 @@ exports.getFeed = async (req, res) => {
         let userSurveyResponse = null;
 
         if (announcement) {
-            let dismissedIds = [];
-            if (req.user.dismissedAnnouncements) {
-                if (Array.isArray(req.user.dismissedAnnouncements)) {
-                    dismissedIds = req.user.dismissedAnnouncements;
-                } else if (typeof req.user.dismissedAnnouncements === 'string') {
-                    try {
-                        dismissedIds = JSON.parse(req.user.dismissedAnnouncements);
-                    } catch (e) {
-                        dismissedIds = [];
-                    }
+            activeAnnouncement = announcement;
+
+            if (announcement.hasSurvey) {
+                const responses = announcement.surveyResponses || [];
+                userSurveyResponse = responses.find(r => r.userId === req.user.id) || null;
+
+                const totalCount = responses.length;
+                let targetCount = 0;
+                if (announcement.target === 'admin') {
+                    targetCount = await User.count({ where: { role: 'admin', isActive: true } });
+                } else {
+                    targetCount = await User.count({ where: { isActive: true } });
                 }
-            }
-            dismissedIds = dismissedIds.map(id => Number(id));
-            if (!dismissedIds.includes(Number(announcement.id))) {
-                activeAnnouncement = announcement;
+                const percentage = targetCount > 0 ? Math.round((totalCount / targetCount) * 100) : 0;
 
-                if (announcement.hasSurvey) {
-                    const responses = announcement.surveyResponses || [];
-                    userSurveyResponse = responses.find(r => r.userId === req.user.id) || null;
-
-                    const totalCount = responses.length;
-                    let targetCount = 0;
-                    if (announcement.target === 'admin') {
-                        targetCount = await User.count({ where: { role: 'admin', isActive: true } });
-                    } else {
-                        targetCount = await User.count({ where: { isActive: true } });
-                    }
-                    const percentage = targetCount > 0 ? Math.round((totalCount / targetCount) * 100) : 0;
-
-                    surveyStats = {
-                        totalCount,
-                        targetCount,
-                        percentage
-                    };
-                }
+                surveyStats = {
+                    totalCount,
+                    targetCount,
+                    percentage
+                };
             }
         }
 

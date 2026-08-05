@@ -3314,7 +3314,7 @@ async function fixImage(btn, url) {
                     <% if (Array.isArray(user.dismissedAnnouncements)) { %>
                         dbDismissed = <%- JSON.stringify(user.dismissedAnnouncements) %>;
                     <% } else if (typeof user.dismissedAnnouncements === 'string') { %>
-                        dbDismissed = <%- user.dismissedAnnouncements %>;
+                        dbDismissed = <%- JSON.stringify(user.dismissedAnnouncements) %>;
                     <% } %>
                 <% } %>
                 

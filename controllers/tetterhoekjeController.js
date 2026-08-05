@@ -253,14 +253,30 @@ exports.getFeed = async (req, res) => {
             return `${parts[1]}-${parts[2]}` === todayMMDD;
         });
 
-        // Announcement
+        // Build list of dismissed announcement IDs for exclusion
+        let dismissedIds = [];
+        if (req.user.dismissedAnnouncements) {
+            if (Array.isArray(req.user.dismissedAnnouncements)) {
+                dismissedIds = req.user.dismissedAnnouncements;
+            } else if (typeof req.user.dismissedAnnouncements === 'string') {
+                try { dismissedIds = JSON.parse(req.user.dismissedAnnouncements); } catch (e) { dismissedIds = []; }
+            }
+        }
+        dismissedIds = dismissedIds.map(id => Number(id)).filter(id => !isNaN(id));
+
+        // Fetch latest active announcement that the user hasn't dismissed
+        const announcementWhere = {
+            isActive: true,
+            target: {
+                [Op.in]: ['all', req.user.role]
+            }
+        };
+        if (dismissedIds.length > 0) {
+            announcementWhere.id = { [Op.notIn]: dismissedIds };
+        }
+
         const announcement = await Announcement.findOne({
-            where: {
-                isActive: true,
-                target: {
-                    [Op.or]: req.user.role === 'admin' ? ['all', 'admin'] : ['all']
-                }
-            },
+            where: announcementWhere,
             include: [{ model: SurveyResponse, as: 'surveyResponses' }],
             order: [['createdAt', 'DESC']]
         });
@@ -270,27 +286,16 @@ exports.getFeed = async (req, res) => {
         let userSurveyResponse = null;
 
         if (announcement) {
-            let dismissedIds = [];
-            if (req.user.dismissedAnnouncements) {
-                if (Array.isArray(req.user.dismissedAnnouncements)) {
-                    dismissedIds = req.user.dismissedAnnouncements;
-                } else if (typeof req.user.dismissedAnnouncements === 'string') {
-                    try { dismissedIds = JSON.parse(req.user.dismissedAnnouncements); } catch (e) { dismissedIds = []; }
-                }
-            }
-            dismissedIds = dismissedIds.map(id => Number(id));
-            if (!dismissedIds.includes(Number(announcement.id))) {
-                activeAnnouncement = announcement;
-                if (announcement.hasSurvey) {
-                    const responses = announcement.surveyResponses || [];
-                    userSurveyResponse = responses.find(r => r.userId === req.user.id) || null;
-                    const totalCount = responses.length;
-                    let targetCount = announcement.target === 'admin' 
-                        ? await User.count({ where: { role: 'admin', isActive: true } })
-                        : await User.count({ where: { isActive: true } });
-                    const percentage = targetCount > 0 ? Math.round((totalCount / targetCount) * 100) : 0;
-                    surveyStats = { totalCount, targetCount, percentage };
-                }
+            activeAnnouncement = announcement;
+            if (announcement.hasSurvey) {
+                const responses = announcement.surveyResponses || [];
+                userSurveyResponse = responses.find(r => r.userId === req.user.id) || null;
+                const totalCount = responses.length;
+                let targetCount = announcement.target === 'admin' 
+                    ? await User.count({ where: { role: 'admin', isActive: true } })
+                    : await User.count({ where: { isActive: true } });
+                const percentage = targetCount > 0 ? Math.round((totalCount / targetCount) * 100) : 0;
+                surveyStats = { totalCount, targetCount, percentage };
             }
         }
 

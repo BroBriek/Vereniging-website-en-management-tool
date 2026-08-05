@@ -11,9 +11,23 @@ const Announcement = sequelize.define('Announcement', {
     allowNull: false
   },
   target: {
-    type: DataTypes.STRING, // 'all' or 'admin'
+    type: DataTypes.JSON,
     allowNull: false,
-    defaultValue: 'all'
+    defaultValue: '["all"]',
+    get() {
+      const rawValue = this.getDataValue('target');
+      if (!rawValue) return ['all'];
+      if (typeof rawValue === 'string') {
+        try { 
+            const parsed = JSON.parse(rawValue);
+            return Array.isArray(parsed) ? parsed : [rawValue];
+        } catch (e) { 
+            // Handle legacy non-JSON strings like "all" or "admin"
+            return [rawValue];
+        }
+      }
+      return Array.isArray(rawValue) ? rawValue : [rawValue];
+    }
   },
   sendNotification: {
     type: DataTypes.BOOLEAN,
