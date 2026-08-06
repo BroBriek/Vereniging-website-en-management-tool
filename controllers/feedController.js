@@ -414,27 +414,27 @@ exports.getFeed = async (req, res) => {
         }
         dismissedIds = dismissedIds.map(id => Number(id)).filter(id => !isNaN(id));
 
-        // Fetch latest active announcement that the user hasn't dismissed
-        const announcementWhere = {
-            isActive: true,
-            target: {
-                [Op.in]: ['all', req.user.role]
-            }
-        };
+        // Fetch all active announcements the user hasn't dismissed, then filter
+        // by target in JS. The target column is stored as a double-encoded JSON
+        // string in SQLite (e.g. "[\"leader\"]"), so SQL LIKE patterns are
+        // unreliable. The Sequelize model getter correctly parses it to an array.
+        const baseAnnouncementWhere = { isActive: true };
         if (dismissedIds.length > 0) {
-            announcementWhere.id = { [Op.notIn]: dismissedIds };
+            baseAnnouncementWhere.id = { [Op.notIn]: dismissedIds };
         }
 
-        const announcement = await Announcement.findOne({
-            where: announcementWhere,
-            include: [
-                {
-                    model: SurveyResponse,
-                    as: 'surveyResponses'
-                }
-            ],
+        const candidates = await Announcement.findAll({
+            where: baseAnnouncementWhere,
+            include: [{ model: SurveyResponse, as: 'surveyResponses' }],
             order: [['createdAt', 'DESC']]
         });
+
+        // Find the first announcement whose target array includes 'all' or the user's role
+        const userRole = req.user.role;
+        const announcement = candidates.find(a => {
+            const targets = Array.isArray(a.target) ? a.target : [a.target];
+            return targets.includes('all') || targets.includes(userRole);
+        }) || null;
 
         let activeAnnouncement = null;
         let surveyStats = null;
@@ -448,19 +448,16 @@ exports.getFeed = async (req, res) => {
                 userSurveyResponse = responses.find(r => r.userId === req.user.id) || null;
 
                 const totalCount = responses.length;
+                const targets = Array.isArray(announcement.target) ? announcement.target : [announcement.target];
                 let targetCount = 0;
-                if (announcement.target === 'admin') {
-                    targetCount = await User.count({ where: { role: 'admin', isActive: true } });
+                if (!targets.includes('all')) {
+                    targetCount = await User.count({ where: { role: { [Op.in]: targets }, isActive: true } });
                 } else {
                     targetCount = await User.count({ where: { isActive: true } });
                 }
                 const percentage = targetCount > 0 ? Math.round((totalCount / targetCount) * 100) : 0;
 
-                surveyStats = {
-                    totalCount,
-                    targetCount,
-                    percentage
-                };
+                surveyStats = { totalCount, targetCount, percentage };
             }
         }
 
@@ -1775,11 +1772,12 @@ exports.postSurveyResponse = async (req, res) => {
 
         const totalResponsesCount = await SurveyResponse.count({ where: { announcementId } });
         
+        const announcementTargets = Array.isArray(announcement.target) ? announcement.target : [announcement.target];
         let targetCount = 0;
-        if (announcement.target === 'admin') {
-            targetCount = await User.count({ where: { role: 'admin', isActive: true } });
-        } else {
+        if (announcementTargets.includes('all')) {
             targetCount = await User.count({ where: { isActive: true } });
+        } else {
+            targetCount = await User.count({ where: { role: { [Op.in]: announcementTargets }, isActive: true } });
         }
 
         const percentage = targetCount > 0 ? Math.round((totalResponsesCount / targetCount) * 100) : 0;

@@ -1,274 +1,180 @@
+<%
+    // Helper not available in this scope — define it locally
+    function _cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+%>
 <style>
-    /* Premium Announcement Page styling */
-    .premium-card {
+    .ann-card {
         border: none;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        background-color: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.06);
         overflow: hidden;
-        transition: all 0.3s ease;
     }
-    .premium-card-header {
-        background-color: var(--chiro-blue);
+    .ann-card-header {
+        background: var(--chiro-blue, #0d6efd);
         color: white;
-        padding: 1.25rem 1.5rem;
+        padding: 1rem 1.25rem;
         font-family: 'Fredoka', sans-serif;
         font-weight: 600;
-        font-size: 1.15rem;
-        border: none;
-    }
-    
-    /* Dialog Glassmorphic styling */
-    .glass-dialog-preview {
-        border-radius: 24px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        overflow: hidden;
-        width: 100%;
-        max-width: 450px;
-        margin: 0 auto;
-    }
-    .glass-dialog-header {
-        background: linear-gradient(135deg, var(--chiro-red) 0%, #b81423 100%);
-        color: white;
-        padding: 1.5rem;
-        position: relative;
-        font-family: 'Fredoka', sans-serif;
-    }
-    .glass-dialog-title {
-        font-weight: 700;
-        margin: 0;
-        font-size: 1.4rem;
+        font-size: 1.1rem;
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 0.5rem;
     }
-    .glass-dialog-body {
-        padding: 1.75rem 1.5rem;
-        color: #333;
-        font-size: 1.05rem;
-        line-height: 1.6;
-        max-height: 300px;
-        overflow-y: auto;
+    .ann-card-header.dark  { background: #343a40; }
+    .ann-card-header.grey  { background: #6c757d; }
+    .target-chip-group { display: flex; flex-wrap: wrap; gap: .5rem; padding-top: .25rem; }
+    .target-chip { display: none; }
+    .target-chip + label {
+        cursor: pointer;
+        padding: .35rem .85rem;
+        border-radius: 50rem;
+        border: 2px solid #dee2e6;
+        font-size: .85rem;
+        font-weight: 600;
+        background: white;
+        transition: all .18s ease;
+        user-select: none;
     }
-    .glass-dialog-footer {
-        padding: 1.25rem 1.5rem;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
-        display: flex;
-        justify-content: center;
-    }
-    
-    /* Real Overlay style for test mode */
-    dialog.announcement-test-dialog {
-        border: none;
-        border-radius: 24px;
-        padding: 0;
-        max-width: 500px;
-        width: 90%;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-        background: rgba(255, 255, 255, 0.88);
-        backdrop-filter: blur(25px) saturate(190%);
-        -webkit-backdrop-filter: blur(25px) saturate(190%);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        outline: none;
-        overflow: hidden;
-    }
-    dialog.announcement-test-dialog::backdrop {
-        background-color: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-    }
-    
-    /* Survey Card sliding transitions */
-    .survey-wizard {
-        position: relative;
-        overflow: hidden;
-        width: 100%;
-        transition: height 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-    
-    .survey-wizard-track {
-        display: flex;
-        width: 100%;
-        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        align-items: start;
-    }
-    
-    .survey-question-card {
-        width: 100%;
-        flex-shrink: 0;
-        box-sizing: border-box;
-    }
-    
-    .btn-test-score-option {
-        border: 2px solid rgba(13, 110, 253, 0.15) !important;
-        background: rgba(13, 110, 253, 0.03);
-        color: var(--chiro-blue, #0d6efd) !important;
-    }
-    .btn-test-score-option:hover {
-        background: var(--chiro-blue, #0d6efd) !important;
-        color: white !important;
-        transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
-    }
-    
-    /* Custom Scrollbar for list and preview */
-    .glass-dialog-body::-webkit-scrollbar {
-        width: 6px;
-    }
-    .glass-dialog-body::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .glass-dialog-body::-webkit-scrollbar-thumb {
-        background-color: rgba(0,0,0,0.15);
-        border-radius: 10px;
-    }
+    .target-chip:checked + label { border-color: currentColor; background: currentColor; color: white !important; }
+    #chip-all:checked + label      { background: #0d6efd; border-color: #0d6efd; color: white; }
+    #chip-admin:checked + label    { background: #dc3545; border-color: #dc3545; color: white; }
+    #chip-leader:checked + label   { background: #198754; border-color: #198754; color: white; }
+    #chip-kookmoeke:checked + label{ background: #fd7e14; border-color: #fd7e14; color: white; }
+    #chip-media:checked + label    { background: #0dcaf0; border-color: #0dcaf0; color: white; }
 
-    .badge-admin {
-        background-color: var(--chiro-blue);
-        color: white;
+    label[for="chip-all"]      { color: #0d6efd; }
+    label[for="chip-admin"]    { color: #dc3545; }
+    label[for="chip-leader"]   { color: #198754; }
+    label[for="chip-kookmoeke"]{ color: #fd7e14; }
+    label[for="chip-media"]    { color: #0dcaf0; }
+
+    .question-row {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1rem;
+        background: white;
+        margin-bottom: .75rem;
+        position: relative;
+        animation: qSlideIn .25s ease;
     }
-    .badge-all {
-        background-color: var(--chiro-yellow);
-        color: #333;
+    @keyframes qSlideIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
+    .badge-target-all       { background:#0d6efd; }
+    .badge-target-admin     { background:#dc3545; }
+    .badge-target-leader    { background:#198754; }
+    .badge-target-kookmoeke { background:#fd7e14; }
+    .badge-target-media     { background:#0dcaf0; color:#333 !important; }
 </style>
 
-<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
-    <h1 class="font-playful text-primary mb-0"><i class="bi bi-megaphone-fill me-2"></i>Aankondigingen Beheer</h1>
-    <div class="d-flex gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end">
-        <a href="/admin" class="btn btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
-            <i class="bi bi-arrow-left me-1"></i> <span class="d-none d-sm-inline">Terug naar Dashboard</span><span class="d-inline d-sm-none">Terug</span>
-        </a>
-        <a href="/admin/info" class="btn btn-info text-white rounded-pill px-3" title="Algemene Hulp & Info">
-            <i class="bi bi-info-circle me-1"></i> Info
-        </a>
-    </div>
-</div>
-
-<div class="row g-4">
-    <!-- Left Column: Creator Form -->
+<!-- ======================================================
+     Creation Form
+     ====================================================== -->
+<div class="row g-4 mb-5">
+    <!-- Left: Form -->
     <div class="col-lg-7">
-        <div class="card premium-card h-100">
-            <div class="premium-card-header d-flex justify-content-between align-items-center">
-                <span>Nieuwe Aankondiging Maken</span>
-                <i class="bi bi-plus-circle-fill"></i>
+        <div class="ann-card card h-100">
+            <div class="ann-card-header">
+                <span><i class="bi bi-plus-circle-fill me-2"></i>Nieuwe Aankondiging</span>
             </div>
             <div class="card-body p-4">
-                <form action="/admin/announcements" method="POST" id="announcementForm">
+                <form action="/admin/announcements" method="POST" id="annForm">
+
+                    <!-- Title -->
                     <div class="mb-3">
-                        <label for="announcementTitle" class="form-label fw-bold small text-muted text-uppercase">Titel</label>
-                        <input type="text" class="form-control form-control-lg border-2 rounded-3" id="announcementTitle" name="title" placeholder="Bijv. Update van de leidingswerking" required>
+                        <label for="annTitle" class="form-label fw-bold small text-uppercase text-muted">Titel</label>
+                        <input type="text" class="form-control form-control-lg rounded-3 border-2"
+                               id="annTitle" name="title"
+                               placeholder="Bijv. Update voor de leiding" required>
                     </div>
 
+                    <!-- Target chips + Notification -->
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold small text-muted text-uppercase">Doelgroep(en)</label>
-                            <div class="d-flex flex-wrap gap-2 pt-1">
-                                <div class="form-check form-check-inline me-2">
-                                    <input class="form-check-input target-checkbox" type="checkbox" name="target[]" id="targetAll" value="all" checked>
-                                    <label class="form-check-label fw-bold text-primary" for="targetAll">Iedereen</label>
-                                </div>
-                                <div class="form-check form-check-inline me-2">
-                                    <input class="form-check-input target-checkbox" type="checkbox" name="target[]" id="targetAdmin" value="admin">
-                                    <label class="form-check-label text-danger" for="targetAdmin">Admins</label>
-                                </div>
-                                <div class="form-check form-check-inline me-2">
-                                    <input class="form-check-input target-checkbox" type="checkbox" name="target[]" id="targetLeader" value="leader">
-                                    <label class="form-check-label text-success" for="targetLeader">Leiding</label>
-                                </div>
-                                <div class="form-check form-check-inline me-2">
-                                    <input class="form-check-input target-checkbox" type="checkbox" name="target[]" id="targetKookmoeke" value="kookmoeke">
-                                    <label class="form-check-label text-warning text-dark" for="targetKookmoeke">Kookmoekes</label>
-                                </div>
-                                <div class="form-check form-check-inline me-0">
-                                    <input class="form-check-input target-checkbox" type="checkbox" name="target[]" id="targetMedia" value="media">
-                                    <label class="form-check-label text-info text-dark" for="targetMedia">Media</label>
-                                </div>
+                            <label class="form-label fw-bold small text-uppercase text-muted">Doelgroep(en)</label>
+                            <div class="target-chip-group">
+                                <input class="target-chip" type="checkbox" id="chip-all"       name="target[]" value="all"       checked>
+                                <label for="chip-all">🌍 Iedereen</label>
+
+                                <input class="target-chip" type="checkbox" id="chip-admin"     name="target[]" value="admin">
+                                <label for="chip-admin">🛡 Admins</label>
+
+                                <input class="target-chip" type="checkbox" id="chip-leader"    name="target[]" value="leader">
+                                <label for="chip-leader">👤 Leiding</label>
+
+                                <input class="target-chip" type="checkbox" id="chip-kookmoeke" name="target[]" value="kookmoeke">
+                                <label for="chip-kookmoeke">🍳 Kookmoekes</label>
+
+                                <input class="target-chip" type="checkbox" id="chip-media"     name="target[]" value="media">
+                                <label for="chip-media">📷 Media</label>
                             </div>
                         </div>
                         <div class="col-md-6 d-flex align-items-end">
-                            <div class="form-check form-switch p-3 w-100 rounded-3 border-2 bg-light d-flex align-items-center justify-content-between px-3 border" style="height: calc(3.5rem + 2px);">
-                                <label class="form-check-label fw-bold text-muted text-uppercase small mb-0" for="sendNotification">Stuur notificatie</label>
-                                <input class="form-check-input shadow-none ms-0 mt-0" type="checkbox" name="sendNotification" id="sendNotification" checked>
+                            <div class="form-check form-switch p-3 w-100 rounded-3 bg-light border d-flex align-items-center justify-content-between px-3" style="height:calc(2.8rem + 2px);">
+                                <label class="form-check-label fw-bold small text-uppercase text-muted mb-0" for="annNotification">Stuur notificatie</label>
+                                <input class="form-check-input shadow-none ms-0 mt-0" type="checkbox" name="sendNotification" id="annNotification" checked>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Content (rich editor) -->
                     <div class="mb-4">
-                        <label for="announcementContent" class="form-label fw-bold small text-muted text-uppercase">Inhoud</label>
-                        <textarea class="form-control rich-editor" name="content" id="announcementContent" rows="8" placeholder="Schrijf hier wat de gebruikers te zien krijgen..."></textarea>
+                        <label for="annContent" class="form-label fw-bold small text-uppercase text-muted">Inhoud</label>
+                        <textarea class="form-control rich-editor" name="content" id="annContent" rows="8"
+                                  placeholder="Schrijf hier wat de gebruikers te zien krijgen..."></textarea>
                     </div>
 
-                    <!-- Survey Option Section -->
-                    <div class="card border border-2 rounded-3 mb-4 bg-light shadow-sm">
-                        <div class="card-body">
-                            <div class="form-check form-switch d-flex justify-content-between align-items-center px-0">
-                                <label class="form-check-label fw-bold text-muted text-uppercase small mb-0" for="hasSurvey"><i class="bi bi-patch-question-fill me-1 text-primary"></i>Survey toevoegen</label>
-                                <input class="form-check-input shadow-none ms-0 mt-0" type="checkbox" name="hasSurvey" id="hasSurvey">
-                            </div>
-                            <div id="surveyFields" style="display: none;" class="mt-3 pt-3 border-top border-2">
-                                <div id="questionsContainer">
-                                    <!-- Dynamic question rows will be added here -->
+                    <!-- Survey toggle -->
+                    <div class="card border-2 rounded-3 mb-4 bg-light shadow-sm">
+                        <div class="card-body py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="fw-bold small text-uppercase text-muted mb-0" for="annHasSurvey">
+                                    <i class="bi bi-patch-question-fill me-1 text-primary"></i>Survey toevoegen
+                                </label>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input shadow-none" type="checkbox" name="hasSurvey" id="annHasSurvey" role="switch">
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-2" id="btnAddQuestion">
-                                    <i class="bi bi-plus-circle me-1"></i> Vraag toevoegen
+                            </div>
+                            <div id="surveyFields" class="mt-3 pt-3 border-top border-2" style="display:none;">
+                                <div id="questionsContainer"></div>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill" id="btnAddQuestion">
+                                    <i class="bi bi-plus-circle me-1"></i>Vraag toevoegen
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-success btn-lg rounded-pill px-4 flex-fill"><i class="bi bi-send-fill me-2"></i>Aankondiging Publiceren</button>
-                        <button type="button" class="btn btn-outline-primary btn-lg rounded-pill px-4" id="btnTestRealPopup"><i class="bi bi-fullscreen me-2"></i>Test Pop-up</button>
-                    </div>
+                    <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 w-100 fw-bold">
+                        <i class="bi bi-send-fill me-2"></i>Aankondiging Publiceren
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Right Column: Live Adaptive Preview -->
+    <!-- Right: Live Preview -->
     <div class="col-lg-5">
-        <div class="card premium-card h-100 bg-light border-0">
-            <div class="premium-card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <div class="ann-card card h-100 bg-light border-0">
+            <div class="ann-card-header dark">
                 <span>Live Pop-up Voorbeeld</span>
-                <span class="badge bg-danger rounded-pill px-2">Adaptive Preview</span>
+                <span class="badge bg-danger rounded-pill px-2" style="font-size:.75rem;">Live Preview</span>
             </div>
             <div class="card-body p-4 d-flex align-items-center justify-content-center">
-                <div class="glass-dialog-preview">
-                    <div class="glass-dialog-header">
-                        <div class="glass-dialog-title" id="announcement-preview-title">
-                            <i class="bi bi-bell-fill text-warning me-1"></i> Titel van de aankondiging
+                <div style="width:100%; max-width:400px; border-radius:20px; overflow:hidden; box-shadow:0 12px 32px rgba(0,0,0,.12); background:rgba(255,255,255,.9); backdrop-filter:blur(16px);">
+                    <div style="background:linear-gradient(135deg,var(--chiro-red,#db3e41),#b81423);padding:1.25rem 1.25rem;color:white;">
+                        <div style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.25rem;display:flex;align-items:center;gap:.4rem;">
+                            🔔 <span id="prevTitle">Titel van de aankondiging</span>
                         </div>
                     </div>
-                    <div class="glass-dialog-body" id="announcement-preview-body">
+                    <div id="prevBody" style="padding:1.25rem;color:#2c3e50;font-size:.95rem;line-height:1.65;max-height:200px;overflow-y:auto;">
                         Inhoud van de aankondiging...
                     </div>
-                    
-                    <!-- Live Survey Preview inside the popup dialog -->
-                    <div class="px-4 pb-3" id="preview-survey-wrapper" style="display: none;">
-                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.08) !important;">
-                            <!-- Progress Bar -->
-                            <div class="progress rounded-0" style="height: 6px; background-color: rgba(0, 0, 0, 0.05);">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 0%;" id="preview-survey-progress-bar"></div>
-                            </div>
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="badge bg-secondary text-white rounded-pill px-2" style="font-size: 0.75rem;" id="preview-survey-progress-badge">0% beantwoord</span>
-                                    <span class="text-muted small fw-bold" style="font-size: 0.75rem;"><i class="bi bi-patch-question-fill me-1 text-primary"></i>Survey</span>
-                                </div>
-                                <div id="preview-survey-questions-list">
-                                    <!-- Preview questions will be generated here -->
-                                </div>
-                            </div>
-                        </div>
+                    <div id="prevSurveyArea" style="display:none;padding:0 1rem 1rem;">
+                        <div id="prevSurveyList" style="background:rgba(0,0,0,.03);border-radius:10px;padding:.75rem;border:1px solid rgba(0,0,0,.06);"></div>
                     </div>
-
-                    <div class="glass-dialog-footer">
-                        <button type="button" class="btn btn-primary rounded-pill px-5 py-2 fw-bold" style="background: linear-gradient(135deg, var(--chiro-red) 0%, #b81423 100%); border: none;">Sluiten</button>
+                    <div style="padding:1rem;border-top:1px solid rgba(0,0,0,.06);display:flex;justify-content:center;">
+                        <button class="btn btn-sm rounded-pill px-4 py-2 fw-bold" style="background:linear-gradient(135deg,var(--chiro-red,#db3e41),#b81423);border:none;color:white;">Sluiten</button>
                     </div>
                 </div>
             </div>
@@ -276,9 +182,11 @@
     </div>
 </div>
 
-<!-- History Section -->
-<div class="card premium-card mt-5">
-    <div class="premium-card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+<!-- ======================================================
+     Published Announcements Table
+     ====================================================== -->
+<div class="ann-card card">
+    <div class="ann-card-header grey">
         <span>Gepubliceerde Aankondigingen</span>
         <i class="bi bi-clock-history"></i>
     </div>
@@ -298,218 +206,176 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% announcements.forEach(a => { %>
-                            <tr>
-                                <td class="text-muted"><%= new Date(a.createdAt).toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
-                                <td>
-                                    <strong><%= a.title %></strong>
-                                    <% if (a.hasSurvey) { 
-                                        let qs = a.surveyQuestions;
-                                        if (qs && typeof qs === 'string') { try { qs = JSON.parse(qs); } catch(e) { qs = null; } }
-                                        const qCount = (qs && Array.isArray(qs)) ? qs.length : (a.surveyQuestion ? 1 : 0);
-                                    %>
-                                        <br>
-                                        <span class="badge bg-info-subtle text-info mt-1" style="font-size: 0.75rem;">
-                                            <i class="bi bi-patch-question-fill me-1"></i>Survey: <%= qCount %> <%= qCount === 1 ? 'vraag' : 'vragen' %>
-                                        </span>
-                                    <% } %>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-wrap gap-1">
-                                    <% 
-                                        let targets = a.target;
-                                        if (!Array.isArray(targets)) {
-                                            try { targets = JSON.parse(targets); } catch(e) { targets = [targets]; }
-                                            if (!Array.isArray(targets)) targets = [targets];
-                                        }
-                                        targets.forEach(t => { 
-                                    %>
-                                        <% if (t === 'admin') { %>
-                                            <span class="badge bg-danger"><i class="bi bi-shield-lock-fill me-1"></i>Admins</span>
-                                        <% } else if (t === 'all') { %>
-                                            <span class="badge bg-primary"><i class="bi bi-globe me-1"></i>Iedereen</span>
+                        <% announcements.forEach(a => {
+                            let targets = a.target;
+                            if (!Array.isArray(targets)) {
+                                try { targets = JSON.parse(targets); } catch(e) { targets = [targets]; }
+                                if (!Array.isArray(targets)) targets = [targets];
+                            }
+                            let qs = a.surveyQuestions;
+                            if (qs && typeof qs === 'string') { try { qs = JSON.parse(qs); } catch(e) { qs = null; } }
+                            if (!Array.isArray(qs)) qs = a.surveyQuestion ? [{ text: a.surveyQuestion }] : [];
+                        %>
+                        <tr>
+                            <td class="text-muted small"><%= new Date(a.createdAt).toLocaleDateString('nl-BE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) %></td>
+                            <td>
+                                <strong><%= a.title %></strong>
+                                <% if (a.hasSurvey && qs.length > 0) { %>
+                                    <br><span class="badge bg-info-subtle text-info mt-1" style="font-size:.72rem;">
+                                        <i class="bi bi-patch-question-fill me-1"></i>Survey: <%= qs.length %> <%= qs.length === 1 ? 'vraag' : 'vragen' %>
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <% targets.forEach(t => { %>
+                                        <% if (t === 'all') { %>
+                                            <span class="badge badge-target-all">🌍 Iedereen</span>
+                                        <% } else if (t === 'admin') { %>
+                                            <span class="badge badge-target-admin">🛡 Admins</span>
                                         <% } else if (t === 'leader') { %>
-                                            <span class="badge bg-success"><i class="bi bi-person-fill me-1"></i>Leiding</span>
+                                            <span class="badge badge-target-leader">👤 Leiding</span>
                                         <% } else if (t === 'kookmoeke') { %>
-                                            <span class="badge bg-warning text-dark"><i class="bi bi-egg-fried me-1"></i>Kookmoekes</span>
+                                            <span class="badge badge-target-kookmoeke">🍳 Kookmoekes</span>
+                                        <% } else if (t === 'media') { %>
+                                            <span class="badge badge-target-media">📷 Media</span>
                                         <% } else { %>
-                                            <span class="badge bg-info text-dark text-capitalize"><i class="bi bi-person-badge me-1"></i><%= t %></span>
+                                            <span class="badge bg-secondary text-capitalize"><%= t %></span>
                                         <% } %>
                                     <% }); %>
-                                    </div>
-                                </td>
-                                <td>
-                                    <% if (a.sendNotification) { %>
-                                        <span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Ja</span>
-                                    <% } else { %>
-                                        <span class="text-muted"><i class="bi bi-x-circle me-1"></i> Nee</span>
+                                </div>
+                            </td>
+                            <td>
+                                <% if (a.sendNotification) { %>
+                                    <span class="text-success fw-bold small"><i class="bi bi-check-circle-fill me-1"></i>Ja</span>
+                                <% } else { %>
+                                    <span class="text-muted small"><i class="bi bi-x-circle me-1"></i>Nee</span>
+                                <% } %>
+                            </td>
+                            <td class="small"><%= a.creator ? _cap(a.creator.username) : 'Onbekend' %></td>
+                            <td>
+                                <% if (a.isActive) { %>
+                                    <span class="badge bg-success rounded-pill px-3">Actief</span>
+                                <% } else { %>
+                                    <span class="badge bg-secondary rounded-pill px-3">Inactief</span>
+                                <% } %>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                    <% if (a.hasSurvey) { %>
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#survey-<%= a.id %>">
+                                            <i class="bi bi-bar-chart-fill me-1"></i>Resultaten (<%= a.surveyResponses ? a.surveyResponses.length : 0 %>)
+                                        </button>
                                     <% } %>
-                                </td>
-                                <td><%= a.creator ? capitalizeName(a.creator.username) : 'Onbekend' %></td>
-                                <td>
-                                    <% if (a.isActive) { %>
-                                        <span class="badge bg-success rounded-pill px-3">Actief</span>
-                                    <% } else { %>
-                                        <span class="badge bg-secondary rounded-pill px-3">Gedeactiveerd</span>
-                                    <% } %>
-                                </td>
-                                <td class="text-end">
-                                    <div class="d-flex justify-content-end align-items-center gap-2">
-                                        <% if (a.hasSurvey) { %>
-                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="collapse" data-bs-target="#survey-results-<%= a.id %>" aria-expanded="false" aria-controls="survey-results-<%= a.id %>">
-                                                <i class="bi bi-bar-chart-fill me-1"></i> Resultaten (<%= a.surveyResponses ? a.surveyResponses.length : 0 %>)
-                                            </button>
-                                        <% } %>
-                                        <div class="btn-group btn-group-sm">
-                                            <form action="/admin/announcements/<%= a.id %>/toggle" method="POST" class="d-inline">
-                                                <button type="submit" class="btn btn-outline-secondary rounded-pill-start px-3">
-                                                    <%= a.isActive ? 'Deactiveren' : 'Activeren' %>
-                                                </button>
-                                            </form>
-                                            <form action="/admin/announcements/<%= a.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je deze aankondiging wilt verwijderen?')" class="d-inline">
-                                                <button type="submit" class="btn btn-outline-danger rounded-pill-end px-3">
-                                                    Verwijderen
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <% if (a.hasSurvey) { %>
-                                <tr class="collapse-row">
-                                    <td colspan="7" class="p-0 border-0">
-                                        <div class="collapse" id="survey-results-<%= a.id %>">
-                                            <div class="p-4 bg-light border-bottom border-top">
-                                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                                    <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-bar-chart-fill me-2"></i>Survey Resultaten</h5>
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        <a href="/admin/announcements/<%= a.id %>/export" class="btn btn-sm btn-success rounded-pill px-3">
-                                                            <i class="bi bi-file-earmark-excel-fill me-1"></i> Exporteer naar Excel
-                                                        </a>
-                                                        <span class="badge bg-secondary rounded-pill px-3 py-2">
-                                                            <%= a.surveyResponses ? a.surveyResponses.length : 0 %> Leden ingevuld
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <% 
-                                                    let questions = a.surveyQuestions;
-                                                    if (questions && typeof questions === 'string') {
-                                                        try {
-                                                            questions = JSON.parse(questions);
-                                                        } catch (e) {}
-                                                    }
-                                                    if (!questions || !Array.isArray(questions)) {
-                                                        questions = [{ id: 0, text: a.surveyQuestion, type: a.surveyType }];
-                                                    }
-                                                    let responses = a.surveyResponses || [];
-                                                %>
-                                                
-                                                <div class="d-flex flex-column gap-4">
-                                                    <% questions.forEach((q, idx) => { %>
-                                                        <div class="p-3 bg-white rounded-3 shadow-sm border">
-                                                            <h6 class="fw-bold mb-3 text-dark border-bottom pb-2">
-                                                                <span class="badge bg-primary me-2">Vraag <%= idx + 1 %></span>
-                                                                <%= q.text %>
-                                                                <span class="badge bg-secondary-subtle text-secondary ms-2 text-capitalize" style="font-size: 0.7rem;"><%= q.type === 'score' ? 'Score' : 'Feedback' %></span>
-                                                            </h6>
-                                                            
-                                                            <div class="row g-3">
-                                                                <% if (q.type === 'score') { 
-                                                                    let totalScore = 0;
-                                                                    let scoresCount = {1:0, 2:0, 3:0, 4:0, 5:0};
-                                                                    let qResponsesCount = 0;
-                                                                    
-                                                                    responses.forEach(r => {
-                                                                        let scoreVal = null;
-                                                                        let userAns = r.answers;
-                                                                        if (userAns && typeof userAns === 'string') {
-                                                                            try { userAns = JSON.parse(userAns); } catch (e) {}
-                                                                        }
-                                                                        if (userAns && userAns[q.id] !== undefined) {
-                                                                            scoreVal = userAns[q.id].score;
-                                                                        } else if (q.id === 0 || q.id === '0') {
-                                                                            scoreVal = r.score;
-                                                                        }
-                                                                        
-                                                                        if (scoreVal !== null && scoreVal !== undefined) {
-                                                                            totalScore += scoreVal;
-                                                                            scoresCount[scoreVal] = (scoresCount[scoreVal] || 0) + 1;
-                                                                            qResponsesCount++;
-                                                                        }
-                                                                    });
-                                                                    
-                                                                    let avgScore = qResponsesCount > 0 ? (totalScore / qResponsesCount).toFixed(1) : '0.0';
-                                                                %>
-                                                                    <div class="col-md-3">
-                                                                        <div class="p-3 bg-light rounded-3 text-center border h-100 d-flex flex-column justify-content-center">
-                                                                            <div class="display-6 fw-bold text-success"><%= avgScore %> <span class="fs-6 text-muted">/ 5</span></div>
-                                                                            <div class="text-muted small">Gemiddelde Score</div>
-                                                                            <div class="text-muted small">(<%= qResponsesCount %> stemmen)</div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-md-9">
-                                                                        <div class="p-3 bg-light rounded-3 border h-100">
-                                                                            <div class="text-muted small mb-2 text-center fw-bold">Score verdeling</div>
-                                                                            <% [5, 4, 3, 2, 1].forEach(scoreVal => { 
-                                                                                let count = scoresCount[scoreVal] || 0;
-                                                                                let pct = qResponsesCount > 0 ? Math.round((count / qResponsesCount) * 100) : 0;
-                                                                            %>
-                                                                                <div class="d-flex align-items-center mb-1">
-                                                                                    <span class="small me-2 fw-bold" style="width: 15px;"><%= scoreVal %></span>
-                                                                                    <div class="progress flex-fill" style="height: 8px;">
-                                                                                        <div class="progress-bar bg-warning animate-all" role="progressbar" style="width: <%= pct %>%; transition: width 0.5s;"></div>
-                                                                                    </div>
-                                                                                    <span class="small ms-2 text-muted" style="width: 25px;"><%= count %></span>
-                                                                                </div>
-                                                                            <% }) %>
-                                                                        </div>
-                                                                    </div>
-                                                                <% } else { 
-                                                                    let textResponses = [];
-                                                                    responses.forEach(r => {
-                                                                        let fText = null;
-                                                                        let userAns = r.answers;
-                                                                        if (userAns && typeof userAns === 'string') {
-                                                                            try { userAns = JSON.parse(userAns); } catch (e) {}
-                                                                        }
-                                                                        if (userAns && userAns[q.id] !== undefined) {
-                                                                            fText = userAns[q.id].feedback;
-                                                                        } else if (q.id === 0 || q.id === '0') {
-                                                                            fText = r.feedback;
-                                                                        }
-                                                                        if (fText) {
-                                                                            textResponses.push({ user: r.user, text: fText });
-                                                                        }
-                                                                    });
-                                                                %>
-                                                                    <div class="col-md-12">
-                                                                        <div class="p-3 bg-light rounded-3 border" style="max-height: 200px; overflow-y: auto;">
-                                                                            <% if (textResponses.length > 0) { %>
-                                                                                <div class="list-group list-group-flush">
-                                                                                    <% textResponses.forEach(tr => { %>
-                                                                                        <div class="list-group-item bg-transparent py-2 px-0 border-0">
-                                                                                            <span class="badge bg-secondary-subtle text-secondary me-2"><%= tr.user ? capitalizeName(tr.user.username) : 'Onbekend' %></span>
-                                                                                            <span class="text-dark"><%= tr.text %></span>
-                                                                                        </div>
-                                                                                    <% }) %>
-                                                                                </div>
-                                                                            <% } else { %>
-                                                                                <p class="text-muted small mb-0 py-2 text-center">Nog geen feedback ontvangen.</p>
-                                                                            <% } %>
-                                                                        </div>
-                                                                    </div>
-                                                                <% } %>
-                                                            </div>
-                                                        </div>
-                                                    <% }) %>
-                                                </div>
+                                    <form action="/admin/announcements/<%= a.id %>/toggle" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                            <%= a.isActive ? 'Deactiveren' : 'Activeren' %>
+                                        </button>
+                                    </form>
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-danger rounded-pill px-3 ann-delete-btn"
+                                        data-id="<%= a.id %>"
+                                        data-title="<%= a.title %>">Verwijderen</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <% if (a.hasSurvey) { %>
+                        <tr>
+                            <td colspan="7" class="p-0 border-0">
+                                <div class="collapse" id="survey-<%= a.id %>">
+                                    <div class="p-4 bg-light border-top border-bottom">
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-bar-chart-fill me-2"></i>Survey Resultaten</h5>
+                                            <div class="d-flex gap-2 align-items-center">
+                                                <a href="/admin/announcements/<%= a.id %>/export" class="btn btn-sm btn-success rounded-pill px-3">
+                                                    <i class="bi bi-file-earmark-excel-fill me-1"></i>Exporteer Excel
+                                                </a>
+                                                <span class="badge bg-secondary rounded-pill px-3 py-2">
+                                                    <%= a.surveyResponses ? a.surveyResponses.length : 0 %> ingevuld
+                                                </span>
                                             </div>
                                         </div>
-                                    </td>
-                                </tr>
-                            <% } %>
-                        <% }) %>
+                                        <% const responses = a.surveyResponses || [];
+                                           qs.forEach((q, qIdx) => { %>
+                                            <div class="p-3 bg-white rounded-3 shadow-sm border mb-3">
+                                                <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                                    <span class="badge bg-primary me-2">Vraag <%= qIdx + 1 %></span>
+                                                    <%= q.text %>
+                                                    <span class="badge bg-secondary-subtle text-secondary ms-2" style="font-size:.7rem;">
+                                                        <%= q.type === 'text' ? 'Feedback' : 'Score' %>
+                                                    </span>
+                                                </h6>
+                                                <% if (q.type !== 'text') {
+                                                    let total = 0, counts = {1:0,2:0,3:0,4:0,5:0}, n = 0;
+                                                    responses.forEach(r => {
+                                                        let ans = r.answers;
+                                                        if (typeof ans === 'string') { try { ans = JSON.parse(ans); } catch(e) { ans = null; } }
+                                                        let sv = null;
+                                                        if (ans && ans[q.id] !== undefined) sv = ans[q.id].score;
+                                                        else if ((q.id === 0 || q.id === '0') && !ans) sv = r.score;
+                                                        if (sv != null) { total += sv; counts[sv] = (counts[sv]||0)+1; n++; }
+                                                    });
+                                                    const avg = n > 0 ? (total/n).toFixed(1) : '0.0';
+                                                %>
+                                                    <div class="row g-2">
+                                                        <div class="col-md-3">
+                                                            <div class="p-3 bg-light rounded-3 text-center border h-100 d-flex flex-column justify-content-center">
+                                                                <div class="display-6 fw-bold text-success"><%= avg %> <span class="fs-6 text-muted">/ 5</span></div>
+                                                                <div class="text-muted small">Gemiddelde (<%= n %> stemmen)</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-9">
+                                                            <div class="p-3 bg-light rounded-3 border h-100">
+                                                                <% [5,4,3,2,1].forEach(sv => {
+                                                                    const c = counts[sv] || 0;
+                                                                    const pct = n > 0 ? Math.round((c/n)*100) : 0;
+                                                                %>
+                                                                    <div class="d-flex align-items-center mb-1">
+                                                                        <span class="small fw-bold me-2" style="width:14px;"><%= sv %></span>
+                                                                        <div class="progress flex-fill" style="height:8px;">
+                                                                            <div class="progress-bar bg-warning" style="width:<%= pct %>%;transition:width .5s;"></div>
+                                                                        </div>
+                                                                        <span class="small ms-2 text-muted" style="width:22px;"><%= c %></span>
+                                                                    </div>
+                                                                <% }); %>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                <% } else {
+                                                    const textResps = [];
+                                                    responses.forEach(r => {
+                                                        let ans = r.answers;
+                                                        if (typeof ans === 'string') { try { ans = JSON.parse(ans); } catch(e) { ans = null; } }
+                                                        let ft = null;
+                                                        if (ans && ans[q.id] !== undefined) ft = ans[q.id].feedback;
+                                                        else if ((q.id === 0 || q.id === '0') && !ans) ft = r.feedback;
+                                                        if (ft) textResps.push({ user: r.user, text: ft });
+                                                    });
+                                                %>
+                                                    <div class="p-3 bg-light rounded-3 border" style="max-height:200px;overflow-y:auto;">
+                                                        <% if (textResps.length > 0) { %>
+                                                            <% textResps.forEach(tr => { %>
+                                                                <div class="py-1 border-bottom border-light">
+                                                                    <span class="badge bg-secondary-subtle text-secondary me-2"><%= tr.user ? _cap(tr.user.username) : 'Onbekend' %></span>
+                                                                    <span class="text-dark small"><%= tr.text %></span>
+                                                                </div>
+                                                            <% }); %>
+                                                        <% } else { %>
+                                                            <p class="text-muted small text-center mb-0 py-2">Nog geen feedback ontvangen.</p>
+                                                        <% } %>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <% } %>
+                        <% }); %>
                     </tbody>
                 </table>
             </div>
@@ -519,541 +385,157 @@
     </div>
 </div>
 
-<!-- Test Dialog Modal Element (rendered offscreen) -->
-<dialog id="announcementTestPopup" class="announcement-test-dialog" closedby="any" aria-labelledby="testDialogTitle">
-    <div class="glass-dialog-header">
-        <h3 class="glass-dialog-title" id="testDialogTitle">
-            <i class="bi bi-bell-fill text-warning me-1"></i> <span id="test-popup-title-text">Titel</span>
-        </h3>
-    </div>
-    <div class="glass-dialog-body" id="test-popup-body-text">
-        Inhoud...
-    </div>
-    
-    <!-- Test Pop-up Survey Section -->
-    <div class="px-4 pb-3" id="test-popup-survey-wrapper" style="display: none;">
-        <div class="survey-wizard position-relative" id="test-popup-survey-wizard" style="min-height: 220px;">
-            <!-- Test questions will be dynamically rendered here as sliding cards -->
-        </div>
-    </div>
-
-    <div class="glass-dialog-footer">
-        <button type="button" class="btn btn-primary rounded-pill px-5 py-2 fw-bold" onclick="document.getElementById('announcementTestPopup').close()" style="background: linear-gradient(135deg, var(--chiro-red) 0%, #b81423 100%); border: none;">Sluiten</button>
-    </div>
-</dialog>
-
 <script src="/js/rich-editor.js"></script>
 <script>
-    function initAnnouncementUI() {
-        const titleInput = document.getElementById('announcementTitle');
-        const previewTitle = document.getElementById('announcement-preview-title');
-        const previewBody = document.getElementById('announcement-preview-body');
-        const testDialog = document.getElementById('announcementTestPopup');
-        const testTitleText = document.getElementById('test-popup-title-text');
-        const testBodyText = document.getElementById('test-popup-body-text');
-        const btnTestRealPopup = document.getElementById('btnTestRealPopup');
+(function () {
+    // ── Target chip logic ──────────────────────────────────────────────────────
+    const chips = document.querySelectorAll('.target-chip');
+    const chipAll = document.getElementById('chip-all');
 
-        // Survey DOM Elements
-        const hasSurveyCheckbox = document.getElementById('hasSurvey');
-        const surveyFieldsDiv = document.getElementById('surveyFields');
-        const btnAddQuestion = document.getElementById('btnAddQuestion');
-        const questionsContainer = document.getElementById('questionsContainer');
-        
-        // Live Preview elements
-        const previewSurveyWrapper = document.getElementById('preview-survey-wrapper');
-        const previewSurveyQuestionsList = document.getElementById('preview-survey-questions-list');
-
-        // Test Dialog elements
-        const testPopupSurveyWrapper = document.getElementById('test-popup-survey-wrapper');
-        const testPopupSurveyWizard = document.getElementById('test-popup-survey-wizard');
-
-        let questionCount = 0;
-
-        function createQuestionRow(text = '', type = 'score') {
-            const index = questionCount++;
-            const row = document.createElement('div');
-            row.className = 'question-row border p-3 rounded-3 mb-3 bg-white shadow-sm position-relative animate-fadeIn';
-            row.style.borderWidth = '2px';
-            row.dataset.index = index;
-            
-            row.innerHTML = `
-                <button type="button" class="btn-close position-absolute top-0 end-0 m-2 btn-remove-question" aria-label="Close" style="font-size: 0.8rem;"></button>
-                <div class="mb-3">
-                    <label class="form-label fw-bold small text-muted text-uppercase">Vraag <span class="question-number"></span></label>
-                    <input type="text" class="form-control border-2 rounded-3 question-text-input" name="surveyQuestions[${index}][text]" value="${text}" placeholder="Bijv. Wat vond je van de activiteit?" required>
-                </div>
-                <div>
-                    <label class="form-label fw-bold small text-muted text-uppercase">Antwoord Type</label>
-                    <select class="form-select border-2 rounded-3 question-type-select" name="surveyQuestions[${index}][type]">
-                        <option value="score" ${type === 'score' ? 'selected' : ''}>Score Knoppen (1 - 5)</option>
-                        <option value="text" ${type === 'text' ? 'selected' : ''}>Feedback Tekstvak</option>
-                    </select>
-                </div>
-            `;
-            
-            row.querySelector('.btn-remove-question').addEventListener('click', () => {
-                row.remove();
-                renumberQuestions();
-                updateSurveyPreview();
-            });
-
-            row.querySelector('.question-text-input').addEventListener('input', updateSurveyPreview);
-            row.querySelector('.question-type-select').addEventListener('change', updateSurveyPreview);
-
-            if(questionsContainer) {
-                questionsContainer.appendChild(row);
-                renumberQuestions();
-                updateSurveyPreview();
-            }
-        }
-
-        function renumberQuestions() {
-            const rows = document.querySelectorAll('#questionsContainer .question-row');
-            rows.forEach((row, idx) => {
-                row.querySelector('.question-number').textContent = idx + 1;
-            });
-        }
-
-        function buildQuestionsPreviewList(targetContainer) {
-            if(!targetContainer) return;
-            targetContainer.innerHTML = '';
-            const rows = document.querySelectorAll('#questionsContainer .question-row');
-            
-            rows.forEach((row, idx) => {
-                const text = row.querySelector('.question-text-input').value.trim() || `Vraag ${idx + 1}`;
-                const type = row.querySelector('.question-type-select').value;
-                
-                const qDiv = document.createElement('div');
-                qDiv.className = 'mb-3 pb-2 border-bottom';
-                if (idx === rows.length - 1) {
-                    qDiv.className = 'mb-1';
-                    qDiv.classList.remove('border-bottom');
-                }
-
-                let optionsHtml = '';
-                if (type === 'score') {
-                    optionsHtml = `
-                        <div class="d-flex justify-content-between gap-1 mb-1">
-                            ${[1,2,3,4,5].map(i => `
-                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-weight: 600;" disabled>${i}</button>
-                            `).join('')}
-                        </div>
-                    `;
+    chips.forEach(chip => {
+        chip.addEventListener('change', () => {
+            if (chip === chipAll) {
+                if (chipAll.checked) {
+                    // Uncheck all specific roles
+                    chips.forEach(c => { if (c !== chipAll) c.checked = false; });
                 } else {
-                    optionsHtml = `
-                        <textarea class="form-control border-2 rounded-3 mb-1" rows="1" style="font-size: 0.8rem;" placeholder="Feedback..." disabled></textarea>
-                    `;
+                    // Can't leave everything unchecked
+                    const anySpecific = [...chips].some(c => c !== chipAll && c.checked);
+                    if (!anySpecific) chipAll.checked = true;
                 }
-
-                qDiv.innerHTML = `
-                    <h6 class="fw-bold mb-2 text-dark" style="font-size: 0.9rem;">${idx + 1}. ${text}</h6>
-                    ${optionsHtml}
-                `;
-                targetContainer.appendChild(qDiv);
-            });
-        }
-
-        function updateSurveyPreview() {
-            if(!hasSurveyCheckbox || !surveyFieldsDiv || !previewSurveyWrapper) return;
-            const hasSurvey = hasSurveyCheckbox.checked;
-            const rows = document.querySelectorAll('#questionsContainer .question-row');
-            
-            if (hasSurvey && rows.length > 0) {
-                surveyFieldsDiv.style.display = 'block';
-                previewSurveyWrapper.style.display = 'block';
-                buildQuestionsPreviewList(previewSurveyQuestionsList);
-
-                const progressBar = document.getElementById('preview-survey-progress-bar');
-                const progressBadge = document.getElementById('preview-survey-progress-badge');
-                if (progressBar) progressBar.style.width = '0%';
-                if (progressBadge) progressBadge.textContent = '0% beantwoord';
             } else {
-                surveyFieldsDiv.style.display = 'none';
-                previewSurveyWrapper.style.display = 'none';
-            }
-        }
-
-        if(hasSurveyCheckbox) {
-            hasSurveyCheckbox.addEventListener('change', () => {
-                if (hasSurveyCheckbox.checked && questionsContainer && questionsContainer.children.length === 0) {
-                    createQuestionRow('', 'score');
-                }
-                updateSurveyPreview();
-            });
-        }
-
-        if(btnAddQuestion) {
-            btnAddQuestion.addEventListener('click', () => {
-                createQuestionRow('', 'score');
-            });
-        }
-
-        if(titleInput && previewTitle) {
-            titleInput.addEventListener('input', () => {
-                const titleValue = titleInput.value.trim() || 'Titel van de aankondiging';
-                previewTitle.innerHTML = `<i class="bi bi-bell-fill text-warning me-1"></i> ${titleValue}`;
-            });
-        }
-
-        const contentInput = document.getElementById('announcementContent');
-        if(contentInput && previewBody) {
-            // Also listen to change and keyup just in case
-            const updateBody = () => {
-                const content = contentInput.value;
-                if (content === '<p><br></p>' || !content.trim()) {
-                    previewBody.innerHTML = 'Inhoud van de aankondiging...';
+                if (chip.checked) {
+                    chipAll.checked = false;
                 } else {
-                    previewBody.innerHTML = content;
-                }
-            };
-            contentInput.addEventListener('input', updateBody);
-            contentInput.addEventListener('change', updateBody);
-            
-            // Periodically check for updates if quill doesn't fire events
-            setInterval(() => {
-                if(contentInput.value !== contentInput.dataset.lastValue) {
-                    contentInput.dataset.lastValue = contentInput.value;
-                    updateBody();
-                }
-            }, 500);
-        }
-
-        const targetCheckboxes = document.querySelectorAll('.target-checkbox');
-        const targetAll = document.getElementById('targetAll');
-        if (targetCheckboxes.length > 0 && targetAll) {
-            targetCheckboxes.forEach(cb => {
-                cb.addEventListener('change', (e) => {
-                    if (e.target.id === 'targetAll') {
-                        if (e.target.checked) {
-                            targetCheckboxes.forEach(other => {
-                                if (other.id !== 'targetAll') other.checked = false;
-                            });
-                        } else {
-                            // Prevent unchecking "Iedereen" if nothing else is selected
-                            const anyChecked = Array.from(targetCheckboxes).some(other => other.checked);
-                            if (!anyChecked) e.target.checked = true;
-                        }
-                    } else {
-                        if (e.target.checked) {
-                            targetAll.checked = false;
-                        } else {
-                            // If they uncheck the last specific role, check "Iedereen" again
-                            const anySpecificChecked = Array.from(targetCheckboxes).some(other => other.id !== 'targetAll' && other.checked);
-                            if (!anySpecificChecked) targetAll.checked = true;
-                        }
-                    }
-                });
-            });
-        }
-
-        function buildTestWizard() {
-            const container = testPopupSurveyWizard;
-            container.innerHTML = '';
-            
-            const rows = document.querySelectorAll('#questionsContainer .question-row');
-            if (rows.length === 0) return;
-            
-            const qList = Array.from(rows).map((row, idx) => {
-                return {
-                    id: row.dataset.index,
-                    text: row.querySelector('.question-text-input').value.trim() || `Vraag ${idx + 1}`,
-                    type: row.querySelector('.question-type-select').value
-                };
-            });
-            
-            const totalSteps = qList.length;
-            const answers = {};
-            let isTransitioning = false;
-            
-            // Create track wrapper for sliding cards
-            const track = document.createElement('div');
-            track.className = 'survey-wizard-track d-flex align-items-start';
-            track.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
-            track.style.transform = 'translateX(0)';
-            track.style.width = '100%';
-            
-            qList.forEach((q, idx) => {
-                const card = document.createElement('div');
-                card.className = 'flex-shrink-0 w-100 survey-question-card px-1';
-                card.id = `test-survey-step-${idx}`;
-                card.style.boxSizing = 'border-box';
-                
-                const progressPercent = Math.round((idx / totalSteps) * 100);
-                
-                let inputHtml = '';
-                if (q.type === 'score') {
-                    inputHtml = `
-                        <div class="d-flex justify-content-between gap-2 my-3">
-                            ${[1,2,3,4,5].map(i => `
-                                <button type="button" class="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center btn-test-score-option" data-step="${idx}" data-score="${i}" style="width: 45px; height: 45px; font-weight: 700; font-size: 1.1rem; border-width: 2px; transition: all 0.2s ease;">
-                                    ${i}
-                                </button>
-                            `).join('')}
-                        </div>
-                        <div class="d-flex justify-content-between text-muted px-1" style="font-size: 0.75rem;">
-                            <span>Slecht</span>
-                            <span>Uitstekend</span>
-                        </div>
-                        <div class="text-center mt-3">
-                            <button type="button" class="btn btn-link btn-sm text-secondary text-decoration-none fw-bold btn-test-skip" data-step="${idx}">
-                                Sla deze vraag over <i class="bi bi-arrow-right ms-1"></i>
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    inputHtml = `
-                        <div class="mb-3">
-                            <textarea class="form-control border-2 rounded-3 test-feedback-text-input" data-step="${idx}" rows="3" placeholder="Schrijf hier je feedback..."></textarea>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-secondary rounded-pill px-3 py-2 fw-bold btn-test-skip flex-grow-1" data-step="${idx}">
-                                Overslaan
-                            </button>
-                            <button type="button" class="btn btn-primary rounded-pill px-4 py-2 w-100 fw-bold shadow-sm btn-test-next-text flex-grow-1" data-step="${idx}" style="background: linear-gradient(135deg, var(--chiro-blue) 0%, #004488 100%); border: none;">
-                                ${idx === totalSteps - 1 ? 'Verzenden (Simulatie)' : 'Volgende'}
-                            </button>
-                        </div>
-                    `;
-                }
-                
-                card.innerHTML = `
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="background: rgba(0, 0, 0, 0.03); border: 1px solid rgba(0, 0, 0, 0.08) !important;">
-                        <div class="progress rounded-0" style="height: 6px; background-color: rgba(0, 0, 0, 0.05);">
-                            <div class="progress-bar bg-success animate-all" role="progressbar" style="width: ${progressPercent}%; background: linear-gradient(90deg, var(--chiro-blue, #0d6efd) 0%, #00bc8c 100%); transition: width 0.4s ease;" aria-valuenow="${progressPercent}" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge bg-secondary text-white rounded-pill px-2" style="font-size: 0.75rem;">
-                                    Vraag ${idx + 1} van ${totalSteps}
-                                </span>
-                                <span class="text-muted small fw-bold" style="font-size: 0.75rem;"><i class="bi bi-patch-question-fill me-1 text-primary"></i>Survey (Test)</span>
-                            </div>
-                            <h5 class="fw-bold mb-3 text-dark" style="font-size: 1.1rem; line-height: 1.4;">${q.text}</h5>
-                            ${inputHtml}
-                        </div>
-                    </div>
-                `;
-                track.appendChild(card);
-            });
-            container.appendChild(track);
-            
-            // Initial Height Setup
-            container.style.height = '';
-            container.style.transition = '';
-            
-            // Set initial height
-            setTimeout(() => {
-                const firstCard = container.querySelector('#test-survey-step-0');
-                if (firstCard) {
-                    container.style.height = firstCard.offsetHeight + 'px';
-                }
-            }, 100);
-            
-            // Add Event Listeners for Test Wizard
-            const scoreOptions = container.querySelectorAll('.btn-test-score-option');
-            scoreOptions.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (isTransitioning) return;
-                    
-                    const stepIdx = parseInt(btn.getAttribute('data-step'));
-                    answers[stepIdx] = { score: parseInt(btn.getAttribute('data-score')) };
-                    
-                    btn.style.transform = 'scale(0.9)';
-                    btn.style.background = 'var(--chiro-blue, #0d6efd)';
-                    btn.style.color = 'white';
-                    
-                    setTimeout(() => {
-                        btn.style.transform = '';
-                        goToNextTestStep(stepIdx);
-                    }, 180);
-                });
-            });
-            
-            const nextTextButtons = container.querySelectorAll('.btn-test-next-text');
-            nextTextButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (isTransitioning) return;
-                    
-                    const stepIdx = parseInt(btn.getAttribute('data-step'));
-                    const textarea = container.querySelector(`.test-feedback-text-input[data-step="${stepIdx}"]`);
-                    const feedback = textarea.value.trim();
-                    
-                    if (!feedback) {
-                        textarea.classList.add('is-invalid');
-                        textarea.focus();
-                        setTimeout(() => {
-                            textarea.classList.remove('is-invalid');
-                        }, 500);
-                        return;
-                    }
-                    
-                    answers[stepIdx] = { feedback };
-                    btn.style.transform = 'scale(0.96)';
-                    setTimeout(() => {
-                        btn.style.transform = '';
-                        goToNextTestStep(stepIdx);
-                    }, 150);
-                });
-            });
-            
-            const skipButtons = container.querySelectorAll('.btn-test-skip');
-            skipButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (isTransitioning) return;
-                    
-                    const stepIdx = parseInt(btn.getAttribute('data-step'));
-                    answers[stepIdx] = { skipped: true };
-                    
-                    btn.style.transform = 'scale(0.96)';
-                    setTimeout(() => {
-                        btn.style.transform = '';
-                        goToNextTestStep(stepIdx);
-                    }, 150);
-                });
-            });
-            
-            function goToNextTestStep(currentIndex) {
-                if (isTransitioning) return;
-                
-                if (currentIndex === totalSteps - 1) {
-                    showTestCompletedCard();
-                } else {
-                    const nextIndex = currentIndex + 1;
-                    const nextCard = container.querySelector(`#test-survey-step-${nextIndex}`);
-                    
-                    if (nextCard) {
-                        isTransitioning = true;
-                        
-                        // Slide to next card
-                        track.style.transform = `translateX(-${nextIndex * 100}%)`;
-                        
-                        // Adjust height
-                        container.style.height = nextCard.offsetHeight + 'px';
-                        
-                        setTimeout(() => {
-                            isTransitioning = false;
-                        }, 400);
-                    }
+                    // If unchecking leaves nothing selected, re-check "Iedereen"
+                    const anySpecific = [...chips].some(c => c !== chipAll && c.checked);
+                    if (!anySpecific) chipAll.checked = true;
                 }
             }
-            
-            function showTestCompletedCard() {
-                let answersHtml = '<ul class="list-group list-group-flush bg-transparent mt-2">';
-                qList.forEach((q, idx) => {
-                    const ans = answers[idx];
-                    answersHtml += `
-                        <li class="list-group-item bg-transparent px-0 py-2 border-0 animate-fadeIn">
-                            <div class="fw-bold text-dark small">${idx + 1}. ${q.text}</div>
-                            <div class="text-secondary small">
-                                ${ans && ans.skipped 
-                                    ? '<em class="text-muted">Overgeslagen</em>' 
-                                    : (q.type === 'score' 
-                                        ? `Jouw score: <strong class="text-dark">${ans ? ans.score : 'N/A'} / 5</strong>` 
-                                        : `Jouw feedback: <em class="text-dark">"${ans ? ans.feedback : 'N/A'}"</em>`)}
-                            </div>
-                        </li>
-                    `;
-                });
-                answersHtml += '</ul>';
-                
-                // Render completion
-                const completeCardHtml = `
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden animate-fadeIn" style="background: rgba(0, 0, 0, 0.03); border: 1px solid rgba(0, 0, 0, 0.08) !important; width: 100%;">
-                        <div class="progress rounded-0" style="height: 6px; background-color: rgba(0, 0, 0, 0.05);">
-                            <div class="progress-bar bg-success animate-all" role="progressbar" style="width: 100%; background: linear-gradient(90deg, var(--chiro-blue, #0d6efd) 0%, #00bc8c 100%); transition: width 0.4s ease;"></div>
-                        </div>
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="badge bg-secondary text-white rounded-pill px-2" style="font-size: 0.75rem;">100% beantwoord</span>
-                                <span class="text-muted small fw-bold" style="font-size: 0.75rem;"><i class="bi bi-patch-question-fill me-1 text-primary"></i>Survey (Test)</span>
-                            </div>
-                            <div class="text-success fw-bold d-flex align-items-center gap-2 py-2 animate-fadeIn" style="font-size: 0.95rem;">
-                                <i class="bi bi-check-circle-fill fs-5"></i>
-                                <span>Simulatie voltooid!</span>
-                            </div>
-                            <div class="text-muted small mt-2">
-                                ${answersHtml}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                // Measure the height of the completed card to transition to it
-                const tempDiv = document.createElement('div');
-                tempDiv.style.width = container.offsetWidth + 'px';
-                tempDiv.style.position = 'absolute';
-                tempDiv.style.visibility = 'hidden';
-                tempDiv.innerHTML = completeCardHtml;
-                document.body.appendChild(tempDiv);
-                const targetHeight = tempDiv.offsetHeight;
-                document.body.removeChild(tempDiv);
-                
-                // Animate height and replace content
-                container.style.transition = 'height 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
-                container.style.height = targetHeight + 'px';
-                
-                // Fade track out and fade complete card in
-                track.style.opacity = '0';
-                track.style.transition = 'opacity 0.35s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
-                
-                setTimeout(() => {
-                    container.innerHTML = completeCardHtml;
-                    container.style.height = '';
-                    container.style.transition = '';
-                    isTransitioning = false;
-                }, 350);
-            }
-        }
-
-        // Test real pop-up triggering
-        btnTestRealPopup.addEventListener('click', () => {
-            const currentTitle = titleInput.value.trim() || 'Titel van de aankondiging';
-            const quillContainer = document.querySelector('.ql-container');
-            let currentBody = 'Inhoud van de aankondiging...';
-            
-            if (quillContainer) {
-                const quill = Quill.find(quillContainer);
-                if (quill && quill.root.innerHTML !== '<p><br></p>') {
-                    currentBody = quill.root.innerHTML;
-                }
-            }
-
-            testTitleText.innerHTML = currentTitle;
-            testBodyText.innerHTML = currentBody;
-
-            // Handle test survey elements
-            if (hasSurveyCheckbox.checked && questionsContainer.children.length > 0) {
-                testPopupSurveyWrapper.style.display = 'block';
-                buildTestWizard();
-            } else {
-                testPopupSurveyWrapper.style.display = 'none';
-            }
-
-            // Trigger Modal Dialog
-            testDialog.showModal();
         });
+    });
 
-        // Fallback for click-outside close for old browsers
-        if (!('closedBy' in HTMLDialogElement.prototype)) {
-            testDialog.addEventListener('click', (event) => {
-                if (event.target !== testDialog) return;
-                const rect = testDialog.getBoundingClientRect();
-                const isDialogContent = (
-                    rect.top <= event.clientY &&
-                    event.clientY <= rect.top + rect.height &&
-                    rect.left <= event.clientX &&
-                    event.clientX <= rect.left + rect.width
-                );
-                if (!isDialogContent) {
-                    testDialog.close();
-                }
-            });
-        }
-    };
+    // ── Live preview ───────────────────────────────────────────────────────────
+    const titleInput = document.getElementById('annTitle');
+    const prevTitle  = document.getElementById('prevTitle');
+    const prevBody   = document.getElementById('prevBody');
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initAnnouncementUI);
-    } else {
-        initAnnouncementUI();
+    if (titleInput) {
+        titleInput.addEventListener('input', () => {
+            prevTitle.textContent = titleInput.value.trim() || 'Titel van de aankondiging';
+        });
     }
+
+    // Poll for rich editor changes (Quill updates a hidden textarea)
+    const contentInput = document.getElementById('annContent');
+    if (contentInput) {
+        let lastVal = '';
+        setInterval(() => {
+            if (contentInput.value !== lastVal) {
+                lastVal = contentInput.value;
+                const v = contentInput.value;
+                prevBody.innerHTML = (!v || v === '<p><br></p>') ? 'Inhoud van de aankondiging...' : v;
+            }
+        }, 400);
+    }
+
+    // ── Survey section toggle ──────────────────────────────────────────────────
+    const hasSurveyCheck    = document.getElementById('annHasSurvey');
+    const surveyFields      = document.getElementById('surveyFields');
+    const questionsContainer= document.getElementById('questionsContainer');
+    const btnAdd            = document.getElementById('btnAddQuestion');
+    const prevSurveyArea    = document.getElementById('prevSurveyArea');
+    const prevSurveyList    = document.getElementById('prevSurveyList');
+    let qCount = 0;
+
+    hasSurveyCheck && hasSurveyCheck.addEventListener('change', () => {
+        const on = hasSurveyCheck.checked;
+        surveyFields.style.display = on ? 'block' : 'none';
+        if (on && questionsContainer.children.length === 0) addQuestion();
+        updateSurveyPreview();
+    });
+
+    btnAdd && btnAdd.addEventListener('click', addQuestion);
+
+    function addQuestion(text = '', type = 'score') {
+        const idx = qCount++;
+        const row = document.createElement('div');
+        row.className = 'question-row';
+        row.dataset.idx = idx;
+        row.innerHTML = `
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-2" style="font-size:.75rem;" aria-label="Verwijder"></button>
+            <div class="mb-2">
+                <label class="form-label small fw-bold text-muted text-uppercase">Vraag <span class="q-num"></span></label>
+                <input type="text" class="form-control rounded-3 q-text" name="surveyQuestions[${idx}][text]" value="${text}" placeholder="Bijv. Wat vond je van de activiteit?" required>
+            </div>
+            <div>
+                <label class="form-label small fw-bold text-muted text-uppercase">Type</label>
+                <select class="form-select rounded-3 q-type" name="surveyQuestions[${idx}][type]">
+                    <option value="score" ${type === 'score' ? 'selected' : ''}>Score (1–5)</option>
+                    <option value="text"  ${type === 'text'  ? 'selected' : ''}>Feedback tekstvak</option>
+                </select>
+            </div>`;
+
+        row.querySelector('.btn-close').addEventListener('click', () => {
+            row.remove(); renumber(); updateSurveyPreview();
+        });
+        row.querySelector('.q-text').addEventListener('input', updateSurveyPreview);
+        row.querySelector('.q-type').addEventListener('change', updateSurveyPreview);
+
+        questionsContainer.appendChild(row);
+        renumber();
+        updateSurveyPreview();
+    }
+
+    function renumber() {
+        document.querySelectorAll('#questionsContainer .question-row').forEach((r, i) => {
+            r.querySelector('.q-num').textContent = i + 1;
+        });
+    }
+
+    function updateSurveyPreview() {
+        if (!hasSurveyCheck || !hasSurveyCheck.checked) {
+            prevSurveyArea.style.display = 'none';
+            return;
+        }
+        const rows = document.querySelectorAll('#questionsContainer .question-row');
+        if (rows.length === 0) { prevSurveyArea.style.display = 'none'; return; }
+
+        prevSurveyArea.style.display = 'block';
+        prevSurveyList.innerHTML = '';
+        rows.forEach((r, i) => {
+            const text = r.querySelector('.q-text').value.trim() || `Vraag ${i+1}`;
+            const type = r.querySelector('.q-type').value;
+            const div  = document.createElement('div');
+            div.className = 'mb-2 pb-2 border-bottom';
+            if (i === rows.length - 1) div.className = 'mb-0';
+            div.innerHTML = `<div class="small fw-bold mb-1" style="font-size:.82rem;">${i+1}. ${text}</div>` +
+                (type === 'score'
+                    ? `<div class="d-flex gap-1">${[1,2,3,4,5].map(n => `<button type="button" class="btn btn-sm btn-outline-secondary rounded-circle" style="width:26px;height:26px;font-size:.75rem;" disabled>${n}</button>`).join('')}</div>`
+                    : `<textarea class="form-control form-control-sm" rows="1" style="font-size:.78rem;" disabled placeholder="Feedback..."></textarea>`);
+            prevSurveyList.appendChild(div);
+        });
+    }
+    // ── Delete announcement ────────────────────────────────────────────────────
+    document.querySelectorAll('.ann-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const id    = this.dataset.id;
+            const title = this.dataset.title;
+            if (!confirm(`Aankondiging "${title}" verwijderen?`)) return;
+            this.disabled = true;
+            try {
+                const res = await fetch(`/admin/announcements/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    alert('Verwijderen mislukt. Probeer opnieuw.');
+                    this.disabled = false;
+                }
+            } catch (e) {
+                alert('Netwerkfout.');
+                this.disabled = false;
+            }
+        });
+    });
+})();
 </script>
