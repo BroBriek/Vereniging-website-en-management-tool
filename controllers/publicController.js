@@ -6,6 +6,9 @@ const fs = require('fs');
 const path = require('path');
 const PhoneService = require('../services/PhoneService');
 
+const { sendMail } = require('../config/mailer');
+const PeriodService = require('../services/PeriodService');
+
 const getContent = async (slug) => {
     try {
         const contents = await PageContent.findAll({ where: { slug } });
@@ -15,6 +18,49 @@ const getContent = async (slug) => {
     } catch (e) {
         return {};
     }
+};
+
+const formatRegistrationTemplate = (templateText, payload) => {
+    if (!templateText) return '';
+
+    const groupMap = {
+        'ribbel': 'Ribbels',
+        'speelclub': 'Speelclub',
+        'rakwi': 'Rakwi\'s',
+        'tito': 'Tito\'s',
+        'keti': 'Keti\'s',
+        'aspi': 'Aspi\'s',
+        'leiding': 'Leiding'
+    };
+
+    const formattedGroup = groupMap[payload.group] || payload.group || '';
+    const typeLabel = payload.type === 'leiding' ? 'Leiding' : 'Lid';
+    const firstName = payload.firstName || '';
+    const lastName = payload.lastName || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    const email = payload.email || '';
+    const parentsNames = payload.parentsNames || '';
+    const parentsPhone = payload.parentsPhone || payload.phone || '';
+    const memberPhone = payload.memberPhone || '';
+    const birthdate = payload.birthdate ? new Date(payload.birthdate).toLocaleDateString('nl-BE') : '';
+    const currentDate = new Date().toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    let result = templateText;
+    result = result.replace(/\{voornaam\}/gi, firstName);
+    result = result.replace(/\{achternaam\}/gi, lastName);
+    result = result.replace(/\{naam\}/gi, fullName);
+    result = result.replace(/\{groep\}/gi, formattedGroup);
+    result = result.replace(/\{type\}/gi, typeLabel);
+    result = result.replace(/\{email\}/gi, email);
+    result = result.replace(/\{ouders_naam\}/gi, parentsNames);
+    result = result.replace(/\{ouders_namen\}/gi, parentsNames);
+    result = result.replace(/\{ouders_telefoon\}/gi, parentsPhone);
+    result = result.replace(/\{lid_telefoon\}/gi, memberPhone);
+    result = result.replace(/\{geboortedatum\}/gi, birthdate);
+    result = result.replace(/\{datum\}/gi, currentDate);
+    result = result.replace(/\{betaalmethode\}/gi, payload.paymentMethod || 'Met QR code op de startdag');
+
+    return result;
 };
 
 exports.getCalendarICS = async (req, res) => {
@@ -329,6 +375,7 @@ exports.postRegister = async (req, res) => {
             email: (req.body.email || '').trim(),
             photoPermission: req.body.photoPermission === 'on' || req.body.photoPermission === 'true',
             medicalInfo: req.body.medicalInfo || null,
+            paymentMethod: req.body.paymentMethod || 'Met QR code op de startdag',
             group: req.body.type === 'leiding' ? 'leiding' : (req.body.group || '').trim().toLowerCase(),
             privacyAccepted: req.body.privacyAccepted === 'on' || req.body.privacyAccepted === 'true'
         };
@@ -383,12 +430,70 @@ exports.postRegister = async (req, res) => {
         payload.period = await PeriodService.getCurrentPeriod();
 
         await Registration.create(payload);
-        res.render('public/register', { 
-            title: 'Inschrijven bij Chiro Vreugdeland', 
-            description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
-            content, 
-            isRegistrationOpen,
-            success: 'Bedankt voor je inschrijving! We hebben de gegevens goed ontvangen.' 
+
+        // Fetch custom page settings for 'register'
+        const rawSuccessText = content && content.success_text && content.success_text.content ? content.success_text.content : '';
+        const defaultSuccessText = `<h3 class="fw-bold text-success mb-3"><i class="bi bi-party me-2"></i>Bedankt voor de inschrijving, {voornaam}!</h3><p class="fs-5">We hebben de inschrijvingsgegevens voor <strong>{voornaam} {achternaam}</strong> ({groep}) goed ontvangen.</p><p>Binnenkort ontvang je meer praktische informatie over het komende Chirojaar. Mocht je in de tussentijd nog vragen hebben, aarzel dan niet om contact op te nemen met onze leiding.</p>`;
+        
+        const successTemplate = rawSuccessText || defaultSuccessText;
+        const formattedSuccessText = formatRegistrationTemplate(successTemplate, payload);
+
+        let emailSent = false;
+        // Send confirmation email if configured or default template exists
+        try {
+            const rawEmailSubject = content && content.email_subject && content.email_subject.content ? content.email_subject.content : 'Inschrijving ontvangen - Chiro Vreugdeland Meeuwen';
+            const rawEmailText = content && content.email_text && content.email_text.content ? content.email_text.content : '';
+            
+            const defaultEmailText = `<p>Beste {voornaam},</p><p>Bedankt voor je inschrijving bij Chiro Vreugdeland Meeuwen! We hebben de gegevens voor <strong>{naam}</strong> in goede orde ontvangen.</p><p><strong>Overzicht inschrijving:</strong></p><ul><li><strong>Naam:</strong> {naam}</li><li><strong>Groep:</strong> {groep}</li><li><strong>Type:</strong> {type}</li><li><strong>E-mail:</strong> {email}</li></ul><p>Mocht je vragen hebben over de inschrijving of het lidgeld, neem dan gerust contact met ons op via <a href="mailto:${process.env.CONTACT_EMAIL || 'Chiromeeuwen@outlook.com'}">${process.env.CONTACT_EMAIL || 'Chiromeeuwen@outlook.com'}</a>.</p><p>Tot snel op de Chiro!</p><p>Met vriendelijke groeten,<br><strong>Leiding Chiro Vreugdeland Meeuwen</strong></p>`;
+
+            const emailTemplate = rawEmailText || defaultEmailText;
+            const emailSubject = formatRegistrationTemplate(rawEmailSubject, payload);
+            const formattedEmailBody = formatRegistrationTemplate(emailTemplate, payload);
+
+            const emailHtml = `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 650px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+                    <div style="background-color: #db3e41; color: #ffffff; padding: 25px 20px; text-align: center;">
+                        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Chiro Vreugdeland Meeuwen</h1>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Inschrijving Bevestiging</p>
+                    </div>
+                    <div style="padding: 30px; line-height: 1.6; font-size: 15px; color: #2d3748;">
+                        ${formattedEmailBody}
+                    </div>
+                    <div style="background-color: #f7fafc; padding: 20px; text-align: center; border-top: 1px solid #edf2f7; font-size: 12px; color: #718096;">
+                        <p style="margin: 0;">Dit is een automatisch bericht van Chiro Vreugdeland Meeuwen.</p>
+                        <p style="margin: 5px 0 0 0;"><a href="${process.env.APP_URL || 'https://www.chiromeeuwen.be'}" style="color: #db3e41; text-decoration: none; font-weight: bold;">www.chiromeeuwen.be</a></p>
+                    </div>
+                </div>
+            `;
+
+            if (payload.email) {
+                await sendMail({
+                    to: payload.email,
+                    subject: emailSubject,
+                    html: emailHtml
+                });
+                emailSent = true;
+            }
+        } catch (mailError) {
+            const isRecipientError = mailError.code === 'EENVELOPE' || 
+                                     mailError.responseCode === 556 || 
+                                     mailError.responseCode === 550 ||
+                                     (mailError.message && mailError.message.includes('recipients were rejected'));
+
+            if (isRecipientError) {
+                console.warn(`[Registration Email] Could not send confirmation mail to "${payload.email}": recipient address or domain rejected.`);
+            } else {
+                console.warn(`[Registration Email] Failed to send confirmation mail to "${payload.email}": ${mailError.message || mailError}`);
+            }
+        }
+
+        res.render('public/register_success', { 
+            title: 'Inschrijving Ontvangen - Chiro Vreugdeland', 
+            description: 'Je inschrijving bij Chiro Vreugdeland is succesvol ontvangen.',
+            registration: payload,
+            formattedSuccessText,
+            emailSent,
+            user: req.user
         });
     } catch (error) {
         let errorMessage = 'Er ging iets mis bij het opslaan. Controleer of alle velden correct zijn ingevuld.';
@@ -419,9 +524,6 @@ exports.postRegister = async (req, res) => {
 };
 
 const nodemailer = require('nodemailer');
-const { sendMail } = require('../config/mailer');
-const PeriodService = require('../services/PeriodService');
-
 const SettingsService = require('../services/SettingsService');
 
 exports.getContact = (req, res) => {

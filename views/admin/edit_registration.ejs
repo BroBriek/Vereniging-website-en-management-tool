@@ -86,6 +86,14 @@
                             <textarea class="form-control" id="medicalInfo" name="medicalInfo" rows="3"><%= registration.medicalInfo || '' %></textarea>
                         </div>
 
+                        <div class="mb-3">
+                            <label for="paymentMethod" class="form-label">Betaalmethode</label>
+                            <select class="form-select" id="paymentMethod" name="paymentMethod">
+                                <option value="Met QR code op de startdag" <%= (registration.paymentMethod === 'Met QR code op de startdag' || !registration.paymentMethod) ? 'selected' : '' %>>Met QR code op de startdag</option>
+                                <option value="Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt" <%= registration.paymentMethod === 'Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt' ? 'selected' : '' %>>Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt</option>
+                            </select>
+                        </div>
+
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="photoPermission" name="photoPermission" <%= registration.photoPermission ? 'checked' : '' %>>
                             <label class="form-check-label" for="photoPermission">Toestemming voor foto's</label>

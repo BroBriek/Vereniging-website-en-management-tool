@@ -123,6 +123,10 @@ class MigrationService {
                     // Backfill default period
                     await sequelize.query("UPDATE Registrations SET period = '2024-2025' WHERE period IS NULL;");
                 }
+                if (!await columnExists('Registrations', 'paymentMethod')) {
+                    await sequelize.query('ALTER TABLE Registrations ADD COLUMN paymentMethod TEXT;');
+                    console.log('Added Registrations.paymentMethod');
+                }
             } catch (registrationsErr) {
                 console.error('Error migrating Registrations table schema:', registrationsErr);
             }

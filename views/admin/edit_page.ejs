@@ -43,16 +43,137 @@
             <textarea class="form-control rich-editor" name="intro" rows="5"><%= contentMap.intro ? contentMap.intro.content : '' %></textarea>
         </div>
     <% } else if (slug === 'register') { %>
-        <h3>Info Tekst (Boven formulier)</h3>
-        <div class="mb-3">
-            <label class="form-label">Tekst boven het inschrijvingsformulier (HTML toegestaan)</label>
-            <textarea class="form-control rich-editor" name="top_text" rows="5"><%= contentMap.top_text ? contentMap.top_text.content : '' %></textarea>
-        </div>
+        <div class="row g-4 mb-4">
+            <!-- Left Column: Form Content, Success Screen, and Email Template -->
+            <div class="col-lg-8">
+                <!-- Section 1: Inschrijvingspagina (Formulier) -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                        <h4 class="fw-bold mb-0 text-primary">
+                            <i class="bi bi-file-earmark-text me-2"></i>Inschrijvingspagina Teksten
+                        </h4>
+                        <p class="text-muted small mb-0 mt-1">Teksten die getoond worden op de inschrijvingspagina vóór het invullen van het formulier.</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Tekst boven het inschrijvingsformulier</label>
+                            <div class="form-text text-muted mb-2">Introductietekst of belangrijke informatie bovenaan de pagina.</div>
+                            <textarea class="form-control rich-editor" name="top_text" rows="5"><%= contentMap.top_text ? contentMap.top_text.content : '' %></textarea>
+                        </div>
 
-        <h3>Info Tekst (Onderaan formulier)</h3>
-        <div class="mb-3">
-            <label class="form-label">Tekst over kosten, rekeningnummer, etc. (HTML toegestaan)</label>
-            <textarea class="form-control rich-editor" name="info_text" rows="10"><%= contentMap.info_text ? contentMap.info_text.content : '' %></textarea>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">Belangrijke info (Onderaan het formulier)</label>
+                            <div class="form-text text-muted mb-2">Informatie over lidgeld, bankrekeningnummer, afspraken, etc.</div>
+                            <textarea class="form-control rich-editor" name="info_text" rows="8"><%= contentMap.info_text ? contentMap.info_text.content : '' %></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Successcherm (Na Inschrijving) -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                        <h4 class="fw-bold mb-0 text-success">
+                            <i class="bi bi-check2-circle me-2"></i>Successcherm (Na Inschrijving)
+                        </h4>
+                        <p class="text-muted small mb-0 mt-1">Deze tekst wordt op het scherm getoond nadat een gebruiker de inschrijving succesvol heeft voltooid.</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">Successcherm Bericht (HTML / Rich Text)</label>
+                            <div class="form-text text-muted mb-2">Gebruik de rijke tekstbewerker om het bericht vorm te geven. Dynamische variabelen (zie hiernaast) worden automatisch ingevuld.</div>
+                            <textarea class="form-control rich-editor" name="success_text" rows="8"><%= contentMap.success_text ? contentMap.success_text.content : '' %></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Automatische Bevestigingsmail -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                        <h4 class="fw-bold mb-0 text-warning">
+                            <i class="bi bi-envelope-paper me-2"></i>Automatische Bevestigingsmail
+                        </h4>
+                        <p class="text-muted small mb-0 mt-1">Stel het onderwerp en de inhoud in van de e-mail die automatisch wordt verstuurd naar het opgegeven e-mailadres.</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-4">
+                            <label for="email_subject" class="form-label fw-bold">Onderwerp E-mail</label>
+                            <input type="text" class="form-control" id="email_subject" name="email_subject" value="<%= contentMap.email_subject ? contentMap.email_subject.content : 'Inschrijving ontvangen - Chiro Vreugdeland Meeuwen' %>" placeholder="Inschrijving ontvangen - Chiro Vreugdeland Meeuwen">
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">Inhoud E-mail (HTML / Rich Text)</label>
+                            <div class="form-text text-muted mb-2">De inhoud van de bevestigingsmail. Ook hier werken dynamische variabelen zoals {voornaam}, {groep}, etc.</div>
+                            <textarea class="form-control rich-editor" name="email_text" rows="10"><%= contentMap.email_text ? contentMap.email_text.content : '' %></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Dynamic Variables Guide -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 position-sticky" style="top: 20px;">
+                    <div class="card-header bg-primary text-white border-0 py-3 px-4 rounded-top-4">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-code-slash me-2"></i>Dynamische Variabelen</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="small text-muted mb-3">
+                            Neem deze variabelen op in het successcherm of het e-mailbericht. Ze worden bij elke inschrijving automatisch vervangen:
+                        </p>
+
+                        <div class="list-group list-group-flush small">
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{voornaam}</code>
+                                <span class="text-muted">Voornaam</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{achternaam}</code>
+                                <span class="text-muted">Achternaam</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{naam}</code>
+                                <span class="text-muted">Volledige naam</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{groep}</code>
+                                <span class="text-muted">Ribbels, Rakwi, etc.</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{type}</code>
+                                <span class="text-muted">Lid of Leiding</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{email}</code>
+                                <span class="text-muted">E-mailadres</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{ouders_naam}</code>
+                                <span class="text-muted">Namen Ouders/Voogd</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{ouders_telefoon}</code>
+                                <span class="text-muted">Telefoon Ouders</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{lid_telefoon}</code>
+                                <span class="text-muted">GSM Lid</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{betaalmethode}</code>
+                                <span class="text-muted">Betaalmethode</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                                <code>{datum}</code>
+                                <span class="text-muted">Datum inschrijving</span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info border-0 rounded-3 mt-4 mb-0 small">
+                            <i class="bi bi-lightbulb-fill text-info me-1"></i>
+                            <strong>Tip:</strong> Als een tekstveld leeg gelaten wordt, wordt er een standaardtekst gebruikt.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     <% } else { %>
         <div class="mb-3">
@@ -61,6 +182,10 @@
         </div>
     <% } %>
     
-    <button type="submit" class="btn btn-success">Opslaan</button>
+    <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+        <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow">
+            <i class="bi bi-check-lg me-2"></i>Wijzigingen Opslaan
+        </button>
+    </div>
 </form>
 <%- include('../partials/footer') %>

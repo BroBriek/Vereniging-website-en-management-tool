@@ -125,7 +125,14 @@ exports.getEditPage = async (req, res) => {
     const contentMap = {};
     contents.forEach(c => contentMap[c.section_key] = c);
     
-    res.render('admin/edit_page', { title: `Bewerk ${slug}`, slug, contentMap, user: req.user });
+    res.render('admin/edit_page', { 
+        title: `Bewerk ${slug}`, 
+        slug, 
+        contentMap, 
+        user: req.user,
+        success: req.query.success,
+        error: req.query.error
+    });
 };
 
 exports.postEditPage = async (req, res) => {
@@ -512,6 +519,7 @@ exports.exportRegistrationsExcel = async (req, res) => {
         { header: 'Telefoon (Ouders/Leiding)', key: 'primaryPhone', width: 20 },
         { header: 'GSM Lid (Optioneel)', key: 'memberPhone', width: 20 },
         { header: 'Namen Ouders/Voogd', key: 'parentsNames', width: 30 },
+        { header: 'Betaalmethode', key: 'paymentMethod', width: 35 },
         { header: 'Foto Toestemming', key: 'photoPermission', width: 20 },
         { header: 'Medische Info', key: 'medicalInfo', width: 40 }
     ];
@@ -528,6 +536,7 @@ exports.exportRegistrationsExcel = async (req, res) => {
             primaryPhone: reg.type === 'lid' ? reg.parentsPhone : reg.phone,
             memberPhone: reg.memberPhone,
             parentsNames: reg.parentsNames,
+            paymentMethod: reg.paymentMethod || 'Met QR code op de startdag',
             photoPermission: reg.photoPermission ? 'Ja' : 'Nee',
             medicalInfo: reg.medicalInfo
         });
@@ -591,7 +600,7 @@ exports.updateRegistration = async (req, res) => {
 
         const { 
             firstName, lastName, birthdate, type, group, email, 
-            phone, parentsPhone, memberPhone, parentsNames, medicalInfo 
+            phone, parentsPhone, memberPhone, parentsNames, medicalInfo, paymentMethod 
         } = req.body;
 
         const photoPermission = req.body.photoPermission === 'on';
@@ -616,6 +625,7 @@ exports.updateRegistration = async (req, res) => {
             parentsPhone: formattedParentsPhone,
             memberPhone: formattedMemberPhone,
             parentsNames, medicalInfo,
+            paymentMethod,
             photoPermission
         });
 
@@ -665,6 +675,7 @@ exports.exportRegistrationsPDF = async (req, res) => {
             doc.fontSize(10).font('Helvetica').text(`Periode: ${reg.period || 'Onbekend'} - Type: ${reg.type}`);
             doc.text(`Email: ${reg.email}`);
             doc.text(`Telefoon: ${reg.type === 'lid' ? reg.parentsPhone : reg.phone}`);
+            doc.text(`Betaalmethode: ${reg.paymentMethod || 'Met QR code op de startdag'}`);
             if (reg.medicalInfo) doc.fillColor('red').text(`Medisch: ${reg.medicalInfo}`).fillColor('black');
             doc.moveDown(0.5);
         });

@@ -182,12 +182,13 @@
                                             <% } %>
                                         </div>
 
-                                        <div class="col-2 border-start ps-4">
+                                         <div class="col-2 border-start ps-4">
                                             <% if (reg.type === 'lid') { %>
                                                 <small class="text-muted d-block text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Ouders / Contact</small>
                                                 <div class="small text-truncate" title="<%= reg.parentsNames %>"><strong><%= reg.parentsNames %></strong></div>
                                                 <div class="small"><i class="bi bi-telephone text-muted me-1"></i><%= reg.parentsPhone %></div>
                                                 <div class="small text-truncate" title="<%= reg.email %>"><i class="bi bi-envelope text-muted me-1"></i><%= reg.email %></div>
+                                                <div class="small text-muted mt-1 text-truncate" title="<%= reg.paymentMethod %>"><i class="bi bi-wallet2 me-1"></i><%= reg.paymentMethod || 'Met QR code' %></div>
                                             <% } else { %>
                                                 <span class="badge bg-danger">Leiding</span>
                                             <% } %>
@@ -292,6 +293,7 @@
                                     <div class="small fw-bold"><%= reg.parentsNames %></div>
                                     <div class="small"><i class="bi bi-telephone text-muted me-1"></i><%= reg.parentsPhone %></div>
                                     <div class="small"><i class="bi bi-envelope text-muted me-1"></i><%= reg.email %></div>
+                                    <div class="small text-muted mt-1">Betaling: <%= reg.paymentMethod || 'Met QR code op de startdag' %></div>
                                     <div class="small text-muted mt-1">Foto's: <%= reg.photoPermission ? 'Ja' : 'Nee' %></div>
                                 </div>
                                 <% } %>

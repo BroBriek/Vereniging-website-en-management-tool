@@ -1,0 +1,102 @@
+<%- include('../partials/header') %>
+
+<div class="py-4 py-md-5">
+    <div class="mx-auto card border-0 shadow-lg rounded-4 overflow-hidden" style="max-width: 760px;">
+        <!-- Top Banner Header -->
+        <div class="bg-success text-white p-4 p-md-5 text-center position-relative">
+            <div class="bg-white bg-opacity-20 rounded-circle d-inline-flex p-3 mb-3 shadow-sm">
+                <i class="bi bi-check-circle-fill display-3 text-white"></i>
+            </div>
+            <h1 class="fw-bold mb-2 display-5">Inschrijving Ontvangen!</h1>
+            <p class="lead mb-0 opacity-90">Bedankt voor het inschrijven bij Chiro Vreugdeland Meeuwen.</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+            <!-- Custom Success Text (Configured by admin via Rich Text Editor) -->
+            <% if (formattedSuccessText) { %>
+                <div class="mb-4 p-4 rounded-4 bg-light border-start border-4 border-success fs-5">
+                    <%- formattedSuccessText %>
+                </div>
+            <% } %>
+
+            <!-- Registration Summary Box -->
+            <div class="card border-0 bg-light rounded-4 p-4 mb-4">
+                <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-person-badge me-2"></i>Overzicht van de inschrijving</h5>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Naam</div>
+                        <div class="fw-bold fs-6"><%= registration.firstName %> <%= registration.lastName %></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Type & Groep</div>
+                        <div class="fw-bold fs-6">
+                            <span class="badge bg-primary rounded-pill"><%= registration.type === 'leiding' ? 'Leiding' : 'Lid' %></span>
+                            <span class="badge bg-danger rounded-pill text-capitalize"><%= registration.group %></span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">E-mailadres</div>
+                        <div class="fw-bold fs-6"><%= registration.email %></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Telefoon</div>
+                        <div class="fw-bold fs-6"><%= registration.parentsPhone || registration.phone || '-' %></div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="text-muted small">Gekozen Betaalmethode</div>
+                        <div class="fw-bold fs-6 text-primary"><i class="bi bi-wallet2 me-1"></i><%= registration.paymentMethod || 'Met QR code op de startdag' %></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Instructions Box (if overschrijving is selected) -->
+            <% if (registration.paymentMethod && registration.paymentMethod.toLowerCase().includes('overschrijving')) { %>
+                <div class="card border-0 rounded-4 p-4 mb-4 bg-light border-start border-4 border-primary shadow-sm">
+                    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-bank me-2"></i>Betaalinstructies (Overschrijving)</h5>
+                    <p class="mb-3">Gelieve het lidgeld per overschrijving over te maken naar ons rekeningnummer:</p>
+                    <div class="bg-white p-3 rounded-3 shadow-sm border mb-3">
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col-sm-4 text-muted small">Rekeningnummer (IBAN):</div>
+                            <div class="col-sm-8 fw-bold fs-5 text-dark">BE71 7845 4208 8869</div>
+                        </div>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-sm-4 text-muted small">Mededeling:</div>
+                            <div class="col-sm-8 fw-bold text-primary">Inschrijving <%= registration.firstName %> <%= registration.lastName %> (<%= registration.group %>)</div>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Email Notification Notice -->
+            <% if (typeof emailSent !== 'undefined' && emailSent) { %>
+                <div class="alert alert-success border-0 rounded-4 d-flex align-items-center gap-3 p-3 mb-4">
+                    <i class="bi bi-envelope-check-fill fs-2 text-success flex-shrink-0"></i>
+                    <div>
+                        <strong>Bevestigingsmail verzonden!</strong>
+                        <div class="small">We hebben een bevestiging gemaild naar <strong><%= registration.email %></strong>. (Controleer eventueel ook de ongewenste e-mail/spammap).</div>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="alert alert-warning border-0 rounded-4 d-flex align-items-center gap-3 p-3 mb-4">
+                    <i class="bi bi-exclamation-triangle-fill fs-2 text-warning flex-shrink-0"></i>
+                    <div>
+                        <strong>Geen e-mail kunnen versturen</strong>
+                        <div class="small">De inschrijving is opgeslagen, maar de bevestigingsmail kon niet worden bezorgd op <strong><%= registration.email %></strong>. Controleer eventueel of het e-mailadres juist is ingevuld.</div>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Bottom Action Buttons -->
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center mt-4">
+                <a href="/inschrijven" class="btn btn-chiro btn-lg rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-person-plus-fill me-2"></i>Nog een kind inschrijven
+                </a>
+                <a href="/" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
+                    <i class="bi bi-house-door-fill me-2"></i>Terug naar Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

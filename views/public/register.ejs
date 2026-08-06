@@ -107,6 +107,25 @@
                         </select>
                     </div>
 
+                    <!-- Payment Method Selection -->
+                    <div class="mt-4 p-4 border rounded-4 bg-white border-2">
+                        <label class="form-label fw-bold text-primary mb-3">Hoe wens je te betalen?</label>
+                        <div class="d-flex flex-column gap-3">
+                            <div class="form-check custom-option">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="payQr" value="Met QR code op de startdag" checked required>
+                                <label class="form-check-label fw-bold" for="payQr">
+                                    Met QR code op de startdag
+                                </label>
+                            </div>
+                            <div class="form-check custom-option">
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="payTransfer" value="Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt" required>
+                                <label class="form-check-label fw-bold" for="payTransfer">
+                                    Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Extra Info -->
                     <div class="mt-4">
                         <label for="medicalInfo" class="form-label fw-bold">Extra Info (Allergieën, medische info, etc.)</label>

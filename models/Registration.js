@@ -61,6 +61,10 @@ const Registration = sequelize.define('Registration', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  paymentMethod: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   period: {
     type: DataTypes.STRING,
     allowNull: true
