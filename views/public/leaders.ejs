@@ -3,6 +3,11 @@
 <div class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="display-4 fw-bold mb-0">Onze Leiding</h1>
+        <% if (user) { %>
+            <a href="/admin/leaders" class="btn btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="bi bi-pencil me-1"></i> Leiding Bewerken
+            </a>
+        <% } %>
     </div>
     <hr class="mb-5 opacity-10">
 
@@ -167,6 +172,13 @@
                     <div class="d-flex justify-content-center">
                         <p class="lead fst-italic text-muted" id="modalExtra" style="max-width: 80%;"></p>
                     </div>
+                    <% if (user) { %>
+                        <div class="mt-3 pt-2 border-top">
+                            <a id="modalEditLink" href="#" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                <i class="bi bi-pencil me-1"></i> Deze leiding bewerken
+                            </a>
+                        </div>
+                    <% } %>
                 </div>
             </div>
         </div>
@@ -207,6 +219,11 @@
             phoneWrapper.style.display = 'none';
         }
         
+        const editLink = document.getElementById('modalEditLink');
+        if (editLink) {
+            editLink.href = `/admin/leaders/${leader.id}/edit`;
+        }
+
         const img = document.getElementById('modalImage');
         if (leader.image) {
             img.src = leader.image;
