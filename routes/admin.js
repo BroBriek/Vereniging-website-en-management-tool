@@ -33,8 +33,8 @@ const checkFormMutationPermission = async (req, res, next) => {
         const id = req.params.id;
         let form;
         
-        // If the URL contains 'responses', the ID refers to a FormResponse
-        if (req.path.includes('/responses/')) {
+        // If the URL starts with /forms/responses/, the ID refers to a FormResponse
+        if (req.path.startsWith('/forms/responses/')) {
             const response = await FormResponse.findByPk(id);
             if (response) {
                 form = await Form.findByPk(response.formId);
@@ -49,11 +49,11 @@ const checkFormMutationPermission = async (req, res, next) => {
     } catch (e) {
         console.error('Permission check error:', e);
     }
-
-    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
-        return res.status(403).json({ success: false, error: 'Geen toestemming' });
+    
+    if (req.xhr || req.headers.accept?.includes('json')) {
+        return res.status(403).json({ success: false, error: 'Geen toegang' });
     }
-    res.redirect('/admin/forms?error=Geen toestemming');
+    res.redirect('/admin/forms?error=Geen toegang');
 };
 
 const checkAdminDashboardAccess = (req, res, next) => {
@@ -119,10 +119,13 @@ router.post('/forms', checkFormPermission, upload.single('bannerImage'), compres
 router.get('/forms/:id/edit', checkFormMutationPermission, formController.getEditForm);
 router.post('/forms/:id/edit', checkFormMutationPermission, upload.single('bannerImage'), compressGenericImage, formController.postEditForm);
 router.post('/forms/:id/delete', checkFormMutationPermission, formController.postDeleteForm);
+router.post('/forms/:id/reset', checkFormMutationPermission, formController.resetForm);
+router.delete('/forms/:id/responses', checkFormMutationPermission, formController.resetForm);
 router.get('/forms/:id/responses', checkFormPermission, formController.getResponses);
 router.get('/forms/:id/responses/export', checkFormPermission, formController.exportResponses);
 router.get('/forms/:id/responses/export-eetdag', checkFormPermission, formController.exportEetdagPDF);
 router.put('/forms/responses/:id', checkFormMutationPermission, formController.updateResponse);
+router.delete('/forms/responses/:id', checkFormMutationPermission, formController.deleteResponse);
 router.post('/forms/responses/:id', checkFormMutationPermission, formController.deleteResponse);
 
 // Custom Page Builder

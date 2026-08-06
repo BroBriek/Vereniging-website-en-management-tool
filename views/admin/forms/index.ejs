@@ -68,6 +68,9 @@
                                                     <a href="/admin/forms/<%= form.id %>/edit" class="btn btn-outline-primary" title="Bewerken">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
+                                                    <button type="button" class="btn btn-outline-warning" title="Herstel formulier (wis antwoorden)" onclick="resetFormFromIndex('<%= form.id %>', '<%= form.title %>')">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                    </button>
                                                     <form action="/admin/forms/<%= form.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Weet je zeker dat je dit formulier wilt verwijderen? Alle antwoorden gaan ook verloren!');">
                                                         <button type="submit" class="btn btn-outline-danger" title="Verwijderen">
                                                             <i class="bi bi-trash"></i>
@@ -137,6 +140,9 @@
                                     <a href="/admin/forms/<%= form.id %>/edit" class="btn btn-outline-primary btn-sm flex-grow-1">
                                         <i class="bi bi-pencil"></i> Bewerken
                                     </a>
+                                    <button type="button" class="btn btn-outline-warning btn-sm flex-grow-1" onclick="resetFormFromIndex('<%= form.id %>', '<%= form.title %>')">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Herstellen
+                                    </button>
                                     <form action="/admin/forms/<%= form.id %>/delete" method="POST" class="d-inline flex-grow-1" onsubmit="return confirm('Weet je zeker dat je dit formulier wilt verwijderen? Alle antwoorden gaan ook verloren!');">
                                         <button type="submit" class="btn btn-outline-danger btn-sm w-100">
                                             <i class="bi bi-trash"></i> Wissen
@@ -166,6 +172,33 @@
             console.error('Copy failed', err);
             alert('Kon niet kopiëren naar klembord.');
         });
+    }
+
+    async function resetFormFromIndex(id, title) {
+        if (!confirm(`Weet je zeker dat je ALLE antwoorden van het formulier "${title}" wilt verwijderen? Dit kan niet ongedaan gemaakt worden!`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/forms/${id}/reset`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+            if (response.ok && result.success) {
+                alert('Formulier hersteld: alle antwoorden zijn verwijderd.');
+                window.location.reload();
+            } else {
+                alert(result.error || 'Fout bij het herstellen van het formulier');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Fout bij communicatie met server');
+        }
     }
 </script>
 

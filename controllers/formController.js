@@ -163,6 +163,32 @@ exports.deleteResponse = async (req, res) => {
     }
 };
 
+exports.resetForm = async (req, res) => {
+    try {
+        const formId = req.params.id;
+        const form = await Form.findByPk(formId);
+        if (!form) {
+            if (req.xhr || req.headers.accept?.includes('json')) {
+                return res.status(404).json({ success: false, error: 'Formulier niet gevonden' });
+            }
+            return res.redirect('/admin/forms?error=Formulier niet gevonden');
+        }
+
+        await FormResponse.destroy({ where: { formId } });
+
+        if (req.xhr || req.headers.accept?.includes('json')) {
+            return res.json({ success: true, message: 'Alle antwoorden zijn verwijderd' });
+        }
+        res.redirect(`/admin/forms/${formId}/responses?success=Alle antwoorden zijn verwijderd`);
+    } catch (error) {
+        console.error('Error resetting form responses:', error);
+        if (req.xhr || req.headers.accept?.includes('json')) {
+            return res.status(500).json({ success: false, error: 'Server fout bij herstellen van formulier' });
+        }
+        res.redirect(`/admin/forms/${req.params.id}/responses?error=Kon antwoorden niet verwijderen`);
+    }
+};
+
 exports.exportResponses = async (req, res) => {
     try {
         const form = await Form.findByPk(req.params.id, {
