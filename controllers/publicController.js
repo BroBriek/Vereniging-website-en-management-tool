@@ -523,7 +523,6 @@ exports.postRegister = async (req, res) => {
     }
 };
 
-const nodemailer = require('nodemailer');
 const SettingsService = require('../services/SettingsService');
 
 exports.getContact = (req, res) => {
