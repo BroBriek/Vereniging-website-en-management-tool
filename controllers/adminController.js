@@ -161,10 +161,10 @@ exports.getLeaders = async (req, res) => {
 
 exports.postLeader = async (req, res) => {
     try {
-        const { name, group, years_active, study, extra_info, birth_date } = req.body;
+        const { name, group, years_active, study, extra_info, birth_date, phone_number } = req.body;
         const is_head_leader = req.body.is_head_leader === 'on';
         const image = req.file ? `/uploads/${req.file.filename}` : null;
-        await Leader.create({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader });
+        await Leader.create({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader, phone_number: phone_number || null });
         res.redirect('/admin/leaders');
     } catch (error) {
         console.error('Error creating leader:', error);
@@ -182,7 +182,7 @@ exports.getEditLeader = async (req, res) => {
 
 exports.updateLeader = async (req, res) => {
     try {
-        const { name, group, years_active, study, extra_info, birth_date } = req.body;
+        const { name, group, years_active, study, extra_info, birth_date, phone_number } = req.body;
         const is_head_leader = req.body.is_head_leader === 'on';
         const leader = await Leader.findByPk(req.params.id);
         if (leader) {
@@ -190,7 +190,7 @@ exports.updateLeader = async (req, res) => {
             if (req.file) {
                 image = `/uploads/${req.file.filename}`;
             }
-            await leader.update({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader });
+            await leader.update({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader, phone_number: phone_number || null });
         }
         res.redirect('/admin/leaders');
     } catch (error) {

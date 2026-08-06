@@ -168,6 +168,11 @@ class MigrationService {
                     await sequelize.query('ALTER TABLE Leaders ADD COLUMN is_head_leader BOOLEAN DEFAULT 0;');
                     console.log('Added Leaders.is_head_leader');
                 }
+
+                if (!await columnExists('Leaders', 'phone_number')) {
+                    await sequelize.query('ALTER TABLE Leaders ADD COLUMN phone_number TEXT;');
+                    console.log('Added Leaders.phone_number');
+                }
             } catch (leadersErr) {
                 console.error('Error migrating Leaders table schema:', leadersErr);
             }
