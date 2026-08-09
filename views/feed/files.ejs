@@ -119,9 +119,13 @@
   }
 </style>
 
+<% const isTetter = (typeof isTetterhoekje !== 'undefined' && isTetterhoekje) || (group && group.isTetterhoekje); %>
+<% const groupBaseUrl = isTetter ? '/tetterhoekje' : '/feed'; %>
+<% const backUrl = group && group.slug ? `${groupBaseUrl}/group/${group.slug}` : groupBaseUrl; %>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="font-playful"><i class="bi bi-folder2-open me-2 text-primary"></i>Bestanden</h1>
-  <a href="/feed/group/<%= group.slug %>" class="btn btn-light rounded-pill px-3 shadow-sm">
+  <a href="<%= backUrl %>" class="btn btn-light rounded-pill px-3 shadow-sm">
     <i class="bi bi-arrow-left me-1"></i>
     <span class="d-none d-sm-inline">Terug naar <%= group.name %></span>
     <span class="d-inline d-sm-none">Terug</span>
@@ -202,7 +206,7 @@
                     <button class="btn btn-sm btn-outline-primary rounded-start-pill px-3" onclick="openFilePreview('<%= f.path %>', '<%= f.originalName %>')">
                       <i class="bi bi-eye"></i>
                     </button>
-                    <a class="btn btn-sm btn-outline-secondary rounded-end-pill px-3" href="/feed/group/<%= group.slug %>#post-<%= f.postId %>" title="Ga naar post">
+                    <a class="btn btn-sm btn-outline-secondary rounded-end-pill px-3" href="<%= backUrl %>#post-<%= f.postId %>" title="Ga naar post">
                       <i class="bi bi-chat-left-text"></i>
                     </a>
                   </div>

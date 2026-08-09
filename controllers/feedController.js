@@ -817,7 +817,9 @@ exports.postComment = async (req, res) => {
             });
         }
         
-        res.redirect(post.groupId && group ? `/feed/group/${group.slug}#post-${postId}` : `/feed#post-${postId}`);
+        const isTetter = group && group.isTetterhoekje;
+        const targetPrefix = isTetter ? '/tetterhoekje' : '/feed';
+        res.redirect(post.groupId && group ? `${targetPrefix}/group/${group.slug}#post-${postId}` : `${targetPrefix}#post-${postId}`);
     } catch (error) {
         console.error('Comment Error:', error);
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
@@ -940,10 +942,12 @@ exports.postResponse = async (req, res) => {
             }
         }
 
+        const isTetter = group && group.isTetterhoekje;
+        const targetPrefix = isTetter ? '/tetterhoekje' : '/feed';
         if (post && post.groupId && group) {
-            return res.redirect('/feed/group/' + group.slug);
+            return res.redirect(`${targetPrefix}/group/${group.slug}`);
         }
-        res.redirect('/feed');
+        res.redirect(targetPrefix);
     } catch (error) {
         console.error('Response Error:', error);
         res.redirect('/feed?error=Fout bij verzenden');
@@ -1174,7 +1178,9 @@ exports.toggleLike = async (req, res) => {
         const post = await Post.findByPk(postId);
         let group = null;
         if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
-        res.redirect((post && post.groupId && group) ? ('/feed/group/' + group.slug + '#' + 'post-' + postId) : ('/feed#' + 'post-' + postId));
+        const isTetter = group && group.isTetterhoekje;
+        const targetPrefix = isTetter ? '/tetterhoekje' : '/feed';
+        res.redirect((post && post.groupId && group) ? (`${targetPrefix}/group/${group.slug}#post-${postId}`) : (`${targetPrefix}#post-${postId}`));
     } catch (error) {
         console.error('Toggle Like Error:', error);
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
@@ -1239,7 +1245,9 @@ exports.toggleCommentLike = async (req, res) => {
                  return res.json({ success: true, liked: !existingLike, count: likeCount, likers });
             }
 
-            res.redirect((post && post.groupId && group) ? ('/feed/group/' + group.slug + '#post-' + post.id) : ('/feed#post-' + post.id));
+            const isTetter = group && group.isTetterhoekje;
+            const targetPrefix = isTetter ? '/tetterhoekje' : '/feed';
+            res.redirect((post && post.groupId && group) ? (`${targetPrefix}/group/${group.slug}#post-${post.id}`) : (`${targetPrefix}#post-${post.id}`));
         } else {
              if (req.xhr || req.headers.accept.indexOf('json') > -1) {
                  return res.json({ success: false });
@@ -1258,15 +1266,21 @@ exports.toggleCommentLike = async (req, res) => {
 exports.deletePost = async (req, res) => {
     try {
         const post = await Post.findByPk(req.params.id);
-        if (!post) return res.redirect('/feed?error=Post niet gevonden');
+        let group = null;
+        if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
+        const isTetter = group && group.isTetterhoekje;
+        const targetPrefix = isTetter ? '/tetterhoekje' : '/feed';
+
+        if (!post) return res.redirect(`${targetPrefix}?error=Post niet gevonden`);
 
         // Check ownership or admin
         if (post.authorId !== req.user.id && req.user.role !== 'admin') {
-            return res.redirect('/feed?error=Geen rechten');
+            return res.redirect(`${targetPrefix}?error=Geen rechten`);
         }
 
         await post.destroy();
-        res.redirect('/feed?success=Post verwijderd');
+        const redirectUrl = group ? `${targetPrefix}/group/${group.slug}` : targetPrefix;
+        res.redirect(`${redirectUrl}?success=Post verwijderd`);
     } catch (error) {
         console.error('Delete Post Error:', error);
         res.redirect('/feed?error=Kon post niet verwijderen');
@@ -1355,8 +1369,10 @@ exports.updatePost = async (req, res) => {
         
         let group = null;
         if (post.groupId) group = await FeedGroup.findByPk(post.groupId);
-        if (group) return res.redirect('/feed/group/' + group.slug + '?success=Post bijgewerkt');
-        res.redirect('/feed?success=Post bijgewerkt');
+        const isTetter = group && group.isTetterhoekje;
+        const targetPrefix = isTetter ? '/tetterhoekje' : '/feed';
+        if (group) return res.redirect(`${targetPrefix}/group/${group.slug}?success=Post bijgewerkt`);
+        res.redirect(`${targetPrefix}?success=Post bijgewerkt`);
     } catch (error) {
         console.error('Update Post Error:', error);
         res.redirect('/feed?error=Kon post niet bijwerken');
@@ -1383,7 +1399,9 @@ exports.updateComment = async (req, res) => {
         let group = null;
         if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
         
-        res.redirect(post.groupId && group ? `/feed/group/${group.slug}?success=Reactie bijgewerkt#post-${post.id}` : `/feed?success=Reactie bijgewerkt#post-${post.id}`);
+        const isTetter = group && group.isTetterhoekje;
+        const targetPrefix = isTetter ? '/tetterhoekje' : '/feed';
+        res.redirect(post.groupId && group ? `${targetPrefix}/group/${group.slug}?success=Reactie bijgewerkt#post-${post.id}` : `${targetPrefix}?success=Reactie bijgewerkt#post-${post.id}`);
     } catch (error) {
         console.error('Update Comment Error:', error);
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
@@ -1414,7 +1432,9 @@ exports.deleteComment = async (req, res) => {
         let group = null;
         if (post && post.groupId) group = await FeedGroup.findByPk(post.groupId);
 
-        res.redirect(post && post.groupId && group ? `/feed/group/${group.slug}?success=Reactie verwijderd#post-${postId}` : `/feed?success=Reactie verwijderd#post-${postId}`);
+        const isTetter = group && group.isTetterhoekje;
+        const targetPrefix = isTetter ? '/tetterhoekje' : '/feed';
+        res.redirect(post && post.groupId && group ? `${targetPrefix}/group/${group.slug}?success=Reactie verwijderd#post-${postId}` : `${targetPrefix}?success=Reactie verwijderd#post-${postId}`);
     } catch (error) {
         console.error('Delete Comment Error:', error);
         if (req.xhr || req.headers.accept.indexOf('json') > -1) {
@@ -1426,8 +1446,15 @@ exports.deleteComment = async (req, res) => {
 
 exports.getGroupFiles = async (req, res) => {
     try {
-        const slug = req.params.slug;
-        const group = await FeedGroup.findOne({ where: { slug } });
+        let slug = req.params.slug;
+        let group = null;
+        if (slug) {
+            group = await FeedGroup.findOne({ where: { slug } });
+        }
+        if (!group) {
+            group = await FeedGroup.findOne({ where: { isTetterhoekje: true } });
+        }
+        if (!group) return res.status(404).send('Groep niet gevonden');
         const allowed = await ensureAccessToGroup(req.user, group);
         if (!allowed) return res.status(403).send('Geen toegang');
         const posts = await Post.findAll({ where: { groupId: group.id }, order: [['createdAt', 'DESC']] });
@@ -1437,7 +1464,13 @@ exports.getGroupFiles = async (req, res) => {
                 p.attachments.forEach(a => files.push({ path: a.path, originalName: a.originalName, postId: p.id, createdAt: p.createdAt }));
             }
         });
-        res.render('feed/files', { title: 'Bestanden', files, group, user: req.user });
+        res.render('feed/files', { 
+            title: 'Bestanden', 
+            files, 
+            group, 
+            user: req.user,
+            isTetterhoekje: group ? group.isTetterhoekje : false
+        });
     } catch (error) {
         console.error('Files Error:', error);
         res.status(500).send('Server Error');
