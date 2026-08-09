@@ -817,7 +817,6 @@ exports.postComment = async (req, res) => {
             });
         }
         
-        const isTetter = group && group.isTetterhoekje;
         const targetPrefix = isTetter ? '/tetterhoekje' : '/feed';
         res.redirect(post.groupId && group ? `${targetPrefix}/group/${group.slug}#post-${postId}` : `${targetPrefix}#post-${postId}`);
     } catch (error) {
@@ -1245,7 +1244,6 @@ exports.toggleCommentLike = async (req, res) => {
                  return res.json({ success: true, liked: !existingLike, count: likeCount, likers });
             }
 
-            const isTetter = group && group.isTetterhoekje;
             const targetPrefix = isTetter ? '/tetterhoekje' : '/feed';
             res.redirect((post && post.groupId && group) ? (`${targetPrefix}/group/${group.slug}#post-${post.id}`) : (`${targetPrefix}#post-${post.id}`));
         } else {
