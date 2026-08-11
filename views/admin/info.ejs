@@ -95,6 +95,13 @@
         border-radius: 15px;
         margin: 25px 0;
     }
+    .info-box {
+        background-color: #e8f4fd;
+        border-left: 5px solid #3498db;
+        padding: 25px;
+        border-radius: 15px;
+        margin: 25px 0;
+    }
     .feature-tag {
         font-size: 0.8rem;
         text-transform: uppercase;
@@ -198,17 +205,21 @@
         <aside class="wiki-sidebar d-none d-lg-block">
             <h5 class="fw-bold mb-3 px-3">Onderwerpen</h5>
             <nav>
-                <a href="#cms" class="wiki-nav-link"><i class="bi bi-pencil-square me-2"></i>Inhoud & Basis Beheer</a>
-                <a href="#custompages" class="wiki-nav-link"><i class="bi bi-file-earmark-plus me-2"></i>Eigen Pagina's (New)</a>
-                <a href="#inschrijvingen" class="wiki-nav-link"><i class="bi bi-people me-2"></i>Ledenbeheer (Inschrijvingen)</a>
-                <a href="#formulieren" class="wiki-nav-link"><i class="bi bi-card-checklist me-2"></i>Form Builder & Eetdag</a>
-                <a href="#boekhouding" class="wiki-nav-link"><i class="bi bi-piggy-bank me-2"></i>Boekhouding (Financiën)</a>
+                <a href="#cms" class="wiki-nav-link"><i class="bi bi-pencil-square me-2"></i>Inhoud &amp; Basis Beheer</a>
+                <a href="#custompages" class="wiki-nav-link"><i class="bi bi-file-earmark-plus me-2"></i>Eigen Pagina's</a>
+                <a href="#leiding" class="wiki-nav-link"><i class="bi bi-person-badge me-2"></i>Leidingspagina</a>
+                <a href="#uploads" class="wiki-nav-link"><i class="bi bi-cloud-upload me-2"></i>Bestandsbeheer</a>
+                <a href="#inschrijvingen" class="wiki-nav-link"><i class="bi bi-people me-2"></i>Ledenbeheer</a>
+                <a href="#formulieren" class="wiki-nav-link"><i class="bi bi-card-checklist me-2"></i>Formulieren &amp; Eetdag</a>
+                <a href="#boekhouding" class="wiki-nav-link"><i class="bi bi-piggy-bank me-2"></i>Boekhouding</a>
                 <a href="#games" class="wiki-nav-link"><i class="bi bi-controller me-2"></i>Spelendatabank</a>
-                <a href="#kalender" class="wiki-nav-link"><i class="bi bi-calendar3 me-2"></i>Kalender & Planning</a>
-                <a href="#feed" class="wiki-nav-link"><i class="bi bi-chat-dots me-2"></i>Leidingshoek & Events</a>
-                <a href="#email" class="wiki-nav-link"><i class="bi bi-envelope me-2"></i>Email Communicatie</a>
-                <a href="#gebruikers" class="wiki-nav-link"><i class="bi bi-shield-lock me-2"></i>Rollen & Toegang</a>
-                <a href="#gdpr" class="wiki-nav-link"><i class="bi bi-shield-check me-2"></i>GDPR & Privacy</a>
+                <a href="#kalender" class="wiki-nav-link"><i class="bi bi-calendar3 me-2"></i>Kalender &amp; Events</a>
+                <a href="#feed" class="wiki-nav-link"><i class="bi bi-chat-dots me-2"></i>Leidingshoek &amp; Feed</a>
+                <a href="#kampboekje" class="wiki-nav-link"><i class="bi bi-journal-richtext me-2"></i>Kampboekje &amp; Quotes</a>
+                <a href="#aankondigingen" class="wiki-nav-link"><i class="bi bi-megaphone me-2"></i>Aankondigingen</a>
+                <a href="#email" class="wiki-nav-link"><i class="bi bi-envelope me-2"></i>E-mail Communicatie</a>
+                <a href="#gebruikers" class="wiki-nav-link"><i class="bi bi-shield-lock me-2"></i>Rollen &amp; Toegang</a>
+                <a href="#gdpr" class="wiki-nav-link"><i class="bi bi-shield-check me-2"></i>GDPR &amp; Privacy</a>
                 <a href="#systeem" class="wiki-nav-link text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Systeembeheer</a>
             </nav>
         </aside>
@@ -219,197 +230,283 @@
             <!-- SECTION: CMS -->
             <section id="cms" class="wiki-section">
                 <span class="feature-tag bg-primary text-white">CMS</span>
-                <h2>Inhoud & Basis Beheer</h2>
-                <p>De website is ontworpen om zo flexibel mogelijk te zijn zonder dat je code hoeft te schrijven. Hier beheer je de kerninhoud van de site.</p>
+                <h2>Inhoud &amp; Basis Beheer</h2>
                 
                 <h3>Bestaande Pagina's Bewerken</h3>
-                <p>Pagina's zoals Home, Praktisch en Afdelingen hebben vaste locaties. Je kunt ze op twee manieren bewerken:</p>
-                <ul>
-                    <li><strong>Via het Dashboard:</strong> Ga naar <strong>Pagina Beheer</strong>. Hier zie je een lijst met alle bewerkbare pagina's. Klik op de "Bewerk" knop naast de pagina die je wilt aanpassen. Dit opent de editor waar je tekst kunt typen, afbeeldingen kunt uploaden en de layout kunt aanpassen.</li>
-                    <li><strong>Direct op de Site:</strong> Navigeer naar de pagina terwijl je bent ingelogd als Admin/Media. Bovenaan de pagina verschijnt een groene "Bewerk Pagina" knop. Klik hierop om direct in de context van de pagina te bewerken.</li>
-                </ul>
-                
+                <p>Vaste pagina's zoals de <strong>Homepagina</strong>, <strong>Praktisch</strong> en <strong>Afdelingen</strong> kun je bewerken via <strong>Pagina Beheer</strong> in het dashboard. Je ziet een lijst met alle bewerkbare secties. Klik op de <strong>"Bewerk"</strong> knop naast de sectie die je wilt aanpassen.</p>
                 <p><strong>In de Editor:</strong></p>
                 <ul>
-                    <li><strong>Tekstvelden:</strong> Gebruik de rich-text editor om tekst op te maken (vet, cursief, lijsten). Elk sectie wordt apart opgeslagen.</li>
-                    <li><strong>Afbeeldingen Uploaden:</strong> Klik op "Afbeelding Toevoegen" om foto's te uploaden. Het systeem comprimeert ze automatisch voor snelle laadtijden.</li>
-                    <li><strong>Opslaan:</strong> Klik op "Opslaan" om je wijzigingen te bewaren. Er is een auto-save functie die elke minuut je werk opslaat.</li>
-                    <li><strong>Annuleren:</strong> Klik op "Annuleren" om terug te gaan zonder op te slaan.</li>
-                    <li><strong>Voorvertoning:</strong> Klik op "Voorvertoning" om te zien hoe de pagina eruitziet voor bezoekers.</li>
+                    <li><strong>Tekstvelden:</strong> Gebruik de rich-text editor om tekst op te maken (vet, cursief, lijsten, links). Elke sectie wordt apart opgeslagen.</li>
+                    <li><strong>Afbeeldingen Uploaden:</strong> Klik op het afbeelding-icoon in de editor om foto's te uploaden vanuit je toestel. Het systeem verkleint de afbeelding automatisch voor snelle laadtijden.</li>
+                    <li><strong>Opslaan:</strong> Klik op <strong>"Opslaan"</strong> om je wijzigingen te bewaren. De pagina wordt meteen bijgewerkt voor bezoekers.</li>
+                    <li><strong>Annuleren:</strong> Klik op <strong>"Annuleren"</strong> om terug te gaan zonder op te slaan.</li>
                 </ul>
-                
                 <div class="how-it-works">
                     <h5>Hoe het werkt onder de motorkap:</h5>
-                    <p>Wanneer je een pagina bewerkt, slaat het systeem elk tekstvak op als een aparte <code>section_key</code> in de database. De afbeeldingen worden geüpload naar de <code>/public/uploads</code> map en het pad naar deze afbeelding wordt bewaard. Versies worden bijgehouden zodat je kunt terugkeren naar vorige versies indien nodig.</p>
+                    <p>Wanneer je een pagina bewerkt, slaat het systeem elk tekstvak op als een aparte <code>section_key</code> in de database. De afbeeldingen worden geüpload naar de <code>/public/uploads</code> map en het pad naar de afbeelding wordt in de database bewaard. De editor gebruikt de Quill.js library voor rich-text opmaak.</p>
                 </div>
 
                 <h3>Site-instellingen</h3>
-                <p>Onder <strong>Instellingen</strong> in het dashboard kun je de identiteit van de site aanpassen. Ga naar het instellingenmenu om deze opties te vinden:</p>
+                <p>Ga naar <strong>Instellingen</strong> in het dashboard om de algemene gedragingen van de website aan te passen.</p>
+
+                <h4>Functionaliteiten</h4>
                 <ul>
-                    <li><strong>Thema Kleuren:</strong> Kies nieuwe hoofdkleuren voor de site (primair rood en secundair blauw). Gebruik de kleurpicker of voer hex-codes in. Veranderingen zijn direct zichtbaar op de hele site.</li>
-                    <li><strong>Navigatie Verbergen:</strong> Vink pagina's aan die je wilt verbergen in het hoofdmenu. De pagina's blijven bestaan maar zijn niet zichtbaar voor bezoekers. Handig voor seizoensgebonden content.</li>
-                    <li><strong>Contactformulier:</strong> Schakel het algemene contactformulier uit als je veel spam ontvangt. Dit blokkeert nieuwe berichten maar behoudt bestaande.</li>
-                    
+                    <li><strong>Contactformulier uitschakelen:</strong> Als dit aangevinkt is, kunnen bezoekers geen berichten meer sturen via de contactpagina. Nuttig als je veel spam ontvangt. Bestaande berichten blijven bewaard.</li>
+                    <li><strong>Spelendatabank verbergen:</strong> Verbergt de spelendatabank van de navigatie en maakt hem ontoegankelijk voor niet-ingelogde gebruikers.</li>
+                    <li><strong>Menu naar Dashboard verplaatsen:</strong> Plaatst alle opties uit het dropdown-menu rechtstreeks in het leiding-dashboard. Handiger voor leiding die de site vaak gebruiken.</li>
+                    <li><strong>Ledenlijst publiek voor leiding:</strong> Als dit ingeschakeld is, kunnen alle leiding (ook zonder admin-rechten) de volledige ledenlijst bekijken. Standaard is de ledenlijst enkel zichtbaar voor admins.</li>
+                    <li><strong>Formulierenbeheer voor alle leiding:</strong> Geeft alle leiding toegang om formulieren aan te maken en te bekijken (niet beperkt tot media/admin).</li>
+                    <li><strong>Quote van de maand uitschakelen:</strong> Verbergt het "Quote van de maand" blok in de leidingsfeed.</li>
                 </ul>
-                
-                <p><strong>Opslaan van Instellingen:</strong> Klik op "Opslaan" om wijzigingen toe te passen. Sommige veranderingen (zoals kleuren) zijn onmiddellijk zichtbaar, andere vereisen een pagina-refresh.</p>
+
+                <h4>Thema Kleuren</h4>
+                <p>Pas de kleuren van de volledige website aan. Er zijn 6 kleuren te wijzigen:</p>
+                <ul>
+                    <li><strong>Primair (Chiro Rood):</strong> Hoofdkleur voor buttons, accenten en highlights.</li>
+                    <li><strong>Secundair (Chiro Blauw):</strong> Kleur voor titels, links en secundaire elementen.</li>
+                    <li><strong>Accent (Chiro Geel):</strong> Kleur voor badges, tags en speciale accenten.</li>
+                    <li><strong>Neutraal (Chiro Bruin):</strong> Kleur voor neutrale elementen en achtergronden.</li>
+                    <li><strong>Achtergrond Kleur:</strong> De algemene achtergrondkleur van de pagina's.</li>
+                    <li><strong>Tekst Kleur:</strong> De standaard kleur voor gewone tekst.</li>
+                </ul>
+                <p>Gebruik de kleurenkiezer of typ een hex-code (bijv. <code>#db3e41</code>) in het tekstveld. Klik op <strong>"Instellingen Opslaan"</strong> om toe te passen. Veranderingen zijn direct zichtbaar op de volledige website.</p>
+
+                <h4>Welkomstbericht voor Nieuwe Gebruikers</h4>
+                <p>Schrijf een bericht dat nieuwe gebruikers eenmalig te zien krijgen wanneer ze voor het eerste keer inloggen. Ideaal om nieuwe leiding welkom te heten en wegwijs te maken. HTML-opmaak is toegestaan in dit veld.</p>
+
+                <h4>Instellingen Resetten</h4>
+                <p>Met de knop <strong>"Herstel Standaardwaarden"</strong> reset je alle instellingen naar de originele waarden uit het configuratiebestand. <span class="text-danger fw-bold">Let op: dit kan niet ongedaan worden gemaakt!</span></p>
+
+                <div class="how-it-works">
+                    <h5>Kleur Systeem:</h5>
+                    <p>De gekozen kleuren worden opgeslagen in de database en bij elke paginaweergave als CSS-variabelen ingeladen via een <code>&lt;style&gt;</code>-tag in de header. Hierdoor zijn kleurwijzigingen meteen van kracht voor alle bezoekers zonder dat er een herstart nodig is.</p>
+                </div>
             </section>
 
             <!-- SECTION: CUSTOM PAGES -->
             <section id="custompages" class="wiki-section">
-                <span class="feature-tag bg-purple text-white" style="background-color: #6f42c1;">Nieuw</span>
+                <span class="feature-tag text-white" style="background-color: #6f42c1;">Pagina's</span>
                 <h2>Eigen Pagina's (Custom Pages)</h2>
-                <p>Maak onbeperkt extra pagina's aan voor speciale projecten. Ideaal voor kampen, evenementen of tijdelijke informatie.</p>
+                <p>Maak onbeperkt extra pagina's aan voor speciale projecten. Ideaal voor kampen, evenementen, speciale activiteiten of tijdelijke informatie die je op de website wil publiceren.</p>
                 
                 <h3>Nieuwe Pagina Aanmaken</h3>
-                <p>Ga naar <strong>Eigen Pagina's</strong> in het dashboard. Klik op "Nieuwe Pagina" om te beginnen.</p>
+                <p>Ga naar <strong>Pagina Beheer</strong> in het dashboard en klik op <strong>"Eigen Pagina's"</strong>. Klik vervolgens op <strong>"Nieuwe Pagina"</strong> om te beginnen.</p>
                 
                 <p><strong>Velden invullen:</strong></p>
                 <ul>
-                    <li><strong>Titel:</strong> De naam van de pagina, verschijnt in het menu en als heading.</li>
-                    <li><strong>Slug:</strong> Automatisch gegenereerd uit de titel, maar aanpasbaar. Dit wordt de URL (bijv. "kamp-2024").</li>
-                    <li><strong>Banner Afbeelding:</strong> Upload een landscape foto. Het systeem snijdt deze bij tot de juiste verhoudingen.</li>
-                    <li><strong>Inhoud:</strong> Gebruik blokken voor tekst, afbeeldingen, lijsten en links.</li>
-                    <li><strong>Zichtbaarheid:</strong> Kies of de pagina publiek is of alleen voor ingelogde gebruikers.</li>
+                    <li><strong>Titel:</strong> De naam van de pagina. Verschijnt als grote heading bovenaan en in het navigatiemenu.</li>
+                    <li><strong>Slug (URL):</strong> Automatisch gegenereerd uit de titel, maar handmatig aanpasbaar. Dit wordt het pad in de URL (bijv. een titel "Kamp 2024" geeft <code>/p/kamp-2024</code>). Gebruik alleen kleine letters, cijfers en koppeltekens. Geen spaties of speciale tekens.</li>
+                    <li><strong>Banner Afbeelding:</strong> Upload een liggende foto als grote banner bovenaan de pagina. Beste kwaliteit: minimaal 1200×600 pixels, liggende oriëntatie.</li>
+                    <li><strong>Inhoud:</strong> De hoofdinhoud van de pagina. Gebruik de blokken-editor voor tekst, afbeeldingen, lijsten en links.</li>
+                    <li><strong>Zichtbaarheid:</strong> Kies of de pagina <strong>Publiek</strong> is (zichtbaar voor iedereen) of <strong>Privé</strong> (alleen voor ingelogde gebruikers).</li>
+                    <li><strong>In Menu Tonen:</strong> Vink aan of de pagina in de hoofdnavigatie verschijnt. Zo kun je pagina's publiceren zonder ze direct in het menu te zetten.</li>
                 </ul>
                 
                 <p><strong>Knoppen:</strong></p>
                 <ul>
-                    <li><strong>Opslaan als Concept:</strong> Bewaar de pagina zonder te publiceren. Alleen admins kunnen deze zien.</li>
-                    <li><strong>Voorvertoning:</strong> Bekijk hoe de pagina eruitziet voor bezoekers.</li>
-                    <li><strong>Publiceren:</strong> Maak de pagina live. Deze verschijnt dan in het menu onder "Projecten".</li>
-                    <li><strong>Verwijderen:</strong> Wis de pagina permanent (met bevestiging).</li>
+                    <li><strong>Opslaan als Concept:</strong> Bewaar de pagina zonder te publiceren. Alleen admins en media-gebruikers kunnen concepten zien.</li>
+                    <li><strong>Publiceren:</strong> Maak de pagina live en zichtbaar voor de ingestelde doelgroep.</li>
+                    <li><strong>Verwijderen:</strong> Wis de pagina permanent (vraagt om bevestiging).</li>
                 </ul>
                 
                 <div class="how-it-works">
                     <h5>Functionele Werking:</h5>
-                    <p>Elke pagina krijgt een unieke <strong>Slug</strong> (de naam in de URL). Als je een pagina maakt met de titel "Kamp 2024", zal de URL <code>chiromeeuwen.be/p/kamp-2024</code> zijn. De editor gebruikt JSON om de verschillende blokken tekst en media op te slaan, wat zorgt voor een snelle laadtijd. Pagina's worden gecached voor betere performance.</p>
+                    <p>Elke pagina krijgt een unieke <strong>Slug</strong> (de naam in de URL). Als je een pagina maakt met de titel "Kamp 2024", zal de URL <code>chiromeeuwen.be/p/kamp-2024</code> zijn. De inhoud wordt opgeslagen als JSON-blokken in de database. De banner-afbeelding krijgt automatisch een donkere overlay zodat de witte titeltekst altijd leesbaar blijft.</p>
                 </div>
 
-                <h3>Banner Strategie</h3>
-                <p>Gebruik voor de banner altijd een liggende foto (landscape, minimaal 1200x600 pixels). De tekst wordt er automatisch overheen gezet met een donkere filter, zodat deze altijd leesbaar blijft ongeacht de kleur van de foto. Het systeem optimaliseert de afbeelding voor mobiele apparaten.</p>
-                
                 <h3>Pagina's Beheren</h3>
-                <p>In het overzicht zie je alle pagina's met status (Concept/Publiek). Klik op "Bewerk" om aan te passen, of "Verwijder" om weg te halen. Je kunt pagina's ook herschikken in het menu via drag & drop.</p>
+                <p>In het overzicht zie je alle custom pagina's met hun status (Concept/Publiek), de slug (URL) en of de pagina in het menu staat. Gebruik de knoppen om te <strong>bewerken</strong> of <strong>verwijderen</strong>.</p>
+
+                <div class="pro-tip">
+                    <i class="bi bi-lightbulb-fill me-2 text-warning"></i>
+                    <strong>Tip – Banner Strategie:</strong> Gebruik altijd een liggende foto (landscape) voor de banner. De tekst van de paginatitel wordt er automatisch overheen gezet met een donkere filter, zodat de titel altijd goed leesbaar blijft.
+                </div>
+            </section>
+
+            <!-- SECTION: LEIDING -->
+            <section id="leiding" class="wiki-section">
+                <span class="feature-tag bg-success text-white">Leiding</span>
+                <h2>Leidingspagina Beheren</h2>
+                <p>Beheer de publieke leidingspagina met profielen van alle leidingspersonen die op de website worden getoond. Dit staat volledig los van de inlogaccounts.</p>
+
+                <h3>Leiding Toevoegen</h3>
+                <p>Ga naar <strong>Leiding Beheren</strong> in het dashboard. Klik op <strong>"Leiding Toevoegen"</strong>.</p>
+                <p><strong>Velden:</strong></p>
+                <ul>
+                    <li><strong>Naam:</strong> De volledige naam van de leidingspersoon (bijv. "Briek Wozniak").</li>
+                    <li><strong>Groep:</strong> De afdeling waarvoor deze persoon leiding is (Ribbels, Speelclub, Rakwi's, Tito's, Keti's, Aspi's).</li>
+                    <li><strong>Aantal jaren leiding:</strong> Hoeveel jaar deze persoon al leiding geeft. Verschijnt op het profiel.</li>
+                    <li><strong>Studie/Werk:</strong> Wat de persoon studeert of werkt (bijv. "Student Rechten"). Optioneel.</li>
+                    <li><strong>Geboortedatum:</strong> Wordt gebruikt om de leeftijd te berekenen op de profielpagina. Optioneel.</li>
+                    <li><strong>Telefoonnummer:</strong> Optioneel contactnummer. <strong>Let op: dit wordt publiek getoond op de website!</strong></li>
+                    <li><strong>Hoofdleiding?</strong> Vink aan als deze persoon tot de hoofdleiding behoort. Hoofdleiding wordt apart gemarkeerd op de website.</li>
+                    <li><strong>Extra Info:</strong> Vrij tekstveld voor persoonlijke info zoals hobby's of favoriete kampgerecht.</li>
+                    <li><strong>Foto:</strong> Upload een profielfoto. Gebruik bij voorkeur een vierkante of portretfoto.</li>
+                </ul>
+
+                <h3>Leiding Bewerken of Verwijderen</h3>
+                <p>In het overzicht zie je alle leidingspersonen. Gebruik de knoppen aan de rechterkant om de gegevens te <strong>bewerken</strong> (potlood-icoon) of de leidingspersoon van de website te <strong>verwijderen</strong> (prullenbak-icoon, met bevestiging).</p>
+
+                <div class="pro-tip">
+                    <i class="bi bi-info-circle-fill me-2 text-primary"></i>
+                    <strong>Verschil met Gebruikers:</strong> Leidingspersonen op deze pagina zijn <em>publieke profielen</em> voor de website (wie is onze leiding?). Dit staat los van de <em>gebruikersaccounts</em> (wie kan inloggen?). Een leidingspersoon hoeft geen account te hebben, en vice versa.
+                </div>
+            </section>
+
+            <!-- SECTION: UPLOADS -->
+            <section id="uploads" class="wiki-section">
+                <span class="feature-tag bg-secondary text-white">Bestanden</span>
+                <h2>Bestandsbeheer (Uploads)</h2>
+                <p>Een centrale bibliotheek voor alle geüploade bestanden: afbeeldingen, documenten, PDF's. Van hieruit kun je bestanden hergebruiken op meerdere plaatsen zonder ze opnieuw te uploaden.</p>
+
+                <h3>Bestand Uploaden</h3>
+                <p>Ga naar <strong>Bestandsbeheer</strong> in het dashboard. Gebruik het uploadgebied bovenaan: selecteer het bestand via <strong>"Bestand kiezen"</strong> en klik op <strong>"Uploaden"</strong>. Het bestand verschijnt meteen in de galerij hieronder.</p>
+
+                <h3>Beschikbare Bestanden</h3>
+                <p>Alle geüploade bestanden worden als tegels getoond. Afbeeldingen worden als miniatuur weergegeven; andere bestanden (PDF, Word, etc.) krijgen een bestandsicoon.</p>
+                <p><strong>Per bestand zijn er drie acties beschikbaar:</strong></p>
+                <ul>
+                    <li><strong>Kopieer URL:</strong> Kopieert de directe link naar het bestand naar je klembord. Handig om in te plakken als link in een tekst of e-mail.</li>
+                    <li><strong>Kopieer HTML:</strong> Kopieert een kant-en-klare HTML <code>&lt;img&gt;</code>-tag voor afbeeldingen, die je rechtstreeks in de pagina-editor kunt plakken.</li>
+                    <li><strong>Verwijderen (prullenbak):</strong> Wist het bestand permanent van de server (met bevestiging). <strong>Let op:</strong> als het bestand ergens op de site gebruikt wordt, zal die plek een kapotte link tonen!</li>
+                </ul>
+
+                <div class="pro-tip">
+                    <i class="bi bi-folder2-open me-2 text-warning"></i>
+                    <strong>Geavanceerd Bestandsbeheer:</strong> Voor meer controle (mappen verkennen, bestanden bewerken, downloaden) gebruik je de <strong>Onderhoudstools → Bestandsbeheer</strong> tab. Daar zie je de volledige mappenstructuur van de server.
+                </div>
             </section>
 
             <!-- SECTION: INSCHRIJVINGEN -->
             <section id="inschrijvingen" class="wiki-section">
                 <span class="feature-tag bg-success text-white">Leden</span>
-                <h2>Ledenbeheer & Inschrijvingen</h2>
-                <p>Het beheren van honderden inschrijvingen per jaar. Hier zie je alle leden per jaargang met hun gegevens.</p>
+                <h2>Ledenbeheer &amp; Inschrijvingen</h2>
+                <p>Hier beheer je alle inschrijvingen per jaargang. Je ziet de volledige ledenlijst met persoonlijke gegevens, medische info en groepsindeling.</p>
 
                 <h3>Overzicht en Filters</h3>
-                <p>In het hoofdoverzicht zie je alle inschrijvingen. Gebruik filters om te zoeken:</p>
+                <p>Het hoofdoverzicht toont alle inschrijvingen van de actieve periode. Gebruik de filters bovenaan om te verfijnen:</p>
                 <ul>
-                    <li><strong>Periode:</strong> Kies de jaargang (bijv. 24-25). Standaard toont het de huidige periode.</li>
-                    <li><strong>Groep:</strong> Filter op afdeling (Kapoenen, Welpen, etc.).</li>
-                    <li><strong>Zoeken:</strong> Typ een naam om snel te vinden.</li>
-                    <li><strong>Status:</strong> Toon alleen actieve leden of inclusief uitgeschrevenen.</li>
+                    <li><strong>Periode:</strong> Kies de jaargang (bijv. 24-25 of 25-26). Standaard zie je de huidige actieve periode.</li>
+                    <li><strong>Groep:</strong> Filter op afdeling (Kapoenen, Welpen, Ribbels, etc.) om snel de juiste groep te vinden.</li>
+                    <li><strong>Zoeken:</strong> Typ een naam om snel een specifiek lid te vinden.</li>
+                    <li><strong>Status:</strong> Toon alleen actieve leden, of inclusief uitgeschrevenen.</li>
                 </ul>
                 
                 <p><strong>Knoppen in het Overzicht:</strong></p>
                 <ul>
-                    <li><strong>Nieuwe Periode:</strong> Start een nieuwe jaargang. Dit archiveert de huidige data en begint een nieuwe telling.</li>
-                    <li><strong>Export Excel:</strong> Download alle gegevens in spreadsheet formaat voor leidingslijsten.</li>
-                    <li><strong>Export PDF:</strong> Genereer kampfiches met essentiële info.</li>
-
+                    <li><strong>Nieuwe Periode:</strong> Start een nieuw werkjaar. Dit archiveert de huidige data en begint een nieuwe telling. <strong>Doe dit enkel aan het begin van een nieuw werkjaar!</strong></li>
+                    <li><strong>Export Excel:</strong> Download alle gefilterde gegevens als een Excel-bestand.</li>
+                    <li><strong>Export PDF:</strong> Genereer een PDF met de essentiële gegevens van de geselecteerde inschrijvingen.</li>
                 </ul>
 
                 <h3>Individuele Inschrijving Bewerken</h3>
-                <p>Klik op een lid om de details te zien. Hier kun je aanpassen:</p>
+                <p>Klik op een lid in de lijst om de detailpagina te openen. Hier kun je alles aanpassen:</p>
                 <ul>
-                    <li><strong>Persoonlijke Gegevens:</strong> Naam, adres, telefoon, email, geboortedatum.</li>
-                    <li><strong>Medische Info:</strong> Allergieën, medicijnen, noodgevallen contacten.</li>
-                    <li><strong>Groepsindeling:</strong> Verander afdeling of maak leider.</li>
-                    <li><strong>Foto Toestemming:</strong> Vink aan of ouders toestemming geven voor foto's.</li>
+                    <li><strong>Persoonlijke Gegevens:</strong> Naam, adres, telefoonnummer, e-mailadres, geboortedatum.</li>
+                    <li><strong>Medische Info:</strong> Allergieën, medicijnen, noodcontacten. Deze info is cruciaal voor kamp en activiteiten.</li>
+                    <li><strong>Groepsindeling:</strong> Verander de afdeling van een lid of markeer als leiding.</li>
+                    <li><strong>Foto Toestemming:</strong> Vink aan of de ouders toestemming geven voor het gebruik van foto's van hun kind op sociale media en de website.</li>
+                    <li><strong>Opmerkingen:</strong> Vrij tekstveld voor interne notities.</li>
                 </ul>
                 
-                <p><strong>Acties:</strong></p>
+                <p><strong>Acties op de detailpagina:</strong></p>
                 <ul>
-                    <li><strong>Opslaan:</strong> Bewaar wijzigingen.</li>
-                    <li><strong>Uitschrijven:</strong> Verwijder uit huidige periode (data blijft bewaard).</li>
-                    <li><strong>Verwijderen:</strong> Wis permanent (alleen voor admins, met bevestiging).</li>
-                    <li><strong>Email Versturen:</strong> Stuur een bericht naar dit lid of ouders.</li>
+                    <li><strong>Opslaan:</strong> Bewaar de wijzigingen.</li>
+                    <li><strong>Uitschrijven:</strong> Verwijder het lid uit de huidige periode. De gegevens blijven bewaard in de database en zijn zichtbaar via het filter "Vorig Jaar".</li>
+                    <li><strong>Permanent Verwijderen:</strong> Wis alle gegevens van dit lid definitief (enkel voor admins, met dubbele bevestiging).</li>
                 </ul>
 
                 <div class="how-it-works">
                     <h5>De Perioden-logica:</h5>
-                    <p>Wanneer je op <strong>"Nieuwe Periode"</strong> klikt, verhoogt het systeem de huidige jaargang (bv. van 23-24 naar 24-25). Alle nieuwe inschrijvingen vanaf dat moment krijgen de nieuwe tag. De oude data blijft in de database staan (model <code>Registration</code>), maar wordt standaard verborgen in het overzicht tenzij je het filter op "Vorig Jaar" zet. Dit zorgt voor historische data zonder rommel.</p>
+                    <p>Wanneer je op <strong>"Nieuwe Periode"</strong> klikt, verhoogt het systeem de huidige jaargang (bv. van 24-25 naar 25-26). Alle nieuwe inschrijvingen vanaf dat moment krijgen de nieuwe tag. De oude data blijft in de database staan (model <code>Registration</code>), maar wordt standaard verborgen in het overzicht tenzij je het filter op de oude periode zet.</p>
                 </div>
 
-                
                 <h3>Statistieken</h3>
-                <p>Bovenaan het overzicht zie je tellingen: totaal leden, per groep, aantal medische gevallen, etc. Dit helpt bij planning.</p>
+                <p>Bovenaan het overzicht zie je automatisch berekende statistieken: totaal aantal leden, opsplitsing per groep, hoeveel leden medische aandachtspunten hebben, etc. Deze tellingen worden real-time bijgewerkt als je filters aanpast.</p>
+
+                <div class="pro-tip">
+                    <i class="bi bi-shield-check me-2 text-success"></i>
+                    <strong>GDPR &amp; Foto Toestemming:</strong> Check altijd de "Foto Toestemming" kolom in de Excel export voordat je foto's van activiteiten online plaatst. Leden zonder toestemming mogen niet herkenbaar in beeld komen op publieke platforms.
+                </div>
             </section>
 
             <!-- SECTION: FORMULIEREN -->
             <section id="formulieren" class="wiki-section">
                 <span class="feature-tag bg-info text-white">Interactie</span>
-                <h2>Formulieren & Eetdag Export</h2>
-                <p>Flexibele formulieren voor elke situatie. Bouw aangepaste formulieren voor inschrijvingen, bestellingen, enquêtes, etc.</p>
+                <h2>Formulieren &amp; Eetdag Export</h2>
+                <p>Bouw aangepaste formulieren voor inschrijvingen, bestellingen, enquêtes of eender welke situatie. Met de ingebouwde Eetdag Printer genereer je direct de afdrukklare briefjes.</p>
 
-                <h3>Formulier Builder</h3>
-                <p>Ga naar <strong>Formulieren</strong> in het dashboard. Klik op "Nieuw Formulier" om te beginnen.</p>
+                <h3>Formulieren Overzicht</h3>
+                <p>Ga naar <strong>Formulieren</strong> in het dashboard. Je ziet een overzicht van alle formulieren met naam, beschrijving, beschikbaarheidsperiode, aantal inzendingen en status (gepubliceerd of concept). Knoppen: <strong>"Nieuw Formulier"</strong>, <strong>"Bekijk Antwoorden"</strong>, <strong>"Bewerken"</strong>, <strong>"Verwijderen"</strong>.</p>
+
+                <h3>Formulier Aanmaken</h3>
+                <p>Klik op <strong>"Nieuw Formulier"</strong>. Je komt in de Formulier Builder.</p>
                 
-                <p><strong>Formulier Instellingen:</strong></p>
+                <p><strong>Formulier Instellingen (bovenaan):</strong></p>
                 <ul>
-                    <li><strong>Titel:</strong> Naam van het formulier.</li>
-                    <li><strong>Beschrijving:</strong> Uitleg voor gebruikers.</li>
-                    <li><strong>Periode:</strong> Stel een start- en einddatum in voor beschikbaarheid.</li>
-                    <li><strong>Email Bevestiging:</strong> Schakel automatische emails in na inzending.</li>
-                    <li><strong>Publiek vs Privé:</strong> Maak het formulier zichtbaar voor iedereen of alleen ingelogde gebruikers.</li>
+                    <li><strong>Titel:</strong> De naam van het formulier, zichtbaar voor gebruikers.</li>
+                    <li><strong>Beschrijving:</strong> Uitleg voor gebruikers over het doel van het formulier.</li>
+                    <li><strong>Beschikbaar van / tot:</strong> Stel een startdatum en einddatum in. Buiten deze periode is het formulier gesloten.</li>
+                    <li><strong>E-mail Bevestiging:</strong> Schakel in om automatisch een bevestigingsmail te sturen na elke inzending. Koppel dit aan een "E-mail" veld in het formulier.</li>
+                    <li><strong>Publiek vs. Privé:</strong> Publiek = zichtbaar voor iedereen zonder account. Privé = enkel voor ingelogde gebruikers.</li>
+                    <li><strong>Maximaal aantal inzendingen:</strong> Stel een limiet in als je het aantal deelnemers wilt beperken.</li>
                 </ul>
                 
-                <p><strong>Veld Types Toevoegen:</strong></p>
+                <p><strong>Velden Toevoegen — beschikbare types:</strong></p>
                 <ul>
-                    <li><strong>Tekst:</strong> Enkele regel tekst (naam, email).</li>
-                    <li><strong>Tekstgebied:</strong> Meerregelige tekst (opmerkingen).</li>
-                    <li><strong>Keuzerondje:</strong> Enkele keuze uit opties.</li>
-                    <li><strong>Vakjes:</strong> Meerdere keuzes mogelijk.</li>
-                    <li><strong>Dropdown:</strong> Uitklapmenu met opties.</li>
-                    <li><strong>Datum:</strong> Datumkiezer.</li>
-                    <li><strong>Bestand Upload:</strong> Voor documenten of foto's.</li>
-                    <li><strong>Pricing:</strong> Producten met prijzen voor automatische berekening.</li>
-                </ul>
-                
-                <p><strong>Knoppen in de Builder:</strong></p>
-                <ul>
-                    <li><strong>Veld Toevoegen:</strong> Kies type en configureer.</li>
-                    <li><strong>Verplicht:</strong> Maak veld verplicht voor inzending.</li>
-                    <li><strong>Voorvertoning:</strong> Bekijk hoe het formulier eruitziet.</li>
-                    <li><strong>Opslaan:</strong> Bewaar als concept.</li>
-                    <li><strong>Publiceren:</strong> Maak live en deel de link.</li>
+                    <li><strong>Tekst (korte invoer):</strong> Enkele tekstregel, ideaal voor naam, e-mailadres of telefoonnummer.</li>
+                    <li><strong>Tekstvak (lange invoer):</strong> Meerregelige tekst voor opmerkingen of extra informatie.</li>
+                    <li><strong>Keuzerondje (radio):</strong> Één keuze uit een lijst van opties (bijv. "welke afdeling?").</li>
+                    <li><strong>Selectievakjes (checkboxes):</strong> Meerdere keuzes tegelijk mogelijk.</li>
+                    <li><strong>Dropdown:</strong> Uitklapmenu, ideaal voor lange lijsten van opties.</li>
+                    <li><strong>Datum:</strong> Datumkiezer voor geboortedatum, datum van activiteit, etc.</li>
+                    <li><strong>Bestandsupload:</strong> Laat gebruikers een document of foto opladen.</li>
+                    <li><strong>Pricing (bestelling):</strong> Voeg producten met prijzen toe. Het systeem berekent automatisch het totaalbedrag voor de gebruiker. Ideaal voor eetdagbestellingen.</li>
                 </ul>
 
+                <p><strong>Per veld kun je instellen:</strong></p>
+                <ul>
+                    <li><strong>Label:</strong> De vraag of naam van het veld.</li>
+                    <li><strong>Placeholder:</strong> Voorbeeldtekst als hulp voor de gebruiker.</li>
+                    <li><strong>Verplicht:</strong> Vink aan als dit veld verplicht ingevuld moet worden voor verzending.</li>
+                    <li><strong>Volgorde:</strong> Versleep velden om de volgorde aan te passen.</li>
+                    <li><strong>Verwijderen:</strong> Klik op het prullenbakicoon om een veld te verwijderen.</li>
+                </ul>
+
+                <p><strong>Formulier Opslaan en Publiceren:</strong></p>
+                <ul>
+                    <li><strong>Opslaan als Concept:</strong> Bewaar het formulier zonder het live te zetten. Enkel admins en media kunnen het zien en testen.</li>
+                    <li><strong>Publiceren:</strong> Maak het formulier live. Je krijgt een unieke deellink die je kunt verspreiden.</li>
+                </ul>
+                
                 <div class="how-it-works">
-                    <h5>Pricing Velden & Berekeningen:</h5>
-                    <p>Wanneer je een "Pricing" veld toevoegt, vraagt het systeem om items en prijzen. De website berekent <strong>real-time</strong> het totaalbedrag voor de gebruiker. In de database wordt de bestelling opgeslagen als een JSON-object (bv. <code>{"Spaghetti": 2, "Totaal": 24}</code>). Bij de export wordt dit automatisch weer uitgesplitst in kolommen.</p>
+                    <h5>Pricing Velden &amp; Berekeningen:</h5>
+                    <p>Wanneer je een "Pricing" veld toevoegt, voeg je items toe (naam + prijs). De website berekent <strong>real-time</strong> het totaalbedrag voor de gebruiker terwijl ze selecteren. In de database wordt de bestelling opgeslagen als een JSON-object (bv. <code>{"Spaghetti": 2, "Lasagne": 1, "Totaal": 28.50}</code>). Bij de export wordt dit automatisch uitgesplitst in aparte kolommen per product en een totaalkolom.</p>
                 </div>
 
                 <h3>De Eetdag Printer</h3>
-                <p>Deze tool bespaart uren werk. Het systeem kijkt naar de geselecteerde antwoorden en genereert een PDF met de briefjes . De layout is zo ontworpen dat je ze met een papiersnijder in één keer kunt snijden.</p>
-                
+                <p>Deze tool genereert automatisch de afdrukbare briefjes voor de eetdag op basis van de formulierantwoorden.</p>
                 <p><strong>Hoe te gebruiken:</strong></p>
                 <ul>
-                    <li>Selecteer het eetdag formulier.</li>
-                    <li>Kies welke velden op de briefjes moeten (naam, bestelling, totaal).</li>
-                    <li>Klik op "Genereer PDF".</li>
-                    <li>Print en snijd met papiersnijder.</li>
+                    <li>Ga naar het eetdag-formulier en klik op <strong>"Bekijk Antwoorden"</strong>.</li>
+                    <li>Klik op de knop <strong>"Eetdag Printer"</strong> of <strong>"Genereer PDF"</strong>.</li>
+                    <li>Kies welke velden op de briefjes moeten staan (naam, bestelling, totaalbedrag, etc.).</li>
+                    <li>Klik op <strong>"Genereer PDF"</strong>.</li>
+                    <li>Print het PDF-bestand. De layout is zo ontworpen dat je de briefjes met een papiersnijder in één beweging kunt snijden — meerdere briefjes per A4-vel.</li>
                 </ul>
                 
                 <div class="pro-tip">
                     <i class="bi bi-envelope-check me-2 text-success"></i>
-                    <strong>Email Bevestiging:</strong> Koppel een "Email" veld aan de automatische bevestiging. De ouders krijgen dan direct een mail met: "Bedankt, je hebt 3 spaghetti's besteld voor een totaal van €36".
+                    <strong>Automatische E-mail Bevestiging:</strong> Voeg een "Tekst"-veld toe met het label "E-mailadres" en activeer de e-mail bevestiging in de formulierinstellingen. Ouders en deelnemers krijgen dan direct een automatische bevestigingsmail met een samenvatting van hun inzending, inclusief bestelling en totaalbedrag.
                 </div>
 
                 <h3>Antwoorden Beheren</h3>
-                <p>In het formulier overzicht zie je alle inzendingen. Klik op "Bekijk Antwoorden" om de data te zien.</p>
+                <p>Klik op <strong>"Bekijk Antwoorden"</strong> bij een formulier om alle inzendingen te zien.</p>
                 <ul>
-                    <li><strong>Filteren:</strong> Zoek op datum, naam of specifieke antwoorden.</li>
-                    <li><strong>Exporteren:</strong> Download als Excel of CSV.</li>
-                    <li><strong>Bewerken:</strong> Pas antwoorden aan indien nodig.</li>
-                    <li><strong>Verwijderen:</strong> Wis ongewenste inzendingen.</li>
+                    <li><strong>Zoeken &amp; Filteren:</strong> Zoek op naam, datum of specifieke antwoorden.</li>
+                    <li><strong>Exporteren:</strong> Download alle antwoorden als Excel of CSV voor verdere verwerking.</li>
+                    <li><strong>Individuele Antwoorden Bekijken:</strong> Klik op een rij om de volledige inzending van één persoon te zien.</li>
+                    <li><strong>Antwoord Verwijderen:</strong> Wis een ongewenste inzending (met bevestiging).</li>
                 </ul>
             </section>
 
@@ -417,383 +514,479 @@
             <section id="boekhouding" class="wiki-section">
                 <span class="feature-tag bg-success text-white">Geld</span>
                 <h2>Boekhouding (Financieel Tool)</h2>
-                <p>Een hiërarchisch systeem voor je kasbeheer. Organiseer uitgaven en inkomsten in mappen en submappen.</p>
+                <p>Een hiërarchisch systeem voor het beheer van de kasboek. Organiseer inkomsten en uitgaven in mappen en submappen per activiteit of periode.</p>
 
-                <h3>Mappen Structuur</h3>
-                <p>De boekhouding werkt met mappen om alles georganiseerd te houden. Klik op "Nieuwe Map" om een categorie aan te maken.</p>
-                <ul>
-                    <li><strong>Map Naam:</strong> Geef een duidelijke naam (bijv. "Kamp 2024").</li>
-                    <li><strong>Beschrijving:</strong> Optioneel, voor extra info.</li>
-                    <li><strong>Submappen:</strong> Klik in een map op "Nieuwe Submap" voor subcategorieën.</li>
-                </ul>
+                <h3>Hoe het systeem werkt</h3>
+                <p>De boekhouding werkt als een mappenstructuur. Je begint bij het <strong>Archief</strong> (de hoofdmap) en maakt daarbinnen mappen aan voor grote categorieën (bijv. "Werkjaar 2024-2025"). Daarbinnen kun je submappen maken (bijv. "Kamp", "Eetdag", "Activiteiten") en in elke map voeg je de individuele transacties toe.</p>
+                <p>Het <strong>saldo bovenaan</strong> toont altijd het gecombineerde totaal van alles in de huidige map, inclusief alle submappen.</p>
 
-                <h3>Items Toevoegen</h3>
-                <p>Binnen een map kun je inkomsten en uitgaven toevoegen. Klik op "Nieuw Item".</p>
-                
+                <h3>Mappen Aanmaken</h3>
+                <p>Klik op <strong>"Nieuw Item Toevoegen"</strong> onderaan de tabel en <strong>laat het bedragveld leeg</strong>. Dit maakt een nieuwe map (submap) aan in de huidige map. Vul de omschrijving in als naam van de map (bijv. "Kamp Ardennen 2025").</p>
+
+                <h3>Transacties Toevoegen</h3>
+                <p>Navigeer naar de gewenste map en gebruik het formulier onderaan.</p>
                 <p><strong>Velden:</strong></p>
                 <ul>
-                    <li><strong>Beschrijving:</strong> Wat is het item (bijv. "Pizza's voor eetdag").</li>
-                    <li><strong>Bedrag:</strong> Positief voor inkomsten, negatief voor uitgaven.</li>
-                    <li><strong>Datum:</strong> Wanneer vond het plaats.</li>
-                    <li><strong>Betaald:</strong> Vink aan als het geld al binnen is/uitgegeven.</li>
-                    <li><strong>Categorie:</strong> Kies type (Voeding, Vervoer, Materiaal, etc.).</li>
-                </ul>
-                
-                <p><strong>Knoppen:</strong></p>
-                <ul>
-                    <li><strong>Opslaan:</strong> Voeg item toe aan de map.</li>
-                    <li><strong>Bewerken:</strong> Klik op een item om aan te passen.</li>
-                    <li><strong>Verwijderen:</strong> Wis item (met bevestiging).</li>
+                    <li><strong>Omschrijving:</strong> Wat is de transactie? (bijv. "Pizza's voor eetdag", "Inschrijvingsgeld kamp").</li>
+                    <li><strong>Bedrag:</strong> Vul een <strong>positief bedrag</strong> in voor inkomsten (bijv. <code>150</code>) en een <strong>negatief bedrag</strong> voor uitgaven (bijv. <code>-75.50</code>). Inkomsten worden groen getoond, uitgaven rood.</li>
+                    <li><strong>Datum:</strong> Wanneer vond de transactie plaats.</li>
+                    <li><strong>Betaald:</strong> Vink aan als het geld effectief ontvangen of betaald is. Onbetaalde items worden gemarkeerd met een "Open" badge en tellen <strong>niet mee</strong> in het officiële saldo.</li>
                 </ul>
 
                 <div class="how-it-works">
-                    <h5>Recursieve Berekeningen:</h5>
-                    <p>Het saldo van een map is <strong>recursief</strong>. Dit betekent dat als je in de map "Kamp" kijkt, het systeem automatisch de totalen van de submappen "Voeding", "Vervoer" en "Materiaal" optelt. Alleen items die gemarkeerd zijn als <strong>Betaald</strong> tellen mee. Zo zie je altijd wat er écht in de kas zit.</p>
+                    <h5>Recursieve Saldoberekening:</h5>
+                    <p>Het saldo bovenaan een map is <strong>recursief</strong>: het systeem telt automatisch alle transacties uit alle submappen op. Alleen items gemarkeerd als <strong>Betaald</strong> tellen mee voor het officiële saldo. Onbetaalde items zijn zichtbaar maar doorstreept.</p>
                 </div>
 
-                <h3>Onbetaalde items</h3>
-                <p>Als iemand nog moet betalen, laat je het vinkje uit. Het item wordt geel gemarkeerd. Je kunt op elk moment een Excel exporteren van <strong>alle onbetaalde items</strong> over de hele boekhouding heen om te zien wie je nog moet herinneren.</p>
-                
+                <h3>Transacties Bewerken</h3>
+                <p>Klik op het <strong>potloodpictogram</strong> naast een transactie of map om een bewerkingsvenster te openen. Pas de omschrijving, het bedrag, de datum of de betaaldstatus aan en klik op <strong>"Wijzigingen Opslaan"</strong>.</p>
+                <p>Om een transactie of map te <strong>verwijderen</strong>, open je het bewerkingsvenster en klik je op de verwijderknop. <strong>Let op: het verwijderen van een map verwijdert ook alle transacties en submappen daarbinnen!</strong></p>
+
+                <h3>Onbetaalde Items &amp; Opvolging</h3>
+                <p>Via het <strong>Export menu</strong> bovenaan de pagina kun je een overzicht downloaden van alle onbetaalde items over de volledige boekhouding heen.</p>
                 <p><strong>Export Opties:</strong></p>
                 <ul>
-                    <li><strong>Per Map:</strong> Export alleen de huidige map.</li>
-                    <li><strong>Alle Onbetaalde:</strong> Overzicht van alles wat nog openstaat.</li>
-                    <li><strong>Volledige Export:</strong> Alle items met historie.</li>
+                    <li><strong>Huidige map:</strong> Exporteer enkel de transacties van de map die je momenteel bekijkt.</li>
+                    <li><strong>Volledig archief:</strong> Exporteer alles, van alle mappen en submappen samen.</li>
+                    <li><strong>Niet betaalde items:</strong> Exporteer enkel de openstaande posten — ideaal om te zien wie je nog moet herinneren te betalen.</li>
                 </ul>
 
                 <div class="pro-tip">
                     <i class="bi bi-folder-fill text-warning me-2"></i>
-                    <strong>Structuur:</strong> Maak voor elk groot evenement (bv. "Eetdag 2024") een aparte map. Zo blijft je overzicht op de hoofdpagina clean.
+                    <strong>Aanbevolen Structuur:</strong> Maak voor elk groot evenement een aparte map op het hoogste niveau (bijv. "Werkjaar 2024-2025"). Maak daarbinnen submappen per activiteit (bijv. "Eetdag November", "Kamp Pasen"). Zo blijft het hoofdoverzicht overzichtelijk.
                 </div>
-
-                <h3>Saldo Overzicht</h3>
-                <p>Bovenaan elke map zie je het huidige saldo. Groen voor positief, rood voor negatief. Dit wordt real-time bijgewerkt.</p>
             </section>
 
             <!-- SECTION: GAMES -->
             <section id="games" class="wiki-section">
                 <span class="feature-tag bg-dark text-white">Games</span>
                 <h2>Spelendatabank</h2>
-                <p>Onze gedeelde kennisbron voor spelen. Hier vind je alle spelen met beschrijvingen, benodigdheden en bijlagen.</p>
+                <p>De gedeelde kennisbron voor spelen. Hier bewaar je alle spelen met beschrijvingen, benodigdheden, bijlagen en tags. Zo gaat geen enkel goed spel verloren.</p>
+
+                <h3>Zichtbaarheid</h3>
+                <p>Via <strong>Instellingen → Functionaliteiten</strong> kun je instellen of de spelendatabank zichtbaar is voor niet-ingelogde bezoekers of enkel voor ingelogde leiding.</p>
 
                 <h3>Spel Toevoegen</h3>
-                <p>Klik op "Nieuw Spel" om een spel aan de databank toe te voegen.</p>
-                
+                <p>Ga naar <strong>Spelendatabank</strong> en klik op <strong>"Nieuw Spel"</strong>.</p>
                 <p><strong>Velden invullen:</strong></p>
                 <ul>
-                    <li><strong>Titel:</strong> Naam van het spel.</li>
-                    <li><strong>Beschrijving:</strong> Hoe speel je het? Regels, duur, aantal spelers.</li>
-                    <li><strong>Benodigdheden:</strong> Wat heb je nodig? (bijv. "15 fluovestjes, 2 ballen").</li>
-                    <li><strong>Leeftijd:</strong> Voor welke leeftijdsgroep.</li>
-                    <li><strong>Duur:</strong> Hoe lang duurt het spel.</li>
-                    <li><strong>Aantal Spelers:</strong> Minimum en maximum aantal.</li>
-                    <li><strong>Tags:</strong> Categorieën zoals "Buiten", "Binnen", "IJss breken", etc.</li>
-                    <li><strong>Bijlagen:</strong> Upload spelschema's, foto's of documenten.</li>
+                    <li><strong>Titel:</strong> De naam van het spel.</li>
+                    <li><strong>Beschrijving:</strong> Volledige uitleg van het spel: doel, regels, verloop, variaties.</li>
+                    <li><strong>Benodigdheden:</strong> Wat heb je nodig? Geef specifieke aantallen (bijv. "15 fluovestjes, 2 voetballen, pionnen"). Verschijnt als handige checklist op de detailpagina.</li>
+                    <li><strong>Leeftijd:</strong> Voor welke leeftijdsgroep is het spel geschikt.</li>
+                    <li><strong>Duur:</strong> Hoe lang duurt het spel (inclusief uitleg en opruimen).</li>
+                    <li><strong>Aantal Spelers:</strong> Minimum en maximum aantal deelnemers.</li>
+                    <li><strong>Tags:</strong> Voeg zoekbare categorieën toe zoals "Buiten", "Binnen", "Kennismaking", "Strategiespel", etc.</li>
+                    <li><strong>Bijlagen:</strong> Upload spelschema's, tekeningen, of documenten bij het spel.</li>
                 </ul>
-                
-                <p><strong>Knoppen:</strong></p>
-                <ul>
-                    <li><strong>Opslaan als Concept:</strong> Bewaar zonder te publiceren.</li>
-                    <li><strong>Publiceren:</strong> Maak zichtbaar voor iedereen.</li>
-                    <li><strong>Voorvertoning:</strong> Bekijk hoe het eruitziet.</li>
-                </ul>
+                <p><strong>Knoppen:</strong> <strong>Opslaan als Concept</strong> (enkel voor jou zichtbaar) of <strong>Publiceren</strong> (zichtbaar voor alle ingelogde gebruikers).</p>
 
                 <h3>Spelen Beheren</h3>
-                <p>In het overzicht zie je alle spelen. Gebruik filters om te zoeken op leeftijd, duur of tags.</p>
-                <ul>
-                    <li><strong>Bewerken:</strong> Klik op een spel om aan te passen.</li>
-                    <li><strong>Verwijderen:</strong> Wis een spel (met bevestiging).</li>
-                    <li><strong>Dupliceren:</strong> Maak een kopie om aan te passen.</li>
-                    <li><strong>Exporteren:</strong> Download lijst als PDF voor kampvoorbereiding.</li>
-                </ul>
+                <p>Gebruik de zoekbalk en filters om te zoeken op naam, leeftijd, duur of tags. Voor elk spel kun je <strong>bewerken</strong> of <strong>verwijderen</strong> (met bevestiging).</p>
 
                 <div class="how-it-works">
-                    <h5>Zoeken & Tags:</h5>
-                    <p>De zoekfunctie doorzoekt niet alleen de titel, maar ook de beschrijving en alle tags. Omdat we SQLite gebruiken, is dit razendsnel. Bijlagen zoals spelschema's worden veilig opgeslagen en zijn alleen toegankelijk voor ingelogde gebruikers (tenzij anders ingesteld).</p>
+                    <h5>Zoeken &amp; Tags:</h5>
+                    <p>De zoekfunctie doorzoekt tegelijk de titel, beschrijving en alle tags. Bijlagen worden veilig opgeslagen op de server en zijn enkel toegankelijk voor ingelogde gebruikers.</p>
                 </div>
-
-                <h3>Extra Info velden</h3>
-                <p>Vul bij "Benodigdheden" altijd specifiek in wat je nodig hebt (bv. "15 fluovestjes, 2 ballen"). Dit verschijnt in een handige checklist-view op de detailpagina.</p>
-
-                <h3>Spel Detailpagina</h3>
-                <p>Klik op een spel om de volledige info te zien. Hier vind je:</p>
-                <ul>
-                    <li>Volledige beschrijving en regels.</li>
-                    <li>Checklist van benodigdheden.</li>
-                    <li>Bijlagen downloaden.</li>
-                    <li>Gerelateerde spelen suggesties.</li>
-                </ul>
             </section>
 
             <!-- SECTION: KALENDER -->
             <section id="kalender" class="wiki-section">
                 <span class="feature-tag bg-danger text-white">Events</span>
-                <h2>Kalender & Planning</h2>
-                <p>Publieke zichtbaarheid en interne planning. Beheer events voor leden en interne afspraken.</p>
+                <h2>Kalender &amp; Planning</h2>
+                <p>Beheer de publieke activiteitenkalender voor leden en de interne agenda voor de leiding. Leiding kan de agenda rechtstreeks in hun telefoonkalender koppelen.</p>
 
                 <h3>Event Toevoegen</h3>
-                <p>Klik op een datum in de kalender of op "Nieuw Event".</p>
-                
+                <p>Ga naar <strong>Kalender</strong> in het dashboard en klik op <strong>"Nieuw Event"</strong> of klik direct op een datum in de kalenderweergave.</p>
                 <p><strong>Velden:</strong></p>
                 <ul>
-                    <li><strong>Titel:</strong> Naam van het event.</li>
-                    <li><strong>Datum & Tijd:</strong> Start en eindtijd.</li>
-                    <li><strong>Beschrijving:</strong> Details over het event.</li>
-                    <li><strong>Locatie:</strong> Waar vindt het plaats.</li>
-                    <li><strong>Type:</strong> Publiek (voor leden) of Privé (alleen leiding).</li>
-                    <li><strong>Kleur:</strong> Kies een kleur voor categorisering.</li>
+                    <li><strong>Titel:</strong> De naam van het event (bijv. "Chiromiddag Rakwi's").</li>
+                    <li><strong>Startdatum &amp; -tijd:</strong> Wanneer begint het event.</li>
+                    <li><strong>Einddatum &amp; -tijd:</strong> Wanneer eindigt het event. Meerdaagse events (zoals kamp) worden automatisch correct weergegeven.</li>
+                    <li><strong>Beschrijving:</strong> Extra info over het event: locatie, wat meebrengen, kosten, etc.</li>
+                    <li><strong>Locatie:</strong> Waar vindt het event plaats.</li>
+                    <li><strong>Type:</strong> <strong>Publiek</strong> (zichtbaar op de publieke kalender voor alle bezoekers) of <strong>Privé</strong> (enkel zichtbaar voor ingelogde leiding — nooit op de publieke kalender).</li>
+                    <li><strong>Kleur:</strong> Kies een kleur om het event visueel te categoriseren.</li>
+                    <li><strong>Groep:</strong> Koppel het event aan een specifieke afdeling zodat leiding van die groep het ziet in hun agenda.</li>
                 </ul>
-                
-                <p><strong>Knoppen:</strong></p>
+
+                <h3>iCal Koppeling voor Leiding</h3>
+                <p>Elke leidingspersoon kan de Chiro-kalender rechtstreeks in hun telefoonkalender (Google Calendar, Apple Calendar, Outlook) importeren via een persoonlijke iCal-link.</p>
+                <p><strong>Hoe te koppelen:</strong></p>
                 <ul>
-                    <li><strong>Opslaan:</strong> Voeg event toe.</li>
-                    <li><strong>Herhalen:</strong> Stel herhalende events in (wekelijks, maandelijks).</li>
-                    <li><strong>Uitnodigingen:</strong> Verstuur notificaties naar groepen.</li>
+                    <li>Ga naar je profiel en zoek de <strong>"Mijn Kalenderlink"</strong> sectie.</li>
+                    <li>Kopieer de iCal-URL en voeg deze toe als abonnement in je kalenderapp.</li>
+                    <li>De kalender synchroniseert automatisch: nieuwe events op de website verschijnen vanzelf in je telefoonkalender.</li>
                 </ul>
 
                 <div class="how-it-works">
                     <h5>Calendar Token (iCal):</h5>
-                    <p>Wanneer een leiding de link koppelt aan hun telefoon, vraagt die telefoon elke paar uur aan de website: "Is er iets nieuws?". De website controleert de unieke <strong>Token</strong> van die leiding en stuurt de volledige lijst (inclusief de blauwe privé-events) terug in het universele iCal-formaat.</p>
+                    <p>Wanneer een leidingspersoon de link koppelt aan hun telefoon, vraagt die telefoon periodiek aan de website: "Is er iets nieuws?". De website controleert de unieke <strong>Token</strong> van die persoon en stuurt alle relevante events (inclusief privé-events van hun groepen) terug in het universele iCal-formaat. Elke token is uniek per gebruiker — als iemand zijn token deelt met een derde, kun je die token resetten via het gebruikersbeheer.</p>
                 </div>
 
-                <h3>Lid-vs-Leiding Events</h3>
-                <p>Events die alleen voor de leiding zijn (LKs, weekends) zet je op "Privé". Ze verschijnen <strong>nooit</strong> op de publieke kalender, ook niet als iemand de URL rechtstreeks probeert te raden.</p>
+                <h3>Kalender Beheren (Admin)</h3>
+                <p>In het beheer-overzicht kun je events <strong>filteren</strong> (publiek/privé), <strong>zoeken</strong> op titel of locatie, <strong>bewerken</strong> en <strong>verwijderen</strong>.</p>
 
-                <h3>Kalender Beheren</h3>
-                <p>In de kalender view kun je:</p>
-                <ul>
-                    <li><strong>Filteren:</strong> Toon alleen publieke of privé events.</li>
-                    <li><strong>Zoeken:</strong> Vind events op titel of beschrijving.</li>
-                    <li><strong>Exporteren:</strong> Download als iCal voor externe kalenders.</li>
-                    <li><strong>Deel Link:</strong> Geef leden toegang tot publieke kalender.</li>
-                </ul>
+                <div class="pro-tip">
+                    <i class="bi bi-lock-fill me-2 text-danger"></i>
+                    <strong>Privé Events:</strong> Zet interne leidingsactiviteiten (LK-weekends, vergaderingen, etc.) altijd op "Privé". Ze verschijnen dan nooit op de publieke kalender, ook niet als iemand de URL probeert te raden.
+                </div>
             </section>
 
             <!-- SECTION: FEED -->
             <section id="feed" class="wiki-section">
                 <span class="feature-tag bg-warning text-dark">Social</span>
-                <h2>Leidingshoek & Events</h2>
-                <p>De plek waar alles gebeurt. Interne communicatie en documenten delen.</p>
+                <h2>Leidingshoek &amp; Feed</h2>
+                <p>De interne communicatieruimte voor de leiding. Hier vinden vergaderverslagen, updates, polls en documenten hun thuis. Elke groep (leidingshoekje) heeft zijn eigen afgeschermde ruimte.</p>
+
+                <h3>Leidingshoekjes Begrijpen</h3>
+                <p>De leidingshoek bestaat uit meerdere <strong>"hoekjes"</strong> (groepen). Elk hoekje heeft zijn eigen feed met berichten, en enkel de leden van dat hoekje hebben toegang. Typische hoekjes zijn:</p>
+                <ul>
+                    <li><strong>Groep 2024-2025:</strong> De volledige leidingsploeg van een werkjaar.</li>
+                    <li><strong>Kamp Ardennen:</strong> Enkel de leiding die meegaat op kamp.</li>
+                    <li><strong>Eetdag Commissie:</strong> Enkel de leden die de eetdag organiseren.</li>
+                </ul>
 
                 <h3>Post Maken</h3>
-                <p>Klik op "Nieuwe Post" om een bericht te plaatsen.</p>
-                
-                <p><strong>Opties:</strong></p>
+                <p>In een leidingshoekje klik je op <strong>"Nieuwe Post"</strong>.</p>
+                <p><strong>Opties bij een post:</strong></p>
                 <ul>
-                    <li><strong>Tekst:</strong> Typ je bericht met opmaak.</li>
-                    <li><strong>Afbeeldingen:</strong> Upload foto's bij je post.</li>
-                    <li><strong>Bestanden:</strong> Deel documenten.</li>
-                    <li><strong>Polls:</strong> Maak een stemming.</li>
-                    <li><strong>Groepen:</strong> Stuur naar specifieke groepen.</li>
+                    <li><strong>Tekst:</strong> Schrijf je bericht met rich-text opmaak (vet, cursief, lijsten).</li>
+                    <li><strong>Afbeeldingen:</strong> Upload foto's die bij de post worden getoond als galerij.</li>
+                    <li><strong>Bestanden:</strong> Deel documenten (PDF, Word, etc.) die anderen kunnen downloaden.</li>
+                    <li><strong>Polls:</strong> Maak een stemming met meerdere keuzes. Ideaal voor "wie kan er op het weekend?" of "welk kampthema kiezen we?".</li>
                 </ul>
-                
-                <p><strong>Knoppen:</strong></p>
-                <ul>
-                    <li><strong>Posten:</strong> Publiceer direct.</li>
-                    <li><strong>Concept:</strong> Bewaar als draft.</li>
-                    <li><strong>Voorvertoning:</strong> Bekijk voordat je post.</li>
-                </ul>
+                <p><strong>Knoppen:</strong> <strong>Plaatsen</strong> (direct publiceren) of <strong>Concept</strong> (bewaar als kladversie).</p>
 
                 <h3>Reageren en Interactie</h3>
-                <p>Onder elke post kun je:</p>
                 <ul>
-                    <li><strong>Reageren:</strong> Schrijf een reactie.</li>
-                    <li><strong>Liken:</strong> Geef een duimpje omhoog.</li>
-                    <li><strong>Mentionen:</strong> @gebruikersnaam om iemand te taggen.</li>
-                    <li><strong>Delen:</strong> Deel de post met anderen.</li>
+                    <li><strong>Reageren:</strong> Schrijf een reactie onder de post.</li>
+                    <li><strong>Liken:</strong> Geef een reactie met een emoji of duimpje omhoog.</li>
+                    <li><strong>Vermelden (@):</strong> Typ <code>@gebruikersnaam</code> in een post of reactie om iemand te taggen. Die persoon krijgt een notificatie.</li>
+                    <li><strong>Stemmen (polls):</strong> Klik op een keuze om je stem uit te brengen.</li>
                 </ul>
 
-                <h3>Mentions (@)</h3>
-                <p>Als je iemand mentio-t, krijgt die persoon direct een notificatie. Dit werkt via de <code>NotificationService</code> die controleert of de gebruiker de browser-notificaties heeft aanstaan of de App gebruikt.</p>
+                <h3>Feed Beheren als Admin</h3>
+                <p>Als admin kun je in elk hoekje posts <strong>verwijderen</strong>, <strong>pinnen</strong> (vastgezet bovenaan tonen) en reacties <strong>modereren</strong>.</p>
+
+                <h3>Leidingshoekjes Beheren</h3>
+                <p>Ga naar <strong>Admin Dashboard → Leidingshoekjes Beheren</strong> om groepen aan te maken, te bewerken of te verwijderen.</p>
+                <p><strong>Nieuw Hoekje Aanmaken:</strong></p>
+                <ul>
+                    <li><strong>Naam:</strong> De naam van het hoekje (bijv. "Groep 2025").</li>
+                    <li><strong>Jaar:</strong> Optioneel jaarnummer voor overzicht.</li>
+                    <li><strong>Omschrijving:</strong> Wat is het doel van dit hoekje.</li>
+                    <li><strong>Toegang Beheren:</strong> Selecteer welke gebruikers toegang hebben. Gebruik de zoekbalk om snel een gebruiker te vinden. Klik op een <strong>groepsknop</strong> (bijv. "+ Groep 2024") om alle leden van een bestaande groep in één klik toe te voegen.</li>
+                </ul>
+
+                <div class="how-it-works">
+                    <h5>Notificaties via @vermelding:</h5>
+                    <p>Wanneer iemand jou vermeldt met <code>@jouwgebruikersnaam</code>, controleert de <code>NotificationService</code> of je push-notificaties hebt ingeschakeld in je browser. Als dat zo is, verschijnt er een melding op je scherm, ook als je de website niet actief open hebt.</p>
+                </div>
+            </section>
+
+            <!-- SECTION: KAMPBOEKJE & QUOTES -->
+            <section id="kampboekje" class="wiki-section">
+                <span class="feature-tag text-white" style="background-color: #e91e63;">Herinneringen</span>
+                <h2>Kampboekje &amp; Quotes</h2>
+                <p>Twee extra functies om mooie momenten en grappige uitspraken voor de Chiro te bewaren.</p>
+
+                <h3>Kampboekje</h3>
+                <p>Het kampboekje is een digitale herinneringsplek voor verhalen en foto's van kampen en activiteiten. Je vindt het via het navigatiemenu (indien ingeschakeld). Elke leiding kan bijdragen schrijven.</p>
+                <p><strong>Een bijdrage toevoegen:</strong></p>
+                <ul>
+                    <li><strong>Titel:</strong> De naam van de bijdrage of het verhaal.</li>
+                    <li><strong>Inhoud:</strong> Het verhaal of de beschrijving, met rich-text opmaak.</li>
+                    <li><strong>Categorie:</strong> Bijv. "Verhaal", "Foto", "Activiteit".</li>
+                    <li><strong>Kamp/Evenement Tag:</strong> Koppel de bijdrage aan een specifiek kamp of evenement.</li>
+                    <li><strong>Afbeeldingen:</strong> Upload foto's die bij de bijdrage horen en als galerij worden getoond.</li>
+                    <li><strong>Pinnen:</strong> Admins kunnen belangrijke bijdragen bovenaan vastpinnen.</li>
+                </ul>
+
+                <h3>Quoteboekje</h3>
+                <p>Een systeem om grappige uitspraken en zinnetjes te bewaren. Op de website wordt automatisch een "Quote van de maand" uitgelicht.</p>
+                <p><strong>Quote Toevoegen:</strong></p>
+                <ul>
+                    <li><strong>Quote:</strong> De grappige uitspraak of zin.</li>
+                    <li><strong>Auteur:</strong> Wie heeft het gezegd.</li>
+                </ul>
+                <p>Via <strong>Instellingen → Functionaliteiten</strong> kun je de "Quote van de maand" uitschakelen als je hem niet wilt tonen.</p>
 
                 <div class="pro-tip">
-                    <i class="bi bi-file-earmark-pdf me-2 text-danger"></i>
-                    <strong>Documenten:</strong> Gebruik de "Bestanden" sectie in de leidingshoek voor statische documenten (bv. het kampreglement). Voor dynamische discussies gebruik je de Feed.
+                    <i class="bi bi-journal-heart me-2 text-danger"></i>
+                    <strong>Tip:</strong> Gebruik het kampboekje actief tijdens en na elk kamp. Zo bouw je een rijke digitale tijdcapsule voor de Chiro die jaar na jaar aangroeit.
                 </div>
+            </section>
 
-                <h3>Feed Beheren</h3>
-                <p>Als admin kun je:</p>
+            <!-- SECTION: AANKONDIGINGEN -->
+            <section id="aankondigingen" class="wiki-section">
+                <span class="feature-tag bg-info text-white">Mededeling</span>
+                <h2>Aankondigingen</h2>
+                <p>Stuur gerichte pop-up mededelingen naar specifieke groepen gebruikers. De aankondiging verschijnt als een pop-upvenster wanneer een gebruiker de leidingshoek bezoekt. Optioneel kun je een enquête (survey) toevoegen.</p>
+
+                <h3>Aankondiging Aanmaken</h3>
+                <p>Ga naar <strong>Onderhoudstools → Aankondigingen</strong>. Je ziet een formulier links met een live preview rechts.</p>
+                <p><strong>Velden:</strong></p>
                 <ul>
-                    <li><strong>Posts Verwijderen:</strong> Wis ongepaste content.</li>
-                    <li><strong>Pinnen:</strong> Maak belangrijke posts zichtbaar bovenaan.</li>
-                    <li><strong>Modereren:</strong> Beheer reacties.</li>
+                    <li><strong>Titel:</strong> De kop van de aankondiging die vet bovenaan de pop-up verschijnt.</li>
+                    <li><strong>Doelgroep(en):</strong> Kies wie de aankondiging te zien krijgt via de gekleurde chips:
+                        <ul>
+                            <li><strong>🌍 Iedereen:</strong> Alle ingelogde gebruikers.</li>
+                            <li><strong>🛡 Admins:</strong> Enkel gebruikers met de admin-rol.</li>
+                            <li><strong>👤 Leiding:</strong> Alle leiding (Member-rol).</li>
+                            <li><strong>🍳 Kookmoekes:</strong> Gebruikers met de kookmoeke-rol.</li>
+                            <li><strong>📷 Media:</strong> Gebruikers met de media-rol.</li>
+                        </ul>
+                        Je kunt meerdere doelgroepen tegelijk aanvinken.
+                    </li>
+                    <li><strong>Stuur notificatie:</strong> Als dit aangevinkt is, krijgen de doelgebruikers ook een push-notificatie (indien ingesteld op hun toestel).</li>
+                    <li><strong>Inhoud:</strong> De tekst van de aankondiging. Ondersteunt rich-text opmaak.</li>
+                    <li><strong>Survey toevoegen:</strong> Zet de schakelaar aan om vragen toe te voegen aan de aankondiging. Gebruikers kunnen direct in de pop-up antwoorden.</li>
                 </ul>
 
-                <h3>Leidingshoekjes Beheren & Toegang</h3>
-                <p>Onder <strong>Admin Dashboard -> Beheer Leidingshoekjes</strong> kun je de groepen (feeds) beheren. Voor elke groep (bv. een werkjaar of commissie) kun je bepalen welke leiding toegang heeft:</p>
-                <ul>
-                    <li><strong>Gebruikers Zoeken & Selecteren:</strong> Gebruik de zoekbalk in de toevoeg/bewerk modal om individuele gebruikers op te zoeken en aan te vinken.</li>
-                    <li><strong>Importeren uit Vorige Groepen:</strong> Klik op de groeps-snelkoppelingen (bv. <code>+ Groep 2024</code>) om in één keer alle leden van die eerdere groep te selecteren.</li>
-                </ul>
+                <h4>Survey Vragen Toevoegen</h4>
+                <p>Als je "Survey toevoegen" inschakelt, klik je op <strong>"Vraag toevoegen"</strong>. Kies het type: <strong>Tekst</strong> (vrij antwoord), <strong>Ja/Nee</strong>, of <strong>Meerkeuzevraag</strong>. Bij meerkeuzevraag voeg je de opties toe. Je kunt meerdere vragen toevoegen per aankondiging.</p>
+
+                <h3>Live Pop-up Preview</h3>
+                <p>Aan de rechterkant zie je terwijl je typt hoe de pop-up er effectief zal uitzien voor de gebruiker. Zo kun je controleren of alles correct overkomt voordat je publiceert.</p>
+
+                <h3>Gepubliceerde Aankondigingen</h3>
+                <p>Onderaan de pagina zie je een overzicht van alle reeds gepubliceerde aankondigingen met datum, titel, doelgroep(en) en een knop om te <strong>verwijderen</strong>. Gebruikers kunnen een aankondiging wegklikken; het systeem houdt bij wie de aankondiging al gezien heeft.</p>
+
+                <div class="warning-box">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Let op:</strong> Eenmaal gepubliceerd wordt de aankondiging meteen getoond aan de doelgroep bij hun volgende bezoek. Er is geen "concept"-modus voor aankondigingen. Gebruik de live preview om alles te controleren voordat je publiceert.
+                </div>
             </section>
 
             <!-- SECTION: EMAIL -->
             <section id="email" class="wiki-section">
                 <span class="feature-tag bg-info text-white">Mail</span>
-                <h2>Email Communicatie</h2>
-                <p>Mass-mailing zonder spam-filters te triggeren. Stuur professionele emails naar leden of ouders.</p>
+                <h2>E-mail Communicatie</h2>
+                <p>Stuur professionele e-mails naar leden, ouders of de volledige leiding vanuit de officiële Chiro-stijl. Het systeem zorgt ervoor dat de e-mails correct afgeleverd worden en niet in de spammap belanden.</p>
 
-                <h3>Email Opstellen</h3>
-                <p>Klik op "Nieuwe Email" om te beginnen.</p>
-                
+                <h3>E-mail Opstellen</h3>
+                <p>Ga naar <strong>E-mail Tool</strong> in het dashboard. Klik op <strong>"Nieuwe E-mail"</strong>.</p>
                 <p><strong>Velden:</strong></p>
                 <ul>
-                    <li><strong>Onderwerp:</strong> Duidelijke titel.</li>
-                    <li><strong>Ontvangers:</strong> Kies groepen (alle ouders, specifieke afdeling, individuen).</li>
-                    <li><strong>Inhoud:</strong> Rich-text editor voor opmaak.</li>
-                    <li><strong>Bijlagen:</strong> Voeg documenten toe.</li>
-                    <li><strong>Template:</strong> Gebruik sjablonen voor standaard mails.</li>
+                    <li><strong>Onderwerp:</strong> De onderwerpregel van de e-mail.</li>
+                    <li><strong>Ontvangers:</strong> Kies de doelgroep:
+                        <ul>
+                            <li><strong>Alle ouders:</strong> Alle e-mailadressen uit de ledenlijst van de huidige periode.</li>
+                            <li><strong>Specifieke afdeling:</strong> Bijv. enkel ouders van Speelclub of Rakwi's.</li>
+                            <li><strong>Volledige leiding:</strong> Alle leidingsaccounts.</li>
+                            <li><strong>Individueel:</strong> Zoek op naam of e-mailadres om één specifiek persoon te selecteren.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Inhoud:</strong> Schrijf de e-mail via de rich-text editor. Je kunt tekst opmaken met vet, cursief, lijsten en links.</li>
+                    <li><strong>Bijlagen:</strong> Voeg documenten toe die als bijlage worden meegestuurd.</li>
                 </ul>
-                
                 <p><strong>Knoppen:</strong></p>
                 <ul>
-                    <li><strong>Verzenden:</strong> Stuur direct.</li>
-                    <li><strong>Voorvertoning:</strong> Bekijk hoe de email eruitziet.</li>
-                    <li><strong>Concept Opslaan:</strong> Bewaar voor later.</li>
-                    <li><strong>Test Email:</strong> Stuur naar jezelf om te controleren.</li>
+                    <li><strong>Verzenden:</strong> Stuur de e-mail direct naar alle geselecteerde ontvangers.</li>
+                    <li><strong>Testmail Sturen:</strong> Stuur een voorbeeldversie naar jezelf om de opmaak te controleren voordat je naar iedereen stuurt.</li>
+                    <li><strong>Concept Opslaan:</strong> Bewaar de e-mail als kladversie om later af te werken.</li>
                 </ul>
 
                 <div class="how-it-works">
-                    <h5>BCC & Delivery:</h5>
-                    <p>Wanneer je een mail stuurt naar 200 ouders, zet het systeem <strong>ons eigen adres</strong> in de "Aan"-regel en alle 200 ouders in de <strong>BCC</strong>. Dit voorkomt dat e-mailprogramma's de mail als spam markeren en beschermt de privacy van de ouders.</p>
+                    <h5>BCC &amp; Privacy:</h5>
+                    <p>Wanneer je een e-mail stuurt naar meerdere ontvangers, zet het systeem <strong>ons eigen Chiro-adres</strong> in de "Aan"-regel en alle ontvangers in de <strong>BCC</strong> (blinde kopie). Dit voorkomt dat ontvangers elkaars e-mailadressen zien, beschermt de privacy van de leden, en zorgt ervoor dat e-mailprogramma's de mail niet als spam markeren.</p>
                 </div>
 
                 <h3>Individuele Mails</h3>
-                <p>Je kunt de tool ook gebruiken om een enkele ouder een mail te sturen in de officiële Chiro-stijl. Dit ziet er veel professioneler uit dan een gewone mail vanuit je eigen Gmail.</p>
+                <p>Je kunt de e-mailtool ook gebruiken om een enkel bericht te sturen aan één ouder of leidingspersoon in de officiële Chiro-stijl. Dit ziet er veel professioneler uit dan een gewone e-mail vanuit je persoonlijk adres.</p>
 
-                <h3>Email Geschiedenis</h3>
-                <p>In het overzicht zie je alle verzonden emails met status (verzonden, bounces, opens).</p>
-                <ul>
-                    <li><strong>Filteren:</strong> Zoek op datum, onderwerp of ontvanger.</li>
-                    <li><strong>Herzenden:</strong> Stuur dezelfde email opnieuw.</li>
-                    <li><strong>Statistieken:</strong> Bekijk open- en klikrates.</li>
-                </ul>
+                <div class="pro-tip">
+                    <i class="bi bi-envelope-check me-2 text-success"></i>
+                    <strong>Testmail altijd eerst!</strong> Stuur voor elke grote mailing altijd eerst een testmail naar jezelf. Zo controleer je of de opmaak, links en bijlagen correct zijn. Eenmaal verzonden kan een e-mail niet worden teruggehaald.
+                </div>
             </section>
 
             <!-- SECTION: GEBRUIKERS -->
             <section id="gebruikers" class="wiki-section">
                 <span class="feature-tag bg-secondary text-white">Rollen</span>
-                <h2>Rollen & Toegang</h2>
-                <p>Veiligheid boven alles. Beheer gebruikersaccounts en permissies.</p>
+                <h2>Rollen &amp; Toegang</h2>
+                <p>Beheer gebruikersaccounts en bepaal wie toegang heeft tot welke functies. Het systeem werkt met vier rollen met verschillende rechten.</p>
 
-                <h3>Gebruikers Overzicht</h3>
-                <p>In het gebruikersbeheer zie je alle accounts met hun rollen en groepen.</p>
-                
-                <p><strong>Filters:</strong></p>
-                <ul>
-                    <li><strong>Rol:</strong> Admin, Media, Member.</li>
-                    <li><strong>Groep:</strong> Afdeling of jaargang.</li>
-                    <li><strong>Status:</strong> Actief of inactief.</li>
-                    <li><strong>Zoeken:</strong> Op naam of email.</li>
-                </ul>
-
-                <h3>Gebruiker Aanmaken</h3>
-                <p>Klik op "Nieuwe Gebruiker" voor nieuwe accounts.</p>
-                
-                <p><strong>Velden:</strong></p>
-                <ul>
-                    <li><strong>Naam:</strong> Volledige naam.</li>
-                    <li><strong>Email:</strong> Uniek emailadres.</li>
-                    <li><strong>Rol:</strong> Kies Admin, Media of Member.</li>
-                    <li><strong>Groepen:</strong> Selecteer toegangsrechten.</li>
-                    <li><strong>Wachtwoord:</strong> Tijdelijk wachtwoord (gebruiker moet wijzigen).</li>
-                </ul>
-                
-                <p><strong>Knoppen:</strong></p>
-                <ul>
-                    <li><strong>Aanmaken:</strong> Maak account en verstuur welkomstmail.</li>
-                    <li><strong>Bulk Import:</strong> Upload CSV met meerdere gebruikers.</li>
-                </ul>
+                <h3>De Vier Rollen</h3>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <i class="bi bi-shield-fill-check"></i>
+                        <strong>Admin</strong>
+                        <p class="small mt-2">Volledige toegang tot alles: financiën, gebruikersbeheer, systeemtools, backups en alle admin-functies. Enkel voor hoofdleiding en technisch verantwoordelijken.</p>
+                    </div>
+                    <div class="info-card">
+                        <i class="bi bi-camera-fill"></i>
+                        <strong>Media</strong>
+                        <p class="small mt-2">Kan pagina's bewerken, custom pages aanmaken, formulieren beheren en bestanden uploaden. Geen toegang tot financiën, gebruikersbeheer of systeemtools.</p>
+                    </div>
+                    <div class="info-card">
+                        <i class="bi bi-egg-fried"></i>
+                        <strong>Kookmoeke</strong>
+                        <p class="small mt-2">Beperkte toegang enkel voor kookmoekes. Kunnen de hen toegewezen leidingshoekjes zien. Geen toegang tot admin-functies.</p>
+                    </div>
+                    <div class="info-card">
+                        <i class="bi bi-person-fill"></i>
+                        <strong>Member (Leiding)</strong>
+                        <p class="small mt-2">Standaardrol voor alle leiding. Toegang tot leidingshoek, kalender, feed en eigen profiel. Afhankelijk van instellingen ook toegang tot ledenlijst en formulieren.</p>
+                    </div>
+                </div>
 
                 <div class="how-it-works">
                     <h5>Rechten-hiërarchie:</h5>
                     <ul>
-                        <li><strong>Admins</strong> passeren alle checks (<code>req.user.role === 'admin'</code>).</li>
-                        <li><strong>Media</strong> mag alleen routes bezoeken die gemarkeerd zijn als content-safe (geen financiën, geen database resets).</li>
-                        <li><strong>Members</strong> kunnen alleen hun eigen profiel en de feeds bezoeken.</li>
+                        <li><strong>Admins</strong> passeren alle toegangscontroles (<code>req.user.role === 'admin'</code>).</li>
+                        <li><strong>Media</strong> mag enkel routes bezoeken die gemarkeerd zijn als content-safe (geen financiën, geen database-resets).</li>
+                        <li><strong>Members</strong> kunnen enkel hun eigen profiel, de leidingshoek en de feed bezoeken. Aanvullende toegang is optioneel instelbaar via de Instellingen.</li>
                     </ul>
                 </div>
 
-                <h3>Nieuwe Leiding</h3>
-                <p>Maak voor nieuwe leiding altijd een account aan met de rol "Member" (Leiding). Nieuwe accounts worden <strong>automatisch</strong> toegevoegd aan de meest recente leidingshoek-groep. Wil je de toegang tot specifieke leidingshoekjes/groepen aanpassen? Dit kan direct via het <strong>Admin Dashboard -> Beheer Leidingshoekjes</strong> door gebruikers aan de desbetreffende groep toe te voegen.</p>
+                <h3>Gebruikers Overzicht</h3>
+                <p>Ga naar <strong>Gebruikers</strong> in het dashboard. Je ziet alle accounts met hun rol, e-mailadres en laatste inlogdatum. Gebruik de filters om te zoeken op rol of naam/e-mail.</p>
+
+                <h3>Gebruiker Aanmaken</h3>
+                <p>Klik op <strong>"Nieuwe Gebruiker"</strong>.</p>
+                <p><strong>Velden:</strong></p>
+                <ul>
+                    <li><strong>Gebruikersnaam:</strong> De naam waarmee de gebruiker inlogt en zichtbaar is in de leidingshoek.</li>
+                    <li><strong>E-mail:</strong> Uniek e-mailadres voor inloggen en wachtwoordherstel.</li>
+                    <li><strong>Rol:</strong> Kies Admin, Media, Kookmoeke of Member.</li>
+                    <li><strong>Tijdelijk Wachtwoord:</strong> Stel een tijdelijk wachtwoord in dat de gebruiker bij het eerste inloggen zelf kan wijzigen.</li>
+                </ul>
+
+                <h3>Nieuwe Leiding Toevoegen</h3>
+                <p>Bij het aanmaken van een account voor nieuwe leiding:</p>
+                <ul>
+                    <li>Maak het account aan met de rol <strong>"Member"</strong>.</li>
+                    <li>Het nieuwe account wordt <strong>automatisch toegevoegd</strong> aan de meest recente leidingshoekgroep.</li>
+                    <li>Wil je de toegang tot specifieke hoekjes aanpassen? Ga naar <strong>Leidingshoekjes Beheren</strong> en voeg de gebruiker toe aan de gewenste groepen.</li>
+                    <li>Geef de nieuwe leiding het tijdelijke wachtwoord door. Ze kunnen het bij hun eerste inlog wijzigen via hun profiel.</li>
+                </ul>
 
                 <h3>Gebruiker Bewerken</h3>
-                <p>Klik op een gebruiker om details aan te passen:</p>
+                <p>Klik op een gebruiker om de detailpagina te openen:</p>
                 <ul>
-                    <li><strong>Profiel Info:</strong> Naam, email, telefoon.</li>
-                    <li><strong>Rollen & Groepen:</strong> Wijzig permissies.</li>
-                    <li><strong>Login Geschiedenis:</strong> Zie wanneer laatste login was.</li>
-                    <li><strong>Reset Wachtwoord:</strong> Stuur reset link.</li>
-                    <li><strong>Deactiveren:</strong> Blokkeer account tijdelijk.</li>
+                    <li><strong>Profielinfo Aanpassen:</strong> Naam en e-mailadres wijzigen.</li>
+                    <li><strong>Rol Wijzigen:</strong> Promoveer naar Media of Admin, of degradeer terug naar Member.</li>
+                    <li><strong>Wachtwoord Resetten:</strong> Stuur de gebruiker een wachtwoordreset-link per e-mail.</li>
+                    <li><strong>Account Deactiveren:</strong> Blokkeer het account tijdelijk. De gebruiker kan niet meer inloggen maar de gegevens blijven bewaard. Handig voor oud-leiding.</li>
+                    <li><strong>Account Verwijderen:</strong> Wis het account permanent (enkel voor admins, met dubbele bevestiging).</li>
                 </ul>
             </section>
 
             <!-- SECTION: GDPR -->
             <section id="gdpr" class="wiki-section">
                 <span class="feature-tag bg-primary text-white">Legal</span>
-                <h2>GDPR & Privacy</h2>
-                <p>Deze website voldoet aan de Europese privacywetgeving.</p>
-
-                <h3>Data Export</h3>
-                <p>Gebruikers kunnen hun data opvragen. Als admin kun je:</p>
-                <ul>
-                    <li><strong>Persoonsgegevens Exporteren:</strong> Download alle data van een gebruiker.</li>
-                    <li><strong>Anonimiseren:</strong> Verwijder identificerende info.</li>
-                    <li><strong>Data Portabiliteit:</strong> Export in machine-leesbaar formaat.</li>
-                    <li><strong>Controleer hierbij eerst de identiteit van de persoon, anders is het delen van data strafbaar!</strong></li>
-                </ul>
+                <h2>GDPR &amp; Privacy</h2>
+                <p>De website is gebouwd met de Europese privacywetgeving (GDPR/AVG) in gedachten. Als admin ben jij verantwoordelijk voor het correct omgaan met persoonsgegevens.</p>
 
                 <h3>Automatische Opschoning</h3>
-                <p>Het systeem ruimt automatisch oude data op. Aangezien de GDPR niet toe laat om persoonsgegevens onbeperkt te bewaren.</p>
-                
-                <p><strong>Wat houdt dit in?</strong></p>
+                <p>Het systeem ruimt automatisch gevoelige data op conform de GDPR-regels:</p>
                 <ul>
-                    <li><strong>Bewaartermijn:</strong> Al de medische info wordt automatisch verwijderd na 18 maanden.</li>
-                    <li><strong>Waarom?</strong> Deze gegevens zijn niet relevant als het lid niet meer actief is binnen de vereniging.</li>
-                    <li> Voor meer info zie on <a href="/pdf/privacyNotice.pdf" target="_blank" rel="noopener">privacy notice </a>.</li>
+                    <li><strong>Medische gegevens:</strong> Worden automatisch verwijderd na <strong>18 maanden</strong>. Deze info is immers niet meer relevant voor ex-leden.</li>
+                    <li><strong>Formulierantwoorden:</strong> Worden na de wettelijke bewaartermijn automatisch geanonimiseerd.</li>
+                    <li>Voor meer info zie onze <a href="/pdf/privacyNotice.pdf" target="_blank" rel="noopener">privacy notice</a>.</li>
                 </ul>
+
+                <h3>Data Export op Verzoek</h3>
+                <p>Wanneer een lid of ouder vraagt om een overzicht van hun persoonsgegevens (recht op inzage), ga dan naar de inschrijving van het betrokken lid en klik op <strong>"Export"</strong> om alle opgeslagen gegevens te downloaden.</p>
+
+                <div class="warning-box">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Verificeer altijd de identiteit!</strong> Voordat je persoonsgegevens deelt, verifieer altijd eerst de identiteit van de persoon die vraagt. Het onrechtmatig delen van persoonsgegevens aan een derde is strafbaar onder de GDPR. Vraag om een identiteitsbewijs of verifieer via een gekend e-mailadres.
+                </div>
+
+                <h3>Foto Toestemming</h3>
+                <p>Bij elke inschrijving staat een veld <strong>"Foto Toestemming"</strong>. Controleer dit altijd voor je foto's van activiteiten op sociale media of de website plaatst. Leden <strong>zonder</strong> toestemming mogen <strong>niet herkenbaar</strong> in beeld komen op publieke platforms (Instagram, Facebook, website).</p>
 
                 <div class="how-it-works">
                     <h5>Data Opschoning (GdprCleanupService):</h5>
-                    <p>De opschoon-tool verwijdert alle inschrijvingen (<code>Registration</code>) en formulier-antwoorden (<code>FormResponse</code>) die ouder zijn dan de wettelijk ingestelde limiet. Dit gebeurt grondig: ook de gekoppelde metadata wordt gewist uit de database.</p>
+                    <p>De automatische opschoon-service verwijdert periodiek gevoelige velden (medische gegevens, noodcontacten) uit inschrijvingen (<code>Registration</code>) die ouder zijn dan de wettelijke bewaartermijn. De basisgegevens (naam, groep) blijven voor historische statistieken. Formulierantwoorden (<code>FormResponse</code>) worden volledig verwijderd na de bewaartermijn.</p>
                 </div>
-
-                <h3>Beeldmateriaal</h3>
-                <p>Bij elke inschrijving staat een vinkje voor "Foto-toestemming". Bij de export naar Excel/PDF wordt dit duidelijk aangegeven. **Check dit altijd** voor je foto's van een weekend op sociale media plaatst.</p>
-
-                
             </section>
 
             <!-- SECTION: SYSTEEM -->
             <section id="systeem" class="wiki-section border-danger">
                 <span class="feature-tag bg-danger text-white">System</span>
                 <h2>Systeembeheer</h2>
-                <p>Onderhoud en noodgevallen. Houd de website gezond en veilig.</p>
-
-                <h3>Backups</h3>
-                <p>De website beschikt over een dedicated <strong>Backup Beheer</strong> tool die toegankelijk is voor alle beheerders (admins) via het dashboard. Hiermee kan elke admin handmatig backups maken, de inhoud ervan bekijken, backups downloaden of een eerdere backup herstellen (zowel voor de database als voor alle geüploade bestanden en media). Backups worden daarnaast ook automatisch elke maand gemaakt en opgeslagen.</p>
-                
-                
-
-                <div class="how-it-works">
-                    <h5>Backup Strategie:</h5>
-                    <p>Het backup script (<code>scripts/backup.js</code>) maakt een kopie van de SQLite database en zipt de volledige <code>public/uploads</code> en <code>public/feed_uploads</code> mappen. Deze backups worden lokaal bewaard in de <code>/backups</code> map. Het is aangeraden deze af en toe naar een externe harde schijf te kopiëren.</p>
-                </div>
-
+                <p>Geavanceerde tools voor onderhoud, diagnostiek en noodgevallen. De tools op deze pagina zijn enkel toegankelijk voor admins en soms enkel voor de systeembeheerder.</p>
 
                 <div class="warning-box">
                     <i class="bi bi-radioactive me-2"></i>
-                    <strong>Reset Website:</strong> Wist alles behalve de Admin-gebruikers. Gebruik dit alleen bij een volledige herstart van de vereniging of bij de overdracht naar een compleet nieuwe leidingsploeg.
+                    <strong>Admin Only:</strong> Alle functies in de Onderhoudstools zijn exclusief voor admins. Verkeerd gebruik kan de werking van de website ernstig verstoren.
                 </div>
 
-                <h3>Geavanceerde Tools</h3>
-                <p>Voor ontwikkelaars en systeembeheerders:</p>
+                <h3>Backups</h3>
+                <p>Ga naar <strong>Backup Beheer</strong> in het dashboard. Hier vind je een volledig back-upbeheer systeem:</p>
                 <ul>
-                    <li><strong>Database Query:</strong> Voer SQL queries uit (alleen voor admins).</li>
-                    <li><strong>Cache Leegmaken:</strong> Reset alle caches.</li>
-                    <li><strong>Service Herstart:</strong> Herstart achtergrondservices.</li>
-                    <li><strong>Log Viewer:</strong> Gedetailleerde systeemlogs bekijken.</li>
+                    <li><strong>Handmatige Backup Maken:</strong> Klik op "Nieuwe Backup" om onmiddellijk een volledige backup te maken van de database EN alle geüploade bestanden.</li>
+                    <li><strong>Backup Bekijken:</strong> Zie welke bestanden in een backup zitten (datum, grootte, inhoud).</li>
+                    <li><strong>Backup Downloaden:</strong> Download de backup-zip naar je eigen computer als externe kopie.</li>
+                    <li><strong>Backup Uploaden:</strong> Upload een eerder gedownloade backup om te herstellen.</li>
+                    <li><strong>Backup Herstellen:</strong> Zet de website terug naar de staat van een eerdere backup. <strong>Doe dit enkel als er iets ernstig mis is — alle wijzigingen na de backup gaan verloren! Vereist wachtwoordbevestiging.</strong></li>
                 </ul>
+
+                <div class="info-box">
+                    <i class="bi bi-calendar-check me-2"></i>
+                    <strong>Automatische Backups:</strong> Het systeem maakt automatisch elke maand een backup. Het is sterk aangeraden om ook af en toe een handmatige backup te downloaden naar een externe locatie (bijv. vóór grote wijzigingen zoals een nieuwe periode starten).
+                </div>
+
+                <div class="how-it-works">
+                    <h5>Backup Strategie:</h5>
+                    <p>Het backup script (<code>scripts/backup.js</code>) maakt een kopie van de SQLite database en zipt de volledige <code>public/uploads</code> en <code>public/feed_uploads</code> mappen. Deze backups worden lokaal bewaard in de <code>/backups</code> map op de server.</p>
+                </div>
+
+                <h3>Onderhoudstools — Overzicht van Tabbladen</h3>
+                <p>Ga naar <strong>Onderhoudstools</strong> in het dashboard. Deze pagina heeft zeven tabbladen:</p>
+
+                <h4>1. Bestandsbeheer</h4>
+                <p>Een visuele bestandsverkenner voor de volledige serverstructuur (enkel de publieke map). Je kunt:</p>
+                <ul>
+                    <li><strong>Navigeren:</strong> Door mappen bladeren via de broodkruimel-navigatie bovenaan.</li>
+                    <li><strong>Bestanden Bekijken &amp; Bewerken:</strong> Klik op een bestand om het te openen in een teksteditor (voor code/tekstbestanden). Klik op "Opslaan" om wijzigingen op te slaan.</li>
+                    <li><strong>Bestanden Downloaden:</strong> Klik op het downloadicoon naast een bestand.</li>
+                    <li><strong>Bestanden Verwijderen:</strong> Klik op het prullenbakicoon (met bevestiging).</li>
+                </ul>
+
+                <h4>2. Database</h4>
+                <p>Een directe viewer van de database. Selecteer een tabel uit de linkerkolom om de inhoud te bekijken. Blader door records (25, 50 of 100 per pagina) en klik op het potlood-icoon naast een record om het te bewerken.</p>
+                <div class="warning-box">
+                    <i class="bi bi-database-exclamation me-2"></i>
+                    <strong>Voorzichtigheid vereist:</strong> Bewerk data in de database enkel als je weet wat je doet. Foutieve wijzigingen kunnen de website onbruikbaar maken. Maak altijd een backup voor je wijzigingen aanbrengt.
+                </div>
+
+                <h4>3. Systeemlogs</h4>
+                <p>Bekijk de applicatielogs van de server. Handig om fouten op te sporen. Foutmeldingen worden rood gemarkeerd. Knoppen: <strong>Vernieuwen</strong> (laad nieuwste logs) en <strong>Wissen</strong> (verwijder logbestanden om ruimte vrij te maken).</p>
+
+                <h4>4. Kalender Stats</h4>
+                <p>Overzicht van hoe vaak de iCal-kalenderlinks gebruikt worden door de leiding. Toont per gebruiker wanneer hun kalenderapp voor het laatste de agenda gesynchroniseerd heeft. Handig om te zien wie de iCal-koppeling gebruikt.</p>
+
+                <h4>5. Online Gebruikers</h4>
+                <p>Real-time overzicht van actieve gebruikers. Toont drie tellers:</p>
+                <ul>
+                    <li><strong>Totaal Actief:</strong> Iedereen actief op de website.</li>
+                    <li><strong>Ingelogde Gebruikers:</strong> Mensen met een actief account die ingelogd zijn.</li>
+                    <li><strong>Gastbezoekers:</strong> Anonieme bezoekers zonder account.</li>
+                </ul>
+                <p>De weergave vernieuwt automatisch (Live updates). Je kunt live updates uitschakelen met de schakelaar bovenaan. Met deze functie kan je controleren of er niet al te veel mensen gebruik aan het maken zijn van de site voor wanneer je een update wilt uitvoeren of de server wilt herstarten.</p>
+
+                <h4>6. Notificaties Versturen</h4>
+                <p>Stuur een directe push-notificatie of e-mail naar een specifieke gebruiker. Gebruik dit enkel voor kritieke systeemmededelingen of tests.</p>
+                <ul>
+                    <li>Kies de ontvanger via de dropdown.</li>
+                    <li>Vul titel en bericht in.</li>
+                    <li>Kies de verzendmethode: <strong>Push</strong> (telefoonmelding), <strong>E-mail</strong>, of <strong>Beide</strong>.</li>
+                    <li>Aan de rechterkant zie je een live preview van hoe de push-notificatie er zal uitzien.</li>
+                </ul>
+
+                <h4>7. Aankondigingen</h4>
+                <p>Beheer pop-up aankondigingen voor de leiding (zie ook de uitgebreide <a href="#aankondigingen">Aankondigingen sectie</a> hierboven).</p>
+
+                <h3>Website Resetten</h3>
+                <div class="warning-box">
+                    <i class="bi bi-radioactive me-2"></i>
+                    <strong>Reset Website:</strong> Wist <em>alle gegevens</em> behalve de admin-gebruikersaccounts en site-instellingen. Dit omvat alle leden, formulieren, posts, financiën, spelen, events en custom pagina's. Gebruik dit <strong>uitsluitend</strong> bij een volledige herstart van de vereniging of bij overdracht naar een compleet nieuwe leidingsploeg. <strong>Deze actie kan niet ongedaan worden gemaakt. Maak altijd eerst een backup!</strong>
+                </div>
             </section>
 
         </main>
@@ -817,6 +1010,7 @@
             e.preventDefault();
             const targetId = this.getAttribute('href');
             const targetElement = document.querySelector(targetId);
+            if (!targetElement) return;
             const offset = 100;
             const elementPosition = targetElement.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - offset;
