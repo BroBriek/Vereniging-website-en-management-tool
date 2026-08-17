@@ -227,6 +227,16 @@ function csrfProtection(req, res, next) {
 
 app.use(csrfProtection);
 
+// Prevent caching of session-authenticated routes to avoid session leaks via proxies
+app.use((req, res, next) => {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
+
 // Global Variables & Alert Middleware
 app.use((req, res, next) => {
   onlineUserService.recordActivity(req);
