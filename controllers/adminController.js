@@ -4,6 +4,7 @@ const PDFDocument = require('pdfkit');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const NotificationService = require('../services/NotificationService');
 const PeriodService = require('../services/PeriodService');
 const PhoneService = require('../services/PhoneService');
@@ -858,7 +859,13 @@ exports.toggleUserStatus = async (req, res) => {
             // If it is false, toggle to true.
             // But DB default is true.
             const currentStatus = target.isActive === false ? false : true;
-            await target.update({ isActive: !currentStatus });
+            const newStatus = !currentStatus;
+            const updates = { isActive: newStatus };
+            if (!newStatus) {
+                // If deactivated/archived, rotate calendarToken so old subscriptions immediately stop working
+                updates.calendarToken = crypto.randomBytes(24).toString('hex');
+            }
+            await target.update(updates);
         }
         res.redirect('/admin/users');
     } catch (error) {

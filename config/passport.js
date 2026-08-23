@@ -28,6 +28,9 @@ module.exports = function(passport) {
   passport.deserializeUser(async (id, done) => {
     try {
       const user = await User.findByPk(id);
+      if (!user || user.isActive === false) {
+        return done(null, false);
+      }
       done(null, user);
     } catch (err) {
       done(err, null);

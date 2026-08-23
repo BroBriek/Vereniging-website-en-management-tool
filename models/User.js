@@ -93,6 +93,12 @@ User.beforeUpdate(async (user) => {
   if (user.changed('password')) {
     user.password = await bcrypt.hash(user.password, 10);
   }
+  if (user.changed('isActive') && user.isActive === false) {
+    user.calendarToken = crypto.randomBytes(24).toString('hex');
+  }
+  if (user.changed('role') && user.role === 'kookmoeke') {
+    user.calendarToken = crypto.randomBytes(24).toString('hex');
+  }
 });
 
 // Ensure JSON columns never get saved as empty strings (causes JSON.parse crash in SQLite)

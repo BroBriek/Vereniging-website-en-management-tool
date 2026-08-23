@@ -72,7 +72,7 @@ exports.getCalendarICS = async (req, res) => {
 
         if (token) {
             const user = await User.findOne({ where: { calendarToken: token, isActive: true } });
-            if (user) {
+            if (user && user.role !== 'kookmoeke') {
                 whereClause = { isArchived: false }; // All non-archived events (public + private)
                 calName = `Chiro Leidingskalender (${user.username})`;
                 foundUserId = user.id;
@@ -604,7 +604,8 @@ exports.getHelp = (req, res) => {
 };
 
 exports.getCalendarHelp = (req, res) => {
-    const calendarUrl = `${req.protocol}://${req.get('host')}/kalender/subscribe.ics${req.user && req.user.calendarToken ? '?token=' + req.user.calendarToken : ''}`;
+    const hasLeidingCalendar = req.user && req.user.isActive !== false && req.user.role !== 'kookmoeke' && req.user.calendarToken;
+    const calendarUrl = `${req.protocol}://${req.get('host')}/kalender/subscribe.ics${hasLeidingCalendar ? '?token=' + req.user.calendarToken : ''}`;
     res.render('public/calendar_help', {
         title: 'Kalender Koppelen - Chiro Vreugdeland Meeuwen',
         description: 'Stappenplan om de Chiro-kalender toe te voegen aan je iPhone, Android of Google Calendar.',

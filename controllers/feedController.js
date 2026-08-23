@@ -110,7 +110,10 @@ const viewHelpers = { getAvatarColor, getInitials, highlightMentions };
 
 exports.getCalendar = async (req, res) => {
     try {
-        if (req.user && req.user.role === 'kookmoeke') {
+        if (!req.user || req.user.isActive === false) {
+            return res.redirect('/auth/login');
+        }
+        if (req.user.role === 'kookmoeke') {
             return res.redirect('/tetterhoekje');
         }
         const today = new Date();
