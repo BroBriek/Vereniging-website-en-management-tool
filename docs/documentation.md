@@ -36,13 +36,24 @@ Voorbeeld inhoud:
 ```env
 PORT=3000
 SESSION_SECRET=een_lang_willekeurig_geheim
-EMAIL_PASSWORD=jouw_outlook_wachtwoord
-CONTACT_EMAIL=Chiromeeuwen@outlook.com
+
+# Organisatie
+ORG_NAME=Chiro Vreugdeland
+ORG_FULL_NAME=Chiro Vreugdeland Meeuwen
+ORG_LOCATION=Meeuwen
+
+# E-mail (SMTP)
+SMTP_HOST=smtp.voorbeeld.be
+SMTP_PORT=587
+SMTP_USER=info@voorbeeld.be
+SMTP_PASS=jouw_wachtwoord
+CONTACT_EMAIL=contact@voorbeeld.be
 ```
 
 - `PORT`: De poort waarop de server draait (standaard 3000).
 - `SESSION_SECRET`: Gebruikt voor het beveiligen van adminsessies.
-- `EMAIL_PASSWORD`: Het wachtwoord van het e-mailaccount voor het verzenden van e-mails.
+- `ORG_NAME`: De naam van de vereniging.
+- `SMTP_USER` & `SMTP_PASS`: De inloggegevens van het e-mailaccount voor het verzenden van e-mails.
 - `CONTACT_EMAIL`: Het e-mailadres waarop contactberichten en wekelijkse updates worden ontvangen.
 
 ## 4. Starten en Updaten

@@ -38,6 +38,7 @@ router.get('/help', publicController.getHelp);
 router.get('/download', publicController.downloadFile);
 router.get('/robots.txt', publicController.getRobotsTxt);
 router.get('/sitemap.xml', publicController.getSitemapXml);
+router.get('/manifest.json', publicController.getManifestJson);
 
 // Public Forms
 router.get('/forms/:slug', formController.getPublicForm);

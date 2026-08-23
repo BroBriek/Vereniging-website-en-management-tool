@@ -13,7 +13,7 @@ const getAdminEmail = async () => {
   } catch (error) {
     console.error('Error finding admin user:', error);
   }
-  return process.env.ADMIN_EMAIL || process.env.IONOS_EMAIL || process.env.GMAIL_EMAIL || process.env.MAILERSEND_FROM || null;
+  return process.env.ADMIN_EMAIL || process.env.CONTACT_EMAIL || process.env.SMTP_USER || process.env.IONOS_EMAIL || process.env.GMAIL_EMAIL || process.env.MAILERSEND_FROM || null;
 };
 
 const formatError = (error, context = '') => {

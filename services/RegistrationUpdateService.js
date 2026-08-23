@@ -96,17 +96,17 @@ class RegistrationUpdateService {
                             </tbody>
                         </table>
                         
-                        <p style="margin-top: 30px;">Je kunt alle details bekijken in het <a href="${process.env.APP_URL || 'https://www.chiromeeuwen.be'}/admin/registrations" style="color: #db3e41; font-weight: bold;">admin dashboard</a>.</p>
+                        <p style="margin-top: 30px;">Je kunt alle details bekijken in het <a href="${(process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '')}/admin/registrations" style="color: #db3e41; font-weight: bold;">admin dashboard</a>.</p>
                         
                         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #777;">
-                            Dit is een automatisch verzonden bericht van de Chiro website.
+                            Dit is een automatisch verzonden bericht van de ${process.env.ORG_NAME || 'Chiro'} website.
                         </div>
                     </div>
                 </div>
             `;
 
             await sendMail({
-                to: process.env.CONTACT_EMAIL || 'Chiromeeuwen@outlook.com',
+                to: process.env.CONTACT_EMAIL || process.env.ADMIN_EMAIL || process.env.SMTP_USER || 'admin@example.com',
                 subject: `📢 Wekelijkse Update: ${newRegistrations.length} Nieuwe Inschrijvingen`,
                 html: emailHtml
             });

@@ -4,53 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <meta name="keywords" content="Chiro Meeuwen, Chiro Vreugdeland, jeugdbeweging, jeugdorganisatie, kinderen activiteiten, Meeuwen">
-    <title><%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland Meeuwen - Jeugdbeweging Meeuwen' %></title>
-    <meta name="description" content="<%= typeof description !== 'undefined' ? description : 'Chiro Vreugdeland Meeuwen: jeugdbeweging voor kinderen in Meeuwen. Elke zondag spelen, activiteiten, vriendschap en plezier.' %>">
+    <meta name="keywords" content="<%= process.env.ORG_KEYWORDS || `${orgFullName}, ${orgName}, jeugdbeweging, jeugdorganisatie, kinderen activiteiten, ${orgLocation}` %>">
+    <title><%= typeof title !== 'undefined' ? title : `${orgFullName} - Jeugdbeweging ${orgLocation}` %></title>
+    <meta name="description" content="<%= typeof description !== 'undefined' ? description : `${orgFullName}: jeugdbeweging voor kinderen in ${orgLocation}. Elke zondag spelen, activiteiten, vriendschap en plezier.` %>">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://www.chiromeeuwen.be<%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
-    <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland Meeuwen - Jeugdbeweging Meeuwen' %>">
-    <meta property="og:description" content="<%= typeof description !== 'undefined' ? description : 'Chiro Vreugdeland Meeuwen: jeugdbeweging voor kinderen in Meeuwen. Elke zondag spelen, activiteiten, vriendschap en plezier.' %>">
-    <meta property="og:image" content="https://www.chiromeeuwen.be/og-image.png">
+    <meta property="og:url" content="<%= appUrl %><%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
+    <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : `${orgFullName} - Jeugdbeweging ${orgLocation}` %>">
+    <meta property="og:description" content="<%= typeof description !== 'undefined' ? description : `${orgFullName}: jeugdbeweging voor kinderen in ${orgLocation}. Elke zondag spelen, activiteiten, vriendschap en plezier.` %>">
+    <meta property="og:image" content="<%= appUrl %>/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="nl_BE">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://www.chiromeeuwen.be<%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
-    <meta property="twitter:title" content="<%= typeof title !== 'undefined' ? title : 'Chiro Vreugdeland Meeuwen - Jeugdbeweging Meeuwen' %>">
-    <meta property="twitter:description" content="<%= typeof description !== 'undefined' ? description : 'Chiro Vreugdeland Meeuwen: jeugdbeweging voor kinderen in Meeuwen. Elke zondag spelen, activiteiten, vriendschap en plezier.' %>">
-    <meta property="twitter:image" content="https://www.chiromeeuwen.be/og-image.png">
+    <meta property="twitter:url" content="<%= appUrl %><%= typeof currentPath !== 'undefined' ? currentPath : '' %>">
+    <meta property="twitter:title" content="<%= typeof title !== 'undefined' ? title : `${orgFullName} - Jeugdbeweging ${orgLocation}` %>">
+    <meta property="twitter:description" content="<%= typeof description !== 'undefined' ? description : `${orgFullName}: jeugdbeweging voor kinderen in ${orgLocation}. Elke zondag spelen, activiteiten, vriendschap en plezier.` %>">
+    <meta property="twitter:image" content="<%= appUrl %>/og-image.png">
 
     <!-- Canonical Tag -->
-    <link rel="canonical" href="https://www.chiromeeuwen.be<%= typeof currentPath !== 'undefined' ? currentPath : '' %>" />
+    <link rel="canonical" href="<%= appUrl %><%= typeof currentPath !== 'undefined' ? currentPath : '' %>" />
 
     <!-- Structured Data: Organization & LocalBusiness -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": ["Organization", "LocalBusiness"],
-      "name": "Chiro Vreugdeland Meeuwen",
-      "alternateName": "Chiro Meeuwen",
-      "description": "Chiro Vreugdeland Meeuwen is een jeugdbeweging in Meeuwen met activiteiten voor kinderen van alle leeftijden.",
-      "url": "https://www.chiromeeuwen.be",
-      "logo": "https://www.chiromeeuwen.be/favicon.png",
-      "image": "https://www.chiromeeuwen.be/og-image.png",
-      "keywords": "Chiro, jeugdbeweging, Meeuwen, kinderen, activiteiten",
+      "name": "<%= orgFullName %>",
+      "alternateName": "<%= orgName %>",
+      "description": "<%= orgFullName %> is een jeugdbeweging in <%= orgLocation %> met activiteiten voor kinderen van alle leeftijden.",
+      "url": "<%= appUrl %>",
+      "logo": "<%= appUrl %>/favicon.png",
+      "image": "<%= appUrl %>/og-image.png",
+      "keywords": "<%= orgName %>, jeugdbeweging, <%= orgLocation %>, kinderen, activiteiten",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "Kloosterstraat 5",
-        "addressLocality": "Meeuwen",
-        "addressRegion": "Limburg",
-        "postalCode": "3670",
-        "addressCountry": "BE"
+        "streetAddress": "<%= process.env.ORG_ADDRESS_STREET || 'Kloosterstraat 5' %>",
+        "addressLocality": "<%= orgLocation %>",
+        "addressRegion": "<%= process.env.ORG_ADDRESS_REGION || 'Limburg' %>",
+        "postalCode": "<%= process.env.ORG_POSTAL_CODE || '3670' %>",
+        "addressCountry": "<%= process.env.ORG_COUNTRY || 'BE' %>"
       },
-      "email": "<%= process.env.CONTACT_EMAIL || 'Chiromeeuwen@outlook.com' %>",
+      "email": "<%= contactEmail %>",
       "sameAs": [
-        "https://www.facebook.com/ChiroVreugdelandMeeuwen"
+        "<%= process.env.ORG_FACEBOOK_URL || 'https://www.facebook.com' %>"
       ]
     }
     </script>
@@ -119,7 +119,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="/home">CHIRO VREUGDELAND</a>
+            <a class="navbar-brand" href="/home"><%= (typeof orgName !== 'undefined' && orgName ? orgName : 'CHIRO VREUGDELAND').toUpperCase() %></a>
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>

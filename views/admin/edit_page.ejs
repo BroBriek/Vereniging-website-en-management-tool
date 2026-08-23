@@ -97,7 +97,7 @@
                     <div class="card-body p-4">
                         <div class="mb-4">
                             <label for="email_subject" class="form-label fw-bold">Onderwerp E-mail</label>
-                            <input type="text" class="form-control" id="email_subject" name="email_subject" value="<%= contentMap.email_subject ? contentMap.email_subject.content : 'Inschrijving ontvangen - Chiro Vreugdeland Meeuwen' %>" placeholder="Inschrijving ontvangen - Chiro Vreugdeland Meeuwen">
+                            <input type="text" class="form-control" id="email_subject" name="email_subject" value="<%= contentMap.email_subject ? contentMap.email_subject.content : ('Inschrijving ontvangen - ' + (typeof orgFullName !== 'undefined' && orgFullName ? orgFullName : (process.env.ORG_FULL_NAME || 'Chiro Vreugdeland Meeuwen'))) %>" placeholder="Inschrijving ontvangen - <%= typeof orgFullName !== 'undefined' && orgFullName ? orgFullName : (process.env.ORG_FULL_NAME || 'Chiro Vreugdeland Meeuwen') %>">
                         </div>
 
                         <div class="mb-2">

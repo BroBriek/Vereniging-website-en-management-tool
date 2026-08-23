@@ -203,8 +203,10 @@ class NotificationService {
      */
     static async _sendEmailNotification(user, messageData) {
         try {
-            // Determine Base URL (fallback to chiromeeuwen.be if not set in ENV)
-            const baseUrl = process.env.APP_URL || 'https://chiromeeuwen.be';
+            // Determine Base URL
+            const baseUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+            const orgName = process.env.ORG_NAME || process.env.ORGANIZATION_NAME || 'Chiro Vreugdeland';
+            const orgFullName = process.env.ORG_FULL_NAME || (process.env.ORG_LOCATION ? `${orgName} ${process.env.ORG_LOCATION}` : `${orgName} Meeuwen`).trim();
             
             // Fix URL: ensure it is absolute
             let fullUrl = messageData.url;
@@ -237,7 +239,7 @@ class NotificationService {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>Chiro Vreugdeland</h1>
+                        <h1>${orgName}</h1>
                     </div>
                     <div class="content">
                         <p>Dag <strong>${user.username}</strong>,</p>
@@ -254,7 +256,7 @@ class NotificationService {
                     </div>
                     <div class="footer">
                         <p>Je ontvangt deze e-mail omdat notificaties zijn ingeschakeld voor jouw account.</p>
-                        <p>&copy; ${new Date().getFullYear()} Chiro Vreugdeland Meeuwen</p>
+                        <p>&copy; ${new Date().getFullYear()} ${orgFullName}</p>
                     </div>
                 </div>
             </body>

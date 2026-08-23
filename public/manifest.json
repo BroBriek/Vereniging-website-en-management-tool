@@ -1,12 +1,12 @@
 {
-  "name": "Chiro Vreugdeland Meeuwen",
-  "short_name": "Chiro",
+  "name": "Jeugdvereniging",
+  "short_name": "Vereniging",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#fdfbf7",
   "theme_color": "#db3e41",
-  "description": "De jeugdbeweging in Meeuwen voor kinderen van alle leeftijden. Elke zondag activiteiten, spel en vriendschap.",
+  "description": "Jeugdorganisatie voor kinderen van alle leeftijden. Elke week activiteiten, spel en vriendschap.",
   "categories": ["lifestyle", "social"],
   "icons": [
     {

@@ -453,7 +453,7 @@
                                         <div class="p-3 bg-dark text-white rounded-3 shadow-sm mb-3" style="opacity: 0.9;">
                                             <div class="d-flex align-items-center mb-2">
                                                 <img src="/favicon.png" width="20" class="me-2">
-                                                <small class="fw-bold">Chiro Vreugdeland</small>
+                                                <small class="fw-bold"><%= typeof orgName !== 'undefined' && orgName ? orgName : (process.env.ORG_NAME || 'Chiro Vreugdeland') %></small>
                                                 <small class="ms-auto text-white-50">nu</small>
                                             </div>
                                             <div class="fw-bold small mb-1" id="preview-title">Titel komt hier...</div>

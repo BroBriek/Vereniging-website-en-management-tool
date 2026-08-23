@@ -180,7 +180,7 @@
 <div class="admin-hero">
     <div class="container">
         <div class="admin-hero-text text-center text-white">
-            <h1>Chiro Meeuwen Wiki</h1>
+            <h1><%= typeof orgName !== 'undefined' && orgName ? orgName : (process.env.ORG_NAME || 'Chiro') %> Wiki</h1>
             <p class="lead">De ultieme bron van waarheid voor het beheer van onze website.</p>
             
             <div class="mt-4">
@@ -311,7 +311,7 @@
                 
                 <div class="how-it-works">
                     <h5>Functionele Werking:</h5>
-                    <p>Elke pagina krijgt een unieke <strong>Slug</strong> (de naam in de URL). Als je een pagina maakt met de titel "Kamp 2024", zal de URL <code>chiromeeuwen.be/p/kamp-2024</code> zijn. De inhoud wordt opgeslagen als JSON-blokken in de database. De banner-afbeelding krijgt automatisch een donkere overlay zodat de witte titeltekst altijd leesbaar blijft.</p>
+                    <p>Elke pagina krijgt een unieke <strong>Slug</strong> (de naam in de URL). Als je een pagina maakt met de titel "Kamp 2024", zal de URL <code><%= appUrl.replace(/^https?:\/\//, '') %>/p/kamp-2024</code> zijn. De inhoud wordt opgeslagen als JSON-blokken in de database. De banner-afbeelding krijgt automatisch een donkere overlay zodat de witte titeltekst altijd leesbaar blijft.</p>
                 </div>
 
                 <h3>Pagina's Beheren</h3>

@@ -26,7 +26,9 @@
                     </div>
                 <% } %>
 
-                <script src="https://www.google.com/recaptcha/api.js?render=<%= recaptchaSiteKey %>"></script>
+                <% if (typeof captchaEnabled !== 'undefined' && captchaEnabled && recaptchaSiteKey) { %>
+                    <script src="https://www.google.com/recaptcha/api.js?render=<%= recaptchaSiteKey %>"></script>
+                <% } %>
                 <form id="contactForm" action="/contact" method="POST" class="mt-2" <% if (typeof contactFormDisabled !== 'undefined' && contactFormDisabled) { %> style="filter: blur(4px); pointer-events: none; user-select: none;" tabindex="-1" <% } %>>
                     <!-- Honeypot field to prevent spam -->
                     <div style="position: absolute; left: -9999px;">
@@ -61,6 +63,7 @@
     </div>
 </div>
 
+<% if (typeof captchaEnabled !== 'undefined' && captchaEnabled && recaptchaSiteKey) { %>
 <script>
     document.getElementById('contactForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -72,4 +75,5 @@
         });
     });
 </script>
+<% } %>
 <%- include('../partials/footer') %>

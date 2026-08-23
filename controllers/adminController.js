@@ -1147,29 +1147,30 @@ exports.postSendEmail = async (req, res) => {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>Chiro Vreugdeland</h1>
+                        <h1>${process.env.ORG_NAME || process.env.ORGANIZATION_NAME || 'Chiro Vreugdeland'}</h1>
                     </div>
                     <div class="content">
                         ${body}
                     </div>
                     <div class="footer">
-                        <p>&copy; ${new Date().getFullYear()} Chiro Vreugdeland Meeuwen</p>
+                        <p>&copy; ${new Date().getFullYear()} ${process.env.ORG_FULL_NAME || 'Chiro Vreugdeland Meeuwen'}</p>
                     </div>
                 </div>
             </body>
             </html>
         `;
 
+        const defaultFrom = `"${process.env.ORG_NAME || 'Chiro Vreugdeland'}" <${process.env.SMTP_USER || process.env.CONTACT_EMAIL || 'noreply@example.com'}>`;
         const mailOptions = {
             subject: subject,
             html: htmlContent,
-            from: process.env.MAIL_FROM || '"Chiro Vreugdeland" <noreply@chiromeeuwen.be>'
+            from: process.env.MAIL_FROM || defaultFrom
         };
 
         if (recipient_type === 'individual') {
             mailOptions.to = recipients[0];
         } else {
-            mailOptions.to = process.env.MAIL_FROM || 'noreply@chiromeeuwen.be';
+            mailOptions.to = process.env.MAIL_FROM || process.env.SMTP_USER || process.env.CONTACT_EMAIL || 'noreply@example.com';
             mailOptions.bcc = recipients;
         }
 

@@ -32,7 +32,7 @@
         <div class="col-lg-6">
             <div class="ps-lg-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h1 class="display-4 fw-bold text-chiro-blue mb-0">Chiro Meeuwen T-shirt</h1>
+                    <h1 class="display-4 fw-bold text-chiro-blue mb-0"><%= orgName %> T-shirt</h1>
                     <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
                         <a href="/admin/page/shirts" class="btn btn-sm btn-outline-secondary rounded-pill">
                             <i class="bi bi-pencil-square"></i>
@@ -43,7 +43,7 @@
                 <!-- Editable Content Area (Price/Description) -->
                 <div class="mb-5 page-content-editable fs-5 text-muted">
                     <%- (content.main && content.main.content) ? content.main.content : `
-                    <p>Het officiële T-shirt van Chiro Meeuwen! Perfect voor op zondagen, uitstappen en kamp. Zo zijn we in één oogopslag herkenbaar als één grote Chiro-familie.</p>
+                    <p>Het officiële T-shirt van ${orgFullName}! Perfect voor op zondagen, uitstappen en kamp. Zo zijn we in één oogopslag herkenbaar als één grote familie.</p>
                     ` %>
                 </div>
 

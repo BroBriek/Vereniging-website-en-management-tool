@@ -35,13 +35,23 @@ Om de applicatie lokaal te draaien, volg je de onderstaande stappen:
     ```env
     PORT=3000
     SESSION_SECRET=uw_geheime_sessie_sleutel # VERPLICHT! Verander deze naar een unieke, sterke sleutel
-    EMAIL=Johnathan.Doe@example.com
-    EMAIL_PASSWORD=uw_email_wachtwoord
-    CONTACT_EMAIL=Chiromeeuwen@outlook.com # Het adres waarop je meldingen wilt ontvangen
+    
+    # Organisatie
+    ORG_NAME=Mijn Vereniging
+    ORG_FULL_NAME=Mijn Vereniging Gemeente
+    ORG_LOCATION=Gemeente
+    
+    # E-mail (SMTP)
+    SMTP_HOST=smtp.voorbeeld.be
+    SMTP_PORT=587
+    SMTP_USER=info@voorbeeld.be
+    SMTP_PASS=uw_smtp_wachtwoord
+    CONTACT_EMAIL=contact@voorbeeld.be # Het adres waarop je contactberichten en updates wilt ontvangen
     ```
     *   **`PORT`**: De poort waarop de server draait.
     *   **`SESSION_SECRET`**: Een willekeurige string die gebruikt wordt om sessies te versleutelen. **Essentieel voor beveiliging.**
-    *   **`EMAIL_PASSWORD`**: Het wachtwoord voor het e-mailaccount dat wordt gebruikt voor het verzenden van e-mails.
+    *   **`ORG_NAME`**: De naam van de vereniging.
+    *   **`SMTP_HOST` / `SMTP_USER` / `SMTP_PASS`**: SMTP instellingen voor het verzenden van e-mails.
     *   **`CONTACT_EMAIL`**: Het e-mailadres waarop contactberichten en wekelijkse updates worden ontvangen.
 
 5.  **Start de applicatie:**

@@ -42,24 +42,32 @@ const app = express();
 app.use((req, res, next) => {
   const host = req.hostname;
   
-  
   // Allow localhost and local IPs for development
   if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.endsWith('.local') || host.endsWith('.ngrok-free.app') || host.endsWith('.ngrok.io') || host.endsWith('.ngrok-free.dev')) {
     return next();
   }
   
-  // Redirect non-www to www
-  if (host === 'chiromeeuwen.be') {
-    return res.redirect(301, 'https://www.chiromeeuwen.be' + req.originalUrl);
-  }
-  
-  // Allow valid production domains
-  if (host === 'www.chiromeeuwen.be') {
-    return next();
+  const appDomain = process.env.APP_DOMAIN;
+  if (appDomain) {
+    const rawAllowed = process.env.ALLOWED_DOMAINS ? process.env.ALLOWED_DOMAINS.split(',') : [appDomain, `www.${appDomain}`];
+    const allowedDomains = rawAllowed.map(d => d.trim().toLowerCase()).filter(Boolean);
+    
+    // Redirect non-www to www if root domain was requested
+    if (host.toLowerCase() === appDomain.toLowerCase() && !appDomain.startsWith('www.')) {
+      return res.redirect(301, `https://www.${appDomain}${req.originalUrl}`);
+    }
+    
+    // Allow valid configured domains
+    if (allowedDomains.includes(host.toLowerCase())) {
+      return next();
+    }
+    
+    // Block unallowed domains
+    return res.status(404).send('Not Found');
   }
 
-  // Block everything else (including printmedialounge.de)
-  res.status(404).send('Not Found');
+  // If no APP_DOMAIN configured, allow request
+  next();
 });
 
 // Trailing Slash Normalization Middleware (301 redirects for SEO)
@@ -92,7 +100,7 @@ syncDatabase().then(() => {
 // Web Push VAPID configuration
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
-    `mailto:${process.env.IONOS_EMAIL || 'example@example.com'}`,
+    `mailto:${process.env.ADMIN_EMAIL || process.env.CONTACT_EMAIL || process.env.SMTP_USER || process.env.IONOS_EMAIL || 'admin@example.com'}`,
     process.env.VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
   );
@@ -246,6 +254,13 @@ app.use((req, res, next) => {
   res.locals.originalAdminId = req.session ? req.session.originalAdminId : null;
   res.locals.enablePublicRegistrations = res.locals.settings.enable_public_registrations_view;
   res.locals.showGamesToAll = res.locals.settings.show_games_to_all;
+  
+  // Organization and contact configuration
+  res.locals.orgName = process.env.ORG_NAME || process.env.ORGANIZATION_NAME || 'Chiro Vreugdeland';
+  res.locals.orgLocation = process.env.ORG_LOCATION || 'Meeuwen';
+  res.locals.orgFullName = process.env.ORG_FULL_NAME || `${res.locals.orgName} ${res.locals.orgLocation}`.trim();
+  res.locals.contactEmail = process.env.CONTACT_EMAIL || 'contact@example.com';
+  res.locals.appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
   
   // Normalize currentPath for SEO (remove trailing slash unless root)
   let normalizedPath = req.path;

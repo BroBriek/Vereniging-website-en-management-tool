@@ -8,6 +8,16 @@ const PhoneService = require('../services/PhoneService');
 
 const { sendMail } = require('../config/mailer');
 const PeriodService = require('../services/PeriodService');
+const SettingsService = require('../services/SettingsService');
+
+const getOrgConfig = () => {
+    const orgName = process.env.ORG_NAME || process.env.ORGANIZATION_NAME || 'Chiro Vreugdeland';
+    const orgLocation = process.env.ORG_LOCATION || 'Meeuwen';
+    const orgFullName = process.env.ORG_FULL_NAME || `${orgName} ${orgLocation}`.trim();
+    const contactEmail = process.env.CONTACT_EMAIL || 'contact@example.com';
+    const appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+    return { orgName, orgLocation, orgFullName, contactEmail, appUrl };
+};
 
 const getContent = async (slug) => {
     try {
@@ -147,6 +157,7 @@ exports.getCalendarICS = async (req, res) => {
                 .replace(/&gt;/g, '>')
                 .trim();
 
+            const { orgName } = getOrgConfig();
             return {
                 start,
                 end,
@@ -156,10 +167,12 @@ exports.getCalendarICS = async (req, res) => {
                 endOutputType: endInputType,
                 title: event.title,
                 description: plainDescription,
-                categories: ['Chiro Vreugdeland'],
-                productId: 'chiromeeuwen/ics'
+                categories: [orgName],
+                productId: `${orgName.toLowerCase().replace(/[^a-z0-9]/g, '')}/ics`
             };
         });
+
+        const { orgName, orgLocation, orgFullName } = getOrgConfig();
 
         if (icsEvents.length === 0) {
             // Provide a dummy event if no events found to avoid empty calendar errors in some clients
@@ -178,7 +191,7 @@ exports.getCalendarICS = async (req, res) => {
                 end,
                 title: 'Geen evenementen gepland',
                 description: 'Er zijn momenteel geen evenementen gepland op de website.',
-                productId: 'chiromeeuwen/ics'
+                productId: `${orgName.toLowerCase().replace(/[^a-z0-9]/g, '')}/ics`
             });
         }
 
@@ -194,7 +207,7 @@ exports.getCalendarICS = async (req, res) => {
 
         res.set({
             'Content-Type': 'text/calendar; charset=utf-8',
-            'Content-Disposition': 'attachment; filename="chiromeeuwen_kalender.ics"',
+            'Content-Disposition': `attachment; filename="${orgName.toLowerCase().replace(/[^a-z0-9]/g, '')}_kalender.ics"`,
             'Cache-Control': 'no-cache'
         });
 
@@ -212,10 +225,11 @@ exports.getHome = async (req, res) => {
     }
 
     try {
+        const { orgLocation, orgFullName } = getOrgConfig();
         const content = await getContent('home');
         res.render('public/home', { 
-            title: 'Chiro Vreugdeland Meeuwen - Jeugdbeweging Meeuwen', 
-            description: 'Chiro Vreugdeland Meeuwen: jeugdbeweging voor kinderen in Meeuwen. Elke zondag spelen, activiteiten, vriendschap en plezier. Word lid!',
+            title: `${orgFullName} - Jeugdbeweging ${orgLocation}`, 
+            description: `${orgFullName}: jeugdbeweging voor kinderen in ${orgLocation}. Elke zondag spelen, activiteiten, vriendschap en plezier. Word lid!`,
             content 
         });
     } catch (error) {
@@ -225,10 +239,11 @@ exports.getHome = async (req, res) => {
 
 exports.getPublicHome = async (req, res) => {
     try {
+        const { orgLocation, orgFullName } = getOrgConfig();
         const content = await getContent('home');
         res.render('public/home', { 
-            title: 'Chiro Vreugdeland Meeuwen - Jeugdbeweging Meeuwen', 
-            description: 'Chiro Vreugdeland Meeuwen: jeugdbeweging voor kinderen in Meeuwen. Elke zondag spelen, activiteiten, vriendschap en plezier. Word lid!',
+            title: `${orgFullName} - Jeugdbeweging ${orgLocation}`, 
+            description: `${orgFullName}: jeugdbeweging voor kinderen in ${orgLocation}. Elke zondag spelen, activiteiten, vriendschap en plezier. Word lid!`,
             content 
         });
     } catch (error) {
@@ -238,10 +253,11 @@ exports.getPublicHome = async (req, res) => {
 
 exports.getPractical = async (req, res) => {
     try {
+        const { orgName } = getOrgConfig();
         const content = await getContent('practical');
         res.render('public/practical', { 
-            title: 'Praktisch - Informatie Chiro Vreugdeland', 
-            description: 'Praktische info over Chiro Vreugdeland: lidgeld, uniformen, uren, locatie en aanmelden. Alles wat je moet weten.',
+            title: `Praktisch - Informatie ${orgName}`, 
+            description: `Praktische info over ${orgName}: lidgeld, uniformen, uren, locatie en aanmelden. Alles wat je moet weten.`,
             content 
         });
     } catch (error) {
@@ -251,6 +267,7 @@ exports.getPractical = async (req, res) => {
 
 exports.getLeaders = async (req, res) => {
     try {
+        const { orgName, orgFullName } = getOrgConfig();
         const leaders = await Leader.findAll({ order: [['group', 'ASC'], ['name', 'ASC']] });
         const groups = {};
         const groupOrder = ['Hoofdleiding', 'Ribbels', 'Speelclub', 'Rakwi\'s', 'Tito\'s', 'Keti\'s', 'Aspi\'s'];
@@ -260,8 +277,8 @@ exports.getLeaders = async (req, res) => {
             groups[l.group].push(l);
         });
         res.render('public/leaders', { 
-            title: 'Onze Leiding - Chiro Vreugdeland Meeuwen', 
-            description: 'Maak kennis met het team van vrijwilligers en jeugdleiders van Chiro Vreugdeland.',
+            title: `Onze Leiding - ${orgFullName}`, 
+            description: `Maak kennis met het team van vrijwilligers en jeugdleiders van ${orgName}.`,
             groups 
         });
     } catch (error) {
@@ -274,6 +291,7 @@ exports.getCalendar = async (req, res) => {
         return res.redirect('/feed/calendar');
     }
     try {
+        const { orgName } = getOrgConfig();
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -294,8 +312,8 @@ exports.getCalendar = async (req, res) => {
             order: [['date', 'ASC']]
         });
         res.render('public/calendar', { 
-            title: 'Kalender & Activiteiten - Chiro Vreugdeland', 
-            description: 'De volledige kalender van Chiro Vreugdeland: mis geen activiteiten, zondagen of speciale evenementen.',
+            title: `Kalender & Activiteiten - ${orgName}`, 
+            description: `De volledige kalender van ${orgName}: mis geen activiteiten, zondagen of speciale evenementen.`,
             events 
         });
     } catch (error) {
@@ -306,10 +324,11 @@ exports.getCalendar = async (req, res) => {
 
 exports.getDepartments = async (req, res) => {
     try {
+        const { orgName, orgFullName } = getOrgConfig();
         const content = await getContent('departments');
         res.render('public/departments', { 
-            title: 'Afdelingen - Chiro Vreugdeland Meeuwen', 
-            description: 'Ontdek alle afdelingen van Chiro: Ribbels, Speelclub, Rakwi\'s, Tito\'s, Keti\'s en Aspi\'s. Vind jouw groep!',
+            title: `Afdelingen - ${orgFullName}`, 
+            description: `Ontdek alle afdelingen van ${orgName}: Ribbels, Speelclub, Rakwi's, Tito's, Keti's en Aspi's. Vind jouw groep!`,
             content 
         });
     } catch (error) {
@@ -319,10 +338,11 @@ exports.getDepartments = async (req, res) => {
 
 exports.getShirts = async (req, res) => {
     try {
+        const { orgName } = getOrgConfig();
         const content = await getContent('shirts');
         res.render('public/shirts', { 
-            title: 'T-Shirts & Merchandise - Chiro Vreugdeland', 
-            description: 'Koop coole Chiro Vreugdeland T-shirts en merchandise. Bekijk maten, kleuren en prijzen.',
+            title: `T-Shirts & Merchandise - ${orgName}`, 
+            description: `Koop coole ${orgName} T-shirts en merchandise. Bekijk maten, kleuren en prijzen.`,
             content 
         });
     } catch (error) {
@@ -332,13 +352,14 @@ exports.getShirts = async (req, res) => {
 
 exports.getRegister = async (req, res) => {
     try {
+        const { orgName } = getOrgConfig();
         const content = await getContent('register');
         const regState = await SystemState.findOne({ where: { key: 'is_registration_open' } });
         const isRegistrationOpen = regState ? regState.value === 'true' : true;
 
         res.render('public/register', {
-            title: 'Inschrijven bij Chiro Vreugdeland',
-            description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
+            title: `Inschrijven bij ${orgName}`,
+            description: `Schrijf jezelf of je kind in voor het nieuwe werkjaar. Alle groepen zijn welkom!`,
             content,
             isRegistrationOpen
         });
@@ -348,6 +369,7 @@ exports.getRegister = async (req, res) => {
 };
 
 exports.postRegister = async (req, res) => {
+    const { orgName, orgFullName, contactEmail, appUrl } = getOrgConfig();
     const content = await getContent('register');
     const regState = await SystemState.findOne({ where: { key: 'is_registration_open' } });
     const isRegistrationOpen = regState ? regState.value === 'true' : true;
@@ -355,7 +377,7 @@ exports.postRegister = async (req, res) => {
     try {
         if (!isRegistrationOpen) {
             return res.render('public/register', {
-                title: 'Inschrijven bij Chiro Vreugdeland',
+                title: `Inschrijven bij ${orgName}`,
                 description: 'De inschrijvingen zijn gesloten.',
                 content,
                 isRegistrationOpen,
@@ -383,7 +405,7 @@ exports.postRegister = async (req, res) => {
         // Basic validation for phone numbers if provided
         if (payload.parentsPhone && !PhoneService.isValidFormat(payload.parentsPhone)) {
              return res.render('public/register', {
-                title: 'Inschrijven bij Chiro Vreugdeland',
+                title: `Inschrijven bij ${orgName}`,
                 content,
                 isRegistrationOpen,
                 error: 'Het telefoonnummer van de ouders is ongeldig. Gebruik bijv. 0470 12 34 56.'
@@ -391,7 +413,7 @@ exports.postRegister = async (req, res) => {
         }
         if (payload.phone && !PhoneService.isValidFormat(payload.phone)) {
              return res.render('public/register', {
-                title: 'Inschrijven bij Chiro Vreugdeland',
+                title: `Inschrijven bij ${orgName}`,
                 content,
                 isRegistrationOpen,
                 error: 'Het telefoonnummer is ongeldig. Gebruik bijv. 0470 12 34 56.'
@@ -399,7 +421,7 @@ exports.postRegister = async (req, res) => {
         }
         if (payload.memberPhone && !PhoneService.isValidFormat(payload.memberPhone)) {
              return res.render('public/register', {
-                title: 'Inschrijven bij Chiro Vreugdeland',
+                title: `Inschrijven bij ${orgName}`,
                 content,
                 isRegistrationOpen,
                 error: 'Het telefoonnummer van het lid is ongeldig. Gebruik bijv. 0470 12 34 56.'
@@ -409,8 +431,8 @@ exports.postRegister = async (req, res) => {
         if (!validGroups.includes(payload.group)) {
             console.warn(`Registration attempt with invalid group: "${payload.group}"`);
             return res.render('public/register', {
-                title: 'Inschrijven bij Chiro Vreugdeland',
-                description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
+                title: `Inschrijven bij ${orgName}`,
+                description: 'Schrijf jezelf of je kind in voor het nieuwe werkjaar. Alle groepen zijn welkom!',
                 content,
                 isRegistrationOpen,
                 error: 'Selecteer een geldige groep.'
@@ -419,8 +441,8 @@ exports.postRegister = async (req, res) => {
 
         if (!payload.firstName || !payload.lastName || !payload.birthdate || !payload.email || !payload.privacyAccepted) {
             return res.render('public/register', {
-                title: 'Inschrijven bij Chiro Vreugdeland',
-                description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
+                title: `Inschrijven bij ${orgName}`,
+                description: 'Schrijf jezelf of je kind in voor het nieuwe werkjaar. Alle groepen zijn welkom!',
                 content,
                 isRegistrationOpen,
                 error: 'Vul alle verplichte velden in.'
@@ -433,7 +455,7 @@ exports.postRegister = async (req, res) => {
 
         // Fetch custom page settings for 'register'
         const rawSuccessText = content && content.success_text && content.success_text.content ? content.success_text.content : '';
-        const defaultSuccessText = `<h3 class="fw-bold text-success mb-3"><i class="bi bi-party me-2"></i>Bedankt voor de inschrijving, {voornaam}!</h3><p class="fs-5">We hebben de inschrijvingsgegevens voor <strong>{voornaam} {achternaam}</strong> ({groep}) goed ontvangen.</p><p>Binnenkort ontvang je meer praktische informatie over het komende Chirojaar. Mocht je in de tussentijd nog vragen hebben, aarzel dan niet om contact op te nemen met onze leiding.</p>`;
+        const defaultSuccessText = `<h3 class="fw-bold text-success mb-3"><i class="bi bi-party me-2"></i>Bedankt voor de inschrijving, {voornaam}!</h3><p class="fs-5">We hebben de inschrijvingsgegevens voor <strong>{voornaam} {achternaam}</strong> ({groep}) goed ontvangen.</p><p>Binnenkort ontvang je meer praktische informatie over het komende werkjaar. Mocht je in de tussentijd nog vragen hebben, aarzel dan niet om contact op te nemen met onze leiding.</p>`;
         
         const successTemplate = rawSuccessText || defaultSuccessText;
         const formattedSuccessText = formatRegistrationTemplate(successTemplate, payload);
@@ -441,10 +463,10 @@ exports.postRegister = async (req, res) => {
         let emailSent = false;
         // Send confirmation email if configured or default template exists
         try {
-            const rawEmailSubject = content && content.email_subject && content.email_subject.content ? content.email_subject.content : 'Inschrijving ontvangen - Chiro Vreugdeland Meeuwen';
+            const rawEmailSubject = content && content.email_subject && content.email_subject.content ? content.email_subject.content : `Inschrijving ontvangen - ${orgFullName}`;
             const rawEmailText = content && content.email_text && content.email_text.content ? content.email_text.content : '';
             
-            const defaultEmailText = `<p>Beste {voornaam},</p><p>Bedankt voor je inschrijving bij Chiro Vreugdeland Meeuwen! We hebben de gegevens voor <strong>{naam}</strong> in goede orde ontvangen.</p><p><strong>Overzicht inschrijving:</strong></p><ul><li><strong>Naam:</strong> {naam}</li><li><strong>Groep:</strong> {groep}</li><li><strong>Type:</strong> {type}</li><li><strong>E-mail:</strong> {email}</li></ul><p>Mocht je vragen hebben over de inschrijving of het lidgeld, neem dan gerust contact met ons op via <a href="mailto:${process.env.CONTACT_EMAIL || 'Chiromeeuwen@outlook.com'}">${process.env.CONTACT_EMAIL || 'Chiromeeuwen@outlook.com'}</a>.</p><p>Tot snel op de Chiro!</p><p>Met vriendelijke groeten,<br><strong>Leiding Chiro Vreugdeland Meeuwen</strong></p>`;
+            const defaultEmailText = `<p>Beste {voornaam},</p><p>Bedankt voor je inschrijving bij ${orgFullName}! We hebben de gegevens voor <strong>{naam}</strong> in goede orde ontvangen.</p><p><strong>Overzicht inschrijving:</strong></p><ul><li><strong>Naam:</strong> {naam}</li><li><strong>Groep:</strong> {groep}</li><li><strong>Type:</strong> {type}</li><li><strong>E-mail:</strong> {email}</li></ul><p>Mocht je vragen hebben over de inschrijving of het lidgeld, neem dan gerust contact met ons op via <a href="mailto:${contactEmail}">${contactEmail}</a>.</p><p>Tot snel!</p><p>Met vriendelijke groeten,<br><strong>Leiding ${orgFullName}</strong></p>`;
 
             const emailTemplate = rawEmailText || defaultEmailText;
             const emailSubject = formatRegistrationTemplate(rawEmailSubject, payload);
@@ -453,15 +475,15 @@ exports.postRegister = async (req, res) => {
             const emailHtml = `
                 <div style="font-family: Arial, sans-serif; color: #333; max-width: 650px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
                     <div style="background-color: #db3e41; color: #ffffff; padding: 25px 20px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Chiro Vreugdeland Meeuwen</h1>
+                        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">${orgFullName}</h1>
                         <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Inschrijving Bevestiging</p>
                     </div>
                     <div style="padding: 30px; line-height: 1.6; font-size: 15px; color: #2d3748;">
                         ${formattedEmailBody}
                     </div>
                     <div style="background-color: #f7fafc; padding: 20px; text-align: center; border-top: 1px solid #edf2f7; font-size: 12px; color: #718096;">
-                        <p style="margin: 0;">Dit is een automatisch bericht van Chiro Vreugdeland Meeuwen.</p>
-                        <p style="margin: 5px 0 0 0;"><a href="${process.env.APP_URL || 'https://www.chiromeeuwen.be'}" style="color: #db3e41; text-decoration: none; font-weight: bold;">www.chiromeeuwen.be</a></p>
+                        <p style="margin: 0;">Dit is een automatisch bericht van ${orgFullName}.</p>
+                        <p style="margin: 5px 0 0 0;"><a href="${appUrl}" style="color: #db3e41; text-decoration: none; font-weight: bold;">${appUrl.replace(/^https?:\/\//, '')}</a></p>
                     </div>
                 </div>
             `;
@@ -488,8 +510,8 @@ exports.postRegister = async (req, res) => {
         }
 
         res.render('public/register_success', { 
-            title: 'Inschrijving Ontvangen - Chiro Vreugdeland', 
-            description: 'Je inschrijving bij Chiro Vreugdeland is succesvol ontvangen.',
+            title: `Inschrijving Ontvangen - ${orgName}`, 
+            description: `Je inschrijving bij ${orgName} is succesvol ontvangen.`,
             registration: payload,
             formattedSuccessText,
             emailSent,
@@ -514,8 +536,8 @@ exports.postRegister = async (req, res) => {
         }
 
         res.render('public/register', { 
-            title: 'Inschrijven bij Chiro Vreugdeland', 
-            description: 'Schrijf jezelf of je kind in voor het nieuwe Chirojaar. Alle groepen zijn welkom!',
+            title: `Inschrijven bij ${orgName}`, 
+            description: 'Schrijf jezelf of je kind in voor het nieuwe werkjaar. Alle groepen zijn welkom!',
             content, 
             isRegistrationOpen,
             error: errorMessage 
@@ -523,25 +545,39 @@ exports.postRegister = async (req, res) => {
     }
 };
 
-const SettingsService = require('../services/SettingsService');
+const isCaptchaEnabled = () => {
+    if (process.env.SKIP_CAPTCHA === 'true') return false;
+    if (process.env.NODE_ENV !== 'production' && process.env.ENABLE_CAPTCHA_IN_DEV !== 'true') return false;
+    const secret = process.env.RECAPTCHA_SECRET_KEY;
+    const siteKey = process.env.RECAPTCHA_SITE_KEY;
+    if (!secret || !siteKey || secret.includes('your_') || siteKey.includes('your_')) return false;
+    return true;
+};
 
 exports.getContact = (req, res) => {
+    const { orgFullName } = getOrgConfig();
+    const captchaEnabled = isCaptchaEnabled();
     res.render('public/contact', { 
-        title: 'Contact - Chiro Vreugdeland Meeuwen', 
-        description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen. Stel je vragen of geef feedback.',
+        title: `Contact - ${orgFullName}`, 
+        description: `Contacteer de leiding van ${orgFullName}. Stel je vragen of geef feedback.`,
         contactFormDisabled: SettingsService.get('disable_contact_form'),
-        recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY
+        recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null,
+        captchaEnabled
     });
 };
 
 exports.postContact = async (req, res) => {
+    const { orgFullName, contactEmail } = getOrgConfig();
+    const captchaEnabled = isCaptchaEnabled();
+
     if (SettingsService.get('disable_contact_form')) {
         return res.render('public/contact', { 
-            title: 'Contact - Chiro Vreugdeland Meeuwen', 
-            description: 'Contacteer de leiding van Chiro Vreugdeland Meeuwen. Stel je vragen of geef feedback.',
+            title: `Contact - ${orgFullName}`, 
+            description: `Contacteer de leiding van ${orgFullName}. Stel je vragen of geef feedback.`,
             contactFormDisabled: true, 
             error: 'Deze functie is tijdelijk nog niet beschikbaar',
-            recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY
+            recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null,
+            captchaEnabled
         });
     }
 
@@ -551,35 +587,49 @@ exports.postContact = async (req, res) => {
     // Honeypot check: if 'website' is filled, it's likely a bot.
     if (website) {
         console.log(`Spam detected: Honeypot filled by ${email}`);
-        return res.render('public/contact', { title: 'Contact', success: true, recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY });
+        return res.render('public/contact', { title: 'Contact', success: true, recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null, captchaEnabled });
     }
 
-    // reCAPTCHA v3 verification
-    if (!recaptchaResponse) {
-        return res.render('public/contact', { 
-            title: 'Contact', 
-            error: 'Er is een fout opgetreden bij de spam-check. Probeer het opnieuw.',
-            recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY 
-        });
-    }
-
-    try {
-        const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaResponse}`;
-        const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
-        const recaptchaJson = await recaptchaRes.json();
-
-        // Check success and score (0.0 - 1.0). Threshold 0.5 is standard.
-        if (!recaptchaJson.success || recaptchaJson.score < 0.5) {
-            console.log(`Spam blocked: reCAPTCHA score ${recaptchaJson.score} for ${email}`);
+    // reCAPTCHA v3 verification (only in production or when explicitly enabled)
+    if (captchaEnabled) {
+        if (!recaptchaResponse) {
             return res.render('public/contact', { 
                 title: 'Contact', 
-                error: 'Ons systeem vermoedt dat dit bericht spam is. Probeer het later opnieuw of stuur een mail via je eigen mailprogramma.',
-                recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY 
+                error: 'Er is een fout opgetreden bij de spam-check. Probeer het opnieuw.',
+                recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
+                captchaEnabled: true
             });
         }
 
+        try {
+            const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaResponse}`;
+            const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
+            const recaptchaJson = await recaptchaRes.json();
+
+            // Check success and score (0.0 - 1.0). Threshold 0.5 is standard.
+            if (!recaptchaJson.success || recaptchaJson.score < 0.5) {
+                console.log(`Spam blocked: reCAPTCHA score ${recaptchaJson.score} for ${email}`);
+                return res.render('public/contact', { 
+                    title: 'Contact', 
+                    error: 'Ons systeem vermoedt dat dit bericht spam is. Probeer het later opnieuw of stuur een mail via je eigen mailprogramma.',
+                    recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
+                    captchaEnabled: true
+                });
+            }
+        } catch (captchaErr) {
+            console.error('Captcha verification error:', captchaErr);
+            return res.render('public/contact', { 
+                title: 'Contact', 
+                error: 'Er ging iets mis bij de verificatie. Probeer het later opnieuw.',
+                recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
+                captchaEnabled: true
+            });
+        }
+    }
+
+    try {
         await sendMail({
-            to: process.env.CONTACT_EMAIL || 'Chiromeeuwen@outlook.com',
+            to: contactEmail,
             replyTo: email,
             subject: `Nieuw bericht van ${name} via Website`,
             text: `Naam: ${name}\nEmail: ${email}\n\nBericht:\n${message}`,
@@ -589,32 +639,35 @@ exports.postContact = async (req, res) => {
                    <p>${message.replace(/\n/g, '<br>')}</p>`
         });
         
-        res.render('public/contact', { title: 'Contact', success: true, recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY });
+        res.render('public/contact', { title: 'Contact', success: true, recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null, captchaEnabled });
     } catch (error) {
-        console.error('Email/Captcha error:', error);
-        res.render('public/contact', { title: 'Contact', error: 'Er ging iets mis bij het versturen. Probeer het later opnieuw.', recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY });
+        console.error('Email error:', error);
+        res.render('public/contact', { title: 'Contact', error: 'Er ging iets mis bij het versturen. Probeer het later opnieuw.', recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null, captchaEnabled });
     }
 };
 
 exports.getHelp = (req, res) => {
+    const { orgFullName } = getOrgConfig();
     res.render('public/notifications_help', { 
-        title: 'Hulp & Informatie - Chiro Vreugdeland Meeuwen', 
-        description: 'Alles wat je moet weten over het gebruik van de Chiro website, van kalender-sync tot meldingen.'
+        title: `Hulp & Informatie - ${orgFullName}`, 
+        description: 'Alles wat je moet weten over het gebruik van de website, van kalender-sync tot meldingen.'
     });
 };
 
 exports.getCalendarHelp = (req, res) => {
+    const { orgFullName } = getOrgConfig();
     const hasLeidingCalendar = req.user && req.user.isActive !== false && req.user.role !== 'kookmoeke' && req.user.calendarToken;
     const calendarUrl = `${req.protocol}://${req.get('host')}/kalender/subscribe.ics${hasLeidingCalendar ? '?token=' + req.user.calendarToken : ''}`;
     res.render('public/calendar_help', {
-        title: 'Kalender Koppelen - Chiro Vreugdeland Meeuwen',
-        description: 'Stappenplan om de Chiro-kalender toe te voegen aan je iPhone, Android of Google Calendar.',
+        title: `Kalender Koppelen - ${orgFullName}`,
+        description: 'Stappenplan om de kalender toe te voegen aan je iPhone, Android of Google Calendar.',
         calendarUrl
     });
 };
 
 exports.getRobotsTxt = (req, res) => {
-    const content = `# Robots.txt for Chiro Vreugdeland Meeuwen
+    const { orgFullName, appUrl } = getOrgConfig();
+    const content = `# Robots.txt for ${orgFullName}
 # Allow search engines to crawl public content
 
 User-agent: *
@@ -636,13 +689,14 @@ User-agent: AhrefsBot
 User-agent: SemrushBot
 Disallow: /
 
-Sitemap: https://www.chiromeeuwen.be/sitemap.xml
+Sitemap: ${appUrl}/sitemap.xml
 `;
     res.type('text/plain').send(content);
 };
 
 exports.getSitemapXml = (req, res) => {
-    const baseUrl = 'https://www.chiromeeuwen.be';
+    const { appUrl } = getOrgConfig();
+    const baseUrl = appUrl;
     const lastmod = new Date().toISOString().split('T')[0];
     const urls = [
         { loc: '/', changefreq: 'weekly', priority: '1.0', lastmod },
@@ -667,6 +721,43 @@ exports.getSitemapXml = (req, res) => {
         `
 </urlset>`;
     res.type('application/xml').send(xml);
+};
+
+exports.getManifestJson = (req, res) => {
+    const { orgName, orgFullName, orgLocation } = getOrgConfig();
+    const manifest = {
+        name: orgFullName,
+        short_name: orgName,
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        background_color: '#fdfbf7',
+        theme_color: '#db3e41',
+        description: `De jeugdbeweging in ${orgLocation} voor kinderen van alle leeftijden. Elke zondag activiteiten, spel en vriendschap.`,
+        categories: ['lifestyle', 'social'],
+        icons: [
+            {
+                src: 'favicon.png',
+                sizes: '180x180',
+                type: 'image/png',
+                purpose: 'any'
+            },
+            {
+                src: 'favicon.png',
+                sizes: '192x192',
+                type: 'image/png',
+                purpose: 'maskable'
+            }
+        ],
+        screenshots: [
+            {
+                src: 'og-image.png',
+                sizes: '1200x630',
+                type: 'image/png'
+            }
+        ]
+    };
+    res.json(manifest);
 };
 
 exports.downloadFile = (req, res) => {
