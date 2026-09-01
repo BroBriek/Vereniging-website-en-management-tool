@@ -38,7 +38,31 @@ exports.postLogin = (req, res, next) => {
   })(req, res, next);
 };
 
-exports.logout = (req, res, next) => {
+exports.logout = async (req, res, next) => {
+  // Remove the current device's push subscription before destroying the session.
+  // This prevents notifications for this user from arriving on a device that is
+  // now being used by a different person (shared-device / mobile scenario).
+  if (req.user) {
+    try {
+      const endpoint = req.query.pushEndpoint || null;
+      if (endpoint) {
+        const { User } = require('../models');
+        const user = await User.findByPk(req.user.id);
+        if (user && user.pushSubscriptions && Array.isArray(user.pushSubscriptions)) {
+          const filtered = user.pushSubscriptions.filter(s => s.endpoint !== endpoint);
+          if (filtered.length !== user.pushSubscriptions.length) {
+            user.pushSubscriptions = filtered;
+            user.changed('pushSubscriptions', true);
+            await user.save();
+            console.log(`Auth: Removed push subscription for ${user.username} on logout`);
+          }
+        }
+      }
+    } catch (cleanupErr) {
+      console.error('Push cleanup on logout error:', cleanupErr);
+    }
+  }
+
   req.logout((err) => {
     if (err) { return next(err); }
     res.redirect('/');

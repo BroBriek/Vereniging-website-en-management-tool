@@ -134,6 +134,32 @@ exports.subscribePush = async (req, res) => {
     const user = await User.findByPk(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
+    // SECURITY FIX: Remove this push endpoint from ALL other users first.
+    // On shared/mobile devices the browser returns the same push subscription endpoint
+    // regardless of which user is logged in. Without this cleanup, notifications meant
+    // for a previous user would still be delivered to the device, causing users to
+    // appear "logged into" the wrong account when clicking a push notification.
+    try {
+      const otherUsers = await User.findAll({
+        where: { id: { [require('sequelize').Op.ne]: user.id } }
+      });
+      for (const otherUser of otherUsers) {
+        let otherSubs = otherUser.pushSubscriptions;
+        if (otherSubs && Array.isArray(otherSubs)) {
+          const filtered = otherSubs.filter(s => s.endpoint !== subscription.endpoint);
+          if (filtered.length !== otherSubs.length) {
+            otherUser.pushSubscriptions = filtered;
+            otherUser.changed('pushSubscriptions', true);
+            await otherUser.save();
+            console.log(`NotificationService: Transferred push endpoint from user ${otherUser.username} to ${user.username} (shared device)`);
+          }
+        }
+      }
+    } catch (cleanupErr) {
+      // Non-fatal: log and continue with saving the subscription for the current user
+      console.error('Push subscription cross-user cleanup error:', cleanupErr);
+    }
+
     let subscriptions = user.pushSubscriptions || [];
     
     // Ensure it is an array (in case of legacy data issues)
@@ -141,7 +167,7 @@ exports.subscribePush = async (req, res) => {
         subscriptions = [];
     }
 
-    // Check if subscription already exists
+    // Check if subscription already exists for this user
     const exists = subscriptions.find(s => s.endpoint === subscription.endpoint);
     
     if (!exists) {

@@ -34,22 +34,35 @@ self.addEventListener('push', function(event) {
 
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  const urlToOpen = event.notification.data.url || '/feed';
+  var urlToOpen = event.notification.data.url || '/feed';
 
   event.waitUntil(
     clients.matchAll({
       type: 'window',
       includeUncontrolled: true
     }).then(function(clientList) {
-      // Check if there is already a window/tab open with the target URL
+      // Resolve relative URL to absolute for proper comparison with client.url
+      var absoluteUrl = new URL(urlToOpen, self.location.origin).href;
+
+      // 1. Try to find an existing tab already on the target URL and focus it
       for (var i = 0; i < clientList.length; i++) {
         var client = clientList[i];
-        if (client.url === urlToOpen && 'focus' in client) {
+        if (client.url === absoluteUrl && 'focus' in client) {
           return client.focus();
         }
       }
+
+      // 2. Try to navigate an existing same-origin tab to the URL (avoids piling up tabs on mobile)
+      for (var j = 0; j < clientList.length; j++) {
+        var existingClient = clientList[j];
+        if (existingClient.url.startsWith(self.location.origin) && 'navigate' in existingClient) {
+          return existingClient.navigate(absoluteUrl).then(function(c) { return c.focus(); });
+        }
+      }
+
+      // 3. No existing tab found – open a new window
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(absoluteUrl);
       }
     })
   );

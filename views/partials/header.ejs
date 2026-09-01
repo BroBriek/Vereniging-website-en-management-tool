@@ -331,6 +331,29 @@
         navigator.serviceWorker.register('/sw.js').catch(function(){});
     }
 
+    // Intercept logout to pass the current push endpoint so the server can clean it up.
+    // This prevents push notifications from arriving for a logged-out user on shared devices.
+    document.addEventListener('DOMContentLoaded', function() {
+        var logoutLinks = document.querySelectorAll('a[href="/auth/logout"]');
+        logoutLinks.forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+                e.preventDefault();
+                navigator.serviceWorker.ready.then(function(reg) {
+                    return reg.pushManager.getSubscription();
+                }).then(function(sub) {
+                    if (sub && sub.endpoint) {
+                        window.location.href = '/auth/logout?pushEndpoint=' + encodeURIComponent(sub.endpoint);
+                    } else {
+                        window.location.href = '/auth/logout';
+                    }
+                }).catch(function() {
+                    window.location.href = '/auth/logout';
+                });
+            });
+        });
+    });
+
     // Set current user data for JavaScript
     window.currentUser = {
         id: <%= user ? user.id : 'null' %>,
