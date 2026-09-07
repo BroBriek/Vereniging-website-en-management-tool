@@ -127,6 +127,10 @@ class MigrationService {
                     await sequelize.query('ALTER TABLE Registrations ADD COLUMN paymentMethod TEXT;');
                     console.log('Added Registrations.paymentMethod');
                 }
+                if (!await columnExists('Registrations', 'customAnswers')) {
+                    await sequelize.query('ALTER TABLE Registrations ADD COLUMN customAnswers TEXT;');
+                    console.log('Added Registrations.customAnswers');
+                }
             } catch (registrationsErr) {
                 console.error('Error migrating Registrations table schema:', registrationsErr);
             }

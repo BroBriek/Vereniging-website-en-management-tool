@@ -175,6 +175,360 @@
                 </div>
             </div>
         </div>
+
+        <div class="mt-4 pt-3 border-top d-flex justify-content-end mb-5">
+            <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow">
+                <i class="bi bi-check-lg me-2"></i>Pagina Teksten Opslaan
+            </button>
+        </div>
+</form>
+
+        <!-- Section 4: Formulier Velden Aanpassen -->
+        <% if (formConfig) { %>
+        <form action="/admin/register-form-config" method="POST" id="formConfigForm">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                    <h4 class="fw-bold mb-0" style="color: var(--chiro-primary, #db3e41);">
+                        <i class="bi bi-sliders me-2"></i>Formulier Velden Aanpassen
+                    </h4>
+                    <p class="text-muted small mb-0 mt-1">Pas de labels, placeholders en teksten aan van alle velden in het inschrijvingsformulier. De standaardwaarden worden getoond als voorbeeld.</p>
+                </div>
+                <div class="card-body p-4">
+
+                    <!-- Rolkeuze -->
+                    <h6 class="fw-bold text-secondary mb-3 border-bottom pb-2"><i class="bi bi-person-check me-1"></i> Rolkeuze</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Label boven rolkeuze</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="roleLabel" value="<%= formConfig.labels.roleLabel %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Optie "Lid"</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="roleLid" value="<%= formConfig.labels.roleLid %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Optie "Leiding"</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="roleLeiding" value="<%= formConfig.labels.roleLeiding %>">
+                        </div>
+                    </div>
+
+                    <!-- Persoonsgegevens -->
+                    <h6 class="fw-bold text-secondary mb-3 border-bottom pb-2"><i class="bi bi-person me-1"></i> Persoonsgegevens</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Label voornaam</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="firstName" value="<%= formConfig.labels.firstName %>">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Placeholder voornaam</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="firstNamePlaceholder" value="<%= formConfig.labels.firstNamePlaceholder %>">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Label achternaam</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="lastName" value="<%= formConfig.labels.lastName %>">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Placeholder achternaam</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="lastNamePlaceholder" value="<%= formConfig.labels.lastNamePlaceholder %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Label geboortedatum</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="birthdate" value="<%= formConfig.labels.birthdate %>">
+                        </div>
+                    </div>
+
+                    <!-- Contactgegevens -->
+                    <h6 class="fw-bold text-secondary mb-3 border-bottom pb-2"><i class="bi bi-telephone me-1"></i> Contactgegevens</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Email label (lid)</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="emailLid" value="<%= formConfig.labels.emailLid %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Email label (leiding)</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="emailLeiding" value="<%= formConfig.labels.emailLeiding %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Email placeholder</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="emailPlaceholder" value="<%= formConfig.labels.emailPlaceholder %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Telefoon label (lid)</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="phoneLid" value="<%= formConfig.labels.phoneLid %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Telefoon label (leiding)</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="phoneLeiding" value="<%= formConfig.labels.phoneLeiding %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Telefoon placeholder</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="phonePlaceholder" value="<%= formConfig.labels.phonePlaceholder %>">
+                        </div>
+                    </div>
+
+                    <!-- Lid-specifieke velden -->
+                    <h6 class="fw-bold text-secondary mb-3 border-bottom pb-2"><i class="bi bi-people me-1"></i> Lid-specifieke velden</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Label namen ouders/voogd</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="parentsNames" value="<%= formConfig.labels.parentsNames %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Placeholder namen ouders</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="parentsNamesPlaceholder" value="<%= formConfig.labels.parentsNamesPlaceholder %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Label GSM lid</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="memberPhone" value="<%= formConfig.labels.memberPhone %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Placeholder GSM lid</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="memberPhonePlaceholder" value="<%= formConfig.labels.memberPhonePlaceholder %>">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold">Foto toestemming vraag</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="photoPermissionLabel" value="<%= formConfig.labels.photoPermissionLabel %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Optie "Ja"</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="photoYes" value="<%= formConfig.labels.photoYes %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Optie "Nee"</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="photoNo" value="<%= formConfig.labels.photoNo %>">
+                        </div>
+                    </div>
+
+                    <!-- Groep & Betaling -->
+                    <h6 class="fw-bold text-secondary mb-3 border-bottom pb-2"><i class="bi bi-wallet2 me-1"></i> Groep & Betaling</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Label groepskeuze</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="groupLabel" value="<%= formConfig.labels.groupLabel %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Placeholder groepskeuze</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="groupPlaceholder" value="<%= formConfig.labels.groupPlaceholder %>">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold">Label betaalvraag</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="paymentLabel" value="<%= formConfig.labels.paymentLabel %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Betaaloptie 1</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="paymentOption1" value="<%= formConfig.labels.paymentOption1 %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Betaaloptie 2</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="paymentOption2" value="<%= formConfig.labels.paymentOption2 %>">
+                        </div>
+                    </div>
+
+                    <!-- Extra & Knop -->
+                    <h6 class="fw-bold text-secondary mb-3 border-bottom pb-2"><i class="bi bi-chat-text me-1"></i> Extra & Knop</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Label extra info</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="medicalInfoLabel" value="<%= formConfig.labels.medicalInfoLabel %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Placeholder extra info</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="medicalInfoPlaceholder" value="<%= formConfig.labels.medicalInfoPlaceholder %>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Knop tekst</label>
+                            <input type="text" class="form-control form-control-sm" data-label-key="submitButton" value="<%= formConfig.labels.submitButton %>">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Extra Vragen -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                    <h4 class="fw-bold mb-0 text-info">
+                        <i class="bi bi-plus-circle me-2"></i>Extra Vragen
+                    </h4>
+                    <p class="text-muted small mb-0 mt-1">Voeg extra vragen toe aan het inschrijvingsformulier. Deze verschijnen onderaan, vóór de privacy-checkbox.</p>
+                </div>
+                <div class="card-body p-4">
+                    <div id="customQuestionsContainer">
+                        <% if (formConfig.customQuestions && formConfig.customQuestions.length > 0) { %>
+                            <% formConfig.customQuestions.forEach((q, idx) => { %>
+                                <div class="custom-question-item card border rounded-3 p-3 mb-3" data-question-id="<%= q.id %>">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-info text-white">Vraag <span class="cq-number"><%= idx + 1 %></span></span>
+                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 remove-question-btn" title="Verwijder vraag">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Vraag / Label</label>
+                                            <input type="text" class="form-control form-control-sm cq-label" value="<%= q.label %>" placeholder="Bijv. Heb je nog bijzondere wensen?" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small fw-bold">Type antwoord</label>
+                                            <select class="form-select form-select-sm cq-type">
+                                                <option value="text" <%= q.type === 'text' ? 'selected' : '' %>>Kort tekstveld</option>
+                                                <option value="textarea" <%= q.type === 'textarea' ? 'selected' : '' %>>Lang tekstveld</option>
+                                                <option value="radio" <%= q.type === 'radio' ? 'selected' : '' %>>Ja / Nee</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 d-flex align-items-end gap-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input cq-required" type="checkbox" id="cqReq<%= idx %>" <%= q.required ? 'checked' : '' %>>
+                                                <label class="form-check-label small" for="cqReq<%= idx %>">Verplicht</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 cq-placeholder-wrapper" style="<%= q.type === 'radio' ? 'display:none' : '' %>">
+                                            <label class="form-label small fw-bold">Placeholder</label>
+                                            <input type="text" class="form-control form-control-sm cq-placeholder" value="<%= q.placeholder || '' %>" placeholder="Optioneel...">
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } %>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-info rounded-pill px-4" id="addQuestionBtn">
+                        <i class="bi bi-plus-lg me-1"></i>Nieuwe Vraag Toevoegen
+                    </button>
+
+                    <div class="alert alert-light border rounded-3 mt-3 small">
+                        <i class="bi bi-info-circle text-info me-1"></i>
+                        Antwoorden op extra vragen worden opgeslagen bij de inschrijving en zijn zichtbaar in de inschrijvingsdetails en Excel-export.
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" name="formConfigJson" id="formConfigJsonInput">
+
+            <div class="mt-3 pt-3 border-top d-flex justify-content-end">
+                <button type="submit" class="btn btn-info text-white btn-lg rounded-pill px-5 shadow" id="saveFormConfigBtn">
+                    <i class="bi bi-sliders me-2"></i>Formulier Instellingen Opslaan
+                </button>
+            </div>
+        </form>
+
+        <script>
+        (function() {
+            const container = document.getElementById('customQuestionsContainer');
+            const addBtn = document.getElementById('addQuestionBtn');
+            const form = document.getElementById('formConfigForm');
+            const jsonInput = document.getElementById('formConfigJsonInput');
+            let questionCounter = container.querySelectorAll('.custom-question-item').length;
+
+            function generateId() {
+                return 'cq_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            }
+
+            function renumberQuestions() {
+                const items = container.querySelectorAll('.custom-question-item');
+                items.forEach((item, idx) => {
+                    const numSpan = item.querySelector('.cq-number');
+                    if (numSpan) numSpan.textContent = idx + 1;
+                });
+            }
+
+            function addQuestion(data) {
+                questionCounter++;
+                const id = (data && data.id) || generateId();
+                const div = document.createElement('div');
+                div.className = 'custom-question-item card border rounded-3 p-3 mb-3';
+                div.dataset.questionId = id;
+                const reqId = 'cqReqNew' + questionCounter;
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-info text-white">Vraag <span class="cq-number">${questionCounter}</span></span>
+                        <button type="button" class="btn btn-sm btn-outline-danger border-0 remove-question-btn" title="Verwijder vraag">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Vraag / Label</label>
+                            <input type="text" class="form-control form-control-sm cq-label" value="${data ? data.label : ''}" placeholder="Bijv. Heb je nog bijzondere wensen?" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Type antwoord</label>
+                            <select class="form-select form-select-sm cq-type">
+                                <option value="text" ${data && data.type === 'text' ? 'selected' : ''}>Kort tekstveld</option>
+                                <option value="textarea" ${data && data.type === 'textarea' ? 'selected' : ''}>Lang tekstveld</option>
+                                <option value="radio" ${data && data.type === 'radio' ? 'selected' : ''}>Ja / Nee</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input cq-required" type="checkbox" id="${reqId}" ${data && data.required ? 'checked' : ''}>
+                                <label class="form-check-label small" for="${reqId}">Verplicht</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 cq-placeholder-wrapper" style="${data && data.type === 'radio' ? 'display:none' : ''}">
+                            <label class="form-label small fw-bold">Placeholder</label>
+                            <input type="text" class="form-control form-control-sm cq-placeholder" value="${data ? (data.placeholder || '') : ''}" placeholder="Optioneel...">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+                bindQuestionEvents(div);
+                renumberQuestions();
+            }
+
+            function bindQuestionEvents(item) {
+                const removeBtn = item.querySelector('.remove-question-btn');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', function() {
+                        if (confirm('Weet je zeker dat je deze vraag wilt verwijderen?')) {
+                            item.remove();
+                            renumberQuestions();
+                        }
+                    });
+                }
+                const typeSelect = item.querySelector('.cq-type');
+                if (typeSelect) {
+                    typeSelect.addEventListener('change', function() {
+                        const placeholderWrapper = item.querySelector('.cq-placeholder-wrapper');
+                        if (placeholderWrapper) {
+                            placeholderWrapper.style.display = this.value === 'radio' ? 'none' : '';
+                        }
+                    });
+                }
+            }
+
+            // Bind events on existing questions
+            container.querySelectorAll('.custom-question-item').forEach(bindQuestionEvents);
+
+            addBtn.addEventListener('click', function() {
+                addQuestion(null);
+            });
+
+            // Before form submit, serialize config to JSON
+            form.addEventListener('submit', function(e) {
+                const labels = {};
+                document.querySelectorAll('[data-label-key]').forEach(input => {
+                    labels[input.dataset.labelKey] = input.value;
+                });
+
+                const customQuestions = [];
+                container.querySelectorAll('.custom-question-item').forEach(item => {
+                    const label = item.querySelector('.cq-label').value.trim();
+                    if (!label) return; // skip empty
+                    customQuestions.push({
+                        id: item.dataset.questionId,
+                        label: label,
+                        type: item.querySelector('.cq-type').value,
+                        required: item.querySelector('.cq-required').checked,
+                        placeholder: (item.querySelector('.cq-placeholder') ? item.querySelector('.cq-placeholder').value.trim() : '')
+                    });
+                });
+
+                const config = { labels, customQuestions };
+                jsonInput.value = JSON.stringify(config);
+            });
+        })();
+        </script>
+        <% } %>
     <% } else { %>
         <div class="mb-3">
             <label class="form-label">Hoofdtekst (HTML toegestaan)</label>
@@ -182,10 +536,12 @@
         </div>
     <% } %>
     
-    <div class="mt-4 pt-3 border-top d-flex justify-content-end">
-        <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow">
-            <i class="bi bi-check-lg me-2"></i>Wijzigingen Opslaan
-        </button>
-    </div>
-</form>
+    <% if (slug !== 'register') { %>
+        <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+            <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 shadow">
+                <i class="bi bi-check-lg me-2"></i>Wijzigingen Opslaan
+            </button>
+        </div>
+    </form>
+    <% } %>
 <%- include('../partials/footer') %>

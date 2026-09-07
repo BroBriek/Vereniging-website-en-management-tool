@@ -65,6 +65,10 @@ const Registration = sequelize.define('Registration', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  customAnswers: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   period: {
     type: DataTypes.STRING,
     allowNull: true

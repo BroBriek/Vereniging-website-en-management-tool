@@ -99,6 +99,27 @@
                             <label class="form-check-label" for="photoPermission">Toestemming voor foto's</label>
                         </div>
 
+                        <% if (registration.customAnswers) { %>
+                            <%
+                                let parsedAnswers = {};
+                                try { parsedAnswers = typeof registration.customAnswers === 'string' ? JSON.parse(registration.customAnswers) : registration.customAnswers; } catch(e) {}
+                                // Build a label map from formConfig
+                                const questionLabels = {};
+                                if (typeof formConfig !== 'undefined' && formConfig && formConfig.customQuestions) {
+                                    formConfig.customQuestions.forEach(q => { questionLabels[q.id] = q.label; });
+                                }
+                            %>
+                            <% if (Object.keys(parsedAnswers).length > 0) { %>
+                                <h5 class="mb-3 text-primary mt-4">Extra Vragen</h5>
+                                <% for (const [qId, answer] of Object.entries(parsedAnswers)) { %>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold"><%= questionLabels[qId] || qId %></label>
+                                        <input type="text" class="form-control bg-light" value="<%= answer %>" readonly>
+                                    </div>
+                                <% } %>
+                            <% } %>
+                        <% } %>
+
                         <div class="d-flex justify-content-between mt-4">
                             <a href="/admin/registrations" class="btn btn-secondary">Annuleren</a>
                             <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Opslaan</button>

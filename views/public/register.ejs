@@ -10,6 +10,15 @@
         <% } %>
     </div>
 
+    <%
+        // Safely get form config with defaults
+        const fc = (typeof formConfig !== 'undefined' && formConfig) ? formConfig : null;
+        const labels = fc ? fc.labels : {};
+        const customQuestions = (fc && fc.customQuestions) ? fc.customQuestions : [];
+        // Helper to get label with fallback
+        const L = (key, fallback) => (labels[key] || fallback);
+    %>
+
     <!-- Top Info Text -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4 p-md-5">
@@ -18,20 +27,26 @@
                 <div class="fs-5"><%- topText %></div>
             <% } %>
 
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger mt-3 rounded-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i><%= error %>
+                </div>
+            <% } %>
+
             <% if (isRegistrationOpen) { %>
                 <form action="/inschrijven" method="POST" class="mt-4" id="registrationForm">
                     
                     <!-- Role Selection -->
                     <div class="mb-5 p-4 border-0 rounded-4 bg-light shadow-inner">
-                        <label class="form-label fw-bold text-primary mb-3">Ik schrijf in als:</label>
+                        <label class="form-label fw-bold text-primary mb-3"><%= L('roleLabel', 'Ik schrijf in als:') %></label>
                         <div class="d-flex gap-4">
                             <div class="form-check custom-option">
                                 <input class="form-check-input" type="radio" name="type" id="roleLid" value="lid" checked>
-                                <label class="form-check-label fw-bold" for="roleLid">Lid</label>
+                                <label class="form-check-label fw-bold" for="roleLid"><%= L('roleLid', 'Lid') %></label>
                             </div>
                             <div class="form-check custom-option">
                                 <input class="form-check-input" type="radio" name="type" id="roleLeiding" value="leiding">
-                                <label class="form-check-label fw-bold" for="roleLeiding">Leiding</label>
+                                <label class="form-check-label fw-bold" for="roleLeiding"><%= L('roleLeiding', 'Leiding') %></label>
                             </div>
                         </div>
                     </div>
@@ -39,55 +54,55 @@
                     <div class="row g-4">
                         <!-- First Name -->
                         <div class="col-md-6">
-                            <label for="firstName" class="form-label fw-bold">Voornaam</label>
-                            <input type="text" class="form-control" id="firstName" name="firstName" required placeholder="Bijv. Pluk">
+                            <label for="firstName" class="form-label fw-bold"><%= L('firstName', 'Voornaam') %></label>
+                            <input type="text" class="form-control" id="firstName" name="firstName" required placeholder="<%= L('firstNamePlaceholder', 'Bijv. Pluk') %>">
                         </div>
                         <!-- Last Name -->
                         <div class="col-md-6">
-                            <label for="lastName" class="form-label fw-bold">Achternaam</label>
-                            <input type="text" class="form-control" id="lastName" name="lastName" required placeholder="Bijv. Van De Petteflet">
+                            <label for="lastName" class="form-label fw-bold"><%= L('lastName', 'Achternaam') %></label>
+                            <input type="text" class="form-control" id="lastName" name="lastName" required placeholder="<%= L('lastNamePlaceholder', 'Bijv. Van De Petteflet') %>">
                         </div>
                     </div>
 
                     <div class="mt-4">
-                        <label for="birthdate" class="form-label fw-bold">Geboortedatum</label>
+                        <label for="birthdate" class="form-label fw-bold"><%= L('birthdate', 'Geboortedatum') %></label>
                         <input type="date" class="form-control" id="birthdate" name="birthdate" required>
                     </div>
 
                     <!-- Contact Info -->
                     <div class="row g-4 mt-2">
                         <div class="col-md-6">
-                            <label for="email" class="form-label fw-bold" id="labelEmail">Email Ouders</label>
-                            <input type="email" class="form-control" id="email" name="email" required placeholder="email@voorbeeld.be">
+                            <label for="email" class="form-label fw-bold" id="labelEmail"><%= L('emailLid', 'Email Ouders') %></label>
+                            <input type="email" class="form-control" id="email" name="email" required placeholder="<%= L('emailPlaceholder', 'email@voorbeeld.be') %>">
                         </div>
                         <div class="col-md-6">
-                            <label for="phone" class="form-label fw-bold" id="labelPhone">Telefoon Ouders</label>
-                            <input type="text" class="form-control" id="phone" name="parentsPhone" required placeholder="0470 00 00 00" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0470 12 34 56 of +31612345678">
+                            <label for="phone" class="form-label fw-bold" id="labelPhone"><%= L('phoneLid', 'Telefoon Ouders') %></label>
+                            <input type="text" class="form-control" id="phone" name="parentsPhone" required placeholder="<%= L('phonePlaceholder', '0470 00 00 00') %>" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0470 12 34 56 of +31612345678">
                         </div>
                     </div>
 
                     <!-- Member Specific Fields -->
                     <div id="memberFields" class="mt-4">
                         <div class="mb-4">
-                            <label for="parentsNames" class="form-label fw-bold">Namen Ouders/Voogd</label>
-                            <input type="text" class="form-control" id="parentsNames" name="parentsNames" placeholder="Bijv. Jan Klaassen en Marie Klaassen">
+                            <label for="parentsNames" class="form-label fw-bold"><%= L('parentsNames', 'Namen Ouders/Voogd') %></label>
+                            <input type="text" class="form-control" id="parentsNames" name="parentsNames" placeholder="<%= L('parentsNamesPlaceholder', 'Bijv. Jan Klaassen en Marie Klaassen') %>">
                         </div>
                         
                         <div class="mb-4">
-                            <label for="memberPhone" class="form-label fw-bold">GSM Nummer Lid (Optioneel)</label>
-                            <input type="text" class="form-control" id="memberPhone" name="memberPhone" placeholder="0475 00 00 00" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0475 12 34 56 of +31612345678">
+                            <label for="memberPhone" class="form-label fw-bold"><%= L('memberPhone', 'GSM Nummer Lid (Optioneel)') %></label>
+                            <input type="text" class="form-control" id="memberPhone" name="memberPhone" placeholder="<%= L('memberPhonePlaceholder', '0475 00 00 00') %>" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0475 12 34 56 of +31612345678">
                         </div>
 
                         <div class="mb-4 p-4 border rounded-4 bg-white border-2">
-                            <label class="form-label fw-bold text-primary mb-3">Mogen er foto's genomen en gepubliceerd worden van het lid?</label>
+                            <label class="form-label fw-bold text-primary mb-3"><%= L('photoPermissionLabel', "Mogen er foto's genomen en gepubliceerd worden van het lid?") %></label>
                             <div class="d-flex gap-4">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="photoPermission" id="photoYes" value="true" checked>
-                                    <label class="form-check-label" for="photoYes">Ja, tuurlijk!</label>
+                                    <label class="form-check-label" for="photoYes"><%= L('photoYes', 'Ja, tuurlijk!') %></label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="photoPermission" id="photoNo" value="false">
-                                    <label class="form-check-label" for="photoNo">Liever niet</label>
+                                    <label class="form-check-label" for="photoNo"><%= L('photoNo', 'Liever niet') %></label>
                                 </div>
                             </div>
                         </div>
@@ -95,9 +110,9 @@
 
                     <!-- Group Selection -->
                     <div class="mt-4" id="groupFields">
-                        <label for="group" class="form-label fw-bold">Groep</label>
+                        <label for="group" class="form-label fw-bold"><%= L('groupLabel', 'Groep') %></label>
                         <select class="form-select" id="groupInput" name="group" required>
-                            <option value="" disabled selected>Kies een groep...</option>
+                            <option value="" disabled selected><%= L('groupPlaceholder', 'Kies een groep...') %></option>
                             <option value="ribbel">Ribbels (1e en 2e leerjaar)</option>
                             <option value="speelclub">Speelclub (3e en 4e leerjaar)</option>
                             <option value="rakwi">Rakwi (5e en 6e leerjaar)</option>
@@ -109,18 +124,18 @@
 
                     <!-- Payment Method Selection -->
                     <div class="mt-4 p-4 border rounded-4 bg-white border-2">
-                        <label class="form-label fw-bold text-primary mb-3">Hoe wens je te betalen?</label>
+                        <label class="form-label fw-bold text-primary mb-3"><%= L('paymentLabel', 'Hoe wens je te betalen?') %></label>
                         <div class="d-flex flex-column gap-3">
                             <div class="form-check custom-option">
-                                <input class="form-check-input" type="radio" name="paymentMethod" id="payQr" value="Met QR code op de startdag" checked required>
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="payQr" value="<%= L('paymentOption1', 'Met QR code op de startdag') %>" checked required>
                                 <label class="form-check-label fw-bold" for="payQr">
-                                    Met QR code op de startdag
+                                    <%= L('paymentOption1', 'Met QR code op de startdag') %>
                                 </label>
                             </div>
                             <div class="form-check custom-option">
-                                <input class="form-check-input" type="radio" name="paymentMethod" id="payTransfer" value="Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt" required>
+                                <input class="form-check-input" type="radio" name="paymentMethod" id="payTransfer" value="<%= L('paymentOption2', 'Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt') %>" required>
                                 <label class="form-check-label fw-bold" for="payTransfer">
-                                    Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt
+                                    <%= L('paymentOption2', 'Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt') %>
                                 </label>
                             </div>
                         </div>
@@ -128,9 +143,42 @@
 
                     <!-- Extra Info -->
                     <div class="mt-4">
-                        <label for="medicalInfo" class="form-label fw-bold">Extra Info (Allergieën, medische info, etc.)</label>
-                        <textarea class="form-control" id="medicalInfo" name="medicalInfo" rows="4" placeholder="Zijn er zaken waar we rekening mee moeten houden?"></textarea>
+                        <label for="medicalInfo" class="form-label fw-bold"><%= L('medicalInfoLabel', 'Extra Info (Allergieën, medische info, etc.)') %></label>
+                        <textarea class="form-control" id="medicalInfo" name="medicalInfo" rows="4" placeholder="<%= L('medicalInfoPlaceholder', 'Zijn er zaken waar we rekening mee moeten houden?') %>"></textarea>
                     </div>
+
+                    <!-- Custom Questions -->
+                    <% if (customQuestions.length > 0) { %>
+                        <div class="mt-4">
+                            <% customQuestions.forEach(q => { %>
+                                <div class="mb-4">
+                                    <label for="custom_<%= q.id %>" class="form-label fw-bold">
+                                        <%= q.label %><% if (!q.required) { %> <span class="text-muted fw-normal">(Optioneel)</span><% } %>
+                                    </label>
+                                    <% if (q.type === 'textarea') { %>
+                                        <textarea class="form-control" id="custom_<%= q.id %>" name="custom_<%= q.id %>" rows="3" 
+                                            placeholder="<%= q.placeholder || '' %>"
+                                            <% if (q.required) { %>required<% } %>></textarea>
+                                    <% } else if (q.type === 'radio') { %>
+                                        <div class="d-flex gap-4 mt-1">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="custom_<%= q.id %>" id="custom_<%= q.id %>_yes" value="Ja" <% if (q.required) { %>required<% } %>>
+                                                <label class="form-check-label" for="custom_<%= q.id %>_yes">Ja</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="custom_<%= q.id %>" id="custom_<%= q.id %>_no" value="Nee">
+                                                <label class="form-check-label" for="custom_<%= q.id %>_no">Nee</label>
+                                            </div>
+                                        </div>
+                                    <% } else { %>
+                                        <input type="text" class="form-control" id="custom_<%= q.id %>" name="custom_<%= q.id %>" 
+                                            placeholder="<%= q.placeholder || '' %>"
+                                            <% if (q.required) { %>required<% } %>>
+                                    <% } %>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } %>
 
                     <div class="mt-5 mb-4 form-check bg-light p-3 rounded-3 ms-0">
                         <div class="ms-4">
@@ -141,7 +189,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-chiro w-100 py-3 fs-4 mt-2 shadow">Nu Inschrijven!</button>
+                    <button type="submit" class="btn btn-chiro w-100 py-3 fs-4 mt-2 shadow"><%= L('submitButton', 'Nu Inschrijven!') %></button>
                 </form>
             <% } else { %>
                 <div class="text-center py-5">
@@ -180,21 +228,27 @@
     const parentsNamesInput = document.getElementById('parentsNames');
     const groupInput = document.getElementById('groupInput');
 
+    // Store configurable labels for JS toggling
+    const emailLidLabel = '<%= L("emailLid", "Email Ouders").replace(/'/g, "\\'") %>';
+    const emailLeidingLabel = '<%= L("emailLeiding", "Email").replace(/'/g, "\\'") %>';
+    const phoneLidLabel = '<%= L("phoneLid", "Telefoon Ouders").replace(/'/g, "\\'") %>';
+    const phoneLeidingLabel = '<%= L("phoneLeiding", "Telefoon").replace(/'/g, "\\'") %>';
+
     function updateForm() {
         if (roleLid.checked) {
             memberFields.style.display = 'block';
             groupFields.style.display = 'block';
             groupInput.setAttribute('required', 'required');
-            labelEmail.innerText = 'Email Ouders';
-            labelPhone.innerText = 'Telefoon Ouders';
+            labelEmail.innerText = emailLidLabel;
+            labelPhone.innerText = phoneLidLabel;
             phoneInput.setAttribute('name', 'parentsPhone'); // Use parentsPhone field
             parentsNamesInput.setAttribute('required', 'required');
         } else {
             memberFields.style.display = 'none';
             groupFields.style.display = 'none';
             groupInput.removeAttribute('required');
-            labelEmail.innerText = 'Email';
-            labelPhone.innerText = 'Telefoon';
+            labelEmail.innerText = emailLeidingLabel;
+            labelPhone.innerText = phoneLeidingLabel;
             phoneInput.setAttribute('name', 'phone'); // Use generic phone field if backend supports or just map to parentsPhone and rename in backend?
             parentsNamesInput.removeAttribute('required');
         }

@@ -83,6 +83,7 @@ router.get('/info', ensureMedia, adminController.getInfo);
 // Page Content Editors
 router.get('/page/:page', ensureMedia, adminController.getEditPage);
 router.post('/page/:page', ensureMedia, upload.single('image'), compressGenericImage, adminController.postEditPage);
+router.post('/register-form-config', ensureMedia, adminController.postRegisterFormConfig);
 
 // Leader CRUD
 router.get('/leaders', ensureMedia, adminController.getLeaders);

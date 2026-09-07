@@ -10,6 +10,41 @@ const { sendMail } = require('../config/mailer');
 const PeriodService = require('../services/PeriodService');
 const SettingsService = require('../services/SettingsService');
 
+const DEFAULT_REGISTER_FORM_CONFIG = {
+    labels: {
+        roleLabel: 'Ik schrijf in als:',
+        roleLid: 'Lid',
+        roleLeiding: 'Leiding',
+        firstName: 'Voornaam',
+        firstNamePlaceholder: 'Bijv. Pluk',
+        lastName: 'Achternaam',
+        lastNamePlaceholder: 'Bijv. Van De Petteflet',
+        birthdate: 'Geboortedatum',
+        emailLid: 'Email Ouders',
+        emailLeiding: 'Email',
+        emailPlaceholder: 'email@voorbeeld.be',
+        phoneLid: 'Telefoon Ouders',
+        phoneLeiding: 'Telefoon',
+        phonePlaceholder: '0470 00 00 00',
+        parentsNames: 'Namen Ouders/Voogd',
+        parentsNamesPlaceholder: 'Bijv. Jan Klaassen en Marie Klaassen',
+        memberPhone: 'GSM Nummer Lid (Optioneel)',
+        memberPhonePlaceholder: '0475 00 00 00',
+        photoPermissionLabel: "Mogen er foto's genomen en gepubliceerd worden van het lid?",
+        photoYes: 'Ja, tuurlijk!',
+        photoNo: 'Liever niet',
+        groupLabel: 'Groep',
+        groupPlaceholder: 'Kies een groep...',
+        paymentLabel: 'Hoe wens je te betalen?',
+        paymentOption1: 'Met QR code op de startdag',
+        paymentOption2: 'Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt',
+        medicalInfoLabel: 'Extra Info (Allergieën, medische info, etc.)',
+        medicalInfoPlaceholder: 'Zijn er zaken waar we rekening mee moeten houden?',
+        submitButton: 'Nu Inschrijven!'
+    },
+    customQuestions: []
+};
+
 const getOrgConfig = () => {
     const orgName = process.env.ORG_NAME || process.env.ORGANIZATION_NAME || 'Chiro Vreugdeland';
     const orgLocation = process.env.ORG_LOCATION || 'Meeuwen';
@@ -357,11 +392,28 @@ exports.getRegister = async (req, res) => {
         const regState = await SystemState.findOne({ where: { key: 'is_registration_open' } });
         const isRegistrationOpen = regState ? regState.value === 'true' : true;
 
+        let formConfig;
+        try {
+            const state = await SystemState.findOne({ where: { key: 'register_form_config' } });
+            if (state && state.value) {
+                const saved = JSON.parse(state.value);
+                formConfig = {
+                    labels: { ...DEFAULT_REGISTER_FORM_CONFIG.labels, ...(saved.labels || {}) },
+                    customQuestions: saved.customQuestions || []
+                };
+            } else {
+                formConfig = JSON.parse(JSON.stringify(DEFAULT_REGISTER_FORM_CONFIG));
+            }
+        } catch (e) {
+            formConfig = JSON.parse(JSON.stringify(DEFAULT_REGISTER_FORM_CONFIG));
+        }
+
         res.render('public/register', {
             title: `Inschrijven bij ${orgName}`,
             description: `Schrijf jezelf of je kind in voor het nieuwe werkjaar. Alle groepen zijn welkom!`,
             content,
-            isRegistrationOpen
+            isRegistrationOpen,
+            formConfig
         });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
@@ -375,12 +427,29 @@ exports.postRegister = async (req, res) => {
     const isRegistrationOpen = regState ? regState.value === 'true' : true;
     
     try {
+        let formConfig;
+        try {
+            const configState = await SystemState.findOne({ where: { key: 'register_form_config' } });
+            if (configState && configState.value) {
+                const saved = JSON.parse(configState.value);
+                formConfig = {
+                    labels: { ...DEFAULT_REGISTER_FORM_CONFIG.labels, ...(saved.labels || {}) },
+                    customQuestions: saved.customQuestions || []
+                };
+            } else {
+                formConfig = JSON.parse(JSON.stringify(DEFAULT_REGISTER_FORM_CONFIG));
+            }
+        } catch (e) {
+            formConfig = JSON.parse(JSON.stringify(DEFAULT_REGISTER_FORM_CONFIG));
+        }
+
         if (!isRegistrationOpen) {
             return res.render('public/register', {
                 title: `Inschrijven bij ${orgName}`,
                 description: 'De inschrijvingen zijn gesloten.',
                 content,
                 isRegistrationOpen,
+                formConfig,
                 error: 'De inschrijvingsperiode is helaas gesloten.'
             });
         }
@@ -402,12 +471,26 @@ exports.postRegister = async (req, res) => {
             privacyAccepted: req.body.privacyAccepted === 'on' || req.body.privacyAccepted === 'true'
         };
 
+        // Collect custom question answers
+        const customAnswers = {};
+        if (formConfig.customQuestions && formConfig.customQuestions.length > 0) {
+            for (const q of formConfig.customQuestions) {
+                const fieldName = 'custom_' + q.id;
+                const answer = (req.body[fieldName] || '').trim();
+                if (answer) {
+                    customAnswers[q.id] = answer;
+                }
+            }
+        }
+        payload.customAnswers = Object.keys(customAnswers).length > 0 ? JSON.stringify(customAnswers) : null;
+
         // Basic validation for phone numbers if provided
         if (payload.parentsPhone && !PhoneService.isValidFormat(payload.parentsPhone)) {
              return res.render('public/register', {
                 title: `Inschrijven bij ${orgName}`,
                 content,
                 isRegistrationOpen,
+                formConfig,
                 error: 'Het telefoonnummer van de ouders is ongeldig. Gebruik bijv. 0470 12 34 56.'
             });
         }
@@ -416,6 +499,7 @@ exports.postRegister = async (req, res) => {
                 title: `Inschrijven bij ${orgName}`,
                 content,
                 isRegistrationOpen,
+                formConfig,
                 error: 'Het telefoonnummer is ongeldig. Gebruik bijv. 0470 12 34 56.'
             });
         }
@@ -424,6 +508,7 @@ exports.postRegister = async (req, res) => {
                 title: `Inschrijven bij ${orgName}`,
                 content,
                 isRegistrationOpen,
+                formConfig,
                 error: 'Het telefoonnummer van het lid is ongeldig. Gebruik bijv. 0470 12 34 56.'
             });
         }
@@ -435,6 +520,7 @@ exports.postRegister = async (req, res) => {
                 description: 'Schrijf jezelf of je kind in voor het nieuwe werkjaar. Alle groepen zijn welkom!',
                 content,
                 isRegistrationOpen,
+                formConfig,
                 error: 'Selecteer een geldige groep.'
             });
         }
@@ -445,6 +531,7 @@ exports.postRegister = async (req, res) => {
                 description: 'Schrijf jezelf of je kind in voor het nieuwe werkjaar. Alle groepen zijn welkom!',
                 content,
                 isRegistrationOpen,
+                formConfig,
                 error: 'Vul alle verplichte velden in.'
             });
         }
@@ -540,6 +627,7 @@ exports.postRegister = async (req, res) => {
             description: 'Schrijf jezelf of je kind in voor het nieuwe werkjaar. Alle groepen zijn welkom!',
             content, 
             isRegistrationOpen,
+            formConfig,
             error: errorMessage 
         });
     }

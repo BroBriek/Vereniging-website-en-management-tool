@@ -12,6 +12,40 @@ const { sendMail } = require('../config/mailer');
 
 const SettingsService = require('../services/SettingsService');
 
+const DEFAULT_REGISTER_FORM_CONFIG = {
+    labels: {
+        roleLabel: 'Ik schrijf in als:',
+        roleLid: 'Lid',
+        roleLeiding: 'Leiding',
+        firstName: 'Voornaam',
+        firstNamePlaceholder: 'Bijv. Pluk',
+        lastName: 'Achternaam',
+        lastNamePlaceholder: 'Bijv. Van De Petteflet',
+        birthdate: 'Geboortedatum',
+        emailLid: 'Email Ouders',
+        emailLeiding: 'Email',
+        emailPlaceholder: 'email@voorbeeld.be',
+        phoneLid: 'Telefoon Ouders',
+        phoneLeiding: 'Telefoon',
+        phonePlaceholder: '0470 00 00 00',
+        parentsNames: 'Namen Ouders/Voogd',
+        parentsNamesPlaceholder: 'Bijv. Jan Klaassen en Marie Klaassen',
+        memberPhone: 'GSM Nummer Lid (Optioneel)',
+        memberPhonePlaceholder: '0475 00 00 00',
+        photoPermissionLabel: "Mogen er foto's genomen en gepubliceerd worden van het lid?",
+        photoYes: 'Ja, tuurlijk!',
+        photoNo: 'Liever niet',
+        groupLabel: 'Groep',
+        groupPlaceholder: 'Kies een groep...',
+        paymentLabel: 'Hoe wens je te betalen?',
+        paymentOption1: 'Met QR code op de startdag',
+        paymentOption2: 'Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt',
+        medicalInfoLabel: 'Extra Info (Allergieën, medische info, etc.)',
+        medicalInfoPlaceholder: 'Zijn er zaken waar we rekening mee moeten houden?',
+        submitButton: 'Nu Inschrijven!'
+    },
+    customQuestions: []
+};
 const BUILT_IN_PAGES = [
     { name: 'Home', path: '/home', editPath: '/admin/page/home', slug: 'home' },
     { name: 'Praktisch', path: '/praktisch', editPath: '/admin/page/practical', slug: 'practical' },
@@ -126,11 +160,32 @@ exports.getEditPage = async (req, res) => {
     const contentMap = {};
     contents.forEach(c => contentMap[c.section_key] = c);
     
+    let formConfig = null;
+    if (slug === 'register') {
+        try {
+            const state = await SystemState.findOne({ where: { key: 'register_form_config' } });
+            if (state && state.value) {
+                const saved = JSON.parse(state.value);
+                // Merge with defaults to ensure all keys exist
+                formConfig = {
+                    labels: { ...DEFAULT_REGISTER_FORM_CONFIG.labels, ...(saved.labels || {}) },
+                    customQuestions: saved.customQuestions || []
+                };
+            } else {
+                formConfig = JSON.parse(JSON.stringify(DEFAULT_REGISTER_FORM_CONFIG));
+            }
+        } catch (e) {
+            console.error('Error loading register form config:', e);
+            formConfig = JSON.parse(JSON.stringify(DEFAULT_REGISTER_FORM_CONFIG));
+        }
+    }
+
     res.render('admin/edit_page', { 
         title: `Bewerk ${slug}`, 
         slug, 
         contentMap, 
         user: req.user,
+        formConfig,
         success: req.query.success,
         error: req.query.error
     });
@@ -141,11 +196,13 @@ exports.postEditPage = async (req, res) => {
     
     // Handle text fields
     for (const key in req.body) {
-        if (key === 'image_key') continue; 
+        if (key === 'image_key' || key === 'formConfigJson') continue;
+        const val = req.body[key];
+        if (typeof val === 'object' && val !== null) continue;
         await PageContent.upsert({
             slug,
             section_key: key,
-            content: req.body[key]
+            content: typeof val === 'string' ? val : String(val ?? '')
         });
     }
 
@@ -160,6 +217,51 @@ exports.postEditPage = async (req, res) => {
     }
     
     res.redirect(`/admin/page/${slug}?success=${encodeURIComponent('Pagina succesvol bijgewerkt!')}`);
+};
+
+exports.postRegisterFormConfig = async (req, res) => {
+    try {
+        const { formConfigJson } = req.body;
+        if (!formConfigJson) {
+            return res.redirect('/admin/page/register?error=' + encodeURIComponent('Geen formulier configuratie ontvangen.'));
+        }
+
+        let parsed;
+        try {
+            parsed = JSON.parse(formConfigJson);
+        } catch (e) {
+            return res.redirect('/admin/page/register?error=' + encodeURIComponent('Ongeldige JSON configuratie.'));
+        }
+
+        // Validate and sanitize
+        const config = {
+            labels: { ...DEFAULT_REGISTER_FORM_CONFIG.labels, ...(parsed.labels || {}) },
+            customQuestions: []
+        };
+
+        // Validate custom questions
+        if (Array.isArray(parsed.customQuestions)) {
+            config.customQuestions = parsed.customQuestions
+                .filter(q => q && typeof q.label === 'string' && q.label.trim())
+                .map(q => ({
+                    id: q.id || ('cq_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
+                    label: q.label.trim(),
+                    type: ['text', 'textarea', 'radio'].includes(q.type) ? q.type : 'text',
+                    required: !!q.required,
+                    placeholder: (q.placeholder || '').trim()
+                }));
+        }
+
+        await SystemState.upsert({
+            key: 'register_form_config',
+            value: JSON.stringify(config)
+        });
+
+        res.redirect('/admin/page/register?success=' + encodeURIComponent('Formulier configuratie opgeslagen!'));
+    } catch (error) {
+        console.error('Error saving register form config:', error);
+        res.redirect('/admin/page/register?error=' + encodeURIComponent('Kon formulier configuratie niet opslaan.'));
+    }
 };
 
 exports.getLeaders = async (req, res) => {
@@ -506,11 +608,21 @@ exports.exportRegistrationsExcel = async (req, res) => {
         ]
     });
 
+    // Load form config for custom question labels
+    let customQuestions = [];
+    try {
+        const configState = await SystemState.findOne({ where: { key: 'register_form_config' } });
+        if (configState && configState.value) {
+            const parsed = JSON.parse(configState.value);
+            customQuestions = parsed.customQuestions || [];
+        }
+    } catch (e) { /* ignore */ }
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Inschrijvingen');
 
-    // Define columns
-    worksheet.columns = [
+    // Define base columns
+    const columns = [
         { header: 'Groep', key: 'group', width: 15 },
         { header: 'Rol', key: 'type', width: 10 },
         { header: 'Voornaam', key: 'firstName', width: 20 },
@@ -525,9 +637,16 @@ exports.exportRegistrationsExcel = async (req, res) => {
         { header: 'Medische Info', key: 'medicalInfo', width: 40 }
     ];
 
+    // Add custom question columns
+    customQuestions.forEach(q => {
+        columns.push({ header: q.label, key: 'cq_' + q.id, width: 30 });
+    });
+
+    worksheet.columns = columns;
+
     // Add rows
     registrations.forEach(reg => {
-        worksheet.addRow({
+        const row = {
             group: reg.group,
             type: reg.type,
             firstName: reg.firstName,
@@ -540,11 +659,23 @@ exports.exportRegistrationsExcel = async (req, res) => {
             paymentMethod: reg.paymentMethod || 'Met QR code op de startdag',
             photoPermission: reg.photoPermission ? 'Ja' : 'Nee',
             medicalInfo: reg.medicalInfo
-        });
+        };
+
+        // Add custom answer values
+        if (reg.customAnswers) {
+            try {
+                const answers = typeof reg.customAnswers === 'string' ? JSON.parse(reg.customAnswers) : reg.customAnswers;
+                customQuestions.forEach(q => {
+                    row['cq_' + q.id] = answers[q.id] || '';
+                });
+            } catch (e) { /* ignore parse errors */ }
+        }
+
+        worksheet.addRow(row);
     });
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=' + 'inschrijvingen.xlsx');
+    res.setHeader('Content-Disposition', 'attachment; filename=' + filename);
 
     await workbook.xlsx.write(res);
     res.end();
@@ -585,7 +716,17 @@ exports.getEditRegistration = async (req, res) => {
         if (!registration) {
             return res.redirect('/admin/registrations?error=Inschrijving niet gevonden');
         }
-        res.render('admin/edit_registration', { title: 'Bewerk Inschrijving', registration, user: req.user });
+
+        // Load form config to resolve custom question labels
+        let formConfig = null;
+        try {
+            const configState = await SystemState.findOne({ where: { key: 'register_form_config' } });
+            if (configState && configState.value) {
+                formConfig = JSON.parse(configState.value);
+            }
+        } catch (e) { /* ignore */ }
+
+        res.render('admin/edit_registration', { title: 'Bewerk Inschrijving', registration, user: req.user, formConfig });
     } catch (error) {
         console.error('Error fetching registration for edit:', error);
         res.redirect('/admin/registrations?error=Kon inschrijving niet ophalen');
