@@ -267,6 +267,20 @@ class MigrationService {
                 console.error('Error migrating FeedGroups table schema:', feedGroupsErr);
             }
 
+            // --- Registrations Table ---
+            try {
+                if (!await columnExists('Registrations', 'secondEmail')) {
+                    await sequelize.query('ALTER TABLE Registrations ADD COLUMN secondEmail TEXT;');
+                    console.log('Added Registrations.secondEmail');
+                }
+                if (!await columnExists('Registrations', 'secondParentsPhone')) {
+                    await sequelize.query('ALTER TABLE Registrations ADD COLUMN secondParentsPhone TEXT;');
+                    console.log('Added Registrations.secondParentsPhone');
+                }
+            } catch (regErr) {
+                console.error('Error migrating Registrations table schema:', regErr);
+            }
+
             console.log('Automatic schema update completed.');
         } catch (error) {
             console.error('Error during automatic schema update:', error);

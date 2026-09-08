@@ -23,11 +23,17 @@ const DEFAULT_REGISTER_FORM_CONFIG = {
         lastNamePlaceholder: 'Bijv. Van De Petteflet',
         birthdate: 'Geboortedatum',
         emailLid: 'Email Ouders',
+        secondEmailLid: 'Tweede Email Ouders (Optioneel)',
         emailLeiding: 'Email',
         emailPlaceholder: 'email@voorbeeld.be',
+        secondEmailPlaceholder: 'tweede-ouder@voorbeeld.be',
         phoneLid: 'Telefoon Ouders',
+        secondPhoneLid: 'Tweede Telefoon Ouders (Optioneel)',
         phoneLeiding: 'Telefoon',
         phonePlaceholder: '0470 00 00 00',
+        secondPhonePlaceholder: '0470 00 00 00',
+        addSecondParentBtn: '+ Tweede ouder / contactpersoon toevoegen (optioneel)',
+        secondParentSectionTitle: 'Gegevens Tweede Ouder / Voogd (Optioneel)',
         parentsNames: 'Namen Ouders/Voogd',
         parentsNamesPlaceholder: 'Bijv. Jan Klaassen en Marie Klaassen',
         memberPhone: 'GSM Nummer Lid (Optioneel)',
@@ -640,7 +646,9 @@ exports.exportRegistrationsExcel = async (req, res) => {
         { header: 'Achternaam', key: 'lastName', width: 20 },
         { header: 'Geboortedatum', key: 'birthdate', width: 15 },
         { header: 'Email', key: 'email', width: 30 },
+        { header: '2e Email (Ouders)', key: 'secondEmail', width: 30 },
         { header: 'Telefoon (Ouders/Leiding)', key: 'primaryPhone', width: 20 },
+        { header: '2e Telefoon (Ouders)', key: 'secondParentsPhone', width: 20 },
         { header: 'GSM Lid (Optioneel)', key: 'memberPhone', width: 20 },
         { header: 'Namen Ouders/Voogd', key: 'parentsNames', width: 30 },
         { header: 'Betaalmethode', key: 'paymentMethod', width: 35 },
@@ -664,7 +672,9 @@ exports.exportRegistrationsExcel = async (req, res) => {
             lastName: reg.lastName,
             birthdate: reg.birthdate,
             email: reg.email,
+            secondEmail: reg.secondEmail || '',
             primaryPhone: reg.type === 'lid' ? reg.parentsPhone : reg.phone,
+            secondParentsPhone: reg.secondParentsPhone || '',
             memberPhone: reg.memberPhone,
             parentsNames: reg.parentsNames,
             paymentMethod: reg.paymentMethod || 'Met QR code op de startdag',
@@ -752,14 +762,15 @@ exports.updateRegistration = async (req, res) => {
         }
 
         const { 
-            firstName, lastName, birthdate, type, group, email, 
-            phone, parentsPhone, memberPhone, parentsNames, medicalInfo, paymentMethod 
+            firstName, lastName, birthdate, type, group, email, secondEmail,
+            phone, parentsPhone, secondParentsPhone, memberPhone, parentsNames, medicalInfo, paymentMethod 
         } = req.body;
 
         const photoPermission = req.body.photoPermission === 'on';
 
         const formattedPhone = PhoneService.formatPhoneNumber(phone);
         const formattedParentsPhone = PhoneService.formatPhoneNumber(parentsPhone);
+        const formattedSecondParentsPhone = PhoneService.formatPhoneNumber(secondParentsPhone);
         const formattedMemberPhone = PhoneService.formatPhoneNumber(memberPhone);
 
         if (formattedPhone && !PhoneService.isValidFormat(formattedPhone)) {
@@ -768,14 +779,27 @@ exports.updateRegistration = async (req, res) => {
         if (formattedParentsPhone && !PhoneService.isValidFormat(formattedParentsPhone)) {
             return res.redirect(`/admin/registrations?error=Ongeldig telefoonformaat ouders. Gebruik: 0470 12 34 56`);
         }
+        if (formattedSecondParentsPhone && !PhoneService.isValidFormat(formattedSecondParentsPhone)) {
+            return res.redirect(`/admin/registrations?error=Ongeldig tweede telefoonformaat ouders. Gebruik: 0470 12 34 56`);
+        }
         if (formattedMemberPhone && !PhoneService.isValidFormat(formattedMemberPhone)) {
             return res.redirect(`/admin/registrations?error=Ongeldig telefoonformaat lid. Gebruik: 0470 12 34 56`);
         }
 
+        const trimmedSecondEmail = (secondEmail || '').trim() || null;
+        if (trimmedSecondEmail) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(trimmedSecondEmail)) {
+                return res.redirect(`/admin/registrations?error=Ongeldig tweede e-mailadres.`);
+            }
+        }
+
         await registration.update({
             firstName, lastName, birthdate, type, group, email,
+            secondEmail: type === 'lid' ? trimmedSecondEmail : null,
             phone: formattedPhone,
             parentsPhone: formattedParentsPhone,
+            secondParentsPhone: type === 'lid' ? formattedSecondParentsPhone : null,
             memberPhone: formattedMemberPhone,
             parentsNames, medicalInfo,
             paymentMethod,
@@ -826,8 +850,12 @@ exports.exportRegistrationsPDF = async (req, res) => {
             
             doc.fontSize(12).font('Helvetica-Bold').text(`${reg.firstName} ${reg.lastName} (${reg.group})`);
             doc.fontSize(10).font('Helvetica').text(`Periode: ${reg.period || 'Onbekend'} - Type: ${reg.type}`);
-            doc.text(`Email: ${reg.email}`);
-            doc.text(`Telefoon: ${reg.type === 'lid' ? reg.parentsPhone : reg.phone}`);
+            let emailText = `Email: ${reg.email}`;
+            if (reg.secondEmail) emailText += ` | 2e: ${reg.secondEmail}`;
+            doc.text(emailText);
+            let phoneText = `Telefoon: ${reg.type === 'lid' ? reg.parentsPhone : reg.phone}`;
+            if (reg.type === 'lid' && reg.secondParentsPhone) phoneText += ` | 2e: ${reg.secondParentsPhone}`;
+            doc.text(phoneText);
             doc.text(`Betaalmethode: ${reg.paymentMethod || 'Met QR code op de startdag'}`);
             if (reg.medicalInfo) doc.fillColor('red').text(`Medisch: ${reg.medicalInfo}`).fillColor('black');
             doc.moveDown(0.5);

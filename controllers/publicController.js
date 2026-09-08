@@ -21,11 +21,17 @@ const DEFAULT_REGISTER_FORM_CONFIG = {
         lastNamePlaceholder: 'Bijv. Van De Petteflet',
         birthdate: 'Geboortedatum',
         emailLid: 'Email Ouders',
+        secondEmailLid: 'Tweede Email Ouders (Optioneel)',
         emailLeiding: 'Email',
         emailPlaceholder: 'email@voorbeeld.be',
+        secondEmailPlaceholder: 'tweede-ouder@voorbeeld.be',
         phoneLid: 'Telefoon Ouders',
+        secondPhoneLid: 'Tweede Telefoon Ouders (Optioneel)',
         phoneLeiding: 'Telefoon',
         phonePlaceholder: '0470 00 00 00',
+        secondPhonePlaceholder: '0470 00 00 00',
+        addSecondParentBtn: '+ Tweede ouder / contactpersoon toevoegen (optioneel)',
+        secondParentSectionTitle: 'Gegevens Tweede Ouder / Voogd (Optioneel)',
         parentsNames: 'Namen Ouders/Voogd',
         parentsNamesPlaceholder: 'Bijv. Jan Klaassen en Marie Klaassen',
         memberPhone: 'GSM Nummer Lid (Optioneel)',
@@ -84,8 +90,10 @@ const formatRegistrationTemplate = (templateText, payload) => {
     const lastName = payload.lastName || '';
     const fullName = `${firstName} ${lastName}`.trim();
     const email = payload.email || '';
+    const secondEmail = payload.secondEmail || '';
     const parentsNames = payload.parentsNames || '';
     const parentsPhone = payload.parentsPhone || payload.phone || '';
+    const secondParentsPhone = payload.secondParentsPhone || '';
     const memberPhone = payload.memberPhone || '';
     const birthdate = payload.birthdate ? new Date(payload.birthdate).toLocaleDateString('nl-BE') : '';
     const currentDate = new Date().toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -97,9 +105,12 @@ const formatRegistrationTemplate = (templateText, payload) => {
     result = result.replace(/\{groep\}/gi, formattedGroup);
     result = result.replace(/\{type\}/gi, typeLabel);
     result = result.replace(/\{email\}/gi, email);
+    result = result.replace(/\{tweede_email\}/gi, secondEmail);
     result = result.replace(/\{ouders_naam\}/gi, parentsNames);
     result = result.replace(/\{ouders_namen\}/gi, parentsNames);
     result = result.replace(/\{ouders_telefoon\}/gi, parentsPhone);
+    result = result.replace(/\{ouders_tweede_telefoon\}/gi, secondParentsPhone);
+    result = result.replace(/\{tweede_telefoon\}/gi, secondParentsPhone);
     result = result.replace(/\{lid_telefoon\}/gi, memberPhone);
     result = result.replace(/\{geboortedatum\}/gi, birthdate);
     result = result.replace(/\{datum\}/gi, currentDate);
@@ -454,20 +465,26 @@ exports.postRegister = async (req, res) => {
             });
         }
 
+        const isLid = req.body.type !== 'leiding';
+        const secondEmailInput = (req.body.secondEmail || '').trim();
+        const secondParentsPhoneInput = req.body.secondParentsPhone ? req.body.secondParentsPhone.trim() : '';
+
         const payload = {
-            type: req.body.type === 'leiding' ? 'leiding' : 'lid',
+            type: isLid ? 'lid' : 'leiding',
             firstName: (req.body.firstName || '').trim(),
             lastName: (req.body.lastName || '').trim(),
             birthdate: req.body.birthdate,
             memberPhone: PhoneService.formatPhoneNumber(req.body.memberPhone),
             parentsNames: req.body.parentsNames || null,
             parentsPhone: PhoneService.formatPhoneNumber(req.body.parentsPhone),
+            secondParentsPhone: isLid && secondParentsPhoneInput ? PhoneService.formatPhoneNumber(secondParentsPhoneInput) : null,
             phone: PhoneService.formatPhoneNumber(req.body.phone),
             email: (req.body.email || '').trim(),
+            secondEmail: isLid && secondEmailInput ? secondEmailInput : null,
             photoPermission: req.body.photoPermission === 'on' || req.body.photoPermission === 'true',
             medicalInfo: req.body.medicalInfo || null,
             paymentMethod: req.body.paymentMethod || 'Met QR code op de startdag',
-            group: req.body.type === 'leiding' ? 'leiding' : (req.body.group || '').trim().toLowerCase(),
+            group: !isLid ? 'leiding' : (req.body.group || '').trim().toLowerCase(),
             privacyAccepted: req.body.privacyAccepted === 'on' || req.body.privacyAccepted === 'true'
         };
 
@@ -491,8 +508,32 @@ exports.postRegister = async (req, res) => {
                 content,
                 isRegistrationOpen,
                 formConfig,
+                formData: req.body,
                 error: 'Het telefoonnummer van de ouders is ongeldig. Gebruik bijv. 0470 12 34 56.'
             });
+        }
+        if (payload.secondParentsPhone && !PhoneService.isValidFormat(payload.secondParentsPhone)) {
+             return res.render('public/register', {
+                title: `Inschrijven bij ${orgName}`,
+                content,
+                isRegistrationOpen,
+                formConfig,
+                formData: req.body,
+                error: 'Het tweede telefoonnummer van de ouders is ongeldig. Gebruik bijv. 0470 12 34 56.'
+            });
+        }
+        if (payload.secondEmail) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(payload.secondEmail)) {
+                return res.render('public/register', {
+                    title: `Inschrijven bij ${orgName}`,
+                    content,
+                    isRegistrationOpen,
+                    formConfig,
+                    formData: req.body,
+                    error: 'Het tweede e-mailadres is ongeldig. Controleer het e-mailformaat.'
+                });
+            }
         }
         if (payload.phone && !PhoneService.isValidFormat(payload.phone)) {
              return res.render('public/register', {
@@ -500,6 +541,7 @@ exports.postRegister = async (req, res) => {
                 content,
                 isRegistrationOpen,
                 formConfig,
+                formData: req.body,
                 error: 'Het telefoonnummer is ongeldig. Gebruik bijv. 0470 12 34 56.'
             });
         }
@@ -509,6 +551,7 @@ exports.postRegister = async (req, res) => {
                 content,
                 isRegistrationOpen,
                 formConfig,
+                formData: req.body,
                 error: 'Het telefoonnummer van het lid is ongeldig. Gebruik bijv. 0470 12 34 56.'
             });
         }
@@ -521,6 +564,7 @@ exports.postRegister = async (req, res) => {
                 content,
                 isRegistrationOpen,
                 formConfig,
+                formData: req.body,
                 error: 'Selecteer een geldige groep.'
             });
         }
@@ -532,6 +576,7 @@ exports.postRegister = async (req, res) => {
                 content,
                 isRegistrationOpen,
                 formConfig,
+                formData: req.body,
                 error: 'Vul alle verplichte velden in.'
             });
         }
@@ -576,11 +621,15 @@ exports.postRegister = async (req, res) => {
             `;
 
             if (payload.email) {
-                await sendMail({
+                const mailOptions = {
                     to: payload.email,
                     subject: emailSubject,
                     html: emailHtml
-                });
+                };
+                if (payload.secondEmail && payload.secondEmail.toLowerCase() !== payload.email.toLowerCase()) {
+                    mailOptions.cc = payload.secondEmail;
+                }
+                await sendMail(mailOptions);
                 emailSent = true;
             }
         } catch (mailError) {

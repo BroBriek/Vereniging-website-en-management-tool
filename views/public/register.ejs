@@ -15,6 +15,7 @@
         const fc = (typeof formConfig !== 'undefined' && formConfig) ? formConfig : null;
         const labels = fc ? fc.labels : {};
         const customQuestions = (fc && fc.customQuestions) ? fc.customQuestions : [];
+        const fd = (typeof formData !== 'undefined' && formData) ? formData : {};
         // Helper to get label with fallback
         const L = (key, fallback) => (labels[key] || fallback);
 
@@ -88,11 +89,40 @@
                     <div class="row g-4 mt-2">
                         <div class="col-md-6">
                             <label for="email" class="form-label fw-bold" id="labelEmail"><%= L('emailLid', 'Email Ouders') %></label>
-                            <input type="email" class="form-control" id="email" name="email" required placeholder="<%= L('emailPlaceholder', 'email@voorbeeld.be') %>">
+                            <input type="email" class="form-control" id="email" name="email" required autocomplete="email" inputmode="email" placeholder="<%= L('emailPlaceholder', 'email@voorbeeld.be') %>" value="<%= fd.email || '' %>">
                         </div>
                         <div class="col-md-6">
                             <label for="phone" class="form-label fw-bold" id="labelPhone"><%= L('phoneLid', 'Telefoon Ouders') %></label>
-                            <input type="text" class="form-control" id="phone" name="parentsPhone" required placeholder="<%= L('phonePlaceholder', '0470 00 00 00') %>" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0470 12 34 56 of +31612345678">
+                            <input type="tel" class="form-control" id="phone" name="parentsPhone" required autocomplete="tel" inputmode="tel" placeholder="<%= L('phonePlaceholder', '0470 00 00 00') %>" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0470 12 34 56 of +31612345678" value="<%= fd.parentsPhone || fd.phone || '' %>">
+                        </div>
+                    </div>
+
+                    <!-- Optional Second Parent Contact (for members) -->
+                    <div id="secondParentToggleWrapper" class="mt-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1-5 d-inline-flex align-items-center gap-2 shadow-sm" id="toggleSecondParentBtn">
+                            <i class="bi bi-person-plus-fill text-primary"></i>
+                            <span><%= L('addSecondParentBtn', '+ Tweede ouder / contactpersoon toevoegen (optioneel)') %></span>
+                        </button>
+                    </div>
+
+                    <div id="secondParentSection" class="mt-3 p-3 rounded-3 border bg-light bg-opacity-50 shadow-sm" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold small text-muted">
+                                <i class="bi bi-people-fill text-primary me-1"></i> <%= L('secondParentSectionTitle', 'Gegevens Tweede Ouder / Voogd (Optioneel)') %>
+                            </span>
+                            <button type="button" class="btn btn-sm btn-link text-danger text-decoration-none p-0 d-inline-flex align-items-center gap-1" id="removeSecondParentBtn">
+                                <i class="bi bi-x-circle"></i><span>Wissen</span>
+                            </button>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="secondEmail" class="form-label fw-bold small"><%= L('secondEmailLid', 'Tweede Email (Optioneel)') %></label>
+                                <input type="email" class="form-control" id="secondEmail" name="secondEmail" autocomplete="email" inputmode="email" placeholder="<%= L('secondEmailPlaceholder', 'tweede-ouder@voorbeeld.be') %>" value="<%= fd.secondEmail || '' %>">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="secondParentsPhone" class="form-label fw-bold small"><%= L('secondPhoneLid', 'Tweede Telefoon (Optioneel)') %></label>
+                                <input type="tel" class="form-control" id="secondParentsPhone" name="secondParentsPhone" autocomplete="tel" inputmode="tel" placeholder="<%= L('secondPhonePlaceholder', '0470 00 00 00') %>" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0470 12 34 56 of +31612345678" value="<%= fd.secondParentsPhone || '' %>">
+                            </div>
                         </div>
                     </div>
 
@@ -250,29 +280,81 @@
     const parentsNamesInput = document.getElementById('parentsNames');
     const groupInput = document.getElementById('groupInput');
 
+    const secondParentToggleWrapper = document.getElementById('secondParentToggleWrapper');
+    const toggleSecondParentBtn = document.getElementById('toggleSecondParentBtn');
+    const secondParentSection = document.getElementById('secondParentSection');
+    const removeSecondParentBtn = document.getElementById('removeSecondParentBtn');
+    const secondEmailInput = document.getElementById('secondEmail');
+    const secondParentsPhoneInput = document.getElementById('secondParentsPhone');
+
     // Store configurable labels for JS toggling
     const emailLidLabel = '<%= L("emailLid", "Email Ouders").replace(/'/g, "\\'") %>';
     const emailLeidingLabel = '<%= L("emailLeiding", "Email").replace(/'/g, "\\'") %>';
     const phoneLidLabel = '<%= L("phoneLid", "Telefoon Ouders").replace(/'/g, "\\'") %>';
     const phoneLeidingLabel = '<%= L("phoneLeiding", "Telefoon").replace(/'/g, "\\'") %>';
 
+    let isSecondParentOpen = (secondEmailInput && (secondEmailInput.value.trim() !== '' || (secondParentsPhoneInput && secondParentsPhoneInput.value.trim() !== '')));
+
+    function showSecondParent() {
+        isSecondParentOpen = true;
+        if (secondParentSection) secondParentSection.style.display = 'block';
+        if (secondParentToggleWrapper) secondParentToggleWrapper.style.display = 'none';
+        if (labelEmail) labelEmail.innerText = 'Email Ouder 1';
+        if (labelPhone) labelPhone.innerText = 'Telefoon Ouder 1';
+    }
+
+    function hideSecondParent(clear = true) {
+        isSecondParentOpen = false;
+        if (clear) {
+            if (secondEmailInput) secondEmailInput.value = '';
+            if (secondParentsPhoneInput) secondParentsPhoneInput.value = '';
+        }
+        if (secondParentSection) secondParentSection.style.display = 'none';
+        if (roleLid.checked && secondParentToggleWrapper) {
+            secondParentToggleWrapper.style.display = 'block';
+            labelEmail.innerText = emailLidLabel;
+            labelPhone.innerText = phoneLidLabel;
+        }
+    }
+
+    if (toggleSecondParentBtn) {
+        toggleSecondParentBtn.addEventListener('click', () => {
+            showSecondParent();
+            if (secondEmailInput) secondEmailInput.focus();
+        });
+    }
+
+    if (removeSecondParentBtn) {
+        removeSecondParentBtn.addEventListener('click', () => {
+            hideSecondParent(true);
+        });
+    }
+
     function updateForm() {
         if (roleLid.checked) {
             memberFields.style.display = 'block';
             groupFields.style.display = 'block';
             groupInput.setAttribute('required', 'required');
-            labelEmail.innerText = emailLidLabel;
-            labelPhone.innerText = phoneLidLabel;
             phoneInput.setAttribute('name', 'parentsPhone'); // Use parentsPhone field
             parentsNamesInput.setAttribute('required', 'required');
+            if (isSecondParentOpen) {
+                showSecondParent();
+            } else {
+                labelEmail.innerText = emailLidLabel;
+                labelPhone.innerText = phoneLidLabel;
+                if (secondParentToggleWrapper) secondParentToggleWrapper.style.display = 'block';
+                if (secondParentSection) secondParentSection.style.display = 'none';
+            }
         } else {
             memberFields.style.display = 'none';
             groupFields.style.display = 'none';
             groupInput.removeAttribute('required');
             labelEmail.innerText = emailLeidingLabel;
             labelPhone.innerText = phoneLeidingLabel;
-            phoneInput.setAttribute('name', 'phone'); // Use generic phone field if backend supports or just map to parentsPhone and rename in backend?
+            phoneInput.setAttribute('name', 'phone'); // Use generic phone field
             parentsNamesInput.removeAttribute('required');
+            if (secondParentToggleWrapper) secondParentToggleWrapper.style.display = 'none';
+            if (secondParentSection) secondParentSection.style.display = 'none';
         }
     }
 
@@ -283,6 +365,7 @@
     const memberPhoneInput = document.getElementById('memberPhone');
     
     function formatPhoneInput(input) {
+        if (!input) return;
         input.addEventListener('input', (e) => {
             let originalValue = e.target.value;
             let value = originalValue.replace(/\D/g, '');
@@ -333,6 +416,7 @@
 
     formatPhoneInput(phoneInput);
     formatPhoneInput(memberPhoneInput);
+    formatPhoneInput(secondParentsPhoneInput);
 
     // Init
     updateForm();

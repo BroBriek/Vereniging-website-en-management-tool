@@ -37,10 +37,16 @@
                     <div class="col-sm-6">
                         <div class="text-muted small">E-mailadres</div>
                         <div class="fw-bold fs-6"><%= registration.email %></div>
+                        <% if (registration.secondEmail) { %>
+                            <div class="small text-muted mt-1">2e E-mail: <span class="fw-bold text-dark"><%= registration.secondEmail %></span></div>
+                        <% } %>
                     </div>
                     <div class="col-sm-6">
                         <div class="text-muted small">Telefoon</div>
                         <div class="fw-bold fs-6"><%= registration.parentsPhone || registration.phone || '-' %></div>
+                        <% if (registration.secondParentsPhone) { %>
+                            <div class="small text-muted mt-1">2e Telefoon: <span class="fw-bold text-dark"><%= registration.secondParentsPhone %></span></div>
+                        <% } %>
                     </div>
                     <div class="col-sm-12">
                         <div class="text-muted small">Gekozen Betaalmethode</div>

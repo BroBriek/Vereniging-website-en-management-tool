@@ -32,6 +32,10 @@ const Registration = sequelize.define('Registration', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  secondParentsPhone: { // Optional second parent phone for 'lid'
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   phone: { // Used for 'leiding'
     type: DataTypes.STRING,
     allowNull: true
@@ -42,6 +46,10 @@ const Registration = sequelize.define('Registration', {
     validate: {
         isEmail: true
     }
+  },
+  secondEmail: { // Optional second parent email for 'lid'
+    type: DataTypes.STRING,
+    allowNull: true
   },
   photoPermission: {
     type: DataTypes.BOOLEAN,

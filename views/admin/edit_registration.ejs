@@ -49,22 +49,33 @@
 
                         <!-- Contact Info -->
                         <h5 class="mb-3 text-primary mt-4">Contactgegevens</h5>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email Adres</label>
-                            <input type="email" class="form-control" id="email" name="email" value="<%= registration.email %>" required>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email Adres</label>
+                                <input type="email" class="form-control" id="email" name="email" value="<%= registration.email %>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="secondEmail" class="form-label">2e Email Ouders (Lid - Optioneel)</label>
+                                <input type="email" class="form-control" id="secondEmail" name="secondEmail" value="<%= registration.secondEmail || '' %>">
+                            </div>
                         </div>
 
                         <!-- Conditional fields based on type could be handled via JS, but for admin edit we show relevant ones -->
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label for="phone" class="form-label">Telefoon (Leiding)</label>
-                                <input type="text" class="form-control" id="phone" name="phone" value="<%= registration.phone || '' %>" pattern="^0\d{2,3} \d{2} \d{2} \d{2}$" title="Gebruik het formaat: 0470 12 34 56">
+                                <input type="text" class="form-control" id="phone" name="phone" value="<%= registration.phone || '' %>" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0470 12 34 56 of +31612345678">
                                 <div class="form-text">Enkel invullen indien leiding.</div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label for="parentsPhone" class="form-label">Telefoon Ouders (Lid)</label>
-                                <input type="text" class="form-control" id="parentsPhone" name="parentsPhone" value="<%= registration.parentsPhone || '' %>" pattern="^0\d{2,3} \d{2} \d{2} \d{2}$" title="Gebruik het formaat: 0470 12 34 56">
+                                <input type="text" class="form-control" id="parentsPhone" name="parentsPhone" value="<%= registration.parentsPhone || '' %>" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0470 12 34 56 of +31612345678">
                                 <div class="form-text">Enkel invullen indien lid.</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="secondParentsPhone" class="form-label">2e Telefoon Ouders (Lid)</label>
+                                <input type="text" class="form-control" id="secondParentsPhone" name="secondParentsPhone" value="<%= registration.secondParentsPhone || '' %>" pattern="^(0\d{2,3} \d{2} \d{2} \d{2})|(\+\d{7,15})$" title="Gebruik het formaat: 0470 12 34 56 of +31612345678">
+                                <div class="form-text">Optioneel voor lid.</div>
                             </div>
                         </div>
 
@@ -182,6 +193,7 @@
 
     formatPhoneInput('phone');
     formatPhoneInput('parentsPhone');
+    formatPhoneInput('secondParentsPhone');
     formatPhoneInput('memberPhone');
 </script>
 
