@@ -196,24 +196,35 @@ exports.postEditPage = async (req, res) => {
     
     // Handle text fields
     for (const key in req.body) {
-        if (key === 'image_key' || key === 'formConfigJson') continue;
+        if (key === 'image_key' || key === 'formConfigJson' || key === '_csrf') continue;
         const val = req.body[key];
         if (typeof val === 'object' && val !== null) continue;
-        await PageContent.upsert({
-            slug,
-            section_key: key,
-            content: typeof val === 'string' ? val : String(val ?? '')
-        });
+
+        let contentVal = typeof val === 'string' ? val : String(val ?? '');
+        // If rich text content only contains empty HTML tags, treat it as empty
+        if (typeof val === 'string' && !/<(img|iframe|video|audio|svg|canvas)\b/i.test(val) && val.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim().length === 0) {
+            contentVal = '';
+        }
+
+        const existing = await PageContent.findOne({ where: { slug, section_key: key }, order: [['id', 'DESC']] });
+        if (existing) {
+            existing.content = contentVal;
+            await existing.save();
+        } else {
+            await PageContent.create({ slug, section_key: key, content: contentVal });
+        }
     }
 
     // Handle Image Upload
     if (req.file) {
         const imageKey = req.body.image_key || 'hero_image';
-        await PageContent.upsert({
-            slug,
-            section_key: imageKey,
-            content: `/uploads/${req.file.filename}`
-        });
+        const existingImage = await PageContent.findOne({ where: { slug, section_key: imageKey }, order: [['id', 'DESC']] });
+        if (existingImage) {
+            existingImage.content = `/uploads/${req.file.filename}`;
+            await existingImage.save();
+        } else {
+            await PageContent.create({ slug, section_key: imageKey, content: `/uploads/${req.file.filename}` });
+        }
     }
     
     res.redirect(`/admin/page/${slug}?success=${encodeURIComponent('Pagina succesvol bijgewerkt!')}`);

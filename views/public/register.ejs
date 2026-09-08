@@ -17,14 +17,29 @@
         const customQuestions = (fc && fc.customQuestions) ? fc.customQuestions : [];
         // Helper to get label with fallback
         const L = (key, fallback) => (labels[key] || fallback);
+
+        // Helper to extract content string safely from section object or string
+        const getSectionContent = (c) => {
+            if (!c) return '';
+            if (typeof c === 'string') return c;
+            if (c && typeof c.content === 'string') return c.content;
+            return '';
+        };
+
+        // Helper to check if rich HTML text is truly empty (e.g. <p><br></p>)
+        const isHtmlEmpty = (str) => {
+            if (!str || typeof str !== 'string') return true;
+            if (/<(img|iframe|video|audio|svg|canvas)\b/i.test(str)) return false;
+            return str.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim().length === 0;
+        };
     %>
 
     <!-- Top Info Text -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4 p-md-5">
-            <% const topText = (content && content.top_text && content.top_text.content) ? content.top_text.content : (content && content.top_text ? content.top_text : ''); %>
-            <% if (topText) { %>
-                <div class="fs-5"><%- topText %></div>
+            <% const topText = getSectionContent(content && content.top_text); %>
+            <% if (topText && !isHtmlEmpty(topText)) { %>
+                <div class="fs-5 mb-4"><%- topText %></div>
             <% } %>
 
             <% if (typeof error !== 'undefined' && error) { %>
@@ -142,10 +157,17 @@
                     </div>
 
                     <!-- Extra Info -->
-                    <div class="mt-4">
-                        <label for="medicalInfo" class="form-label fw-bold"><%= L('medicalInfoLabel', 'Extra Info (Allergieën, medische info, etc.)') %></label>
-                        <textarea class="form-control" id="medicalInfo" name="medicalInfo" rows="4" placeholder="<%= L('medicalInfoPlaceholder', 'Zijn er zaken waar we rekening mee moeten houden?') %>"></textarea>
-                    </div>
+                    <% 
+                        const hasMedicalInfo = (typeof labels.medicalInfoLabel === 'undefined') 
+                            ? true 
+                            : (labels.medicalInfoLabel && labels.medicalInfoLabel.trim().length > 0);
+                    %>
+                    <% if (hasMedicalInfo) { %>
+                        <div class="mt-4">
+                            <label for="medicalInfo" class="form-label fw-bold"><%= labels.medicalInfoLabel || 'Extra Info (Allergieën, medische info, etc.)' %></label>
+                            <textarea class="form-control" id="medicalInfo" name="medicalInfo" rows="4" placeholder="<%= L('medicalInfoPlaceholder', 'Zijn er zaken waar we rekening mee moeten houden?') %>"></textarea>
+                        </div>
+                    <% } %>
 
                     <!-- Custom Questions -->
                     <% if (customQuestions.length > 0) { %>
@@ -204,8 +226,8 @@
     </div>
 
     <!-- Dynamic Footer Text -->
-    <% const infoText = (content && content.info_text && content.info_text.content) ? content.info_text.content : (content && content.info_text ? content.info_text : ''); %>
-    <% if (infoText) { %>
+    <% const infoText = getSectionContent(content && content.info_text); %>
+    <% if (infoText && !isHtmlEmpty(infoText)) { %>
         <div class="card border-0 bg-light text-dark rounded-4 shadow-sm">
             <div class="card-body p-4 p-md-5">
                 <h3 class="fw-bold mb-3" style="color: var(--chiro-yellow);"><i class="bi bi-info-circle me-2"></i>Belangrijke Info</h3>

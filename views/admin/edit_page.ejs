@@ -63,7 +63,7 @@
 
                         <div class="mb-2">
                             <label class="form-label fw-bold">Belangrijke info (Onderaan het formulier)</label>
-                            <div class="form-text text-muted mb-2">Informatie over lidgeld, bankrekeningnummer, afspraken, etc.</div>
+                            <div class="form-text text-muted mb-2">Informatie over lidgeld, bankrekeningnummer, afspraken, etc. Laat leeg om dit blok te verbergen op de inschrijvingspagina.</div>
                             <textarea class="form-control rich-editor" name="info_text" rows="8"><%= contentMap.info_text ? contentMap.info_text.content : '' %></textarea>
                         </div>
                     </div>
@@ -330,6 +330,7 @@
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Label extra info</label>
                             <input type="text" class="form-control form-control-sm" data-label-key="medicalInfoLabel" value="<%= formConfig.labels.medicalInfoLabel %>">
+                            <div class="form-text text-muted small">Laat dit veld leeg om het extra info veld te verbergen op de inschrijvingspagina.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Placeholder extra info</label>
