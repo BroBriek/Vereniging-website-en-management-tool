@@ -11,8 +11,8 @@
                 <i class="bi bi-calendar-plus me-1"></i> Abonneer op Kalender
             </a>
             <% if (user && user.role === 'admin') { %>
-                <a href="/admin/events" class="btn btn-chiro btn-sm shadow-sm">
-                    <i class="bi bi-pencil-square me-1"></i> Beheer Kalender
+                <a href="/admin/events" class="btn btn-chiro btn-sm btn-edit-page shadow-sm">
+                    <i class="bi bi-pencil-square"></i><span class="d-none d-sm-inline ms-1">Beheer Kalender</span><span class="d-sm-none ms-1">Beheer</span>
                 </a>
             <% } %>
         </div>

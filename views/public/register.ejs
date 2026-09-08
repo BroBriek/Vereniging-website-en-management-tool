@@ -1,11 +1,11 @@
 <%- include('../partials/header') %>
 
 <div class="mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
         <h1 class="display-4 fw-bold mb-0">Inschrijven</h1>
         <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-            <a href="/admin/page/register" class="btn btn-chiro btn-sm shadow-sm">
-                <i class="bi bi-pencil-square me-1"></i> Bewerk Pagina
+            <a href="/admin/page/register" class="btn btn-chiro btn-sm btn-edit-page shadow-sm">
+                <i class="bi bi-pencil-square"></i><span class="d-none d-sm-inline ms-1">Bewerk Pagina</span><span class="d-sm-none ms-1">Bewerken</span>
             </a>
         <% } %>
     </div>

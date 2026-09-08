@@ -190,6 +190,33 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: 0 2px 0 #a82b2e;
 }
 
+.btn-chiro.btn-sm {
+    padding: 6px 16px;
+    font-size: 0.95rem;
+    border-radius: 20px;
+    box-shadow: 0 3px 0 #a82b2e;
+}
+
+.btn-chiro.btn-sm:hover {
+    box-shadow: 0 4px 0 #a82b2e;
+    transform: translateY(-1px);
+}
+
+.btn-chiro.btn-sm:active {
+    box-shadow: 0 1px 0 #a82b2e;
+    transform: translateY(2px);
+}
+
+/* Edit Page Button on Public Pages */
+.btn-edit-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    gap: 0.35rem;
+}
+
 /* Navbar */
 .navbar {
     background-color: white !important;
@@ -502,6 +529,18 @@ body.navbar-open {
     .navbar-brand { font-size: 1.5rem; }
     
     footer { border-radius: 40px 40px 0 0; padding: 3rem 1rem 2rem; }
+    
+    .btn-chiro.btn-sm {
+        padding: 5px 12px;
+        font-size: 0.85rem;
+        border-radius: 16px;
+        box-shadow: 0 2px 0 #a82b2e;
+    }
+
+    .btn-edit-page {
+        font-size: 0.85rem;
+        padding: 5px 12px;
+    }
 }
 
 @media (max-width: 576px) {
@@ -524,6 +563,18 @@ body.navbar-open {
     
     .calendar-date-badge { min-width: 65px; padding: 8px; }
     .calendar-day { font-size: 1.5rem; }
+
+    .btn-chiro.btn-sm {
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        border-radius: 14px;
+        box-shadow: 0 2px 0 #a82b2e;
+    }
+
+    .btn-edit-page {
+        font-size: 0.8rem;
+        padding: 4px 10px;
+    }
 }
 
 /* Custom spacing utilities */

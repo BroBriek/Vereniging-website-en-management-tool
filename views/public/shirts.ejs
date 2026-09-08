@@ -31,11 +31,11 @@
         <!-- Product Info & Order Form Section -->
         <div class="col-lg-6">
             <div class="ps-lg-4">
-                <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                     <h1 class="display-4 fw-bold text-chiro-blue mb-0"><%= orgName %> T-shirt</h1>
                     <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-                        <a href="/admin/page/shirts" class="btn btn-sm btn-outline-secondary rounded-pill">
-                            <i class="bi bi-pencil-square"></i>
+                        <a href="/admin/page/shirts" class="btn btn-chiro btn-sm btn-edit-page shadow-sm" title="Bewerk Pagina">
+                            <i class="bi bi-pencil-square"></i><span class="d-none d-sm-inline ms-1">Bewerk Pagina</span><span class="d-sm-none ms-1">Bewerken</span>
                         </a>
                     <% } %>
                 </div>
