@@ -33,11 +33,71 @@
             if (/<(img|iframe|video|audio|svg|canvas)\b/i.test(str)) return false;
             return str.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim().length === 0;
         };
+
+        // Helper to intelligently split/format payment option text for mobile-adaptive presentation
+        const parsePaymentOption = (rawText, defaultIcon) => {
+            if (!rawText) return { title: '', description: '', icon: defaultIcon || 'bi-wallet2' };
+            const str = rawText.trim();
+            let title = str;
+            let description = '';
+            let icon = defaultIcon || 'bi-wallet2';
+
+            const lower = str.toLowerCase();
+            if (lower.includes('qr')) {
+                icon = 'bi-qr-code';
+            } else if (lower.includes('overschrijving') || lower.includes('rekening') || lower.includes('bank') || lower.includes('iban')) {
+                icon = 'bi-bank';
+            } else if (lower.includes('cash') || lower.includes('contant')) {
+                icon = 'bi-cash-stack';
+            } else if (lower.includes('kaart') || lower.includes('bancontact') || lower.includes('payconiq')) {
+                icon = 'bi-credit-card';
+            }
+
+            if (str.includes(' - ')) {
+                const parts = str.split(' - ');
+                title = parts[0].trim();
+                description = parts.slice(1).join(' - ').trim();
+            } else if (str.includes(' – ')) {
+                const parts = str.split(' – ');
+                title = parts[0].trim();
+                description = parts.slice(1).join(' – ').trim();
+            } else if (str.includes(': ')) {
+                const parts = str.split(': ');
+                title = parts[0].trim();
+                description = parts.slice(1).join(': ').trim();
+            } else {
+                const parenMatch = str.match(/^([^(]+)\(([^)]+)\)$/);
+                if (parenMatch) {
+                    title = parenMatch[1].trim();
+                    description = parenMatch[2].trim();
+                } else {
+                    const overschrijvingMatch = str.match(/^(Via overschrijving)\s+(naar.*)$/i);
+                    if (overschrijvingMatch) {
+                        title = overschrijvingMatch[1].trim();
+                        description = overschrijvingMatch[2].charAt(0).toUpperCase() + overschrijvingMatch[2].slice(1).trim();
+                    } else {
+                        const qrMatch = str.match(/^(Met QR[\s-]?code)\s+(op de startdag.*)$/i);
+                        if (qrMatch) {
+                            title = qrMatch[1].trim();
+                            description = qrMatch[2].charAt(0).toUpperCase() + qrMatch[2].slice(1).trim();
+                        } else if (str.length > 35) {
+                            const prepMatch = str.match(/^(.{8,45}?)\s+(naar\s+.*|op\s+.*|via\s+.*)$/i);
+                            if (prepMatch) {
+                                title = prepMatch[1].trim();
+                                description = prepMatch[2].charAt(0).toUpperCase() + prepMatch[2].slice(1).trim();
+                            }
+                        }
+                    }
+                }
+            }
+
+            return { title, description, icon };
+        };
     %>
 
     <!-- Top Info Text -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-4 p-md-5">
+        <div class="card-body p-3 p-sm-4 p-md-5">
             <% const topText = getSectionContent(content && content.top_text); %>
             <% if (topText && !isHtmlEmpty(topText)) { %>
                 <div class="fs-5 mb-4"><%- topText %></div>
@@ -168,21 +228,42 @@
                     </div>
 
                     <!-- Payment Method Selection -->
-                    <div class="mt-4 p-4 border rounded-4 bg-white border-2">
-                        <label class="form-label fw-bold text-primary mb-3"><%= L('paymentLabel', 'Hoe wens je te betalen?') %></label>
-                        <div class="d-flex flex-column gap-3">
-                            <div class="form-check custom-option">
-                                <input class="form-check-input" type="radio" name="paymentMethod" id="payQr" value="<%= L('paymentOption1', 'Met QR code op de startdag') %>" checked required>
-                                <label class="form-check-label fw-bold" for="payQr">
-                                    <%= L('paymentOption1', 'Met QR code op de startdag') %>
-                                </label>
-                            </div>
-                            <div class="form-check custom-option">
-                                <input class="form-check-input" type="radio" name="paymentMethod" id="payTransfer" value="<%= L('paymentOption2', 'Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt') %>" required>
-                                <label class="form-check-label fw-bold" for="payTransfer">
-                                    <%= L('paymentOption2', 'Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt') %>
-                                </label>
-                            </div>
+                    <% 
+                        const opt1Raw = L('paymentOption1', 'Met QR code op de startdag');
+                        const opt2Raw = L('paymentOption2', 'Via overschrijving naar het rekeningnummer dat op de volgende pagina getoond wordt');
+                        const opt1Parsed = parsePaymentOption(opt1Raw, 'bi-qr-code');
+                        const opt2Parsed = parsePaymentOption(opt2Raw, 'bi-bank');
+                    %>
+                    <div class="mt-4 p-3 p-sm-4 border rounded-4 bg-white border-2">
+                        <label class="form-label fw-bold text-primary mb-3 d-flex align-items-center gap-2">
+                            <i class="bi bi-wallet2 fs-5"></i>
+                            <span><%= L('paymentLabel', 'Hoe wens je te betalen?') %></span>
+                        </label>
+                        <div class="payment-methods-wrapper">
+                            <label class="payment-option-card" for="payQr">
+                                <input class="form-check-input payment-radio" type="radio" name="paymentMethod" id="payQr" value="<%= opt1Raw %>" checked required>
+                                <div class="payment-icon-badge">
+                                    <i class="bi <%= opt1Parsed.icon %>"></i>
+                                </div>
+                                <div class="payment-content">
+                                    <div class="payment-title"><%= opt1Parsed.title %></div>
+                                    <% if (opt1Parsed.description) { %>
+                                        <div class="payment-desc"><%= opt1Parsed.description %></div>
+                                    <% } %>
+                                </div>
+                            </label>
+                            <label class="payment-option-card" for="payTransfer">
+                                <input class="form-check-input payment-radio" type="radio" name="paymentMethod" id="payTransfer" value="<%= opt2Raw %>" required>
+                                <div class="payment-icon-badge">
+                                    <i class="bi <%= opt2Parsed.icon %>"></i>
+                                </div>
+                                <div class="payment-content">
+                                    <div class="payment-title"><%= opt2Parsed.title %></div>
+                                    <% if (opt2Parsed.description) { %>
+                                        <div class="payment-desc"><%= opt2Parsed.description %></div>
+                                    <% } %>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
@@ -420,6 +501,23 @@
 
     // Init
     updateForm();
+
+    // Payment cards active state handler
+    const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
+    function updatePaymentCards() {
+        paymentRadios.forEach(radio => {
+            const card = radio.closest('.payment-option-card');
+            if (card) {
+                if (radio.checked) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            }
+        });
+    }
+    paymentRadios.forEach(radio => radio.addEventListener('change', updatePaymentCards));
+    updatePaymentCards();
 </script>
 
 <%- include('../partials/footer') %>

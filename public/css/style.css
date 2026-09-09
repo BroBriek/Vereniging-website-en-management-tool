@@ -703,6 +703,167 @@ body.navbar-open {
     font-size: 1.25rem !important;
 }
 
+/* Payment Option Cards (Register Page) */
+.payment-methods-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.payment-option-card {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem 1.15rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 1rem;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    margin-bottom: 0;
+}
+
+.payment-option-card:hover {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+
+/* Checked state via :has and .selected fallback */
+.payment-option-card:has(.form-check-input:checked),
+.payment-option-card.selected {
+    border-color: var(--chiro-blue);
+    background-color: #f4f8fd;
+    box-shadow: 0 4px 12px rgba(29, 78, 137, 0.08);
+}
+
+/* Radio button styling */
+.payment-option-card .form-check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.25rem;
+    margin-right: 0.85rem;
+    margin-left: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 2px solid #94a3b8;
+    float: none;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.payment-option-card:has(.form-check-input:checked) .form-check-input,
+.payment-option-card.selected .form-check-input {
+    border-color: var(--chiro-blue);
+    background-color: var(--chiro-blue);
+}
+
+.payment-option-card .form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(29, 78, 137, 0.2);
+    border-color: var(--chiro-blue);
+}
+
+/* Payment icon */
+.payment-icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    min-width: 2.35rem;
+    border-radius: 10px;
+    background-color: rgba(29, 78, 137, 0.08);
+    color: var(--chiro-blue);
+    font-size: 1.15rem;
+    margin-right: 0.85rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.payment-option-card:has(.form-check-input:checked) .payment-icon-badge,
+.payment-option-card.selected .payment-icon-badge {
+    background-color: var(--chiro-blue);
+    color: #ffffff;
+}
+
+/* Content typography */
+.payment-content {
+    flex-grow: 1;
+    min-width: 0;
+    padding-top: 0.1rem;
+}
+
+.payment-title {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.payment-option-card:has(.form-check-input:checked) .payment-title,
+.payment-option-card.selected .payment-title {
+    color: var(--chiro-blue);
+}
+
+.payment-desc {
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    line-height: 1.35;
+    color: #475569;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    margin-top: 0.2rem;
+}
+
+/* Responsive styles */
+@media (max-width: 576px) {
+    .payment-option-card {
+        padding: 0.75rem 0.85rem;
+        border-radius: 0.85rem;
+    }
+    .payment-option-card .form-check-input {
+        width: 1.15rem;
+        height: 1.15rem;
+        margin-top: 0.2rem;
+        margin-right: 0.65rem;
+    }
+    .payment-icon-badge {
+        width: 2rem;
+        height: 2rem;
+        min-width: 2rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        margin-right: 0.65rem;
+    }
+    .payment-title {
+        font-size: 1.05rem;
+    }
+    .payment-desc {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .payment-option-card {
+        padding: 0.65rem 0.75rem;
+    }
+    .payment-icon-badge {
+        width: 1.8rem;
+        height: 1.8rem;
+        min-width: 1.8rem;
+        font-size: 0.9rem;
+        margin-right: 0.5rem;
+    }
+    .payment-option-card .form-check-input {
+        margin-right: 0.5rem;
+    }
+}
+
+
 
 
 
