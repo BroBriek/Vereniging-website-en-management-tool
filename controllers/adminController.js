@@ -556,6 +556,22 @@ exports.getRegistrations = async (req, res) => {
         const regState = await SystemState.findOne({ where: { key: 'is_registration_open' } });
         const isRegistrationOpen = regState ? regState.value === 'true' : true; // Default to true if not set
 
+        let formConfig = null;
+        const configState = await SystemState.findOne({ where: { key: 'register_form_config' } });
+        if (configState && configState.value) {
+            try {
+                const saved = JSON.parse(configState.value);
+                formConfig = {
+                    labels: { ...DEFAULT_REGISTER_FORM_CONFIG.labels, ...(saved.labels || {}) },
+                    customQuestions: saved.customQuestions || []
+                };
+            } catch (e) {
+                formConfig = JSON.parse(JSON.stringify(DEFAULT_REGISTER_FORM_CONFIG));
+            }
+        } else {
+            formConfig = JSON.parse(JSON.stringify(DEFAULT_REGISTER_FORM_CONFIG));
+        }
+
         const totalRegistrations = allPeriods.reduce((sum, p) => sum + p.count, 0);
 
         res.render('admin/registrations', { 
@@ -570,7 +586,8 @@ exports.getRegistrations = async (req, res) => {
             sortField,
             sortDirection,
             canEdit: req.user.role === 'admin',
-            isRegistrationOpen
+            isRegistrationOpen,
+            formConfig
         });
     } catch (error) {
         console.error('Error fetching registrations:', error);

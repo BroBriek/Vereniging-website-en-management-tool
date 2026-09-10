@@ -144,7 +144,7 @@
             <!-- Desktop View: Vertical List of Cards -->
             <div class="d-none d-lg-block">
                 <% registrations.forEach(reg => { %>
-                    <div class="card mb-3 shadow-sm border-0 overflow-hidden">
+                    <div class="card mb-3 shadow-sm border-0 overflow-hidden registration-card" data-reg-id="<%= reg.id %>" role="button" tabindex="0" title="Klik om details van <%= reg.firstName %> <%= reg.lastName %> te bekijken">
                         <div class="card-body p-0">
                             <div class="row g-0 align-items-center">
                                 <!-- Status Color Strip -->
@@ -202,6 +202,14 @@
 
                                         <div class="col-2 text-end pe-4">
                                             <div class="d-flex gap-2 justify-content-end align-items-center">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-info shadow-sm d-flex align-items-center gap-1 px-2 view-details-btn" 
+                                                        title="Bekijk details"
+                                                        data-reg-id="<%= reg.id %>">
+                                                    <i class="bi bi-eye"></i>
+                                                    <span class="d-none d-xl-inline small">Details</span>
+                                                </button>
+
                                                 <% if (reg.medicalInfo) { %>
                                                     <button type="button" 
                                                             class="btn btn-sm btn-warning shadow-sm border-0 d-flex align-items-center gap-2 px-2" 
@@ -234,12 +242,19 @@
             <!-- Mobile View: Existing Card Style -->
             <div class="d-lg-none">
                 <% registrations.forEach(reg => { %>
-                    <div class="card mb-3 shadow-sm border-0">
+                    <div class="card mb-3 shadow-sm border-0 registration-card" data-reg-id="<%= reg.id %>" role="button" tabindex="0" title="Klik om details van <%= reg.firstName %> <%= reg.lastName %> te bekijken">
                         <div class="card-header d-flex justify-content-between align-items-center bg-light text-dark border-bottom-0">
                             <div>
                                 <h5 class="mb-0 text-primary fw-bold"><%= reg.firstName %> <%= reg.lastName %></h5>
                             </div>
                             <div class="d-flex align-items-center gap-2">
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-info shadow-sm d-flex align-items-center gap-1 px-2 py-1 view-details-btn" 
+                                        title="Bekijk details"
+                                        data-reg-id="<%= reg.id %>">
+                                    <i class="bi bi-eye"></i>
+                                    <span class="small">Details</span>
+                                </button>
                                 <% if (reg.medicalInfo) { %>
                                     <button type="button" 
                                             class="btn btn-sm btn-warning shadow-sm border-0 d-flex align-items-center gap-2 px-2 py-1" 
@@ -311,8 +326,13 @@
                                 <% } %>
                             </div>
 
-                            <% if (canEdit) { %>
-                            <div class="mt-3 pt-2 border-top d-flex justify-content-end gap-2">
+                            <div class="mt-3 pt-2 border-top d-flex justify-content-end gap-2 flex-wrap">
+                                <button type="button" 
+                                        class="btn btn-outline-info btn-sm flex-grow-1 shadow-sm view-details-btn"
+                                        data-reg-id="<%= reg.id %>">
+                                    <i class="bi bi-eye"></i> Details
+                                </button>
+                                <% if (canEdit) { %>
                                 <a href="/admin/registrations/<%= reg.id %>/edit" class="btn btn-outline-primary btn-sm flex-grow-1 shadow-sm">
                                     <i class="bi bi-pencil"></i> Bewerken
                                 </a>
@@ -321,8 +341,8 @@
                                         <i class="bi bi-trash"></i> Verwijderen
                                     </button>
                                 </form>
+                                <% } %>
                             </div>
-                            <% } %>
                         </div>
                     </div>
                 <% }) %>
@@ -345,7 +365,7 @@
     </div>
 </div>
 
-<!-- Info Modal -->
+<!-- Info Modal (Medical) -->
 <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -364,20 +384,671 @@
     </div>
 </div>
 
+<!-- Registration Details Modal -->
+<div class="modal fade" id="registrationDetailModal" tabindex="-1" aria-labelledby="registrationDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <!-- Modal Header -->
+            <div class="modal-header border-0 pb-0 pt-3 px-4 bg-light align-items-start">
+                <div class="d-flex align-items-center gap-3">
+                    <div id="detailAvatarIcon" class="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm flex-shrink-0" style="width: 48px; height: 48px; font-size: 1.4rem; background-color: var(--chiro-blue, #1d4e89);">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <h4 class="modal-title fw-bold mb-0 text-dark" id="registrationDetailModalLabel">
+                                <span id="detailFullName">--</span>
+                            </h4>
+                            <span id="detailRoleBadge" class="badge bg-success">Lid</span>
+                            <span id="detailGroupBadge" class="badge bg-secondary">Groep</span>
+                        </div>
+                        <div class="text-muted small mt-1 d-flex align-items-center gap-2 flex-wrap">
+                            <span><i class="bi bi-calendar3 me-1"></i>Werkjaar: <strong id="detailPeriod">--</strong></span>
+                            <span>•</span>
+                            <span><i class="bi bi-clock-history me-1"></i>Inschrijving: <span id="detailCreatedAt">--</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="btn-group btn-group-sm me-1" id="modalNavControls">
+                        <button type="button" class="btn btn-outline-secondary" id="modalPrevBtn" title="Vorige inschrijving (Pijltje links)">
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="modalNextBtn" title="Volgende inschrijving (Pijltje rechts)">
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body p-4">
+                <!-- Medical Notice Banner -->
+                <div id="detailMedicalContainer" class="alert alert-warning border-warning d-flex gap-3 align-items-start shadow-sm mb-4 rounded-3" style="display: none;">
+                    <i class="bi bi-heart-pulse-fill fs-3 text-danger flex-shrink-0 mt-1"></i>
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                            <span>Medische Informatie & Opmerkingen</span>
+                            <span class="badge bg-danger text-white rounded-pill px-2" style="font-size: 0.7rem;">Belangrijk</span>
+                        </h6>
+                        <div id="detailMedicalContent" class="text-dark fs-6" style="white-space: pre-wrap;"></div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <!-- Personal Info Card -->
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light rounded-3 p-3 h-100 shadow-none">
+                            <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                <i class="bi bi-person-badge text-primary me-2"></i>Persoonlijke Gegevens
+                            </h6>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Geboortedatum & Leeftijd</small>
+                                <span class="fw-semibold" id="detailBirthdate">--</span> 
+                                <span class="text-muted" id="detailAge"></span>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Groep / Afdeling</small>
+                                <span class="fw-semibold" id="detailGroup">--</span>
+                            </div>
+                            <div class="mb-0" id="detailMemberPhoneRow">
+                                <small class="text-muted d-block">GSM Nummer Lid</small>
+                                <span id="detailMemberPhone">--</span>
+                            </div>
+                            <div class="mb-0" id="detailLeidingPhoneRow" style="display: none;">
+                                <small class="text-muted d-block">Telefoon Leiding</small>
+                                <span id="detailLeidingPhone">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Administrative & Status Card -->
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light rounded-3 p-3 h-100 shadow-none">
+                            <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                <i class="bi bi-clipboard-check text-primary me-2"></i>Administratie & Toestemming
+                            </h6>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Betaalmethode</small>
+                                <div class="fw-semibold d-flex align-items-center gap-1">
+                                    <i class="bi bi-wallet2 text-secondary"></i>
+                                    <span id="detailPaymentMethod">--</span>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted d-block">Toestemming voor Foto's</small>
+                                <span id="detailPhotoPermission">--</span>
+                            </div>
+                            <div class="mb-0">
+                                <small class="text-muted d-block">Privacyverklaring</small>
+                                <span id="detailPrivacyAccepted">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parents Section (Lid) -->
+                    <div class="col-12" id="detailParentsSection">
+                        <div class="card border-0 bg-light rounded-3 p-3 shadow-none">
+                            <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                <i class="bi bi-people text-primary me-2"></i>Ouders / Contactpersonen
+                            </h6>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Namen Ouders / Voogd</small>
+                                <span class="fw-bold fs-6" id="detailParentsNames">--</span>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <div class="p-3 bg-white rounded-2 border">
+                                        <div class="fw-bold text-dark mb-2 small text-uppercase">
+                                            <i class="bi bi-person-fill text-muted me-1"></i>Contactpersoon 1
+                                        </div>
+                                        <div class="mb-2">
+                                            <small class="text-muted d-block">Telefoon</small>
+                                            <span id="detailParentsPhone">--</span>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">E-mail</small>
+                                            <span id="detailEmail" class="text-break">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="p-3 bg-white rounded-2 border">
+                                        <div class="fw-bold text-dark mb-2 small text-uppercase">
+                                            <i class="bi bi-person-plus-fill text-muted me-1"></i>Contactpersoon 2
+                                        </div>
+                                        <div class="mb-2">
+                                            <small class="text-muted d-block">2e Telefoon</small>
+                                            <span id="detailSecondParentsPhone">--</span>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">2e E-mail</small>
+                                            <span id="detailSecondEmail" class="text-break">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leiding Contact Section (Leiding) -->
+                    <div class="col-12" id="detailLeidingSection" style="display: none;">
+                        <div class="card border-0 bg-light rounded-3 p-3 shadow-none">
+                            <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                <i class="bi bi-envelope-open text-primary me-2"></i>Contact Leiding
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <div class="p-3 bg-white rounded-2 border">
+                                        <small class="text-muted d-block">E-mailadres</small>
+                                        <span id="detailLeidingEmail" class="text-break fw-semibold">--</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="p-3 bg-white rounded-2 border">
+                                        <small class="text-muted d-block">Telefoonnummer</small>
+                                        <span id="detailLeidingDirectPhone" class="fw-semibold">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Questions Section -->
+                    <div class="col-12" id="detailCustomSection" style="display: none;">
+                        <div class="card border-0 bg-light rounded-3 p-3 shadow-none">
+                            <h6 class="fw-bold text-uppercase text-muted mb-3" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                <i class="bi bi-question-circle text-primary me-2"></i>Extra Vragen & Antwoorden
+                            </h6>
+                            <div id="detailCustomAnswersList" class="row g-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer border-top bg-light px-4 py-3 d-flex justify-content-between">
+                <div>
+                    <span id="detailModalCounter" class="text-muted small"></span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" id="modalPrintBtn">
+                        <i class="bi bi-printer me-1"></i> Afdrukken
+                    </button>
+                    <% if (canEdit) { %>
+                    <a href="#" id="modalEditBtn" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-pencil me-1"></i> Bewerken
+                    </a>
+                    <% } %>
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">
+                        Sluiten
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script id="registrationsDataJson" type="application/json">
+    <%- JSON.stringify(registrations).replace(/</g, '\\u003c') %>
+</script>
+<script id="formConfigJson" type="application/json">
+    <%- JSON.stringify(typeof formConfig !== 'undefined' && formConfig ? formConfig : {}).replace(/</g, '\\u003c') %>
+</script>
+
+<style>
+    .registration-card {
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .registration-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important;
+    }
+    .registration-card:focus-visible {
+        outline: 2px solid var(--bs-primary);
+        outline-offset: 2px;
+    }
+    .registration-card .btn,
+    .registration-card a,
+    .registration-card form {
+        cursor: default;
+    }
+    .registration-card .btn,
+    .registration-card a {
+        cursor: pointer;
+    }
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #registrationDetailModal,
+        #registrationDetailModal * {
+            visibility: visible;
+        }
+        #registrationDetailModal {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #registrationDetailModal .modal-dialog {
+            max-width: 100%;
+            margin: 0;
+        }
+        #registrationDetailModal .modal-footer,
+        #registrationDetailModal .btn-close,
+        #modalNavControls {
+            display: none !important;
+        }
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- Existing Info Modal (Medical) Handler ---
         const infoModalElement = document.getElementById('infoModal');
         if (infoModalElement) {
             infoModalElement.addEventListener('show.bs.modal', function(event) {
                 const button = event.relatedTarget;
+                if (!button) return;
                 const info = button.getAttribute('data-info');
                 const name = button.getAttribute('data-name');
                 
                 const modalTitleName = infoModalElement.querySelector('#infoModalName');
                 const modalBodyContent = infoModalElement.querySelector('#infoModalContent');
                 
-                modalTitleName.textContent = name;
-                modalBodyContent.textContent = info;
+                if (modalTitleName) modalTitleName.textContent = name || '';
+                if (modalBodyContent) modalBodyContent.textContent = info || '';
+            });
+        }
+
+        // --- Registration Detail Modal ---
+        const detailModalEl = document.getElementById('registrationDetailModal');
+        if (!detailModalEl) return;
+
+        const detailModal = new bootstrap.Modal(detailModalEl);
+
+        // Load JSON data safely
+        let registrationsList = [];
+        let formConfig = {};
+        try {
+            const dataEl = document.getElementById('registrationsDataJson');
+            if (dataEl && dataEl.textContent.trim()) {
+                registrationsList = JSON.parse(dataEl.textContent);
+            }
+        } catch (err) {
+            console.error('Error parsing registrations data:', err);
+        }
+
+        try {
+            const configEl = document.getElementById('formConfigJson');
+            if (configEl && configEl.textContent.trim()) {
+                formConfig = JSON.parse(configEl.textContent);
+            }
+        } catch (err) {
+            console.error('Error parsing form config:', err);
+        }
+
+        const regMap = new Map();
+        const regIds = [];
+        registrationsList.forEach(r => {
+            const idStr = String(r.id);
+            regMap.set(idStr, r);
+            regIds.push(idStr);
+        });
+
+        // Question label dictionary from formConfig
+        const questionLabels = {};
+        if (formConfig && Array.isArray(formConfig.customQuestions)) {
+            formConfig.customQuestions.forEach(q => {
+                if (q && q.id) questionLabels[q.id] = q.label;
+            });
+        }
+
+        let currentActiveRegId = null;
+
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function cleanPhone(phone) {
+            if (!phone) return '';
+            return phone.replace(/[^\d+]/g, '');
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('nl-BE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('nl-BE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function calculateAge(birthdateStr) {
+            if (!birthdateStr) return '';
+            const birthDate = new Date(birthdateStr);
+            if (isNaN(birthDate.getTime())) return '';
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age >= 0 ? `(${age} jaar)` : '';
+        }
+
+        function capitalize(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function populateAndShowModal(regId) {
+            const reg = regMap.get(String(regId));
+            if (!reg) return;
+
+            currentActiveRegId = String(regId);
+
+            // Header & Avatar
+            const fullName = `${reg.firstName || ''} ${reg.lastName || ''}`.trim() || 'Naamloos';
+            document.getElementById('detailFullName').textContent = fullName;
+
+            const isLeiding = reg.type === 'leiding';
+            const avatarIcon = document.getElementById('detailAvatarIcon');
+            const roleBadge = document.getElementById('detailRoleBadge');
+
+            if (isLeiding) {
+                avatarIcon.style.backgroundColor = '#dc3545';
+                avatarIcon.innerHTML = '<i class="bi bi-star-fill"></i>';
+                roleBadge.className = 'badge bg-danger';
+                roleBadge.textContent = 'Leiding';
+            } else {
+                avatarIcon.style.backgroundColor = 'var(--chiro-blue, #1d4e89)';
+                avatarIcon.innerHTML = '<i class="bi bi-person-fill"></i>';
+                roleBadge.className = 'badge bg-success';
+                roleBadge.textContent = 'Lid';
+            }
+
+            const groupBadge = document.getElementById('detailGroupBadge');
+            groupBadge.textContent = capitalize(reg.group);
+
+            document.getElementById('detailPeriod').textContent = reg.period || '-';
+            document.getElementById('detailCreatedAt').textContent = formatDateTime(reg.createdAt);
+
+            // Medical Warning
+            const medContainer = document.getElementById('detailMedicalContainer');
+            const medContent = document.getElementById('detailMedicalContent');
+            if (reg.medicalInfo && reg.medicalInfo.trim()) {
+                medContent.textContent = reg.medicalInfo.trim();
+                medContainer.style.display = 'flex';
+            } else {
+                medContainer.style.display = 'none';
+                medContent.textContent = '';
+            }
+
+            // Personal Info
+            document.getElementById('detailBirthdate').textContent = formatDate(reg.birthdate);
+            document.getElementById('detailAge').textContent = calculateAge(reg.birthdate);
+            document.getElementById('detailGroup').textContent = capitalize(reg.group);
+
+            // Member / Leiding Phone & Email
+            const memberPhoneRow = document.getElementById('detailMemberPhoneRow');
+            const leidingPhoneRow = document.getElementById('detailLeidingPhoneRow');
+            const detailMemberPhone = document.getElementById('detailMemberPhone');
+            const detailLeidingPhone = document.getElementById('detailLeidingPhone');
+
+            if (isLeiding) {
+                memberPhoneRow.style.display = 'none';
+                leidingPhoneRow.style.display = 'block';
+                if (reg.phone) {
+                    detailLeidingPhone.innerHTML = `<a href="tel:${cleanPhone(reg.phone)}" class="text-decoration-none fw-bold"><i class="bi bi-telephone me-1"></i>${escapeHtml(reg.phone)}</a>`;
+                } else {
+                    detailLeidingPhone.innerHTML = '<span class="text-muted">Geen telefoonnummer</span>';
+                }
+            } else {
+                memberPhoneRow.style.display = 'block';
+                leidingPhoneRow.style.display = 'none';
+                if (reg.memberPhone) {
+                    detailMemberPhone.innerHTML = `<a href="tel:${cleanPhone(reg.memberPhone)}" class="text-decoration-none fw-semibold"><i class="bi bi-telephone me-1"></i>${escapeHtml(reg.memberPhone)}</a>`;
+                } else {
+                    detailMemberPhone.innerHTML = '<span class="text-muted">Geen GSM opgegeven</span>';
+                }
+            }
+
+            // Administrative
+            document.getElementById('detailPaymentMethod').textContent = reg.paymentMethod || 'Met QR code op de startdag';
+
+            const photoEl = document.getElementById('detailPhotoPermission');
+            if (reg.photoPermission) {
+                photoEl.innerHTML = '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Toegestaan</span>';
+            } else {
+                photoEl.innerHTML = '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1"><i class="bi bi-x-circle-fill me-1"></i>Niet toegestaan</span>';
+            }
+
+            const privacyEl = document.getElementById('detailPrivacyAccepted');
+            if (reg.privacyAccepted) {
+                privacyEl.innerHTML = '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Akkoord</span>';
+            } else {
+                privacyEl.innerHTML = '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1"><i class="bi bi-dash-circle me-1"></i>Niet geregistreerd</span>';
+            }
+
+            // Parents vs Leiding contact section
+            const parentsSec = document.getElementById('detailParentsSection');
+            const leidingSec = document.getElementById('detailLeidingSection');
+
+            if (isLeiding) {
+                parentsSec.style.display = 'none';
+                leidingSec.style.display = 'block';
+
+                const leidingEmailEl = document.getElementById('detailLeidingEmail');
+                if (reg.email) {
+                    leidingEmailEl.innerHTML = `<a href="mailto:${escapeHtml(reg.email)}" class="text-decoration-none"><i class="bi bi-envelope me-1"></i>${escapeHtml(reg.email)}</a>`;
+                } else {
+                    leidingEmailEl.innerHTML = '<span class="text-muted">Geen e-mailadres</span>';
+                }
+
+                const leidingDirectPhoneEl = document.getElementById('detailLeidingDirectPhone');
+                if (reg.phone) {
+                    leidingDirectPhoneEl.innerHTML = `<a href="tel:${cleanPhone(reg.phone)}" class="text-decoration-none fw-bold"><i class="bi bi-telephone me-1"></i>${escapeHtml(reg.phone)}</a>`;
+                } else {
+                    leidingDirectPhoneEl.innerHTML = '<span class="text-muted">Geen telefoonnummer</span>';
+                }
+            } else {
+                parentsSec.style.display = 'block';
+                leidingSec.style.display = 'none';
+
+                document.getElementById('detailParentsNames').textContent = reg.parentsNames || 'Niet opgegeven';
+
+                // Contact 1
+                const pPhoneEl = document.getElementById('detailParentsPhone');
+                if (reg.parentsPhone) {
+                    pPhoneEl.innerHTML = `<a href="tel:${cleanPhone(reg.parentsPhone)}" class="text-decoration-none fw-bold"><i class="bi bi-telephone me-1"></i>${escapeHtml(reg.parentsPhone)}</a>`;
+                } else {
+                    pPhoneEl.innerHTML = '<span class="text-muted">Niet opgegeven</span>';
+                }
+
+                const pEmailEl = document.getElementById('detailEmail');
+                if (reg.email) {
+                    pEmailEl.innerHTML = `<a href="mailto:${escapeHtml(reg.email)}" class="text-decoration-none"><i class="bi bi-envelope me-1"></i>${escapeHtml(reg.email)}</a>`;
+                } else {
+                    pEmailEl.innerHTML = '<span class="text-muted">Niet opgegeven</span>';
+                }
+
+                // Contact 2
+                const p2PhoneEl = document.getElementById('detailSecondParentsPhone');
+                if (reg.secondParentsPhone) {
+                    p2PhoneEl.innerHTML = `<a href="tel:${cleanPhone(reg.secondParentsPhone)}" class="text-decoration-none fw-bold"><i class="bi bi-telephone me-1"></i>${escapeHtml(reg.secondParentsPhone)}</a>`;
+                } else {
+                    p2PhoneEl.innerHTML = '<span class="text-muted">Geen 2e telefoon</span>';
+                }
+
+                const p2EmailEl = document.getElementById('detailSecondEmail');
+                if (reg.secondEmail) {
+                    p2EmailEl.innerHTML = `<a href="mailto:${escapeHtml(reg.secondEmail)}" class="text-decoration-none"><i class="bi bi-envelope me-1"></i>${escapeHtml(reg.secondEmail)}</a>`;
+                } else {
+                    p2EmailEl.innerHTML = '<span class="text-muted">Geen 2e e-mail</span>';
+                }
+            }
+
+            // Custom Questions
+            const customSec = document.getElementById('detailCustomSection');
+            const customList = document.getElementById('detailCustomAnswersList');
+            customList.innerHTML = '';
+            let customAnswersObj = null;
+            if (reg.customAnswers) {
+                if (typeof reg.customAnswers === 'string') {
+                    try { customAnswersObj = JSON.parse(reg.customAnswers); } catch(e) {}
+                } else if (typeof reg.customAnswers === 'object') {
+                    customAnswersObj = reg.customAnswers;
+                }
+            }
+
+            if (customAnswersObj && Object.keys(customAnswersObj).length > 0) {
+                let hasAnswers = false;
+                for (const [qId, answer] of Object.entries(customAnswersObj)) {
+                    if (answer == null || answer === '') continue;
+                    hasAnswers = true;
+                    const label = questionLabels[qId] || qId;
+                    const itemCol = document.createElement('div');
+                    itemCol.className = 'col-sm-6';
+                    itemCol.innerHTML = `
+                        <div class="p-3 bg-white rounded-2 border h-100">
+                            <small class="text-muted d-block fw-bold mb-1">${escapeHtml(label)}</small>
+                            <span class="text-dark">${escapeHtml(answer)}</span>
+                        </div>
+                    `;
+                    customList.appendChild(itemCol);
+                }
+                customSec.style.display = hasAnswers ? 'block' : 'none';
+            } else {
+                customSec.style.display = 'none';
+            }
+
+            // Edit Link
+            const editBtn = document.getElementById('modalEditBtn');
+            if (editBtn) {
+                editBtn.href = `/admin/registrations/${reg.id}/edit`;
+            }
+
+            // Navigation Controls
+            const currentIndex = regIds.indexOf(String(regId));
+            const prevBtn = document.getElementById('modalPrevBtn');
+            const nextBtn = document.getElementById('modalNextBtn');
+            const counterEl = document.getElementById('detailModalCounter');
+
+            if (currentIndex !== -1) {
+                prevBtn.disabled = currentIndex <= 0;
+                nextBtn.disabled = currentIndex >= regIds.length - 1;
+                counterEl.textContent = `Inschrijving ${currentIndex + 1} van ${regIds.length}`;
+            } else {
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                counterEl.textContent = '';
+            }
+
+            detailModal.show();
+        }
+
+        // Card and Button Clicks
+        document.addEventListener('click', function(e) {
+            // Check if a view-details-btn was clicked
+            const detailBtn = e.target.closest('.view-details-btn');
+            if (detailBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const regId = detailBtn.getAttribute('data-reg-id');
+                if (regId) populateAndShowModal(regId);
+                return;
+            }
+
+            // Check if registration card was clicked
+            const card = e.target.closest('.registration-card');
+            if (card) {
+                // If clicked on an interactive element inside card (link, button, form), ignore
+                if (e.target.closest('a, button, form, input, select, textarea, label')) {
+                    return;
+                }
+                const regId = card.getAttribute('data-reg-id');
+                if (regId) populateAndShowModal(regId);
+            }
+        });
+
+        // Keyboard accessibility on cards (Enter or Space)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                const activeEl = document.activeElement;
+                if (activeEl && activeEl.classList.contains('registration-card')) {
+                    // Don't trigger if an inner button has focus
+                    if (e.target.closest('a, button, form, input, select, textarea') && e.target !== activeEl) {
+                        return;
+                    }
+                    e.preventDefault();
+                    const regId = activeEl.getAttribute('data-reg-id');
+                    if (regId) populateAndShowModal(regId);
+                }
+            }
+
+            // Left/Right Arrow Navigation when modal is open
+            if (detailModalEl.classList.contains('show')) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const prevBtn = document.getElementById('modalPrevBtn');
+                    if (prevBtn && !prevBtn.disabled) prevBtn.click();
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const nextBtn = document.getElementById('modalNextBtn');
+                    if (nextBtn && !nextBtn.disabled) nextBtn.click();
+                }
+            }
+        });
+
+        // Prev & Next Buttons
+        const prevBtn = document.getElementById('modalPrevBtn');
+        const nextBtn = document.getElementById('modalNextBtn');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                const idx = regIds.indexOf(currentActiveRegId);
+                if (idx > 0) {
+                    populateAndShowModal(regIds[idx - 1]);
+                }
+            });
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                const idx = regIds.indexOf(currentActiveRegId);
+                if (idx !== -1 && idx < regIds.length - 1) {
+                    populateAndShowModal(regIds[idx + 1]);
+                }
+            });
+        }
+
+        // Print Button
+        const printBtn = document.getElementById('modalPrintBtn');
+        if (printBtn) {
+            printBtn.addEventListener('click', function() {
+                window.print();
             });
         }
     });
