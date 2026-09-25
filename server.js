@@ -25,10 +25,20 @@ const stderrLogStream = fs.createWriteStream(stderrLogPath, { flags: 'a' });
 const formatConsoleArgs = (...args) => util.format(...args) + '\n';
 
 const originalConsoleLog = console.log.bind(console);
+const originalConsoleInfo = console.info.bind(console);
+const originalConsoleWarn = console.warn.bind(console);
 const originalConsoleError = console.error.bind(console);
 console.log = (...args) => {
   stdoutLogStream.write(formatConsoleArgs(...args));
   originalConsoleLog(...args);
+};
+console.info = (...args) => {
+  stdoutLogStream.write(formatConsoleArgs(...args));
+  originalConsoleInfo(...args);
+};
+console.warn = (...args) => {
+  stderrLogStream.write(formatConsoleArgs(...args));
+  originalConsoleWarn(...args);
 };
 console.error = (...args) => {
   stderrLogStream.write(formatConsoleArgs(...args));
