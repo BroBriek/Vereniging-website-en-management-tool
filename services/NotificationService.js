@@ -34,12 +34,10 @@ class NotificationService {
 
             if (user.role === 'kookmoeke') {
                 if (isLeidingshoekje || (!isTetterhoekje && url.startsWith('/feed'))) {
-                    console.log(`NotificationService: Skipping notification '${messageData.title}' for kookmoeke user ${user.username} (Leidingshoekje notification)`);
                     return;
                 }
             } else if (user.role !== 'admin') {
                 if (isTetterhoekje) {
-                    console.log(`NotificationService: Skipping Tetterhoekje notification '${messageData.title}' for user ${user.username} (Role: ${user.role})`);
                     return;
                 }
             }
