@@ -2779,6 +2779,39 @@ async function fixImage(btn, url) {
         background: var(--chiro-blue, #0d6efd) !important;
         color: white !important;
     }
+    .ap-choice-btn {
+        border: 2px solid rgba(13, 110, 253, 0.18) !important;
+        background: rgba(13, 110, 253, 0.03) !important;
+        color: #212529 !important;
+        transition: all 0.2s ease;
+    }
+    .ap-choice-btn:hover {
+        border-color: var(--chiro-blue, #0d6efd) !important;
+        background: rgba(13, 110, 253, 0.09) !important;
+        color: var(--chiro-blue, #0d6efd) !important;
+        transform: translateY(-1px);
+    }
+    .ap-choice-btn.selected {
+        border-color: var(--chiro-blue, #0d6efd) !important;
+        background: var(--chiro-blue, #0d6efd) !important;
+        color: white !important;
+    }
+    .ap-choice-btn.selected span, .ap-choice-btn.selected i {
+        color: white !important;
+    }
+    .ap-multi-option {
+        border: 2px solid rgba(0, 0, 0, 0.08) !important;
+        background: #fff;
+        transition: all 0.2s ease;
+    }
+    .ap-multi-option:hover {
+        border-color: rgba(13, 110, 253, 0.35) !important;
+        background: rgba(13, 110, 253, 0.02) !important;
+    }
+    .ap-multi-option.selected {
+        border-color: var(--chiro-blue, #0d6efd) !important;
+        background: rgba(13, 110, 253, 0.08) !important;
+    }
     @keyframes apSlideUp {
         from { opacity: 0; transform: translateY(10px); }
         to   { opacity: 1; transform: translateY(0);    }
@@ -2830,7 +2863,12 @@ async function fixImage(btn, url) {
                                         <div class="text-muted">
                                             <% if (ans.skipped) { %>Overgeslagen
                                             <% } else if (q.type === 'score') { %>Score: <strong><%= ans.score !== undefined ? ans.score : '—' %> / 5</strong>
-                                            <% } else { %>Feedback: <em>"<%= ans.feedback || '—' %>"</em>
+                                            <% } else if (q.type === 'text') { %>Feedback: <em>"<%= ans.feedback || '—' %>"</em>
+                                            <% } else if (q.type === 'multiple_choice') { %>Keuze: <strong><%= ans.selected || '—' %></strong>
+                                            <% } else if (q.type === 'multiple_choice_multi') {
+                                                const arr = Array.isArray(ans.selected) ? ans.selected : (ans.selected ? [ans.selected] : []);
+                                            %>Keuzes: <strong><%= arr.length > 0 ? arr.join(', ') : '—' %></strong>
+                                            <% } else { %>Antwoord: <strong><%= ans.selected || ans.feedback || ans.score || '—' %></strong>
                                             <% } %>
                                         </div>
                                     </li>
@@ -2875,7 +2913,7 @@ async function fixImage(btn, url) {
                                                         Sla over <i class="bi bi-arrow-right ms-1"></i>
                                                     </button>
                                                 </div>
-                                            <% } else { %>
+                                            <% } else if (q.type === 'text') { %>
                                                 <textarea class="form-control rounded-3 mb-2 ap-text-input"
                                                     data-step="<%= idx %>"
                                                     data-qid="<%= q.id %>"
@@ -2884,6 +2922,46 @@ async function fixImage(btn, url) {
                                                 <div class="d-flex gap-2">
                                                     <button type="button" class="btn btn-outline-secondary rounded-pill flex-fill ap-skip-btn" data-step="<%= idx %>" data-qid="<%= q.id %>">Overslaan</button>
                                                     <button type="button" class="btn btn-primary rounded-pill flex-fill ap-next-text-btn" data-step="<%= idx %>" data-qid="<%= q.id %>"
+                                                        style="background:linear-gradient(135deg,var(--chiro-blue,#0d6efd),#004488);border:none;">
+                                                        <%= idx === _qList.length - 1 ? 'Verzenden' : 'Volgende' %>
+                                                    </button>
+                                                </div>
+                                            <% } else if (q.type === 'multiple_choice') { %>
+                                                <div class="d-flex flex-column gap-2 mb-3">
+                                                    <% (q.options || []).forEach((opt) => { %>
+                                                        <button type="button"
+                                                            class="ap-choice-btn btn btn-outline-primary text-start rounded-3 p-2 px-3 d-flex align-items-center justify-content-between transition-base"
+                                                            data-step="<%= idx %>"
+                                                            data-qid="<%= q.id %>"
+                                                            data-value="<%= opt %>">
+                                                            <span class="fw-semibold text-dark"><%= opt %></span>
+                                                            <i class="bi bi-circle ap-choice-icon fs-6 opacity-75"></i>
+                                                        </button>
+                                                    <% }); %>
+                                                </div>
+                                                <div class="text-center">
+                                                    <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none ap-skip-btn" data-step="<%= idx %>" data-qid="<%= q.id %>">
+                                                        Sla over <i class="bi bi-arrow-right ms-1"></i>
+                                                    </button>
+                                                </div>
+                                            <% } else if (q.type === 'multiple_choice_multi') { %>
+                                                <div class="d-flex flex-column gap-2 mb-3">
+                                                    <% (q.options || []).forEach((opt) => { %>
+                                                        <div class="card border rounded-3 p-2 px-3 ap-multi-option" style="cursor: pointer; transition: all .2s;">
+                                                            <label class="form-check d-flex align-items-center justify-content-between mb-0 w-100" style="cursor: pointer;">
+                                                                <span class="fw-semibold text-dark"><%= opt %></span>
+                                                                <input type="checkbox"
+                                                                    class="form-check-input ms-2 mt-0 ap-multi-check"
+                                                                    data-step="<%= idx %>"
+                                                                    data-qid="<%= q.id %>"
+                                                                    value="<%= opt %>">
+                                                            </label>
+                                                        </div>
+                                                    <% }); %>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-outline-secondary rounded-pill flex-fill ap-skip-btn" data-step="<%= idx %>" data-qid="<%= q.id %>">Overslaan</button>
+                                                    <button type="button" class="btn btn-primary rounded-pill flex-fill ap-next-multi-btn" data-step="<%= idx %>" data-qid="<%= q.id %>"
                                                         style="background:linear-gradient(135deg,var(--chiro-blue,#0d6efd),#004488);border:none;">
                                                         <%= idx === _qList.length - 1 ? 'Verzenden' : 'Volgende' %>
                                                     </button>
@@ -3029,10 +3107,62 @@ async function fixImage(btn, url) {
         });
     });
 
+    // Single choice buttons
+    document.querySelectorAll('.ap-choice-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            if (isTransitioning) return;
+            const step = +this.dataset.step;
+            const qid  = this.dataset.qid;
+            const val  = this.dataset.value;
+            answers[qid] = { selected: val };
+
+            this.classList.add('selected');
+            const icon = this.querySelector('.ap-choice-icon');
+            if (icon) {
+                icon.className = 'bi bi-check-circle-fill ap-choice-icon fs-6 text-white';
+            }
+            this.style.transform = 'scale(0.97)';
+            setTimeout(() => { this.style.transform = ''; afterAnswer(step); }, 180);
+        });
+    });
+
+    // Multi choice option card toggle
+    document.querySelectorAll('.ap-multi-option').forEach(card => {
+        card.addEventListener('click', function (e) {
+            const checkbox = this.querySelector('.ap-multi-check');
+            if (e.target !== checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
+            if (checkbox.checked) {
+                this.classList.add('selected');
+            } else {
+                this.classList.remove('selected');
+            }
+        });
+    });
+
+    // Multi choice next buttons
+    document.querySelectorAll('.ap-next-multi-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            if (isTransitioning) return;
+            const step = +this.dataset.step;
+            const qid  = this.dataset.qid;
+            const checkedBoxes = Array.from(document.querySelectorAll(`.ap-multi-check[data-step="${step}"]:checked`));
+            const selected = checkedBoxes.map(cb => cb.value);
+            if (selected.length === 0) {
+                alert('Kies minstens één optie, of klik op "Overslaan".');
+                return;
+            }
+            answers[qid] = { selected };
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => { this.style.transform = ''; afterAnswer(step); }, 150);
+        });
+    });
+
     // Submit
     async function submitSurvey() {
         // Disable all interactive elements
-        document.querySelectorAll('.ap-score-btn, .ap-next-text-btn, .ap-skip-btn, .ap-text-input').forEach(el => el.disabled = true);
+        document.querySelectorAll('.ap-score-btn, .ap-next-text-btn, .ap-skip-btn, .ap-text-input, .ap-choice-btn, .ap-next-multi-btn, .ap-multi-check').forEach(el => el.disabled = true);
 
         try {
             const res    = await fetch(SURVEY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) });
@@ -3046,7 +3176,14 @@ async function fixImage(btn, url) {
                     let ansText = '';
                     if (ans.skipped)          ansText = 'Overgeslagen';
                     else if (q.type === 'score') ansText = 'Score: <strong>' + (ans.score ?? '—') + ' / 5</strong>';
-                    else                       ansText = 'Feedback: <em>"' + (ans.feedback || '—') + '"</em>';
+                    else if (q.type === 'text')  ansText = 'Feedback: <em>"' + (ans.feedback || '—') + '"</em>';
+                    else if (q.type === 'multiple_choice') ansText = 'Keuze: <strong>' + (ans.selected || '—') + '</strong>';
+                    else if (q.type === 'multiple_choice_multi') {
+                        const arr = Array.isArray(ans.selected) ? ans.selected : (ans.selected ? [ans.selected] : []);
+                        ansText = 'Keuzes: <strong>' + (arr.length > 0 ? arr.join(', ') : 'Geen') + '</strong>';
+                    } else {
+                        ansText = 'Antwoord: <strong>' + (ans.selected || ans.feedback || ans.score || '—') + '</strong>';
+                    }
                     summaryHtml += '<li class="small mb-2"><div class="fw-bold text-dark">' + (i+1) + '. ' + q.text + '</div><div class="text-muted">' + ansText + '</div></li>';
                 });
                 summaryHtml += '</ul>';
@@ -3074,12 +3211,12 @@ async function fixImage(btn, url) {
                 }, 300);
             } else {
                 alert(result.error || 'Er is iets misgegaan.');
-                document.querySelectorAll('.ap-score-btn, .ap-next-text-btn, .ap-skip-btn, .ap-text-input').forEach(el => el.disabled = false);
+                document.querySelectorAll('.ap-score-btn, .ap-next-text-btn, .ap-skip-btn, .ap-text-input, .ap-choice-btn, .ap-next-multi-btn, .ap-multi-check').forEach(el => el.disabled = false);
             }
         } catch (err) {
             console.error('Survey submit error:', err);
             alert('Netwerkfout. Probeer het opnieuw.');
-            document.querySelectorAll('.ap-score-btn, .ap-next-text-btn, .ap-skip-btn, .ap-text-input').forEach(el => el.disabled = false);
+            document.querySelectorAll('.ap-score-btn, .ap-next-text-btn, .ap-skip-btn, .ap-text-input, .ap-choice-btn, .ap-next-multi-btn, .ap-multi-check').forEach(el => el.disabled = false);
         }
     }
 })();
@@ -3091,8 +3228,11 @@ async function fixImage(btn, url) {
 <script>
 (function () {
     try {
-        const ids = <%- JSON.stringify(Array.isArray(user.dismissedAnnouncements) ? user.dismissedAnnouncements : []) %>;
-        ids.forEach(id => localStorage.setItem('dismissed_announcement_' + id, '1'));
+        let ids = <%- JSON.stringify(user.dismissedAnnouncements) %>;
+        while (typeof ids === 'string') { try { ids = JSON.parse(ids); } catch(e) { break; } }
+        if (Array.isArray(ids)) {
+            ids.forEach(id => localStorage.setItem('dismissed_announcement_' + id, '1'));
+        }
     } catch (_) {}
 })();
 </script>

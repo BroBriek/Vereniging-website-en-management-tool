@@ -243,6 +243,10 @@ class MigrationService {
                     await sequelize.query('ALTER TABLE Announcements ADD COLUMN surveyQuestions TEXT;');
                     console.log('Added Announcements.surveyQuestions');
                 }
+                if (!await columnExists('Announcements', 'isDraft')) {
+                    await sequelize.query('ALTER TABLE Announcements ADD COLUMN isDraft BOOLEAN DEFAULT 0;');
+                    console.log('Added Announcements.isDraft');
+                }
             } catch (announcementsErr) {
                 console.error('Error migrating Announcements table schema:', announcementsErr);
             }

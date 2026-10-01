@@ -1,6 +1,9 @@
 <%
     // Helper not available in this scope — define it locally
     function _cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+    const allAnnouncements = typeof announcements !== 'undefined' && announcements ? announcements : [];
+    const drafts = allAnnouncements.filter(a => a.isDraft);
+    const published = allAnnouncements.filter(a => !a.isDraft);
 %>
 <style>
     .ann-card {
@@ -8,6 +11,11 @@
         border-radius: 16px;
         box-shadow: 0 4px 20px rgba(0,0,0,.06);
         overflow: hidden;
+        transition: all .2s ease;
+    }
+    .ann-card.dragover-highlight {
+        border: 2px dashed #0d6efd !important;
+        background: rgba(13, 110, 253, 0.03) !important;
     }
     .ann-card-header {
         background: var(--chiro-blue, #0d6efd);
@@ -22,6 +30,7 @@
     }
     .ann-card-header.dark  { background: #343a40; }
     .ann-card-header.grey  { background: #6c757d; }
+    .ann-card-header.concept { background: #fd7e14; color: white; }
     .target-chip-group { display: flex; flex-wrap: wrap; gap: .5rem; padding-top: .25rem; }
     .target-chip { display: none; }
     .target-chip + label {
@@ -68,25 +77,54 @@
     .badge-target-media     { background:#0dcaf0; color:#333 !important; }
 </style>
 
+<!-- Hidden file input for importing announcements/polls -->
+<input type="file" id="annFileInput" accept=".json,application/json" class="d-none">
+
 <!-- ======================================================
-     Creation Form
+     Creation & Edit Form
      ====================================================== -->
 <div class="row g-4 mb-5">
     <!-- Left: Form -->
     <div class="col-lg-7">
-        <div class="ann-card card h-100">
-            <div class="ann-card-header">
-                <span><i class="bi bi-plus-circle-fill me-2"></i>Nieuwe Aankondiging</span>
+        <div class="ann-card card h-100" id="annFormCard">
+            <div class="ann-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span id="formHeaderTitle"><i class="bi bi-pencil-square me-2"></i>Aankondiging & Poll Opstellen</span>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-light text-primary rounded-pill px-3 shadow-none fw-bold" id="btnTriggerImport" title="Importeer een aankondiging/poll uit een JSON-bestand">
+                        <i class="bi bi-upload me-1"></i>Importeer bestand
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3 shadow-none fw-bold" id="btnExportCurrent" title="Exporteer de huidige formulierinhoud als JSON-bestand">
+                        <i class="bi bi-download me-1"></i>Exporteer formulier
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-2 shadow-none" id="btnResetForm" title="Formulier leegmaken / Nieuw">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
             </div>
             <div class="card-body p-4">
+                <!-- Edit mode banner (shown when modifying a draft) -->
+                <div id="editingBanner" class="alert alert-warning border-2 rounded-3 d-none d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <i class="bi bi-pencil-fill me-2"></i>
+                        Je bewerkt nu concept: <strong id="editingConceptTitle"></strong>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3" id="btnCancelEdit">
+                        <i class="bi bi-x-circle me-1"></i>Annuleren (Nieuw)
+                    </button>
+                </div>
+
                 <form action="/admin/announcements" method="POST" id="annForm">
+                    <!-- Hidden fields -->
+                    <input type="hidden" name="id" id="annId" value="">
+                    <input type="hidden" name="isDraft" id="annIsDraft" value="false">
+                    <input type="hidden" name="action" id="annAction" value="publish">
 
                     <!-- Title -->
                     <div class="mb-3">
                         <label for="annTitle" class="form-label fw-bold small text-uppercase text-muted">Titel</label>
                         <input type="text" class="form-control form-control-lg rounded-3 border-2"
                                id="annTitle" name="title"
-                               placeholder="Bijv. Update voor de leiding" required>
+                               placeholder="Bijv. Update voor de leiding of Poll: Kampactiviteit" required>
                     </div>
 
                     <!-- Target chips + Notification -->
@@ -125,12 +163,12 @@
                                   placeholder="Schrijf hier wat de gebruikers te zien krijgen..."></textarea>
                     </div>
 
-                    <!-- Survey toggle -->
+                    <!-- Survey / Poll toggle -->
                     <div class="card border-2 rounded-3 mb-4 bg-light shadow-sm">
                         <div class="card-body py-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <label class="fw-bold small text-uppercase text-muted mb-0" for="annHasSurvey">
-                                    <i class="bi bi-patch-question-fill me-1 text-primary"></i>Survey toevoegen
+                                    <i class="bi bi-patch-question-fill me-1 text-primary"></i>Survey / Poll toevoegen
                                 </label>
                                 <div class="form-check form-switch mb-0">
                                     <input class="form-check-input shadow-none" type="checkbox" name="hasSurvey" id="annHasSurvey" role="switch">
@@ -145,9 +183,19 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-success btn-lg rounded-pill px-5 w-100 fw-bold">
-                        <i class="bi bi-send-fill me-2"></i>Aankondiging Publiceren
-                    </button>
+                    <!-- Buttons: Concept vs Publiceren -->
+                    <div class="row g-2">
+                        <div class="col-sm-6">
+                            <button type="button" class="btn btn-outline-secondary btn-lg rounded-pill w-100 fw-bold py-2" id="btnSaveDraft">
+                                <i class="bi bi-file-earmark-text me-2"></i>Opslaan als Concept
+                            </button>
+                        </div>
+                        <div class="col-sm-6">
+                            <button type="button" class="btn btn-success btn-lg rounded-pill w-100 fw-bold py-2" id="btnPublish">
+                                <i class="bi bi-send-fill me-2"></i>Aankondiging Publiceren
+                            </button>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -183,15 +231,121 @@
 </div>
 
 <!-- ======================================================
+     Concepten / Kladversies Table
+     ====================================================== -->
+<div class="ann-card card mb-5">
+    <div class="ann-card-header concept d-flex justify-content-between align-items-center">
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-file-earmark-text-fill"></i>
+            <span>Concepten & Kladversies</span>
+            <span class="badge bg-dark text-white rounded-pill px-2"><%= drafts.length %></span>
+        </span>
+        <small class="text-white fw-normal opacity-75">Niet zichtbaar voor gebruikers</small>
+    </div>
+    <div class="card-body p-4">
+        <% if (drafts && drafts.length > 0) { %>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Laatst aangepast</th>
+                            <th>Titel</th>
+                            <th>Doelgroep</th>
+                            <th>Auteur</th>
+                            <th class="text-end">Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% drafts.forEach(d => {
+                            let targets = d.target;
+                            if (!Array.isArray(targets)) {
+                                try { targets = JSON.parse(targets); } catch(e) { targets = [targets]; }
+                                if (!Array.isArray(targets)) targets = [targets];
+                            }
+                            let qs = d.surveyQuestions;
+                            if (qs && typeof qs === 'string') { try { qs = JSON.parse(qs); } catch(e) { qs = null; } }
+                            if (!Array.isArray(qs)) qs = d.surveyQuestion ? [{ text: d.surveyQuestion, type: d.surveyType || 'score' }] : [];
+                            
+                            const dData = {
+                                id: d.id,
+                                title: d.title,
+                                content: d.content,
+                                target: targets,
+                                sendNotification: d.sendNotification,
+                                hasSurvey: d.hasSurvey,
+                                surveyQuestions: qs,
+                                isDraft: true
+                            };
+                        %>
+                        <tr>
+                            <td class="text-muted small"><%= new Date(d.updatedAt || d.createdAt).toLocaleDateString('nl-BE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) %></td>
+                            <td>
+                                <strong><%= d.title %></strong>
+                                <span class="badge bg-warning text-dark ms-1" style="font-size:.7rem;">Concept</span>
+                                <% if (d.hasSurvey && qs.length > 0) { %>
+                                    <br><span class="badge bg-info-subtle text-info mt-1" style="font-size:.72rem;">
+                                        <i class="bi bi-patch-question-fill me-1"></i>Survey: <%= qs.length %> <%= qs.length === 1 ? 'vraag' : 'vragen' %>
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <% targets.forEach(t => { %>
+                                        <span class="badge badge-target-<%= t %>"><%= t === 'all' ? '🌍 Iedereen' : _cap(t) %></span>
+                                    <% }); %>
+                                </div>
+                            </td>
+                            <td class="small"><%= d.creator ? _cap(d.creator.username) : 'Onbekend' %></td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 btn-edit-concept"
+                                        data-announcement="<%- JSON.stringify(dData).replace(/"/g, '&quot;') %>">
+                                        <i class="bi bi-pencil me-1"></i>Bewerken
+                                    </button>
+                                    <form action="/admin/announcements/<%= d.id %>/publish" method="POST" class="d-inline" onsubmit="return confirm('Weet je zeker dat je dit concept direct wilt publiceren?');">
+                                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">
+                                            <i class="bi bi-send-fill me-1"></i>Publiceren
+                                        </button>
+                                    </form>
+                                    <a href="/admin/announcements/<%= d.id %>/export-file" class="btn btn-sm btn-outline-secondary rounded-pill px-3" title="Exporteer als JSON-bestand">
+                                        <i class="bi bi-download me-1"></i>Bestand
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 ann-delete-btn"
+                                        data-id="<%= d.id %>"
+                                        data-title="<%= d.title %>">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        <% } else { %>
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-journal-text display-6 d-block mb-2 text-secondary opacity-50"></i>
+                <p class="mb-1 fw-bold">Geen opgeslagen concepten</p>
+                <small>Gebruik de knop <strong>"Opslaan als Concept"</strong> in het formulier om een kladversie te bewaren zonder te publiceren.</small>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- ======================================================
      Published Announcements Table
      ====================================================== -->
 <div class="ann-card card">
-    <div class="ann-card-header grey">
-        <span>Gepubliceerde Aankondigingen</span>
+    <div class="ann-card-header grey d-flex justify-content-between align-items-center">
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-megaphone-fill"></i>
+            <span>Gepubliceerde Aankondigingen</span>
+            <span class="badge bg-light text-dark rounded-pill px-2"><%= published.length %></span>
+        </span>
         <i class="bi bi-clock-history"></i>
     </div>
     <div class="card-body p-4">
-        <% if (announcements && announcements.length > 0) { %>
+        <% if (published && published.length > 0) { %>
             <div class="table-responsive">
                 <table class="table align-middle">
                     <thead>
@@ -206,7 +360,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% announcements.forEach(a => {
+                        <% published.forEach(a => {
                             let targets = a.target;
                             if (!Array.isArray(targets)) {
                                 try { targets = JSON.parse(targets); } catch(e) { targets = [targets]; }
@@ -214,7 +368,18 @@
                             }
                             let qs = a.surveyQuestions;
                             if (qs && typeof qs === 'string') { try { qs = JSON.parse(qs); } catch(e) { qs = null; } }
-                            if (!Array.isArray(qs)) qs = a.surveyQuestion ? [{ text: a.surveyQuestion }] : [];
+                            if (!Array.isArray(qs)) qs = a.surveyQuestion ? [{ text: a.surveyQuestion, type: a.surveyType || 'score' }] : [];
+
+                            const aData = {
+                                id: a.id,
+                                title: a.title,
+                                content: a.content,
+                                target: targets,
+                                sendNotification: a.sendNotification,
+                                hasSurvey: a.hasSurvey,
+                                surveyQuestions: qs,
+                                isDraft: false
+                            };
                         %>
                         <tr>
                             <td class="text-muted small"><%= new Date(a.createdAt).toLocaleDateString('nl-BE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) %></td>
@@ -229,19 +394,7 @@
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
                                     <% targets.forEach(t => { %>
-                                        <% if (t === 'all') { %>
-                                            <span class="badge badge-target-all">🌍 Iedereen</span>
-                                        <% } else if (t === 'admin') { %>
-                                            <span class="badge badge-target-admin">🛡 Admins</span>
-                                        <% } else if (t === 'leader') { %>
-                                            <span class="badge badge-target-leader">👤 Leiding</span>
-                                        <% } else if (t === 'kookmoeke') { %>
-                                            <span class="badge badge-target-kookmoeke">🍳 Kookmoekes</span>
-                                        <% } else if (t === 'media') { %>
-                                            <span class="badge badge-target-media">📷 Media</span>
-                                        <% } else { %>
-                                            <span class="badge bg-secondary text-capitalize"><%= t %></span>
-                                        <% } %>
+                                        <span class="badge badge-target-<%= t %>"><%= t === 'all' ? '🌍 Iedereen' : _cap(t) %></span>
                                     <% }); %>
                                 </div>
                             </td>
@@ -270,6 +423,15 @@
                                             <i class="bi bi-bar-chart-fill me-1"></i>Resultaten (<%= a.surveyResponses ? a.surveyResponses.length : 0 %>)
                                         </button>
                                     <% } %>
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-info rounded-pill px-3 btn-copy-concept"
+                                        data-announcement="<%- JSON.stringify(aData).replace(/"/g, '&quot;') %>"
+                                        title="Kopieer de inhoud naar het formulier om te hergebruiken">
+                                        <i class="bi bi-files me-1"></i>Hergebruiken
+                                    </button>
+                                    <a href="/admin/announcements/<%= a.id %>/export-file" class="btn btn-sm btn-outline-secondary rounded-pill px-3" title="Exporteer als JSON-bestand">
+                                        <i class="bi bi-download me-1"></i>Bestand
+                                    </a>
                                     <form action="/admin/announcements/<%= a.id %>/toggle" method="POST" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
                                             <%= a.isActive ? 'Deactiveren' : 'Activeren' %>
@@ -288,7 +450,7 @@
                                 <div class="collapse" id="survey-<%= a.id %>">
                                     <div class="p-4 bg-light border-top border-bottom">
                                         <div class="d-flex justify-content-between align-items-center mb-4">
-                                            <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-bar-chart-fill me-2"></i>Survey Resultaten</h5>
+                                            <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-bar-chart-fill me-2"></i>Survey / Poll Resultaten</h5>
                                             <div class="d-flex gap-2 align-items-center">
                                                 <a href="/admin/announcements/<%= a.id %>/export" class="btn btn-sm btn-success rounded-pill px-3">
                                                     <i class="bi bi-file-earmark-excel-fill me-1"></i>Exporteer Excel
@@ -300,23 +462,25 @@
                                         </div>
                                         <% const responses = a.surveyResponses || [];
                                            qs.forEach((q, qIdx) => { %>
-                                            <div class="p-3 bg-white rounded-3 shadow-sm border mb-3">
+                                             <div class="p-3 bg-white rounded-3 shadow-sm border mb-3">
                                                 <h6 class="fw-bold mb-3 border-bottom pb-2">
                                                     <span class="badge bg-primary me-2">Vraag <%= qIdx + 1 %></span>
                                                     <%= q.text %>
                                                     <span class="badge bg-secondary-subtle text-secondary ms-2" style="font-size:.7rem;">
-                                                        <%= q.type === 'text' ? 'Feedback' : 'Score' %>
+                                                        <%= q.type === 'text' ? 'Feedback' : (q.type === 'multiple_choice' ? 'Meerkeuze (1 antwoord)' : (q.type === 'multiple_choice_multi' ? 'Meerkeuze (meerdere)' : 'Score (1–5)')) %>
                                                     </span>
                                                 </h6>
-                                                <% if (q.type !== 'text') {
+                                                <% if (q.type === 'score' || (!q.type && q.type !== 'text')) {
                                                     let total = 0, counts = {1:0,2:0,3:0,4:0,5:0}, n = 0;
                                                     responses.forEach(r => {
                                                         let ans = r.answers;
-                                                        if (typeof ans === 'string') { try { ans = JSON.parse(ans); } catch(e) { ans = null; } }
+                                                        while (typeof ans === 'string') { try { ans = JSON.parse(ans); } catch(e) { break; } }
                                                         let sv = null;
-                                                        if (ans && ans[q.id] !== undefined) sv = ans[q.id].score;
-                                                        else if ((q.id === 0 || q.id === '0') && !ans) sv = r.score;
-                                                        if (sv != null) { total += sv; counts[sv] = (counts[sv]||0)+1; n++; }
+                                                        const qKey = q.id !== undefined ? q.id : qIdx;
+                                                        if (ans && ans[qKey] !== undefined) sv = ans[qKey].score !== undefined ? ans[qKey].score : ans[qKey];
+                                                        else if (ans && ans[String(qKey)] !== undefined) sv = ans[String(qKey)].score !== undefined ? ans[String(qKey)].score : ans[String(qKey)];
+                                                        else if ((qKey === 0 || qKey === '0') && !ans) sv = r.score;
+                                                        if (sv != null && !isNaN(sv)) { sv = Number(sv); total += sv; counts[sv] = (counts[sv]||0)+1; n++; }
                                                     });
                                                     const avg = n > 0 ? (total/n).toFixed(1) : '0.0';
                                                 %>
@@ -344,29 +508,110 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                <% } else {
+                                                <% } else if (q.type === 'text') {
                                                     const textResps = [];
                                                     responses.forEach(r => {
                                                         let ans = r.answers;
-                                                        if (typeof ans === 'string') { try { ans = JSON.parse(ans); } catch(e) { ans = null; } }
+                                                        while (typeof ans === 'string') { try { ans = JSON.parse(ans); } catch(e) { break; } }
                                                         let ft = null;
-                                                        if (ans && ans[q.id] !== undefined) ft = ans[q.id].feedback;
-                                                        else if ((q.id === 0 || q.id === '0') && !ans) ft = r.feedback;
+                                                        const qKey = q.id !== undefined ? q.id : qIdx;
+                                                        if (ans && ans[qKey] !== undefined) ft = ans[qKey].feedback !== undefined ? ans[qKey].feedback : ans[qKey];
+                                                        else if (ans && ans[String(qKey)] !== undefined) ft = ans[String(qKey)].feedback !== undefined ? ans[String(qKey)].feedback : ans[String(qKey)];
+                                                        else if ((qKey === 0 || qKey === '0') && !ans) ft = r.feedback;
                                                         if (ft) textResps.push({ user: r.user, text: ft });
                                                     });
                                                 %>
                                                     <div class="p-3 bg-light rounded-3 border" style="max-height:200px;overflow-y:auto;">
                                                         <% if (textResps.length > 0) { %>
-                                                            <% textResps.forEach(tr => { %>
-                                                                <div class="py-1 border-bottom border-light">
-                                                                    <span class="badge bg-secondary-subtle text-secondary me-2"><%= tr.user ? _cap(tr.user.username) : 'Onbekend' %></span>
-                                                                    <span class="text-dark small"><%= tr.text %></span>
-                                                                </div>
-                                                            <% }); %>
+                                                             <% textResps.forEach(tr => { %>
+                                                                 <div class="py-1 border-bottom border-light">
+                                                                     <span class="badge bg-secondary-subtle text-secondary me-2"><%= tr.user ? _cap(tr.user.username) : 'Onbekend' %></span>
+                                                                     <span class="text-dark small"><%= tr.text %></span>
+                                                                 </div>
+                                                             <% }); %>
                                                         <% } else { %>
-                                                            <p class="text-muted small text-center mb-0 py-2">Nog geen feedback ontvangen.</p>
+                                                             <p class="text-muted small text-center mb-0 py-2">Nog geen feedback ontvangen.</p>
                                                         <% } %>
                                                     </div>
+                                                <% } else if (q.type === 'multiple_choice' || q.type === 'multiple_choice_multi') {
+                                                    const qOpts = Array.isArray(q.options) ? q.options : [];
+                                                    const optCounts = {};
+                                                    qOpts.forEach(o => { optCounts[o] = 0; });
+                                                    let totalVoters = 0;
+                                                    let skippedCount = 0;
+                                                    const userPicks = [];
+
+                                                    responses.forEach(r => {
+                                                        let ans = r.answers;
+                                                        while (typeof ans === 'string') { try { ans = JSON.parse(ans); } catch(e) { break; } }
+                                                        const qKey = q.id !== undefined ? q.id : qIdx;
+                                                        let aObj = ans ? (ans[qKey] !== undefined ? ans[qKey] : ans[String(qKey)]) : null;
+                                                        if (aObj) {
+                                                            if (aObj.skipped) {
+                                                                skippedCount++;
+                                                            } else if (aObj.selected !== undefined) {
+                                                                totalVoters++;
+                                                                const sel = aObj.selected;
+                                                                if (Array.isArray(sel)) {
+                                                                    sel.forEach(val => {
+                                                                        optCounts[val] = (optCounts[val] || 0) + 1;
+                                                                    });
+                                                                    userPicks.push({ user: r.user, text: sel.join(', ') });
+                                                                } else {
+                                                                    optCounts[sel] = (optCounts[sel] || 0) + 1;
+                                                                    userPicks.push({ user: r.user, text: sel });
+                                                                }
+                                                            }
+                                                        }
+                                                    });
+                                                %>
+                                                    <div class="row g-2 mb-2">
+                                                        <div class="col-md-3">
+                                                            <div class="p-3 bg-light rounded-3 text-center border h-100 d-flex flex-column justify-content-center">
+                                                                <div class="display-6 fw-bold text-primary"><%= totalVoters %></div>
+                                                                <div class="text-muted small">Antwoorden <%= skippedCount > 0 ? `(${skippedCount} overgeslagen)` : '' %></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-9">
+                                                            <div class="p-3 bg-light rounded-3 border h-100">
+                                                                <% if (qOpts.length === 0) { %>
+                                                                    <p class="text-muted small mb-0">Geen opties ingesteld voor deze vraag.</p>
+                                                                <% } else { %>
+                                                                    <% qOpts.forEach(opt => {
+                                                                        const c = optCounts[opt] || 0;
+                                                                        const pct = totalVoters > 0 ? Math.round((c / totalVoters) * 100) : 0;
+                                                                    %>
+                                                                        <div class="mb-2">
+                                                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                                                <span class="small fw-semibold text-dark"><%= opt %></span>
+                                                                                <span class="small text-muted fw-bold"><%= c %> (<%= pct %>%)</span>
+                                                                            </div>
+                                                                            <div class="progress" style="height: 8px;">
+                                                                                <div class="progress-bar bg-primary" role="progressbar" style="width: <%= pct %>%;" aria-valuenow="<%= pct %>" aria-valuemin="0" aria-valuemax="100"></div>
+                                                                            </div>
+                                                                        </div>
+                                                                    <% }); %>
+                                                                <% } %>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <% if (userPicks.length > 0) { %>
+                                                        <div class="mt-2">
+                                                            <a class="text-decoration-none small text-muted d-inline-flex align-items-center gap-1" data-bs-toggle="collapse" href="#voters-<%= a.id %>-<%= qIdx %>" role="button">
+                                                                <i class="bi bi-people-fill me-1"></i>Bekijk wie wat koos (<%= userPicks.length %>)
+                                                            </a>
+                                                            <div class="collapse mt-2" id="voters-<%= a.id %>-<%= qIdx %>">
+                                                                <div class="p-2 bg-light rounded-3 border" style="max-height: 160px; overflow-y: auto;">
+                                                                    <% userPicks.forEach(up => { %>
+                                                                        <div class="py-1 border-bottom border-light d-flex justify-content-between align-items-center">
+                                                                            <span class="badge bg-secondary-subtle text-secondary"><%= up.user ? _cap(up.user.username) : 'Onbekend' %></span>
+                                                                            <span class="text-dark small fw-semibold"><%= up.text %></span>
+                                                                        </div>
+                                                                    <% }); %>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    <% } %>
                                                 <% } %>
                                             </div>
                                         <% }); %>
@@ -380,35 +625,40 @@
                 </table>
             </div>
         <% } else { %>
-            <p class="text-muted text-center my-4">Er zijn nog geen aankondigingen gemaakt.</p>
+            <p class="text-muted text-center my-4">Er zijn nog geen gepubliceerde aankondigingen.</p>
         <% } %>
     </div>
 </div>
 
-<script src="/js/rich-editor.js"></script>
 <script>
 (function () {
+    // ── Helper Alert ──────────────────────────────────────────────────────────
+    function displayAlert(type, message) {
+        if (typeof window.showAlert === 'function') {
+            window.showAlert(type, message);
+        } else {
+            alert(message);
+        }
+    }
+
     // ── Target chip logic ──────────────────────────────────────────────────────
-    const chips = document.querySelectorAll('.target-chip');
+    const chips = Array.from(document.querySelectorAll('.target-chip'));
     const chipAll = document.getElementById('chip-all');
 
     chips.forEach(chip => {
         chip.addEventListener('change', () => {
             if (chip === chipAll) {
                 if (chipAll.checked) {
-                    // Uncheck all specific roles
                     chips.forEach(c => { if (c !== chipAll) c.checked = false; });
                 } else {
-                    // Can't leave everything unchecked
-                    const anySpecific = [...chips].some(c => c !== chipAll && c.checked);
+                    const anySpecific = chips.some(c => c !== chipAll && c.checked);
                     if (!anySpecific) chipAll.checked = true;
                 }
             } else {
                 if (chip.checked) {
                     chipAll.checked = false;
                 } else {
-                    // If unchecking leaves nothing selected, re-check "Iedereen"
-                    const anySpecific = [...chips].some(c => c !== chipAll && c.checked);
+                    const anySpecific = chips.some(c => c !== chipAll && c.checked);
                     if (!anySpecific) chipAll.checked = true;
                 }
             }
@@ -426,7 +676,7 @@
         });
     }
 
-    // Poll for rich editor changes (Quill updates a hidden textarea)
+    // Poll for rich editor changes (Quill updates the hidden textarea)
     const contentInput = document.getElementById('annContent');
     if (contentInput) {
         let lastVal = '';
@@ -455,32 +705,116 @@
         updateSurveyPreview();
     });
 
-    btnAdd && btnAdd.addEventListener('click', addQuestion);
+    btnAdd && btnAdd.addEventListener('click', () => addQuestion());
 
-    function addQuestion(text = '', type = 'score') {
+    function addQuestion(text = '', type = 'score', options = []) {
         const idx = qCount++;
         const row = document.createElement('div');
         row.className = 'question-row';
         row.dataset.idx = idx;
+
+        const isChoice = type === 'multiple_choice' || type === 'multiple_choice_multi';
+        const isMulti = type === 'multiple_choice_multi';
+
         row.innerHTML = `
             <button type="button" class="btn-close position-absolute top-0 end-0 m-2" style="font-size:.75rem;" aria-label="Verwijder"></button>
             <div class="mb-2">
                 <label class="form-label small fw-bold text-muted text-uppercase">Vraag <span class="q-num"></span></label>
-                <input type="text" class="form-control rounded-3 q-text" name="surveyQuestions[${idx}][text]" value="${text}" placeholder="Bijv. Wat vond je van de activiteit?" required>
+                <input type="text" class="form-control rounded-3 q-text" name="surveyQuestions[${idx}][text]" value="${text.replace(/"/g, '&quot;')}" placeholder="Bijv. Wat vond je van de activiteit?" required>
             </div>
             <div>
                 <label class="form-label small fw-bold text-muted text-uppercase">Type</label>
                 <select class="form-select rounded-3 q-type" name="surveyQuestions[${idx}][type]">
                     <option value="score" ${type === 'score' ? 'selected' : ''}>Score (1–5)</option>
                     <option value="text"  ${type === 'text'  ? 'selected' : ''}>Feedback tekstvak</option>
+                    <option value="multiple_choice" ${type === 'multiple_choice' ? 'selected' : ''}>Meerkeuze (1 antwoord)</option>
+                    <option value="multiple_choice_multi" ${type === 'multiple_choice_multi' ? 'selected' : ''}>Meerkeuze (meerdere antwoorden)</option>
                 </select>
+            </div>
+            <div class="q-options-container mt-2" style="${isChoice ? '' : 'display:none;'}">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-0">Opties</label>
+                    <span class="small text-muted fst-italic" style="font-size:.72rem;">Minimaal 2 opties</span>
+                </div>
+                <div class="q-options-list mb-2"></div>
+                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill btn-add-opt">
+                    <i class="bi bi-plus-circle me-1"></i>Optie toevoegen
+                </button>
             </div>`;
+
+        const optList = row.querySelector('.q-options-list');
+        const optContainer = row.querySelector('.q-options-container');
+        const typeSelect = row.querySelector('.q-type');
+
+        function addOptionItem(val = '') {
+            const optRow = document.createElement('div');
+            optRow.className = 'input-group input-group-sm mb-1 q-option-item';
+            const multi = typeSelect.value === 'multiple_choice_multi';
+            const choice = typeSelect.value === 'multiple_choice' || typeSelect.value === 'multiple_choice_multi';
+            optRow.innerHTML = `
+                <span class="input-group-text bg-light text-muted q-opt-icon" style="width:34px; justify-content:center;">
+                    <i class="bi ${multi ? 'bi-square' : 'bi-circle'}"></i>
+                </span>
+                <input type="text" class="form-control q-opt-input" name="surveyQuestions[${idx}][options][]" value="${val.replace(/"/g, '&quot;')}" placeholder="Optietekst..." ${choice ? 'required' : 'disabled'}>
+                <button type="button" class="btn btn-outline-danger btn-del-opt" title="Verwijder optie">
+                    <i class="bi bi-trash"></i>
+                </button>
+            `;
+            optRow.querySelector('.btn-del-opt').addEventListener('click', () => {
+                if (optList.querySelectorAll('.q-option-item').length > 2) {
+                    optRow.remove();
+                    updateSurveyPreview();
+                } else {
+                    displayAlert('warning', 'Een meerkeuzevraag moet minimaal 2 opties hebben.');
+                }
+            });
+            optRow.querySelector('.q-opt-input').addEventListener('input', updateSurveyPreview);
+            optList.appendChild(optRow);
+        }
+
+        // Initialize options
+        const initialOpts = Array.isArray(options) && options.length > 0 ? options : ['Optie 1', 'Optie 2'];
+        initialOpts.forEach(o => addOptionItem(o));
+
+        row.querySelector('.btn-add-opt').addEventListener('click', () => {
+            const currentCount = optList.querySelectorAll('.q-option-item').length;
+            addOptionItem(`Optie ${currentCount + 1}`);
+            const lastInput = optList.querySelector('.q-option-item:last-child .q-opt-input');
+            if (lastInput) {
+                lastInput.focus();
+                lastInput.select();
+            }
+            updateSurveyPreview();
+        });
 
         row.querySelector('.btn-close').addEventListener('click', () => {
             row.remove(); renumber(); updateSurveyPreview();
         });
         row.querySelector('.q-text').addEventListener('input', updateSurveyPreview);
-        row.querySelector('.q-type').addEventListener('change', updateSurveyPreview);
+        typeSelect.addEventListener('change', () => {
+            const currentType = typeSelect.value;
+            const choice = currentType === 'multiple_choice' || currentType === 'multiple_choice_multi';
+            optContainer.style.display = choice ? 'block' : 'none';
+
+            // Enable or disable option inputs so required validation doesn't fire when hidden
+            optList.querySelectorAll('.q-opt-input').forEach(inp => {
+                inp.disabled = !choice;
+            });
+
+            // Update icons between circle and square
+            const multiNow = currentType === 'multiple_choice_multi';
+            optList.querySelectorAll('.q-opt-icon i').forEach(icon => {
+                icon.className = `bi ${multiNow ? 'bi-square' : 'bi-circle'}`;
+            });
+
+            // Ensure at least 2 options exist
+            while (optList.querySelectorAll('.q-option-item').length < 2) {
+                const count = optList.querySelectorAll('.q-option-item').length;
+                addOptionItem(`Optie ${count + 1}`);
+            }
+
+            updateSurveyPreview();
+        });
 
         questionsContainer.appendChild(row);
         renumber();
@@ -509,19 +843,368 @@
             const div  = document.createElement('div');
             div.className = 'mb-2 pb-2 border-bottom';
             if (i === rows.length - 1) div.className = 'mb-0';
-            div.innerHTML = `<div class="small fw-bold mb-1" style="font-size:.82rem;">${i+1}. ${text}</div>` +
-                (type === 'score'
-                    ? `<div class="d-flex gap-1">${[1,2,3,4,5].map(n => `<button type="button" class="btn btn-sm btn-outline-secondary rounded-circle" style="width:26px;height:26px;font-size:.75rem;" disabled>${n}</button>`).join('')}</div>`
-                    : `<textarea class="form-control form-control-sm" rows="1" style="font-size:.78rem;" disabled placeholder="Feedback..."></textarea>`);
+
+            let bodyHtml = '';
+            if (type === 'score') {
+                bodyHtml = `<div class="d-flex gap-1">${[1,2,3,4,5].map(n => `<button type="button" class="btn btn-sm btn-outline-secondary rounded-circle" style="width:26px;height:26px;font-size:.75rem;" disabled>${n}</button>`).join('')}</div>`;
+            } else if (type === 'text') {
+                bodyHtml = `<textarea class="form-control form-control-sm" rows="1" style="font-size:.78rem;" disabled placeholder="Feedback..."></textarea>`;
+            } else {
+                const optInputs = Array.from(r.querySelectorAll('.q-opt-input'));
+                const opts = optInputs.map(inp => inp.value.trim()).filter(Boolean);
+                const displayOpts = opts.length > 0 ? opts : ['Optie 1', 'Optie 2'];
+                const isMulti = type === 'multiple_choice_multi';
+                bodyHtml = `<div class="d-flex flex-column gap-1">${displayOpts.map(opt => `
+                    <div class="form-check form-check-inline mb-0" style="font-size:.78rem;">
+                        <input class="form-check-input" type="${isMulti ? 'checkbox' : 'radio'}" disabled>
+                        <label class="form-check-label text-muted">${opt}</label>
+                    </div>`).join('')}</div>`;
+            }
+
+            div.innerHTML = `<div class="small fw-bold mb-1" style="font-size:.82rem;">${i+1}. ${text}</div>` + bodyHtml;
             prevSurveyList.appendChild(div);
         });
     }
-    // ── Delete announcement ────────────────────────────────────────────────────
+
+    // ── Load announcement data into form ──────────────────────────────────────
+    function loadAnnouncementIntoForm(data, isEditMode = false) {
+        const annId = document.getElementById('annId');
+        const editingBanner = document.getElementById('editingBanner');
+        const editingConceptTitle = document.getElementById('editingConceptTitle');
+        const formHeaderTitle = document.getElementById('formHeaderTitle');
+
+        if (isEditMode) {
+            annId.value = data.id || '';
+            editingConceptTitle.textContent = data.title || 'Zonder titel';
+            editingBanner.classList.remove('d-none');
+            formHeaderTitle.innerHTML = '<i class="bi bi-pencil-fill me-2"></i>Concept Bewerken';
+            document.getElementById('btnSaveDraft').innerHTML = '<i class="bi bi-file-earmark-text me-2"></i>Concept Bijwerken';
+        } else {
+            annId.value = '';
+            editingBanner.classList.add('d-none');
+            formHeaderTitle.innerHTML = '<i class="bi bi-pencil-square me-2"></i>Aankondiging & Poll Opstellen';
+            document.getElementById('btnSaveDraft').innerHTML = '<i class="bi bi-file-earmark-text me-2"></i>Opslaan als Concept';
+        }
+
+        // Title
+        titleInput.value = data.title || '';
+        titleInput.dispatchEvent(new Event('input'));
+
+        // Content
+        contentInput.value = data.content || '';
+        const qlEditor = document.querySelector('#annForm .ql-editor');
+        if (qlEditor) {
+            qlEditor.innerHTML = data.content || '';
+        }
+        contentInput.dispatchEvent(new Event('input'));
+
+        // Targets
+        let targets = data.target;
+        if (!Array.isArray(targets)) {
+            try { targets = JSON.parse(targets); } catch(e) { targets = [targets]; }
+            if (!Array.isArray(targets)) targets = [targets];
+        }
+        chips.forEach(chip => {
+            chip.checked = targets.includes(chip.value);
+        });
+        if (targets.includes('all') || !chips.some(c => c.checked)) {
+            chipAll.checked = true;
+            chips.forEach(c => { if (c !== chipAll) c.checked = false; });
+        }
+
+        // Notification
+        document.getElementById('annNotification').checked = (data.sendNotification !== false && data.sendNotification !== 'false');
+
+        // Survey & Questions
+        questionsContainer.innerHTML = '';
+        qCount = 0;
+        let qs = data.surveyQuestions;
+        if (typeof qs === 'string') {
+            try { qs = JSON.parse(qs); } catch(e) { qs = []; }
+        }
+        if (data.hasSurvey && Array.isArray(qs) && qs.length > 0) {
+            hasSurveyCheck.checked = true;
+            surveyFields.style.display = 'block';
+            qs.forEach(q => {
+                addQuestion(q.text || '', q.type || 'score', q.options || []);
+            });
+        } else {
+            hasSurveyCheck.checked = false;
+            surveyFields.style.display = 'none';
+        }
+
+        updateSurveyPreview();
+        document.getElementById('annFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function resetForm() {
+        document.getElementById('annId').value = '';
+        document.getElementById('annIsDraft').value = 'false';
+        document.getElementById('annAction').value = 'publish';
+
+        titleInput.value = '';
+        titleInput.dispatchEvent(new Event('input'));
+
+        contentInput.value = '';
+        const qlEditor = document.querySelector('#annForm .ql-editor');
+        if (qlEditor) qlEditor.innerHTML = '';
+        contentInput.dispatchEvent(new Event('input'));
+
+        chips.forEach(c => { c.checked = (c === chipAll); });
+        document.getElementById('annNotification').checked = true;
+
+        hasSurveyCheck.checked = false;
+        surveyFields.style.display = 'none';
+        questionsContainer.innerHTML = '';
+        qCount = 0;
+        updateSurveyPreview();
+
+        document.getElementById('editingBanner').classList.add('d-none');
+        document.getElementById('formHeaderTitle').innerHTML = '<i class="bi bi-pencil-square me-2"></i>Aankondiging & Poll Opstellen';
+        document.getElementById('btnSaveDraft').innerHTML = '<i class="bi bi-file-earmark-text me-2"></i>Opslaan als Concept';
+    }
+
+    // Reset button
+    document.getElementById('btnResetForm').addEventListener('click', () => {
+        resetForm();
+        displayAlert('info', 'Formulier leeggemaakt.');
+    });
+
+    // Cancel edit banner button
+    document.getElementById('btnCancelEdit').addEventListener('click', () => {
+        resetForm();
+        displayAlert('info', 'Bewerken geannuleerd. Formulier staat klaar voor een nieuwe aankondiging.');
+    });
+
+    // ── Edit concept buttons ───────────────────────────────────────────────────
+    document.querySelectorAll('.btn-edit-concept').forEach(btn => {
+        btn.addEventListener('click', function () {
+            try {
+                const data = JSON.parse(this.dataset.announcement);
+                loadAnnouncementIntoForm(data, true);
+            } catch (err) {
+                console.error('Error loading concept:', err);
+                displayAlert('danger', 'Kon conceptgegevens niet inladen.');
+            }
+        });
+    });
+
+    // ── Copy / Reuse published announcement buttons ────────────────────────────
+    document.querySelectorAll('.btn-copy-concept').forEach(btn => {
+        btn.addEventListener('click', function () {
+            try {
+                const data = JSON.parse(this.dataset.announcement);
+                loadAnnouncementIntoForm(data, false);
+                displayAlert('info', `Inhoud van '${data.title}' ingeladen als nieuw concept/sjabloon.`);
+            } catch (err) {
+                console.error('Error copying announcement:', err);
+                displayAlert('danger', 'Kon gegevens niet inladen.');
+            }
+        });
+    });
+
+    // ── Import JSON file ───────────────────────────────────────────────────────
+    const fileInput = document.getElementById('annFileInput');
+    document.getElementById('btnTriggerImport').addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const rawJson = JSON.parse(event.target.result);
+                const data = rawJson.data || rawJson;
+                if (!data.title && !data.content && !data.surveyQuestions) {
+                    alert('Ongeldig bestandsformaat: bestand bevat geen titel of inhoud.');
+                    return;
+                }
+                loadAnnouncementIntoForm(data, false);
+                displayAlert('success', `Bestand "${file.name}" succesvol ingeladen in het formulier!`);
+            } catch (err) {
+                console.error('Import parse error:', err);
+                alert('Kon het bestand niet verwerken. Zorg ervoor dat het een geldig JSON-bestand is.');
+            } finally {
+                fileInput.value = '';
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    // ── Drag & Drop on Form Card ───────────────────────────────────────────────
+    const formCard = document.getElementById('annFormCard');
+    if (formCard) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+            formCard.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                formCard.classList.add('dragover-highlight');
+            });
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            formCard.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                formCard.classList.remove('dragover-highlight');
+            });
+        });
+        formCard.addEventListener('drop', (e) => {
+            const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (file && (file.type === 'application/json' || file.name.endsWith('.json'))) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const rawJson = JSON.parse(ev.target.result);
+                        const data = rawJson.data || rawJson;
+                        loadAnnouncementIntoForm(data, false);
+                        displayAlert('success', `Bestand "${file.name}" ingeladen via drag & drop!`);
+                    } catch (err) {
+                        alert('Ongeldig JSON-bestand.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+    }
+
+    // ── Export Current Form to JSON ────────────────────────────────────────────
+    document.getElementById('btnExportCurrent').addEventListener('click', () => {
+        const title = titleInput.value.trim();
+        if (!title) {
+            alert('Vul eerst minimaal een titel in voordat je exporteert.');
+            titleInput.focus();
+            return;
+        }
+
+        // Sync Quill editor content to textarea
+        const qlEditor = document.querySelector('#annForm .ql-editor');
+        if (qlEditor) {
+            contentInput.value = qlEditor.innerHTML;
+        }
+        const content = contentInput.value.trim();
+
+        const selectedTargets = [];
+        chips.forEach(c => { if (c.checked) selectedTargets.push(c.value); });
+
+        const hasSurvey = hasSurveyCheck.checked;
+        const questions = [];
+        if (hasSurvey) {
+            document.querySelectorAll('#questionsContainer .question-row').forEach((r, idx) => {
+                const text = r.querySelector('.q-text').value.trim();
+                const type = r.querySelector('.q-type').value;
+                if (text) {
+                    const qObj = { id: idx, text, type };
+                    if (type === 'multiple_choice' || type === 'multiple_choice_multi') {
+                        const opts = Array.from(r.querySelectorAll('.q-opt-input'))
+                            .map(inp => inp.value.trim())
+                            .filter(Boolean);
+                        qObj.options = opts.length > 0 ? opts : ['Optie 1', 'Optie 2'];
+                    }
+                    questions.push(qObj);
+                }
+            });
+        }
+
+        const exportObj = {
+            $schema: 'chiro-announcement-v1',
+            version: '1.0',
+            exportedAt: new Date().toISOString(),
+            data: {
+                title,
+                content,
+                target: selectedTargets.length > 0 ? selectedTargets : ['all'],
+                sendNotification: document.getElementById('annNotification').checked,
+                hasSurvey,
+                surveyQuestions: questions
+            }
+        };
+
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'aankondiging';
+        const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `aankondiging-${slug}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        displayAlert('success', `Formulier succesvol geëxporteerd als "${a.download}"!`);
+    });
+
+    // ── Form Submissions (Draft vs Publish) ────────────────────────────────────
+    const annForm   = document.getElementById('annForm');
+    const annIsDraft= document.getElementById('annIsDraft');
+    const annAction = document.getElementById('annAction');
+
+    document.getElementById('btnSaveDraft').addEventListener('click', () => {
+        annIsDraft.value = 'true';
+        annAction.value = 'draft';
+        submitValidated(true);
+    });
+
+    document.getElementById('btnPublish').addEventListener('click', () => {
+        annIsDraft.value = 'false';
+        annAction.value = 'publish';
+        submitValidated(false);
+    });
+
+    function submitValidated(isDraft) {
+        if (!titleInput.value.trim()) {
+            alert('Titel is verplicht.');
+            titleInput.focus();
+            return;
+        }
+
+        // Copy Quill content to textarea
+        const qlEditor = document.querySelector('#annForm .ql-editor');
+        if (qlEditor) {
+            contentInput.value = qlEditor.innerHTML;
+        }
+
+        const contentVal = contentInput.value.trim();
+        if (!isDraft && (!contentVal || contentVal === '<p><br></p>')) {
+            alert('Inhoud is verplicht om te publiceren.');
+            return;
+        }
+
+        if (hasSurveyCheck.checked) {
+            const rows = document.querySelectorAll('#questionsContainer .question-row');
+            if (rows.length === 0 && !isDraft) {
+                alert('Voeg minimaal één survey- of pollvraag toe of zet de schakelaar uit.');
+                return;
+            }
+            for (let r of rows) {
+                const qText = r.querySelector('.q-text');
+                if (!qText.value.trim() && !isDraft) {
+                    alert('Vul alle vragen in voordat je publiceert.');
+                    qText.focus();
+                    return;
+                }
+                const qType = r.querySelector('.q-type').value;
+                if (!isDraft && (qType === 'multiple_choice' || qType === 'multiple_choice_multi')) {
+                    const optInputs = Array.from(r.querySelectorAll('.q-opt-input'));
+                    const validOpts = optInputs.filter(inp => inp.value.trim().length > 0);
+                    if (validOpts.length < 2) {
+                        alert('Elke meerkeuzevraag moet minimaal 2 ingevulde opties hebben.');
+                        return;
+                    }
+                }
+            }
+        }
+
+        annForm.submit();
+    }
+
+    // ── Delete announcement / concept ──────────────────────────────────────────
     document.querySelectorAll('.ann-delete-btn').forEach(btn => {
         btn.addEventListener('click', async function () {
             const id    = this.dataset.id;
             const title = this.dataset.title;
-            if (!confirm(`Aankondiging "${title}" verwijderen?`)) return;
+            if (!confirm(`Weet je zeker dat je "${title}" wilt verwijderen?`)) return;
             this.disabled = true;
             try {
                 const res = await fetch(`/admin/announcements/${id}`, { method: 'DELETE' });

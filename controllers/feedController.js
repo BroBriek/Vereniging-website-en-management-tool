@@ -403,25 +403,20 @@ exports.getFeed = async (req, res) => {
         });
 
         // Build list of dismissed announcement IDs for exclusion
-        let dismissedIds = [];
-        if (req.user.dismissedAnnouncements) {
-            if (Array.isArray(req.user.dismissedAnnouncements)) {
-                dismissedIds = req.user.dismissedAnnouncements;
-            } else if (typeof req.user.dismissedAnnouncements === 'string') {
-                try {
-                    dismissedIds = JSON.parse(req.user.dismissedAnnouncements);
-                } catch (e) {
-                    dismissedIds = [];
-                }
-            }
+        let dismissedIds = req.user.dismissedAnnouncements;
+        while (typeof dismissedIds === 'string') {
+            try { dismissedIds = JSON.parse(dismissedIds); } catch (e) { break; }
         }
-        dismissedIds = dismissedIds.map(id => Number(id)).filter(id => !isNaN(id));
+        dismissedIds = Array.isArray(dismissedIds) ? dismissedIds.map(id => Number(id)).filter(id => !isNaN(id)) : [];
 
-        // Fetch all active announcements the user hasn't dismissed, then filter
+        // Fetch all active, non-draft announcements the user hasn't dismissed, then filter
         // by target in JS. The target column is stored as a double-encoded JSON
         // string in SQLite (e.g. "[\"leader\"]"), so SQL LIKE patterns are
         // unreliable. The Sequelize model getter correctly parses it to an array.
-        const baseAnnouncementWhere = { isActive: true };
+        const baseAnnouncementWhere = {
+            isActive: true,
+            [Op.or]: [{ isDraft: false }, { isDraft: null }]
+        };
         if (dismissedIds.length > 0) {
             baseAnnouncementWhere.id = { [Op.notIn]: dismissedIds };
         }
@@ -1722,20 +1717,11 @@ exports.postDismissAnnouncement = async (req, res) => {
             return res.status(400).json({ success: false, error: 'Ongeldige ID' });
         }
 
-        let dismissedIds = [];
-        if (req.user.dismissedAnnouncements) {
-            if (Array.isArray(req.user.dismissedAnnouncements)) {
-                dismissedIds = req.user.dismissedAnnouncements;
-            } else if (typeof req.user.dismissedAnnouncements === 'string') {
-                try {
-                    dismissedIds = JSON.parse(req.user.dismissedAnnouncements);
-                } catch (e) {
-                    dismissedIds = [];
-                }
-            }
+        let dismissedIds = req.user.dismissedAnnouncements;
+        while (typeof dismissedIds === 'string') {
+            try { dismissedIds = JSON.parse(dismissedIds); } catch (e) { break; }
         }
-
-        dismissedIds = dismissedIds.map(x => Number(x));
+        dismissedIds = Array.isArray(dismissedIds) ? dismissedIds.map(x => Number(x)).filter(x => !isNaN(x)) : [];
 
         if (!dismissedIds.includes(announcementId)) {
             dismissedIds.push(announcementId);
@@ -1765,7 +1751,7 @@ exports.postSurveyResponse = async (req, res) => {
         }
 
         const announcement = await Announcement.findByPk(announcementId);
-        if (!announcement || !announcement.hasSurvey) {
+        if (!announcement || !announcement.hasSurvey || !announcement.isActive || announcement.isDraft) {
             return res.status(404).json({ success: false, error: 'Aankondiging of survey niet gevonden' });
         }
 
@@ -1792,6 +1778,8 @@ exports.postSurveyResponse = async (req, res) => {
                 }
                 if (firstAnswer.feedback !== undefined) {
                     fallbackFeedback = firstAnswer.feedback;
+                } else if (firstAnswer.selected !== undefined) {
+                    fallbackFeedback = Array.isArray(firstAnswer.selected) ? firstAnswer.selected.join(', ') : String(firstAnswer.selected);
                 }
             }
         }

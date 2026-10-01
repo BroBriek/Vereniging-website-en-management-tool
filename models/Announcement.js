@@ -17,16 +17,17 @@ const Announcement = sequelize.define('Announcement', {
     get() {
       const rawValue = this.getDataValue('target');
       if (!rawValue) return ['all'];
-      if (typeof rawValue === 'string') {
-        try { 
-            const parsed = JSON.parse(rawValue);
-            return Array.isArray(parsed) ? parsed : [rawValue];
-        } catch (e) { 
-            // Handle legacy non-JSON strings like "all" or "admin"
-            return [rawValue];
+      let val = rawValue;
+      while (typeof val === 'string') {
+        try {
+          val = JSON.parse(val);
+        } catch (_) {
+          break;
         }
       }
-      return Array.isArray(rawValue) ? rawValue : [rawValue];
+      if (Array.isArray(val)) return val;
+      if (typeof val === 'string') return [val];
+      return ['all'];
     }
   },
   sendNotification: {
@@ -38,6 +39,11 @@ const Announcement = sequelize.define('Announcement', {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: true
+  },
+  isDraft: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
   },
   creatorId: {
     type: DataTypes.INTEGER,
@@ -53,7 +59,7 @@ const Announcement = sequelize.define('Announcement', {
     allowNull: true
   },
   surveyType: {
-    type: DataTypes.STRING, // 'score' or 'text'
+    type: DataTypes.STRING, // 'score', 'text', 'multiple_choice', or 'multiple_choice_multi'
     allowNull: true
   },
   surveyQuestions: {
@@ -62,14 +68,15 @@ const Announcement = sequelize.define('Announcement', {
     get() {
       const rawValue = this.getDataValue('surveyQuestions');
       if (!rawValue) return null;
-      if (typeof rawValue === 'string') {
+      let val = rawValue;
+      while (typeof val === 'string') {
         try {
-          return JSON.parse(rawValue);
-        } catch (e) {
-          return [];
+          val = JSON.parse(val);
+        } catch (_) {
+          break;
         }
       }
-      return rawValue;
+      return Array.isArray(val) ? val : [];
     }
   }
 });

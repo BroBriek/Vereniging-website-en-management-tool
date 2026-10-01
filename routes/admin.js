@@ -249,6 +249,11 @@ router.put('/feedgroups/:id', adminController.updateFeedGroup);
 router.delete('/feedgroups/:id', adminController.deleteFeedGroup);
 
 // Announcements (strictly restricted to the user named 'admin')
+const uploadJson = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024 }
+});
+
 const ensureAdminUsername = (req, res, next) => {
     if (req.isAuthenticated() && req.user.username === 'admin') {
         return next();
@@ -258,7 +263,10 @@ const ensureAdminUsername = (req, res, next) => {
 
 router.get('/announcements', ensureAdminUsername, announcementController.getAnnouncements);
 router.get('/announcements/:id/export', ensureAdminUsername, announcementController.exportAnnouncementSurveyExcel);
+router.get('/announcements/:id/export-file', ensureAdminUsername, announcementController.exportAnnouncementFile);
+router.post('/announcements/import-file', ensureAdminUsername, uploadJson.single('file'), announcementController.importAnnouncementFile);
 router.post('/announcements', ensureAdminUsername, announcementController.postAnnouncement);
+router.post('/announcements/:id/publish', ensureAdminUsername, announcementController.postPublishAnnouncement);
 router.post('/announcements/:id/toggle', ensureAdminUsername, announcementController.postToggleAnnouncement);
 router.delete('/announcements/:id', ensureAdminUsername, announcementController.deleteAnnouncement);
 

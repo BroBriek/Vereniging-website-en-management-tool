@@ -254,32 +254,32 @@ exports.getFeed = async (req, res) => {
         });
 
         // Build list of dismissed announcement IDs for exclusion
-        let dismissedIds = [];
-        if (req.user.dismissedAnnouncements) {
-            if (Array.isArray(req.user.dismissedAnnouncements)) {
-                dismissedIds = req.user.dismissedAnnouncements;
-            } else if (typeof req.user.dismissedAnnouncements === 'string') {
-                try { dismissedIds = JSON.parse(req.user.dismissedAnnouncements); } catch (e) { dismissedIds = []; }
-            }
+        let dismissedIds = req.user.dismissedAnnouncements;
+        while (typeof dismissedIds === 'string') {
+            try { dismissedIds = JSON.parse(dismissedIds); } catch (e) { break; }
         }
-        dismissedIds = dismissedIds.map(id => Number(id)).filter(id => !isNaN(id));
+        dismissedIds = Array.isArray(dismissedIds) ? dismissedIds.map(id => Number(id)).filter(id => !isNaN(id)) : [];
 
-        // Fetch latest active announcement that the user hasn't dismissed
+        // Fetch active, non-draft announcements that the user hasn't dismissed, then filter by target in JS
         const announcementWhere = {
             isActive: true,
-            target: {
-                [Op.in]: ['all', req.user.role]
-            }
+            [Op.or]: [{ isDraft: false }, { isDraft: null }]
         };
         if (dismissedIds.length > 0) {
             announcementWhere.id = { [Op.notIn]: dismissedIds };
         }
 
-        const announcement = await Announcement.findOne({
+        const candidates = await Announcement.findAll({
             where: announcementWhere,
             include: [{ model: SurveyResponse, as: 'surveyResponses' }],
             order: [['createdAt', 'DESC']]
         });
+
+        const userRole = req.user.role;
+        const announcement = candidates.find(a => {
+            const targets = Array.isArray(a.target) ? a.target : [a.target];
+            return targets.includes('all') || targets.includes(userRole);
+        }) || null;
 
         let activeAnnouncement = null;
         let surveyStats = null;
@@ -291,9 +291,13 @@ exports.getFeed = async (req, res) => {
                 const responses = announcement.surveyResponses || [];
                 userSurveyResponse = responses.find(r => r.userId === req.user.id) || null;
                 const totalCount = responses.length;
-                let targetCount = announcement.target === 'admin' 
-                    ? await User.count({ where: { role: 'admin', isActive: true } })
-                    : await User.count({ where: { isActive: true } });
+                const targets = Array.isArray(announcement.target) ? announcement.target : [announcement.target];
+                let targetCount = 0;
+                if (!targets.includes('all')) {
+                    targetCount = await User.count({ where: { role: { [Op.in]: targets }, isActive: true } });
+                } else {
+                    targetCount = await User.count({ where: { isActive: true } });
+                }
                 const percentage = targetCount > 0 ? Math.round((totalCount / targetCount) * 100) : 0;
                 surveyStats = { totalCount, targetCount, percentage };
             }
