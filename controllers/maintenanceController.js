@@ -352,6 +352,7 @@ exports.getPM2Logs = (req, res) => {
                             stderr: stderrLog
                         }
                     },
+                    timestamp: new Date().toISOString(),
                     message: 'PM2 is niet beschikbaar. Lokale applicatielogs worden weergegeven.'
                 });
             }
@@ -387,6 +388,7 @@ exports.getPM2Logs = (req, res) => {
                                 stderr: stderrLog
                             }
                         },
+                        timestamp: new Date().toISOString(),
                         message: 'Geen PM2-processen gevonden. Lokale applicatielogs worden weergegeven.'
                     });
                 }

@@ -1,9 +1,47 @@
 process.env.TZ = 'Europe/Brussels';
 require('dotenv').config();
-const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
+
+const LOGS_DIR = path.join(__dirname, 'logs');
+fs.mkdirSync(LOGS_DIR, { recursive: true });
+const stdoutLogPath = path.join(LOGS_DIR, 'stdout.log');
+const stderrLogPath = path.join(LOGS_DIR, 'stderr.log');
+const stdoutLogStream = fs.createWriteStream(stdoutLogPath, { flags: 'a' });
+const stderrLogStream = fs.createWriteStream(stderrLogPath, { flags: 'a' });
+
+const pad = n => String(n).padStart(2, '0');
+const getTimestamp = () => {
+  const d = new Date();
+  return `[${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}]`;
+};
+
+const originalConsoleLog = console.log.bind(console);
+const originalConsoleInfo = console.info.bind(console);
+const originalConsoleWarn = console.warn.bind(console);
+const originalConsoleError = console.error.bind(console);
+const originalConsoleDebug = (console.debug || console.log).bind(console);
+
+const writeLog = (stream, originalConsoleMethod, args) => {
+  if (args.length === 0) {
+    stream.write('\n');
+    originalConsoleMethod();
+    return;
+  }
+  const timestamp = getTimestamp();
+  const formatted = util.format(...args);
+  stream.write(`${timestamp} ${formatted}\n`);
+  originalConsoleMethod(`${timestamp} ${formatted}`);
+};
+
+console.log = (...args) => writeLog(stdoutLogStream, originalConsoleLog, args);
+console.info = (...args) => writeLog(stdoutLogStream, originalConsoleInfo, args);
+console.warn = (...args) => writeLog(stderrLogStream, originalConsoleWarn, args);
+console.error = (...args) => writeLog(stderrLogStream, originalConsoleError, args);
+console.debug = (...args) => writeLog(stdoutLogStream, originalConsoleDebug, args);
+
+const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
 const methodOverride = require('method-override');
@@ -15,35 +53,6 @@ const CustomPageService = require('./services/CustomPageService');
 const BackupService = require('./services/BackupService');
 const logMonitor = require('./services/LogMonitorService');
 const onlineUserService = require('./services/OnlineUserService');
-
-const LOGS_DIR = path.join(__dirname, 'logs');
-fs.mkdirSync(LOGS_DIR, { recursive: true });
-const stdoutLogPath = path.join(LOGS_DIR, 'stdout.log');
-const stderrLogPath = path.join(LOGS_DIR, 'stderr.log');
-const stdoutLogStream = fs.createWriteStream(stdoutLogPath, { flags: 'a' });
-const stderrLogStream = fs.createWriteStream(stderrLogPath, { flags: 'a' });
-const formatConsoleArgs = (...args) => util.format(...args) + '\n';
-
-const originalConsoleLog = console.log.bind(console);
-const originalConsoleInfo = console.info.bind(console);
-const originalConsoleWarn = console.warn.bind(console);
-const originalConsoleError = console.error.bind(console);
-console.log = (...args) => {
-  stdoutLogStream.write(formatConsoleArgs(...args));
-  originalConsoleLog(...args);
-};
-console.info = (...args) => {
-  stdoutLogStream.write(formatConsoleArgs(...args));
-  originalConsoleInfo(...args);
-};
-console.warn = (...args) => {
-  stderrLogStream.write(formatConsoleArgs(...args));
-  originalConsoleWarn(...args);
-};
-console.error = (...args) => {
-  stderrLogStream.write(formatConsoleArgs(...args));
-  originalConsoleError(...args);
-};
 
 // Init App
 const app = express();
