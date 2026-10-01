@@ -2667,10 +2667,10 @@ async function fixImage(btn, url) {
         border: none;
         border-radius: 24px;
         padding: 0;
-        max-width: 500px;
-        width: 90%;
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
-        background: rgba(255, 255, 255, 0.92);
+        max-width: 520px;
+        width: 92%;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+        background: rgba(255, 255, 255, 0.96);
         backdrop-filter: blur(25px) saturate(190%);
         -webkit-backdrop-filter: blur(25px) saturate(190%);
         border: 1px solid rgba(255, 255, 255, 0.6);
@@ -2698,12 +2698,12 @@ async function fixImage(btn, url) {
     .ap-header {
         background: linear-gradient(135deg, var(--chiro-red, #db3e41) 0%, #b81423 100%);
         color: white;
-        padding: 1.6rem 1.5rem;
+        padding: 1.25rem 1.4rem;
     }
     .ap-title {
         font-family: 'Fredoka', sans-serif;
         font-weight: 700;
-        font-size: 1.4rem;
+        font-size: 1.35rem;
         line-height: 1.3;
         margin: 0;
         display: flex;
@@ -2711,15 +2711,15 @@ async function fixImage(btn, url) {
         gap: .5rem;
     }
     .ap-body {
-        padding: 1.75rem 1.5rem;
+        padding: 1.25rem 1.25rem;
         color: #2c3e50;
         font-size: 1.05rem;
         line-height: 1.7;
-        max-height: 55vh;
+        max-height: 72vh;
         overflow-y: auto;
     }
     .ap-footer {
-        padding: 1.1rem 1.5rem 1.6rem;
+        padding: 0.85rem 1.25rem 1.1rem;
         display: flex;
         justify-content: center;
         border-top: 1px solid rgba(0,0,0,.06);
@@ -2758,8 +2758,17 @@ async function fixImage(btn, url) {
         box-sizing: border-box;
         padding: 0 2px;
     }
+    .ap-card-box {
+        background: rgba(0,0,0,.03);
+        border: 1px solid rgba(0,0,0,.08) !important;
+        border-radius: 1rem;
+        box-shadow: 0 4px 14px rgba(0,0,0,.03);
+        overflow: hidden;
+    }
     .ap-score-btn {
         width: 44px; height: 44px;
+        flex: 1 1 0;
+        max-width: 52px;
         border-radius: 50%;
         border: 2px solid rgba(13, 110, 253, 0.2) !important;
         background: rgba(13, 110, 253, 0.04);
@@ -2772,7 +2781,7 @@ async function fixImage(btn, url) {
     .ap-score-btn:hover {
         background: var(--chiro-blue, #0d6efd) !important;
         color: white !important;
-        transform: scale(1.12);
+        transform: scale(1.1);
         box-shadow: 0 4px 12px rgba(13,110,253,.25);
     }
     .ap-score-btn.selected {
@@ -2823,162 +2832,276 @@ async function fixImage(btn, url) {
         50%       { transform: translateY(-4px); }
     }
     .ap-bell { display: inline-block; animation: apBellBounce 2s infinite; }
+
+    @media (max-width: 576px) {
+        dialog#announcementPopup {
+            width: 95%;
+            border-radius: 18px;
+        }
+        .ap-header {
+            padding: 1rem 1.15rem;
+        }
+        .ap-title {
+            font-size: 1.15rem;
+        }
+        .ap-body {
+            padding: 0.85rem 0.75rem;
+            max-height: 76vh;
+        }
+        .ap-footer {
+            padding: 0.75rem 1rem 0.9rem;
+        }
+        .ap-close-btn {
+            padding: 0.45rem 1.75rem !important;
+            font-size: 0.95rem;
+        }
+        .ap-score-btn {
+            width: 38px; height: 38px;
+            font-size: 0.95rem;
+        }
+    }
 </style>
 
 <dialog id="announcementPopup" aria-labelledby="apTitle" aria-modal="true">
-    <div class="ap-header">
-        <h3 class="ap-title" id="apTitle">
+    <div class="ap-header d-flex justify-content-between align-items-center">
+        <h3 class="ap-title mb-0" id="apTitle">
             <span class="ap-bell">🔔</span>
             <%= announcement.title %>
         </h3>
+        <button type="button" class="btn-close btn-close-white ap-header-close-btn" aria-label="Sluiten" id="apHeaderCloseBtn"></button>
     </div>
 
-    <div class="ap-body rich-text-content" id="apBody">
-        <%- announcement.content %>
-
-        <% if (_hasSurvey) { %>
-            <div id="ap-survey-area" class="mt-4">
-                <% if (_alreadyAnswered) { %>
-                    <%
-                        let _userAns = userSurveyResponse.answers;
-                        if (typeof _userAns === 'string') { try { _userAns = JSON.parse(_userAns); } catch(e) { _userAns = {}; } }
-                        if (!_userAns || typeof _userAns !== 'object') {
-                            _userAns = { "0": { score: userSurveyResponse.score, feedback: userSurveyResponse.feedback } };
-                        }
-                    %>
-                    <div class="card border-0 rounded-4 ap-animate" style="background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.08)!important;">
-                        <div class="progress rounded-0" style="height:5px;">
-                            <div class="progress-bar" style="width:100%;background:linear-gradient(90deg,var(--chiro-blue,#0d6efd),#00bc8c);"></div>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="text-success fw-bold d-flex align-items-center gap-2 mb-3">
-                                <i class="bi bi-check-circle-fill"></i> Bedankt voor je reactie!
+    <% if (!_hasSurvey) { %>
+        <!-- No survey: standard announcement view -->
+        <div class="ap-body rich-text-content" id="apBody">
+            <%- announcement.content %>
+        </div>
+    <% } else { %>
+        <!-- Survey attached: Unified card wizard where Announcement is Card 0 -->
+        <div class="ap-body" id="apBody">
+            <div class="ap-survey-wizard" id="apWizard" data-total="<%= _qList.length %>">
+                <div class="ap-survey-track" id="apTrack">
+                    <!-- Step 0: Announcement Card -->
+                    <div class="ap-survey-card" id="ap-step-0">
+                        <div class="card border-0 rounded-4 ap-card-box">
+                            <div class="progress rounded-0" style="height:5px;">
+                                <div class="progress-bar" style="width:0%;background:linear-gradient(90deg,var(--chiro-blue,#0d6efd),#00bc8c);transition:width .4s;"></div>
                             </div>
-                            <ul class="list-unstyled mb-0">
-                                <% _qList.forEach((q, i) => {
-                                    const ans = _userAns[q.id] || _userAns[String(q.id)] || _userAns[i] || {};
-                                %>
-                                    <li class="small mb-2">
-                                        <div class="fw-bold text-dark"><%= i+1 %>. <%= q.text %></div>
-                                        <div class="text-muted">
-                                            <% if (ans.skipped) { %>Overgeslagen
-                                            <% } else if (q.type === 'score') { %>Score: <strong><%= ans.score !== undefined ? ans.score : '—' %> / 5</strong>
-                                            <% } else if (q.type === 'text') { %>Feedback: <em>"<%= ans.feedback || '—' %>"</em>
-                                            <% } else if (q.type === 'multiple_choice') { %>Keuze: <strong><%= ans.selected || '—' %></strong>
-                                            <% } else if (q.type === 'multiple_choice_multi') {
-                                                const arr = Array.isArray(ans.selected) ? ans.selected : (ans.selected ? [ans.selected] : []);
-                                            %>Keuzes: <strong><%= arr.length > 0 ? arr.join(', ') : '—' %></strong>
-                                            <% } else { %>Antwoord: <strong><%= ans.selected || ans.feedback || ans.score || '—' %></strong>
-                                            <% } %>
-                                        </div>
-                                    </li>
-                                <% }); %>
-                            </ul>
+                            <div class="card-body p-3 p-sm-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge bg-secondary rounded-pill" style="font-size:.72rem;">
+                                        <i class="bi bi-megaphone-fill me-1"></i>Aankondiging
+                                    </span>
+                                    <span class="text-muted small fw-bold" style="font-size:.72rem;">
+                                        <i class="bi bi-patch-question-fill text-primary me-1"></i>Survey (<%= _qList.length %> <%= _qList.length === 1 ? 'vraag' : 'vragen' %>)
+                                    </span>
+                                </div>
+
+                                <div class="ap-announcement-card-content rich-text-content mb-3" style="max-height: 48vh; overflow-y: auto;">
+                                    <%- announcement.content %>
+                                </div>
+
+                                <% if (_alreadyAnswered) { %>
+                                    <div class="alert alert-success d-flex align-items-center gap-2 py-2 px-3 mb-2 rounded-3 small">
+                                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                        <div>Je hebt deze survey al beantwoord.</div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary rounded-pill py-2.5 px-4 fw-bold ap-goto-btn w-100" data-to="1">
+                                        <i class="bi bi-card-checklist me-2"></i>Bekijk je feedback
+                                    </button>
+                                <% } else { %>
+                                    <div class="pt-2">
+                                        <button type="button" class="btn btn-primary rounded-pill py-2.5 px-4 fw-bold w-100 ap-start-btn d-flex align-items-center justify-content-center gap-2 shadow-sm"
+                                            id="apStartBtn"
+                                            style="background:linear-gradient(135deg,var(--chiro-blue,#0d6efd),#004488);border:none;font-size:1.05rem;">
+                                            <span>Start</span>
+                                            <i class="bi bi-arrow-right"></i>
+                                        </button>
+                                    </div>
+                                <% } %>
+                            </div>
                         </div>
                     </div>
-                <% } else { %>
-                    <!-- Survey wizard: server-rendered cards, JS handles sliding -->
-                    <div class="ap-survey-wizard" id="apWizard" data-total="<%= _qList.length %>">
-                        <div class="ap-survey-track" id="apTrack">
-                            <% _qList.forEach((q, idx) => { %>
-                                <div class="ap-survey-card" id="ap-step-<%= idx %>">
-                                    <div class="card border-0 rounded-4" style="background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.08)!important;">
-                                        <div class="progress rounded-0" style="height:5px;">
-                                            <div class="progress-bar" style="width:<%= Math.round((idx/_qList.length)*100) %>%;background:linear-gradient(90deg,var(--chiro-blue,#0d6efd),#00bc8c);transition:width .4s;"></div>
-                                        </div>
-                                        <div class="card-body p-3">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="badge bg-secondary rounded-pill" style="font-size:.72rem;">Vraag <%= idx+1 %> van <%= _qList.length %></span>
-                                                <span class="text-muted small fw-bold" style="font-size:.72rem;"><i class="bi bi-patch-question-fill text-primary me-1"></i>Survey</span>
-                                            </div>
-                                            <h6 class="fw-bold mb-3 text-dark" style="font-size:1rem;line-height:1.4;"><%= q.text %></h6>
 
-                                            <% if (q.type === 'score') { %>
-                                                <div class="d-flex justify-content-between gap-2 mb-2">
-                                                    <% for(let i=1;i<=5;i++) { %>
-                                                        <button type="button"
-                                                            class="ap-score-btn btn"
-                                                            data-step="<%= idx %>"
-                                                            data-qid="<%= q.id %>"
-                                                            data-score="<%= i %>">
-                                                            <%= i %>
-                                                        </button>
-                                                    <% } %>
-                                                </div>
-                                                <div class="d-flex justify-content-between text-muted mb-3" style="font-size:.72rem;">
-                                                    <span>Slecht</span><span>Uitstekend</span>
-                                                </div>
-                                                <div class="text-center">
-                                                    <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none ap-skip-btn" data-step="<%= idx %>" data-qid="<%= q.id %>">
-                                                        Sla over <i class="bi bi-arrow-right ms-1"></i>
-                                                    </button>
-                                                </div>
-                                            <% } else if (q.type === 'text') { %>
-                                                <textarea class="form-control rounded-3 mb-2 ap-text-input"
-                                                    data-step="<%= idx %>"
-                                                    data-qid="<%= q.id %>"
-                                                    rows="3"
-                                                    placeholder="Schrijf hier je feedback..."></textarea>
-                                                <div class="d-flex gap-2">
-                                                    <button type="button" class="btn btn-outline-secondary rounded-pill flex-fill ap-skip-btn" data-step="<%= idx %>" data-qid="<%= q.id %>">Overslaan</button>
-                                                    <button type="button" class="btn btn-primary rounded-pill flex-fill ap-next-text-btn" data-step="<%= idx %>" data-qid="<%= q.id %>"
-                                                        style="background:linear-gradient(135deg,var(--chiro-blue,#0d6efd),#004488);border:none;">
-                                                        <%= idx === _qList.length - 1 ? 'Verzenden' : 'Volgende' %>
-                                                    </button>
-                                                </div>
-                                            <% } else if (q.type === 'multiple_choice') { %>
-                                                <div class="d-flex flex-column gap-2 mb-3">
-                                                    <% (q.options || []).forEach((opt) => { %>
-                                                        <button type="button"
-                                                            class="ap-choice-btn btn btn-outline-primary text-start rounded-3 p-2 px-3 d-flex align-items-center justify-content-between transition-base"
-                                                            data-step="<%= idx %>"
-                                                            data-qid="<%= q.id %>"
-                                                            data-value="<%= opt %>">
-                                                            <span class="fw-semibold text-dark"><%= opt %></span>
-                                                            <i class="bi bi-circle ap-choice-icon fs-6 opacity-75"></i>
-                                                        </button>
-                                                    <% }); %>
-                                                </div>
-                                                <div class="text-center">
-                                                    <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none ap-skip-btn" data-step="<%= idx %>" data-qid="<%= q.id %>">
-                                                        Sla over <i class="bi bi-arrow-right ms-1"></i>
-                                                    </button>
-                                                </div>
-                                            <% } else if (q.type === 'multiple_choice_multi') { %>
-                                                <div class="d-flex flex-column gap-2 mb-3">
-                                                    <% (q.options || []).forEach((opt) => { %>
-                                                        <div class="card border rounded-3 p-2 px-3 ap-multi-option" style="cursor: pointer; transition: all .2s;">
-                                                            <label class="form-check d-flex align-items-center justify-content-between mb-0 w-100" style="cursor: pointer;">
-                                                                <span class="fw-semibold text-dark"><%= opt %></span>
-                                                                <input type="checkbox"
-                                                                    class="form-check-input ms-2 mt-0 ap-multi-check"
-                                                                    data-step="<%= idx %>"
-                                                                    data-qid="<%= q.id %>"
-                                                                    value="<%= opt %>">
-                                                            </label>
-                                                        </div>
-                                                    <% }); %>
-                                                </div>
-                                                <div class="d-flex gap-2">
-                                                    <button type="button" class="btn btn-outline-secondary rounded-pill flex-fill ap-skip-btn" data-step="<%= idx %>" data-qid="<%= q.id %>">Overslaan</button>
-                                                    <button type="button" class="btn btn-primary rounded-pill flex-fill ap-next-multi-btn" data-step="<%= idx %>" data-qid="<%= q.id %>"
-                                                        style="background:linear-gradient(135deg,var(--chiro-blue,#0d6efd),#004488);border:none;">
-                                                        <%= idx === _qList.length - 1 ? 'Verzenden' : 'Volgende' %>
-                                                    </button>
-                                                </div>
-                                            <% } %>
-                                        </div>
+                    <% if (_alreadyAnswered) { %>
+                        <!-- Already Answered: Card 1 is the Summary / Thank you card -->
+                        <%
+                            let _userAns = userSurveyResponse.answers;
+                            if (typeof _userAns === 'string') { try { _userAns = JSON.parse(_userAns); } catch(e) { _userAns = {}; } }
+                            if (!_userAns || typeof _userAns !== 'object') {
+                                _userAns = { "0": { score: userSurveyResponse.score, feedback: userSurveyResponse.feedback } };
+                            }
+                        %>
+                        <div class="ap-survey-card" id="ap-step-1">
+                            <div class="card border-0 rounded-4 ap-card-box">
+                                <div class="progress rounded-0" style="height:5px;">
+                                    <div class="progress-bar" style="width:100%;background:linear-gradient(90deg,var(--chiro-blue,#0d6efd),#00bc8c);"></div>
+                                </div>
+                                <div class="card-body p-3 p-sm-4 text-center">
+                                    <div class="text-success mb-2">
+                                        <i class="bi bi-check-circle-fill" style="font-size:2.8rem;"></i>
+                                    </div>
+                                    <h5 class="fw-bold text-dark mb-1">Bedankt voor je feedback!</h5>
+                                    <p class="text-muted small mb-3">Je reactie is eerder al geregistreerd.</p>
+
+                                    <div class="text-start bg-white rounded-3 p-3 border mb-3 shadow-sm" style="max-height: 38vh; overflow-y: auto;">
+                                        <ul class="list-unstyled mb-0">
+                                            <% _qList.forEach((q, i) => {
+                                                const ans = _userAns[q.id] || _userAns[String(q.id)] || _userAns[i] || {};
+                                            %>
+                                                <li class="small mb-2">
+                                                    <div class="fw-bold text-dark"><%= i+1 %>. <%= q.text %></div>
+                                                    <div class="text-muted">
+                                                        <% if (ans.skipped) { %>Overgeslagen
+                                                        <% } else if (q.type === 'score') { %>Score: <strong><%= ans.score !== undefined ? ans.score : '—' %> / 5</strong>
+                                                        <% } else if (q.type === 'text') { %>Feedback: <em>"<%= ans.feedback || '—' %>"</em>
+                                                        <% } else if (q.type === 'multiple_choice') { %>Keuze: <strong><%= ans.selected || '—' %></strong>
+                                                        <% } else if (q.type === 'multiple_choice_multi') {
+                                                            const arr = Array.isArray(ans.selected) ? ans.selected : (ans.selected ? [ans.selected] : []);
+                                                        %>Keuzes: <strong><%= arr.length > 0 ? arr.join(', ') : '—' %></strong>
+                                                        <% } else { %>Antwoord: <strong><%= ans.selected || ans.feedback || ans.score || '—' %></strong>
+                                                        <% } %>
+                                                    </div>
+                                                </li>
+                                            <% }); %>
+                                        </ul>
+                                    </div>
+
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4 ap-prev-btn" data-to="0">
+                                            <i class="bi bi-arrow-left me-1"></i>Mededeling
+                                        </button>
+                                        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold ap-thankyou-close-btn" style="background:linear-gradient(135deg,var(--chiro-blue,#0d6efd),#004488);border:none;">
+                                            Sluiten
+                                        </button>
                                     </div>
                                 </div>
-                            <% }); %>
+                            </div>
                         </div>
-                    </div>
-                    <!-- Hidden completed card, shown after submit -->
-                    <div id="ap-completed" class="d-none"></div>
-                <% } %>
+                    <% } else { %>
+                        <!-- Question Cards: Step 1 to N -->
+                        <% _qList.forEach((q, idx) => {
+                            const stepNum = idx + 1;
+                        %>
+                            <div class="ap-survey-card" id="ap-step-<%= stepNum %>">
+                                <div class="card border-0 rounded-4 ap-card-box">
+                                    <div class="progress rounded-0" style="height:5px;">
+                                        <div class="progress-bar" style="width:<%= Math.round((stepNum / (_qList.length + 1)) * 100) %>%;background:linear-gradient(90deg,var(--chiro-blue,#0d6efd),#00bc8c);transition:width .4s;"></div>
+                                    </div>
+                                    <div class="card-body p-3 p-sm-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none p-0 ap-prev-btn" data-to="<%= stepNum - 1 %>" title="Vorige">
+                                                    <i class="bi bi-arrow-left fs-6"></i>
+                                                    <span class="small ms-1"><%= stepNum === 1 ? 'Mededeling' : 'Vorige' %></span>
+                                                </button>
+                                                <span class="badge bg-secondary rounded-pill" style="font-size:.72rem;">Vraag <%= stepNum %> van <%= _qList.length %></span>
+                                            </div>
+                                            <span class="text-muted small fw-bold" style="font-size:.72rem;"><i class="bi bi-patch-question-fill text-primary me-1"></i>Survey</span>
+                                        </div>
+
+                                        <h6 class="fw-bold mb-3 text-dark" style="font-size:1.05rem;line-height:1.4;"><%= q.text %></h6>
+
+                                        <% if (q.type === 'score') { %>
+                                            <div class="d-flex justify-content-between gap-2 mb-2 pt-2">
+                                                <% for(let i=1;i<=5;i++) { %>
+                                                    <button type="button"
+                                                        class="ap-score-btn btn"
+                                                        data-step="<%= stepNum %>"
+                                                        data-qid="<%= q.id %>"
+                                                        data-score="<%= i %>">
+                                                        <%= i %>
+                                                    </button>
+                                                <% } %>
+                                            </div>
+                                            <div class="d-flex justify-content-between text-muted mb-3 px-1" style="font-size:.72rem;">
+                                                <span>Slecht</span><span>Uitstekend</span>
+                                            </div>
+                                            <div class="text-center pt-2">
+                                                <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none ap-skip-btn" data-step="<%= stepNum %>" data-qid="<%= q.id %>">
+                                                    Sla over <i class="bi bi-arrow-right ms-1"></i>
+                                                </button>
+                                            </div>
+                                        <% } else if (q.type === 'text') { %>
+                                            <textarea class="form-control rounded-3 mb-3 ap-text-input"
+                                                data-step="<%= stepNum %>"
+                                                data-qid="<%= q.id %>"
+                                                rows="3"
+                                                placeholder="Schrijf hier je feedback..."></textarea>
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-outline-secondary rounded-pill flex-fill ap-skip-btn" data-step="<%= stepNum %>" data-qid="<%= q.id %>">Overslaan</button>
+                                                <button type="button" class="btn btn-primary rounded-pill flex-fill ap-next-text-btn" data-step="<%= stepNum %>" data-qid="<%= q.id %>"
+                                                    style="background:linear-gradient(135deg,var(--chiro-blue,#0d6efd),#004488);border:none;">
+                                                    <%= idx === _qList.length - 1 ? 'Verzenden' : 'Volgende' %>
+                                                </button>
+                                            </div>
+                                        <% } else if (q.type === 'multiple_choice') { %>
+                                            <div class="d-flex flex-column gap-2 mb-3">
+                                                <% (q.options || []).forEach((opt) => { %>
+                                                    <button type="button"
+                                                        class="ap-choice-btn btn btn-outline-primary text-start rounded-3 p-2 px-3 d-flex align-items-center justify-content-between transition-base"
+                                                        data-step="<%= stepNum %>"
+                                                        data-qid="<%= q.id %>"
+                                                        data-value="<%= opt %>">
+                                                        <span class="fw-semibold text-dark"><%= opt %></span>
+                                                        <i class="bi bi-circle ap-choice-icon fs-6 opacity-75"></i>
+                                                    </button>
+                                                <% }); %>
+                                            </div>
+                                            <div class="text-center">
+                                                <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none ap-skip-btn" data-step="<%= stepNum %>" data-qid="<%= q.id %>">
+                                                    Sla over <i class="bi bi-arrow-right ms-1"></i>
+                                                </button>
+                                            </div>
+                                        <% } else if (q.type === 'multiple_choice_multi') { %>
+                                            <div class="d-flex flex-column gap-2 mb-3">
+                                                <% (q.options || []).forEach((opt) => { %>
+                                                    <div class="card border rounded-3 p-2 px-3 ap-multi-option" style="cursor: pointer; transition: all .2s;">
+                                                        <label class="form-check d-flex align-items-center justify-content-between mb-0 w-100" style="cursor: pointer;">
+                                                            <span class="fw-semibold text-dark"><%= opt %></span>
+                                                            <input type="checkbox"
+                                                                class="form-check-input ms-2 mt-0 ap-multi-check"
+                                                                data-step="<%= stepNum %>"
+                                                                data-qid="<%= q.id %>"
+                                                                value="<%= opt %>">
+                                                        </label>
+                                                    </div>
+                                                <% }); %>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-outline-secondary rounded-pill flex-fill ap-skip-btn" data-step="<%= stepNum %>" data-qid="<%= q.id %>">Overslaan</button>
+                                                <button type="button" class="btn btn-primary rounded-pill flex-fill ap-next-multi-btn" data-step="<%= stepNum %>" data-qid="<%= q.id %>"
+                                                    style="background:linear-gradient(135deg,var(--chiro-blue,#0d6efd),#004488);border:none;">
+                                                    <%= idx === _qList.length - 1 ? 'Verzenden' : 'Volgende' %>
+                                                </button>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+
+                        <!-- Step N+1: Thank you card (populated after submit) -->
+                        <div class="ap-survey-card" id="ap-step-<%= _qList.length + 1 %>">
+                            <div class="card border-0 rounded-4 ap-card-box">
+                                <div class="progress rounded-0" style="height:5px;">
+                                    <div class="progress-bar" id="apThankYouProgress" style="width:100%;background:linear-gradient(90deg,var(--chiro-blue,#0d6efd),#00bc8c);"></div>
+                                </div>
+                                <div class="card-body p-3 p-sm-4 text-center" id="apThankYouBody">
+                                    <div class="py-4 text-center">
+                                        <div class="spinner-border text-primary mb-3" role="status">
+                                            <span class="visually-hidden">Laden...</span>
+                                        </div>
+                                        <h6 class="text-muted">Antwoorden verwerken...</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
             </div>
-        <% } %>
-    </div>
+        </div>
+    <% } %>
 
     <div class="ap-footer">
         <button type="button" class="btn ap-close-btn rounded-pill px-5 py-2 fw-bold" id="apCloseBtn">
@@ -2989,14 +3112,17 @@ async function fixImage(btn, url) {
 
 <script>
 (function () {
-    const POPUP_ID   = '<%= announcement.id %>';
-    const DISMISS_URL = FEED_BASE_URL + '/announcements/' + POPUP_ID + '/dismiss';
-    const SURVEY_URL  = FEED_BASE_URL + '/announcements/' + POPUP_ID + '/survey';
-    const HAS_SURVEY  = <%= _hasSurvey && !_alreadyAnswered ? 'true' : 'false' %>;
-    const Q_LIST      = <%- JSON.stringify(_qList) %>;
+    const POPUP_ID         = '<%= announcement.id %>';
+    const DISMISS_URL      = FEED_BASE_URL + '/announcements/' + POPUP_ID + '/dismiss';
+    const SURVEY_URL       = FEED_BASE_URL + '/announcements/' + POPUP_ID + '/survey';
+    const HAS_SURVEY       = <%= _hasSurvey ? 'true' : 'false' %>;
+    const ALREADY_ANSWERED = <%= _alreadyAnswered ? 'true' : 'false' %>;
+    const Q_LIST           = <%- JSON.stringify(_qList) %>;
 
-    const popup    = document.getElementById('announcementPopup');
-    const closeBtn = document.getElementById('apCloseBtn');
+    const popup       = document.getElementById('announcementPopup');
+    const closeBtn    = document.getElementById('apCloseBtn');
+    const headerClose = document.getElementById('apHeaderCloseBtn');
+    const popupBody   = document.getElementById('apBody');
 
     // ── Dismiss helper ────────────────────────────────────────────────────────
     function dismiss() {
@@ -3005,22 +3131,28 @@ async function fixImage(btn, url) {
         fetch(DISMISS_URL, { method: 'POST' }).catch(() => {});
     }
 
-    closeBtn.addEventListener('click', dismiss);
+    if (closeBtn) closeBtn.addEventListener('click', dismiss);
+    if (headerClose) headerClose.addEventListener('click', dismiss);
 
     // Click-on-backdrop fallback (browsers that don't support closedby="any")
-    popup.addEventListener('click', function (e) {
-        const r = popup.getBoundingClientRect();
-        const inside = e.clientX >= r.left && e.clientX <= r.right &&
-                       e.clientY >= r.top  && e.clientY <= r.bottom;
-        if (!inside) dismiss();
-    });
+    if (popup) {
+        popup.addEventListener('click', function (e) {
+            const r = popup.getBoundingClientRect();
+            const inside = e.clientX >= r.left && e.clientX <= r.right &&
+                           e.clientY >= r.top  && e.clientY <= r.bottom;
+            if (!inside) dismiss();
+        });
+    }
 
     // ── Show popup ────────────────────────────────────────────────────────────
-    // The server already filtered out dismissed announcements, so if we have
-    // one here it should ALWAYS be shown. No localStorage gate.
     function openPopup() {
+        if (!popup) return;
         popup.showModal();
-        if (HAS_SURVEY) initWizardHeight();
+        if (HAS_SURVEY) {
+            requestAnimationFrame(() => {
+                setTimeout(initWizardHeight, 50);
+            });
+        }
     }
 
     if (document.readyState === 'loading') {
@@ -3036,12 +3168,34 @@ async function fixImage(btn, url) {
     const track   = document.getElementById('apTrack');
     const answers = {};
     let isTransitioning = false;
-    let totalSteps = Q_LIST.length;
+    let currentStep     = 0;
+    const totalQuestions = Q_LIST.length;
+
+    function setWizardHeight(card) {
+        if (!card || !wizard) return;
+        const h = card.offsetHeight;
+        if (h > 0) wizard.style.height = h + 'px';
+    }
 
     function initWizardHeight() {
         const first = document.getElementById('ap-step-0');
-        if (first && wizard) wizard.style.height = first.offsetHeight + 'px';
+        if (first) {
+            setWizardHeight(first);
+            first.querySelectorAll('img').forEach(img => {
+                if (!img.complete) {
+                    img.addEventListener('load', () => {
+                        if (currentStep === 0) setWizardHeight(first);
+                    });
+                }
+            });
+        }
     }
+
+    window.addEventListener('resize', () => {
+        if (!wizard) return;
+        const activeCard = document.getElementById('ap-step-' + currentStep);
+        if (activeCard) setWizardHeight(activeCard);
+    });
 
     function goTo(nextIdx) {
         if (isTransitioning) return;
@@ -3049,16 +3203,56 @@ async function fixImage(btn, url) {
         if (!nextCard || !wizard || !track) return;
 
         isTransitioning = true;
+        currentStep = nextIdx;
         track.style.transform = 'translateX(-' + (nextIdx * 100) + '%)';
         wizard.style.height   = nextCard.offsetHeight + 'px';
-        setTimeout(() => { isTransitioning = false; }, 420);
+
+        if (popupBody) popupBody.scrollTop = 0;
+
+        setTimeout(() => {
+            isTransitioning = false;
+            if (nextCard.offsetHeight > 0) {
+                wizard.style.height = nextCard.offsetHeight + 'px';
+            }
+        }, 420);
     }
 
-    function afterAnswer(stepIdx) {
-        if (stepIdx === totalSteps - 1) {
+    // Start button on Card 0
+    const startBtn = document.getElementById('apStartBtn');
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            goTo(1);
+        });
+    }
+
+    // Back / Prev buttons
+    document.querySelectorAll('.ap-prev-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const to = +this.dataset.to;
+            goTo(to);
+        });
+    });
+
+    // Go-to buttons (e.g. view feedback)
+    document.querySelectorAll('.ap-goto-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const to = +this.dataset.to;
+            goTo(to);
+        });
+    });
+
+    // Thank you card close buttons
+    document.querySelectorAll('.ap-thankyou-close-btn').forEach(btn => {
+        btn.addEventListener('click', dismiss);
+    });
+
+    if (ALREADY_ANSWERED) return;
+
+    function afterAnswer(stepNum) {
+        if (stepNum === totalQuestions) {
             submitSurvey();
         } else {
-            goTo(stepIdx + 1);
+            goTo(stepNum + 1);
         }
     }
 
@@ -3070,10 +3264,16 @@ async function fixImage(btn, url) {
             const qid   = this.dataset.qid;
             const score = +this.dataset.score;
             answers[qid] = { score };
+
+            // Update UI selection
+            document.querySelectorAll(`.ap-score-btn[data-step="${step}"]`).forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+
             this.style.transform = 'scale(0.88)';
-            this.style.background = 'var(--chiro-blue, #0d6efd)';
-            this.style.color = 'white';
-            setTimeout(() => { this.style.transform = ''; afterAnswer(step); }, 180);
+            setTimeout(() => { 
+                this.style.transform = ''; 
+                afterAnswer(step); 
+            }, 180);
         });
     });
 
@@ -3086,12 +3286,19 @@ async function fixImage(btn, url) {
             const ta   = document.querySelector('.ap-text-input[data-step="' + step + '"]');
             const val  = ta ? ta.value.trim() : '';
             if (!val) {
-                if (ta) { ta.classList.add('is-invalid'); ta.focus(); setTimeout(() => ta.classList.remove('is-invalid'), 500); }
+                if (ta) { 
+                    ta.classList.add('is-invalid'); 
+                    ta.focus(); 
+                    setTimeout(() => ta.classList.remove('is-invalid'), 600); 
+                }
                 return;
             }
             answers[qid] = { feedback: val };
             this.style.transform = 'scale(0.95)';
-            setTimeout(() => { this.style.transform = ''; afterAnswer(step); }, 150);
+            setTimeout(() => { 
+                this.style.transform = ''; 
+                afterAnswer(step); 
+            }, 150);
         });
     });
 
@@ -3103,7 +3310,10 @@ async function fixImage(btn, url) {
             const qid  = this.dataset.qid;
             answers[qid] = { skipped: true };
             this.style.transform = 'scale(0.95)';
-            setTimeout(() => { this.style.transform = ''; afterAnswer(step); }, 150);
+            setTimeout(() => { 
+                this.style.transform = ''; 
+                afterAnswer(step); 
+            }, 150);
         });
     });
 
@@ -3116,13 +3326,22 @@ async function fixImage(btn, url) {
             const val  = this.dataset.value;
             answers[qid] = { selected: val };
 
+            document.querySelectorAll(`.ap-choice-btn[data-step="${step}"]`).forEach(b => {
+                b.classList.remove('selected');
+                const ic = b.querySelector('.ap-choice-icon');
+                if (ic) ic.className = 'bi bi-circle ap-choice-icon fs-6 opacity-75';
+            });
+
             this.classList.add('selected');
             const icon = this.querySelector('.ap-choice-icon');
             if (icon) {
                 icon.className = 'bi bi-check-circle-fill ap-choice-icon fs-6 text-white';
             }
             this.style.transform = 'scale(0.97)';
-            setTimeout(() => { this.style.transform = ''; afterAnswer(step); }, 180);
+            setTimeout(() => { 
+                this.style.transform = ''; 
+                afterAnswer(step); 
+            }, 180);
         });
     });
 
@@ -3155,7 +3374,10 @@ async function fixImage(btn, url) {
             }
             answers[qid] = { selected };
             this.style.transform = 'scale(0.95)';
-            setTimeout(() => { this.style.transform = ''; afterAnswer(step); }, 150);
+            setTimeout(() => { 
+                this.style.transform = ''; 
+                afterAnswer(step); 
+            }, 150);
         });
     });
 
@@ -3189,26 +3411,60 @@ async function fixImage(btn, url) {
                 summaryHtml += '</ul>';
 
                 const pct = result.stats ? result.stats.percentage : 100;
+                const thankYouStep = totalQuestions + 1;
+                const thankYouBody = document.getElementById('apThankYouBody');
 
-                if (wizard) wizard.style.opacity = '0';
-                setTimeout(() => {
-                    const area = document.getElementById('ap-survey-area');
-                    if (area) area.innerHTML = `
-                        <div class="card border-0 rounded-4 ap-animate" style="background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.08)!important;">
-                            <div class="progress rounded-0" style="height:5px;">
-                                <div class="progress-bar" style="width:${pct}%;background:linear-gradient(90deg,var(--chiro-blue,#0d6efd),#00bc8c);"></div>
+                if (thankYouBody) {
+                    thankYouBody.innerHTML = `
+                        <div class="py-2">
+                            <div class="text-success mb-2">
+                                <i class="bi bi-check-circle-fill" style="font-size:2.8rem;"></i>
                             </div>
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="badge bg-secondary rounded-pill" style="font-size:.72rem;">${pct}% beantwoord</span>
-                                </div>
-                                <div class="text-success fw-bold d-flex align-items-center gap-2 mb-3">
-                                    <i class="bi bi-check-circle-fill"></i> Bedankt voor je reactie!
-                                </div>
+                            <h5 class="fw-bold text-dark mb-1">Bedankt voor je feedback!</h5>
+                            <p class="text-muted small mb-3">Je reactie is succesvol verzonden.${pct ? ` (${pct}% beantwoord)` : ''}</p>
+                            
+                            <div class="text-start bg-white rounded-3 p-3 border mb-3 shadow-sm" style="max-height: 38vh; overflow-y: auto;">
                                 ${summaryHtml}
                             </div>
-                        </div>`;
-                }, 300);
+                            <div class="d-flex justify-content-center gap-2">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-4 ap-prev-btn" data-to="0">
+                                    <i class="bi bi-arrow-left me-1"></i>Mededeling
+                                </button>
+                                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold ap-thankyou-close-btn" style="background:linear-gradient(135deg,var(--chiro-blue,#0d6efd),#004488);border:none;">
+                                    Sluiten
+                                </button>
+                            </div>
+                        </div>
+                    `;
+
+                    // Wire up buttons in new DOM
+                    const backBtn = thankYouBody.querySelector('.ap-prev-btn');
+                    if (backBtn) backBtn.addEventListener('click', () => goTo(0));
+                    const tyCloseBtn = thankYouBody.querySelector('.ap-thankyou-close-btn');
+                    if (tyCloseBtn) tyCloseBtn.addEventListener('click', dismiss);
+                }
+
+                // Update Card 0 so if they go back to announcement, it shows answered state
+                const card0Body = document.querySelector('#ap-step-0 .card-body');
+                const startBtnEl = document.getElementById('apStartBtn');
+                if (startBtnEl && card0Body) {
+                    const statusDiv = document.createElement('div');
+                    statusDiv.className = 'pt-2';
+                    statusDiv.innerHTML = `
+                        <div class="alert alert-success d-flex align-items-center gap-2 py-2 px-3 mb-2 rounded-3 small">
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            <div>Je hebt deze survey beantwoord. Bedankt voor je feedback!</div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary rounded-pill py-2.5 px-4 fw-bold w-100" id="apViewAnswersBtnAgain">
+                            <i class="bi bi-card-checklist me-2"></i>Bekijk je feedback
+                        </button>
+                    `;
+                    startBtnEl.parentElement.replaceWith(statusDiv);
+                    const againBtn = document.getElementById('apViewAnswersBtnAgain');
+                    if (againBtn) againBtn.addEventListener('click', () => goTo(thankYouStep));
+                }
+
+                goTo(thankYouStep);
             } else {
                 alert(result.error || 'Er is iets misgegaan.');
                 document.querySelectorAll('.ap-score-btn, .ap-next-text-btn, .ap-skip-btn, .ap-text-input, .ap-choice-btn, .ap-next-multi-btn, .ap-multi-check').forEach(el => el.disabled = false);
