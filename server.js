@@ -186,6 +186,38 @@ app.use(passport.session());
 
 const crypto = require('crypto');
 
+// Helper to safely format form action URL: only keeps/adds _csrf for multipart forms, cleans it from standard forms
+function formatActionUrl(action, isMultipart, csrfToken) {
+  if (!action) {
+    return isMultipart ? `?_csrf=${csrfToken}` : '';
+  }
+  try {
+    const isRelative = !action.startsWith('http://') && !action.startsWith('https://');
+    const dummyBase = 'http://localhost';
+    const parsed = new URL(action, dummyBase);
+    if (isMultipart) {
+      parsed.searchParams.set('_csrf', csrfToken);
+    } else {
+      parsed.searchParams.delete('_csrf');
+    }
+    const search = parsed.search;
+    const hash = parsed.hash;
+    const pathname = isRelative ? (action.startsWith('/') ? parsed.pathname : parsed.pathname.replace(/^\//, '')) : parsed.origin + parsed.pathname;
+    return `${pathname}${search}${hash}`;
+  } catch (e) {
+    return action;
+  }
+}
+
+// Timing-safe string comparison to prevent timing attacks
+function safeCompareTokens(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 // CSRF Generation & Auto-Injection Middleware
 app.use((req, res, next) => {
   if (!req.session) return next();
@@ -198,23 +230,25 @@ app.use((req, res, next) => {
   // Expose token to all views
   res.locals.csrfToken = req.session.csrfToken;
 
-  // Intercept res.send to auto-inject CSRF query param and hidden input to POST forms
+  // Intercept res.send to auto-inject CSRF hidden input to POST forms (and query param ONLY for multipart forms)
   const originalSend = res.send;
   res.send = function (body) {
     if (typeof body === 'string' && body.includes('</form>') && req.session && req.session.csrfToken) {
+      const csrfToken = req.session.csrfToken;
+      const csrfInput = `<input type="hidden" name="_csrf" value="${csrfToken}">`;
       body = body.replace(/(<form\b[^>]*method=["']?post["']?[^>]*>)/gi, (formTag) => {
+        const isMultipart = /enctype=["']?multipart\/form-data["']?/i.test(formTag);
         const actionMatch = formTag.match(/action=["']([^"']*)["']/i);
-        const csrfInput = `<input type="hidden" name="_csrf" value="${req.session.csrfToken}">`;
         
         if (actionMatch) {
-          const originalAction = actionMatch[1];
-          const separator = originalAction.includes('?') ? '&' : '?';
-          const newAction = `${originalAction}${separator}_csrf=${req.session.csrfToken}`;
-          const updatedFormTag = formTag.replace(/action=["']([^"']*)["']/i, `action="${newAction}"`);
+          const updatedAction = formatActionUrl(actionMatch[1], isMultipart, csrfToken);
+          const updatedFormTag = formTag.replace(/action=["'][^"']*["']/i, `action="${updatedAction}"`);
+          return `${updatedFormTag}${csrfInput}`;
+        } else if (isMultipart) {
+          const updatedFormTag = formTag.replace(/(<form\b)/i, `$1 action="?_csrf=${csrfToken}"`);
           return `${updatedFormTag}${csrfInput}`;
         } else {
-          const updatedFormTag = formTag.replace(/(<form\b)/i, `$1 action="?_csrf=${req.session.csrfToken}"`);
-          return `${updatedFormTag}${csrfInput}`;
+          return `${formTag}${csrfInput}`;
         }
       });
     }
@@ -230,13 +264,51 @@ function csrfProtection(req, res, next) {
     return next();
   }
 
-  const token = (req.body && req.body._csrf) ||
-                (req.query && req.query._csrf) ||
-                req.headers['x-csrf-token'] ||
-                req.headers['x-xsrf-token'];
+  const getSingleToken = (val) => {
+    if (!val) return null;
+    if (Array.isArray(val)) return val[val.length - 1];
+    return typeof val === 'string' ? val : null;
+  };
 
-  if (!token || !req.session || token !== req.session.csrfToken) {
-    console.warn(`CSRF Validation Failed for ${req.method} ${req.originalUrl}`);
+  const token = (req.body && getSingleToken(req.body._csrf)) ||
+                (req.query && getSingleToken(req.query._csrf)) ||
+                getSingleToken(req.headers['x-csrf-token'] || req.headers['x-xsrf-token']);
+
+  const sessionToken = req.session ? req.session.csrfToken : null;
+
+  if (!token || !sessionToken || !safeCompareTokens(token, sessionToken)) {
+    // Check if the targeted route is part of the application
+    const isKnownAppPath = /^\/(auth|account|admin|feed|tetterhoekje|kampboekje|quotes|games|inschrijven|contact|forms)($|\/)/i.test(req.path);
+
+    // If it's a known application path, log to stdout using console.log (NOT console.warn which routes to stderr and triggers PM2 error monitors)
+    if (isKnownAppPath) {
+      console.log(`[CSRF Blocked] ${req.method} ${req.originalUrl} - IP: ${req.ip || req.connection.remoteAddress}`);
+    }
+
+    // Graceful redirects for user-facing forms when a session expired
+    if (req.originalUrl.startsWith('/auth/login') || req.path === '/login') {
+      return res.redirect('/auth/login?error=' + encodeURIComponent('Je sessie is verlopen. Log opnieuw in.'));
+    }
+
+    if (req.originalUrl.startsWith('/inschrijven')) {
+      return res.redirect('/inschrijven?error=' + encodeURIComponent('Je sessie is verlopen omdat het formulier te lang open stond. Probeer het opnieuw.'));
+    }
+
+    if (req.xhr || req.is('json') || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+      return res.status(403).json({ error: 'Sessie verlopen of ongeldige CSRF-token. Vernieuw de pagina.' });
+    }
+
+    // For automated scanners hitting non-existent endpoints (/graphql, /api/fs/exec, /inngest, etc.), return 404 rather than 403
+    if (!isKnownAppPath) {
+      return res.status(404).render('error', {
+        title: 'Pagina Niet Gevonden',
+        status: 404,
+        message: 'Oeps! Pagina niet gevonden',
+        description: 'De pagina die je zoekt bestaat niet of is verplaatst.',
+        user: req.user || null
+      });
+    }
+
     return res.status(403).send('Forbidden: Invalid or missing CSRF token');
   }
 

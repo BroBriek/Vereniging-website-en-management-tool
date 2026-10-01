@@ -33,6 +33,15 @@ const formatError = (error, context = '') => {
 };
 
 const sendErrorNotification = async (errorLog) => {
+  // Suppress expected CSRF blocks and routine security rejections from error alerts
+  if (typeof errorLog === 'string' && (
+    errorLog.includes('CSRF Validation Failed') ||
+    errorLog.includes('Invalid or missing CSRF token') ||
+    errorLog.includes('[CSRF Blocked]')
+  )) {
+    return;
+  }
+
   const now = Date.now();
   if (now - lastEmailSentTime < RATE_LIMIT_MS) {
     console.log('Error notification suppressed due to rate limiting.');
