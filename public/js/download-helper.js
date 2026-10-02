@@ -1,13 +1,17 @@
 /**
  * download-helper.js
  * Centralized logic for file downloads and rich client-side document previews.
- * Converts DOCX, XLSX, XLS, PPTX, CSV, and text files directly to HTML in the browser.
+ * Converts DOCX, XLSX, XLS, PPTX, PDF, CSV, and text files directly to HTML in the browser.
  */
 
-// Keep track of active blob URLs, renderers, and caches
+// Keep track of active blob URLs, renderers, zoom controllers, and caches
 let activePreviewBlobUrl = null;
 let activePptxRenderer = null;
 let activeKeydownHandler = null;
+let currentPreviewZoom = 1.0;
+let defaultFitZoom = 1.0;
+let activeZoomTarget = null;
+let activeTouchListeners = null;
 const previewCache = new Map();
 const loadedVendorScripts = new Map();
 
@@ -101,7 +105,6 @@ function escapeHtml(str) {
 async function triggerDownload(url, filename, btn) {
     if (btn && btn.classList.contains('disabled')) return;
 
-    // Detect if the user is on an iOS device and if they are in Standalone (PWA) mode
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
     
@@ -188,9 +191,41 @@ async function openFilePreview(url, name) {
     const modalEl = document.getElementById('filePreviewModal');
     if (!modalEl) {
         console.warn('filePreviewModal not found, navigating to download endpoint:', url);
-        const downloadUrl = `/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
+        const downloadUrl = `/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name || 'bestand')}`;
         window.location.href = downloadUrl;
         return false;
+    }
+
+    // Cleanup previous preview state safely
+    cleanupActivePreview();
+
+    // Unwrap if passed a /download?path=... URL directly
+    if (typeof url === 'string' && url.includes('/download?')) {
+        try {
+            const parsed = new URL(url, window.location.origin);
+            const qPath = parsed.searchParams.get('path');
+            const qName = parsed.searchParams.get('name');
+            if (qPath) url = qPath;
+            if (qName && (!name || name === 'Bestand')) name = qName;
+        } catch (e) {
+            // URL parse fallback
+        }
+    }
+
+    if (typeof url === 'string' && url.startsWith('/uploads/feed/')) {
+        url = url.replace('/uploads/feed/', '/feed_uploads/');
+    }
+
+    // Determine extension robustly from name OR url
+    let ext = '';
+    if (name && typeof name === 'string' && name.includes('.')) {
+        ext = name.split('.').pop().toLowerCase().trim();
+    }
+    if (!ext && typeof url === 'string') {
+        const cleanUrl = url.split('?')[0].split('#')[0];
+        if (cleanUrl.includes('.')) {
+            ext = cleanUrl.split('.').pop().toLowerCase().trim();
+        }
     }
 
     const modal = new bootstrap.Modal(modalEl);
@@ -206,51 +241,36 @@ async function openFilePreview(url, name) {
     const loader = document.getElementById('previewLoader');
     const loaderText = document.getElementById('previewLoaderText');
     const errorDiv = document.getElementById('previewError');
-    const errorMessage = document.getElementById('previewErrorMessage');
     
-    if (!frame || !img || !title || !downloadBtn) {
+    if (!title || !downloadBtn) {
         console.error('Required preview modal elements missing');
         return false;
-    }
-
-    // Cleanup previous preview state
-    cleanupActivePreview();
-
-    if (typeof url === 'string' && url.startsWith('/uploads/feed/')) {
-        url = url.replace('/uploads/feed/', '/feed_uploads/');
     }
 
     const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
 
     // Reset Title and Download Links
     title.textContent = name || 'Bestand';
-    const downloadUrl = `/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
+    const downloadUrl = `/download?path=${encodeURIComponent(url)}&name=${encodeURIComponent(name || 'bestand')}`;
     
-    downloadBtn.href = downloadUrl;
-    if (errorBtn) errorBtn.href = downloadUrl;
-    
-    if (isStandalone) {
-        downloadBtn.target = "_blank";
-        downloadBtn.rel = "noopener noreferrer";
-        if (errorBtn) {
-            errorBtn.target = "_blank";
-            errorBtn.rel = "noopener noreferrer";
-        }
-    } else {
-        downloadBtn.target = "_self";
-        if (errorBtn) errorBtn.target = "_self";
+    if (downloadBtn) {
+        downloadBtn.href = downloadUrl;
+        downloadBtn.target = isStandalone ? "_blank" : "_self";
+        downloadBtn.onclick = (e) => {
+            e.preventDefault();
+            triggerDownload(downloadUrl, name, e.currentTarget);
+        };
+    }
+    if (errorBtn) {
+        errorBtn.href = downloadUrl;
+        errorBtn.target = isStandalone ? "_blank" : "_self";
+        errorBtn.onclick = (e) => {
+            e.preventDefault();
+            triggerDownload(downloadUrl, name, e.currentTarget);
+        };
     }
 
-    const downloadHandler = (e) => {
-        e.preventDefault();
-        triggerDownload(downloadUrl, name, e.currentTarget);
-    };
-    
-    downloadBtn.onclick = downloadHandler;
-    if (errorBtn) errorBtn.onclick = downloadHandler;
-
-    // Determine File Extension and Categories
-    const ext = (name && name.includes('.')) ? name.split('.').pop().toLowerCase() : '';
+    // Determine File Categories
     const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'heic', 'avif'].includes(ext) || 
                     (typeof url === 'string' && (url.startsWith('data:image/') || /\.(jpg|jpeg|png|gif|webp|svg|bmp|heic|avif)(\?.*)?$/i.test(url)));
     const isPDF = ext === 'pdf';
@@ -262,17 +282,15 @@ async function openFilePreview(url, name) {
     // Update Header Icon & Badge
     updateFileHeader(ext, isImage, isPDF, isWord, isExcel, isPPT, isText, fileIcon, fileBadge);
 
-    // Reset visibility
-    loader.classList.remove('d-none');
-    frame.classList.add('d-none'); 
-    imgContainer.classList.add('d-none');
+    // Reset visibility states cleanly
+    if (loader) loader.classList.remove('d-none');
+    if (frame) frame.classList.add('d-none'); 
+    if (imgContainer) imgContainer.classList.add('d-none');
     if (docContainer) {
         docContainer.classList.add('d-none');
         docContainer.innerHTML = '';
     }
-    errorDiv.classList.add('d-none');
-    frame.src = '';
-    img.src = '';
+    if (errorDiv) errorDiv.classList.add('d-none');
 
     modal.show();
 
@@ -287,19 +305,12 @@ async function openFilePreview(url, name) {
     try {
         if (isImage) {
             if (loaderText) loaderText.textContent = 'Afbeelding laden...';
-            img.src = url;
-            img.onload = () => {
-                loader.classList.add('d-none');
-                imgContainer.classList.remove('d-none');
-            };
-            img.onerror = () => {
-                showPreviewError('De afbeelding kon niet worden geladen.');
-            };
-        } else if (isPDF) {
+            handleImagePreview(url, img, imgContainer, loader);
+        } else if (isPDF && docContainer) {
             if (loaderText) loaderText.textContent = 'PDF voorbereiden...';
-            await handlePdfPreview(url, frame, loader, errorDiv);
+            await handlePdfPreview(url, docContainer, loader);
         } else if (isWord && docContainer) {
-            if (loaderText) loaderText.textContent = 'Word-document converteren naar weergave...';
+            if (loaderText) loaderText.textContent = 'Word-document converteren...';
             await handleWordPreview(url, ext, docContainer, loader);
         } else if (isExcel && docContainer) {
             if (loaderText) loaderText.textContent = 'Rekenblad voorbereiden...';
@@ -311,7 +322,6 @@ async function openFilePreview(url, name) {
             if (loaderText) loaderText.textContent = 'Tekstbestand laden...';
             await handleTextPreview(url, docContainer, loader);
         } else {
-            // Unsupported or no preview container available
             showPreviewError('Dit bestandstype kan niet direct worden weergegeven in de browser.');
         }
     } catch (err) {
@@ -320,6 +330,20 @@ async function openFilePreview(url, name) {
     }
 
     return false;
+}
+
+/**
+ * Handle Image Previews safely
+ */
+function handleImagePreview(url, img, imgContainer, loader) {
+    if (!img || !imgContainer) return;
+    img.onload = () => {
+        showPreviewSuccess(imgContainer);
+    };
+    img.onerror = () => {
+        showPreviewError('De afbeelding kon niet worden geladen.');
+    };
+    img.src = url;
 }
 
 /**
@@ -362,36 +386,108 @@ function updateFileHeader(ext, isImage, isPDF, isWord, isExcel, isPPT, isText, i
 }
 
 /**
- * Handle PDF Preview with Blob or fallback
+ * Handle PDF Preview with PDF.js on HTML5 Canvas
+ * Directly renders pages into high-DPI canvas sheets inside the modal.
+ * This completely avoids the mobile Chrome/Android iframe auto-download behavior.
  */
-async function handlePdfPreview(url, frame, loader, errorDiv) {
+async function handlePdfPreview(url, container, loader) {
+    if (previewCache.has(url)) {
+        container.innerHTML = previewCache.get(url);
+        showPreviewSuccess(container);
+        setupPreviewZoom(container.querySelector('#pdfPreviewWrapper'), 'pdf');
+        return;
+    }
+
+    try {
+        await loadVendorScript(
+            '/vendor/pdf.min.js',
+            'pdfjsLib',
+            'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'
+        );
+
+        if (window.pdfjsLib) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = '/vendor/pdf.worker.min.js';
+        }
+
+        const res = await fetch(url, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('PDF bestand niet bereikbaar');
+        const arrayBuffer = await res.arrayBuffer();
+
+        const loadingTask = window.pdfjsLib.getDocument({
+            data: arrayBuffer,
+            cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+            cMapPacked: true
+        });
+
+        const pdfDoc = await loadingTask.promise;
+        const totalPages = pdfDoc.numPages;
+
+        container.innerHTML = `
+            <div class="pdf-preview-wrapper docx-wrapper" id="pdfPreviewWrapper">
+                <div class="pdf-pages-container" id="pdfPagesContainer">
+                </div>
+            </div>
+        `;
+
+        const pagesContainer = container.querySelector('#pdfPagesContainer');
+
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+            const page = await pdfDoc.getPage(pageNum);
+            // Render at 1.5x resolution for retina/high-DPI sharpness
+            const viewport = page.getViewport({ scale: 1.5 });
+
+            const pageCard = document.createElement('section');
+            pageCard.className = 'pdf-page-card docx';
+            pageCard.style.width = `${viewport.width}px`;
+            pageCard.style.height = `${viewport.height}px`;
+
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-page-canvas';
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+
+            const ctx = canvas.getContext('2d');
+            pageCard.appendChild(canvas);
+            pagesContainer.appendChild(pageCard);
+
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+        }
+
+        previewCache.set(url, container.innerHTML);
+        showPreviewSuccess(container);
+        setupPreviewZoom(container.querySelector('#pdfPreviewWrapper'), 'pdf');
+
+    } catch (pdfErr) {
+        console.warn('PDF.js rendering failed, attempting fallback...', pdfErr);
+        await handlePdfIframeFallback(url, loader);
+    }
+}
+
+/**
+ * Fallback PDF iframe preview if PDF.js fails
+ */
+async function handlePdfIframeFallback(url, loader) {
+    const frame = document.getElementById('previewFrame');
+    if (!frame) {
+        showPreviewError('De PDF kon niet worden weergegeven.');
+        return;
+    }
     try {
         const response = await fetch(url, { credentials: 'same-origin' });
         if (!response.ok) throw new Error('Kon PDF niet ophalen');
-        
-        const contentLength = response.headers.get('Content-Length');
-        if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) {
-             frame.src = url;
-        } else {
-             const blob = await response.blob();
-             activePreviewBlobUrl = window.URL.createObjectURL(blob);
-             frame.src = activePreviewBlobUrl;
-        }
-        
+        const blob = await response.blob();
+        activePreviewBlobUrl = window.URL.createObjectURL(blob);
         frame.onload = function() {
-            loader.classList.add('d-none');
-            frame.classList.remove('d-none');
-        };
-    } catch (err) {
-        console.error('PDF Preview Fetch Error:', err);
-        frame.src = url;
-        frame.onload = function() {
-            loader.classList.add('d-none');
-            frame.classList.remove('d-none');
+            showPreviewSuccess(frame);
         };
         frame.onerror = function() {
             showPreviewError('De PDF kon niet worden weergegeven.');
         };
+        frame.src = activePreviewBlobUrl;
+    } catch (e) {
+        showPreviewError('De PDF kon niet worden weergegeven.');
     }
 }
 
@@ -400,7 +496,6 @@ async function handlePdfPreview(url, frame, loader, errorDiv) {
  * Maps proprietary Microsoft Symbol and Wingdings font codes to universal Unicode glyphs.
  */
 const WORD_SYMBOL_MAP = {
-    // Bullets and Common Marks
     0xF0B7: '•', // Round bullet
     0xF0A7: '▪', // Black square bullet
     0xF0A8: '▫', // White square bullet
@@ -437,14 +532,10 @@ const WORD_SYMBOL_MAP = {
     0xF0D4: '❖', // Diamond
     0xF0DE: '⇒', // Right double arrow
     0xF0DF: '⇔', // Left-right double arrow
-    
-    // Checkmarks & Boxes
     0xF0FC: '✓', // Checkmark
     0xF0FD: '✗', // Cross mark
     0xF0FE: '☑', // Checked box
     0xF0FF: '□', // Empty box / checkbox
-    
-    // Common Wingdings icons
     0xF028: '☎', // Phone
     0xF029: '🕾', // Handset
     0xF02A: '✉', // Mail
@@ -456,7 +547,7 @@ const WORD_SYMBOL_MAP = {
     0xF086: '🔒', // Lock
     0xF087: '🔓', // Open lock
     0xF088: '🔔', // Bell
-    0xF0E0: '✉', // Envelope (very common for email)
+    0xF0E0: '✉', // Envelope
     0xF0E1: '✉', // Envelope
     0xF0E2: '✉'  // Envelope
 };
@@ -469,7 +560,6 @@ function getUnicodeForSymbol(charHexOrCode) {
 
 /**
  * Normalizes bullet symbols and icons in docx XML before rendering
- * Replaces proprietary Symbol/Wingdings PUA characters with universally recognized Unicode characters.
  */
 async function normalizeDocxSymbols(arrayBuffer) {
     if (!window.JSZip) return arrayBuffer;
@@ -477,7 +567,7 @@ async function normalizeDocxSymbols(arrayBuffer) {
         const zip = await window.JSZip.loadAsync(arrayBuffer);
         let modified = false;
 
-        // 1. Process word/numbering.xml (bullet lists & summations)
+        // 1. Process word/numbering.xml
         const numFile = zip.file('word/numbering.xml');
         if (numFile) {
             let numXml = await numFile.async('text');
@@ -496,23 +586,18 @@ async function normalizeDocxSymbols(arrayBuffer) {
                 numXml = numXml.split(dec).join(uni);
             }
 
-            // Clean bullet levels inside <w:lvl>
             numXml = numXml.replace(/<w:lvl\b[^>]*>[\s\S]*?<\/w:lvl>/gi, (lvlBlock) => {
                 let cleaned = lvlBlock;
-                // Replace level-2 'o' bullet with '○'
                 cleaned = cleaned.replace(/(<w:lvlText\s+[^>]*w:val=\")[oO](\"[^>]*\/>)/g, '$1○$2');
-                // Strip w:rFonts in bullet levels so standard system fonts render the bullets cleanly
                 if (/w:val=\"bullet\"/i.test(cleaned)) {
                     cleaned = cleaned.replace(/<w:rFonts\b[^>]*\/>/gi, '');
                     cleaned = cleaned.replace(/<w:rFonts\b[^>]*>[\s\S]*?<\/w:rFonts>/gi, '');
                 }
-                // Strip any proprietary Symbol / Wingdings / Webdings fonts regardless of numFmt
                 cleaned = cleaned.replace(/<w:rFonts\b[^>]*(?:Symbol|Wingdings|Webdings)[^>]*\/>/gi, '');
                 cleaned = cleaned.replace(/<w:rFonts\b[^>]*(?:Symbol|Wingdings|Webdings)[^>]*>[\s\S]*?<\/w:rFonts>/gi, '');
                 return cleaned;
             });
 
-            // Also replace any remaining PUA characters in numbering.xml
             numXml = numXml.replace(/[\uF000-\uF0FF]/g, (ch) => getUnicodeForSymbol(ch.charCodeAt(0)));
 
             if (numXml !== origNumXml) {
@@ -521,24 +606,21 @@ async function normalizeDocxSymbols(arrayBuffer) {
             }
         }
 
-        // 2. Process all text XML files (document.xml, header*.xml, footer*.xml, footnotes.xml, endnotes.xml)
+        // 2. Process all text XML files
         const xmlFiles = zip.file(/^word\/(document|header\d+|footer\d+|footnotes|endnotes)\.xml$/);
         for (const file of xmlFiles) {
             let xml = await file.async('text');
             const origXml = xml;
 
-            // Replace <w:sym w:font="..." w:char="..."/>
             xml = xml.replace(/<w:sym [^>]*w:char=\"([0-9a-fA-F]+)\"[^>]*\/?>/g, (match, hex) => {
                 const uni = getUnicodeForSymbol(hex);
                 return '<w:t>' + uni + '</w:t>';
             });
 
-            // Replace direct PUA characters from Symbol / Wingdings in document text
             xml = xml.replace(/[\uF000-\uF0FF]/g, (ch) => {
                 return getUnicodeForSymbol(ch.charCodeAt(0));
             });
 
-            // Replace entity references &#xf0b7; etc.
             for (const [codeStr, uni] of Object.entries(WORD_SYMBOL_MAP)) {
                 const code = parseInt(codeStr, 10);
                 const hex = '&#x' + code.toString(16).toLowerCase() + ';';
@@ -566,19 +648,17 @@ async function normalizeDocxSymbols(arrayBuffer) {
 
 /**
  * Handle Word Document (.docx / .doc) Preview
- * Converts .docx to rich HTML client-side with full layout, marker highlights, recognized bullet symbols, and font colors.
- * Falls back to Mammoth.js and then to server converter if needed.
+ * Preserves true A4 page layout without squishing into mobile width,
+ * and attaches responsive zoom and pan gestures.
  */
 async function handleWordPreview(url, ext, container, loader) {
-    // Check in-memory cache
     if (previewCache.has(url)) {
         container.innerHTML = previewCache.get(url);
-        loader.classList.add('d-none');
-        container.classList.remove('d-none');
+        showPreviewSuccess(container);
+        setupPreviewZoom(container.querySelector('.docx-wrapper') || container, 'docx');
         return;
     }
 
-    // Modern .docx files: render with full layout, marker highlights, and letter colors
     if (ext === 'docx') {
         try {
             const res = await fetch(url, { credentials: 'same-origin' });
@@ -597,7 +677,6 @@ async function handleWordPreview(url, ext, container, loader) {
                 'https://cdn.jsdelivr.net/npm/docx-preview@0.4.1/dist/docx-preview.min.js'
             );
 
-            // Normalize bullet symbols and Wingdings/Symbol codes to standard recognized Unicode glyphs
             const cleanArrayBuffer = await normalizeDocxSymbols(arrayBuffer);
 
             container.innerHTML = '';
@@ -605,6 +684,7 @@ async function handleWordPreview(url, ext, container, loader) {
             renderWrapper.className = 'w-100 h-100';
             container.appendChild(renderWrapper);
 
+            // Keep true A4 format! Do NOT ignore width or height!
             await window.docx.renderAsync(cleanArrayBuffer, renderWrapper, null, {
                 className: "docx",
                 inWrapper: true,
@@ -620,8 +700,8 @@ async function handleWordPreview(url, ext, container, loader) {
             });
 
             previewCache.set(url, container.innerHTML);
-            loader.classList.add('d-none');
-            container.classList.remove('d-none');
+            showPreviewSuccess(container);
+            setupPreviewZoom(container.querySelector('.docx-wrapper') || renderWrapper, 'docx');
             return;
         } catch (docxErr) {
             console.warn('docx-preview failed, attempting mammoth fallback...', docxErr);
@@ -643,17 +723,17 @@ async function handleWordPreview(url, ext, container, loader) {
                 }
 
                 const markup = `
-                    <div class="docx-preview-container p-2 p-md-4">
+                    <div class="docx-preview-container">
                         <div class="docx-paper">
                             ${html}
                         </div>
                     </div>
                 `;
 
-                previewCache.set(url, markup);
                 container.innerHTML = markup;
-                loader.classList.add('d-none');
-                container.classList.remove('d-none');
+                previewCache.set(url, container.innerHTML);
+                showPreviewSuccess(container);
+                setupPreviewZoom(container.querySelector('.docx-paper') || container, 'docx');
                 return;
             } catch (clientErr) {
                 console.warn('Client-side Mammoth conversion also failed, falling back to server preview...', clientErr);
@@ -666,16 +746,45 @@ async function handleWordPreview(url, ext, container, loader) {
 }
 
 /**
+ * Trims empty trailing columns/rows from SheetJS worksheet to prevent awkward stretched tables
+ */
+function cleanWorksheetRange(worksheet) {
+    if (!worksheet || !worksheet['!ref']) return;
+    try {
+        let maxR = 0, maxC = 0;
+        let hasCells = false;
+        Object.keys(worksheet).forEach(k => {
+            if (k.startsWith('!')) return;
+            const cell = window.XLSX.utils.decode_cell(k);
+            const val = worksheet[k] ? worksheet[k].v : undefined;
+            if (val !== undefined && val !== '' && val !== null) {
+                hasCells = true;
+                if (cell.r > maxR) maxR = cell.r;
+                if (cell.c > maxC) maxC = cell.c;
+            }
+        });
+        if (hasCells) {
+            worksheet['!ref'] = window.XLSX.utils.encode_range({
+                s: { r: 0, c: 0 },
+                e: { r: maxR, c: maxC }
+            });
+        }
+    } catch (e) {
+        // Safe fallback
+    }
+}
+
+/**
  * Handle Excel / Spreadsheet (.xlsx, .xls, .csv, .tsv) Preview
- * Converts sheets to responsive HTML tables client-side with SheetJS
+ * Converts sheets to clean, structured HTML tables without distorted columns,
+ * with horizontal scrolling and zoom controls.
  */
 async function handleExcelPreview(url, ext, container, loader) {
-    // Check in-memory cache
     if (previewCache.has(url)) {
         container.innerHTML = previewCache.get(url);
-        loader.classList.add('d-none');
-        container.classList.remove('d-none');
+        showPreviewSuccess(container);
         initExcelInteractiveEvents(container);
+        setupPreviewZoom(container.querySelector('#excelTableArea'), 'xlsx');
         return;
     }
 
@@ -684,7 +793,6 @@ async function handleExcelPreview(url, ext, container, loader) {
         if (!res.ok) throw new Error('Bestand niet bereikbaar');
         const arrayBuffer = await res.arrayBuffer();
 
-        // Lazy-load SheetJS (xlsx.full.min.js)
         await loadVendorScript(
             '/vendor/xlsx.full.min.js',
             'XLSX',
@@ -696,16 +804,18 @@ async function handleExcelPreview(url, ext, container, loader) {
             throw new Error('Geen werkbladen gevonden in rekenblad.');
         }
 
-        // Store sheet HTMLs
         const sheetMap = {};
         workbook.SheetNames.forEach((sheetName) => {
             const worksheet = workbook.Sheets[sheetName];
+            
+            // Trim empty padding columns/rows
+            cleanWorksheetRange(worksheet);
+
             const rawTable = window.XLSX.utils.sheet_to_html(worksheet, { id: 'sheetTable' });
-            // Enhance table styling with Bootstrap classes
-            sheetMap[sheetName] = rawTable.replace('<table', '<table class="sheetjs-table table table-hover table-sm"');
+            // Use dedicated excel-table class without Bootstrap .table
+            sheetMap[sheetName] = rawTable.replace('<table', '<table class="excel-table"');
         });
 
-        // Build HTML UI with sheet tabs & search filter
         const tabsHtml = workbook.SheetNames.map((name, idx) => `
             <button type="button" class="nav-link ${idx === 0 ? 'active' : ''} px-3 py-1 btn-sm" data-sheet="${escapeHtml(name)}">
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i>${escapeHtml(name)}
@@ -734,11 +844,10 @@ async function handleExcelPreview(url, ext, container, loader) {
 
         previewCache.set(url, markup);
         container.innerHTML = markup;
-        loader.classList.add('d-none');
-        container.classList.remove('d-none');
+        showPreviewSuccess(container);
 
-        // Attach tab-switching and filter interactions
         initExcelInteractiveEvents(container, sheetMap);
+        setupPreviewZoom(container.querySelector('#excelTableArea'), 'xlsx');
 
     } catch (err) {
         console.warn('Client-side Excel preview failed, trying server...', err);
@@ -747,7 +856,7 @@ async function handleExcelPreview(url, ext, container, loader) {
 }
 
 /**
- * Setup interactions for Excel sheets: tabs and row filtering
+ * Setup interactions for Excel sheets: tabs, search filtering, and cell tap expand
  */
 function initExcelInteractiveEvents(container, sheetMap) {
     const tabsContainer = container.querySelector('#excelTabs');
@@ -764,6 +873,7 @@ function initExcelInteractiveEvents(container, sheetMap) {
             if (sheetMap[sheetName]) {
                 tableArea.innerHTML = sheetMap[sheetName];
                 if (searchInput) searchInput.value = '';
+                setupPreviewZoom(tableArea, 'xlsx');
             }
         });
     }
@@ -780,6 +890,15 @@ function initExcelInteractiveEvents(container, sheetMap) {
                     row.style.display = 'none';
                 }
             });
+        });
+    }
+
+    // Toggle cell expansion on click for long truncated text on mobile
+    if (tableArea) {
+        tableArea.addEventListener('click', (e) => {
+            const td = e.target.closest('td');
+            if (!td) return;
+            td.classList.toggle('cell-expanded');
         });
     }
 }
@@ -807,7 +926,6 @@ async function handlePptxPreview(url, ext, container, loader) {
             let currentSlide = 0;
             const slideCount = renderer.slideCount;
 
-            // Generate thumbnail buttons
             let thumbsHtml = '';
             for (let i = 0; i < slideCount; i++) {
                 thumbsHtml += `
@@ -847,8 +965,7 @@ async function handlePptxPreview(url, ext, container, loader) {
             `;
 
             container.innerHTML = markup;
-            loader.classList.add('d-none');
-            container.classList.remove('d-none');
+            showPreviewSuccess(container);
 
             const canvas = container.querySelector('#pptxCanvas');
             const prevBtn = container.querySelector('#pptxPrevBtn');
@@ -872,10 +989,8 @@ async function handlePptxPreview(url, ext, container, loader) {
                 await renderer.renderSlide(currentSlide, canvas, 1280);
             }
 
-            // Render first slide
             await renderCurrentSlide(0);
 
-            // Button handlers
             prevBtn.onclick = () => renderCurrentSlide(currentSlide - 1);
             nextBtn.onclick = () => renderCurrentSlide(currentSlide + 1);
 
@@ -890,7 +1005,6 @@ async function handlePptxPreview(url, ext, container, loader) {
                 };
             });
 
-            // Keyboard navigation
             activeKeydownHandler = (e) => {
                 if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
                     e.preventDefault();
@@ -902,7 +1016,6 @@ async function handlePptxPreview(url, ext, container, loader) {
             };
             window.addEventListener('keydown', activeKeydownHandler);
 
-            // Touch swipe gesture navigation
             const stage = container.querySelector('#pptxStage');
             let touchStartX = 0;
             let touchEndX = 0;
@@ -913,9 +1026,9 @@ async function handlePptxPreview(url, ext, container, loader) {
                 touchEndX = e.changedTouches[0].screenX;
                 const diff = touchEndX - touchStartX;
                 if (diff < -50) {
-                    renderCurrentSlide(currentSlide + 1); // Swipe left = next
+                    renderCurrentSlide(currentSlide + 1);
                 } else if (diff > 50) {
-                    renderCurrentSlide(currentSlide - 1); // Swipe right = prev
+                    renderCurrentSlide(currentSlide - 1);
                 }
             }, { passive: true });
 
@@ -945,8 +1058,7 @@ async function handleTextPreview(url, container, loader) {
         `;
 
         container.innerHTML = markup;
-        loader.classList.add('d-none');
-        container.classList.remove('d-none');
+        showPreviewSuccess(container);
     } catch (err) {
         showPreviewError('Het tekstbestand kon niet worden geladen.');
     }
@@ -968,17 +1080,17 @@ async function handleServerDocPreview(url, container, loader) {
         }
 
         const markup = `
-            <div class="docx-preview-container p-2 p-md-4">
+            <div class="docx-preview-container">
                 <div class="docx-paper">
                     ${data.html}
                 </div>
             </div>
         `;
 
-        previewCache.set(url, markup);
         container.innerHTML = markup;
-        loader.classList.add('d-none');
-        container.classList.remove('d-none');
+        previewCache.set(url, container.innerHTML);
+        showPreviewSuccess(container);
+        setupPreviewZoom(container.querySelector('.docx-paper') || container, 'doc');
     } catch (serverErr) {
         console.error('Server document conversion failed:', serverErr);
         showPreviewError('Dit bestandstype kan niet direct worden weergegeven in de browser.');
@@ -986,25 +1098,214 @@ async function handleServerDocPreview(url, container, loader) {
 }
 
 /**
- * Display a user-friendly error card inside the preview modal
+ * Unify preview success:
+ * Explicitly hides loader & errorDiv, and displays only the active container.
  */
-function showPreviewError(msg) {
+function showPreviewSuccess(activeEl) {
     const loader = document.getElementById('previewLoader');
     const errorDiv = document.getElementById('previewError');
-    const errorMsg = document.getElementById('previewErrorMessage');
     const frame = document.getElementById('previewFrame');
     const imgContainer = document.getElementById('previewImageContainer');
     const docContainer = document.getElementById('previewDocContainer');
 
     if (loader) loader.classList.add('d-none');
+    
+    // Explicitly hide error fallback and clear text
+    if (errorDiv) {
+        errorDiv.classList.add('d-none');
+        const errorMsg = document.getElementById('previewErrorMessage');
+        if (errorMsg) errorMsg.textContent = '';
+    }
+
+    if (frame && activeEl !== frame) {
+        frame.classList.add('d-none');
+        frame.removeAttribute('src');
+    }
+    if (imgContainer && activeEl !== imgContainer) {
+        imgContainer.classList.add('d-none');
+    }
+    if (docContainer && activeEl !== docContainer) {
+        docContainer.classList.add('d-none');
+    }
+
+    if (activeEl) {
+        activeEl.classList.remove('d-none');
+    }
+}
+
+/**
+ * Display a user-friendly error card inside the preview modal
+ */
+function showPreviewError(msg) {
+    const docContainer = document.getElementById('previewDocContainer');
+    const imgContainer = document.getElementById('previewImageContainer');
+    const frame = document.getElementById('previewFrame');
+
+    // If content has already been successfully rendered and displayed, do not show error over it
+    if (docContainer && !docContainer.classList.contains('d-none') && docContainer.children.length > 0) {
+        console.warn('Ignoring showPreviewError because docContainer is already populated and visible:', msg);
+        return;
+    }
+    if (imgContainer && !imgContainer.classList.contains('d-none')) {
+        return;
+    }
+    if (frame && !frame.classList.contains('d-none')) {
+        return;
+    }
+
+    const loader = document.getElementById('previewLoader');
+    const errorDiv = document.getElementById('previewError');
+    const errorMsg = document.getElementById('previewErrorMessage');
+    const zoomToolbar = document.getElementById('previewZoomToolbar');
+
+    if (loader) loader.classList.add('d-none');
     if (frame) frame.classList.add('d-none');
     if (imgContainer) imgContainer.classList.add('d-none');
     if (docContainer) docContainer.classList.add('d-none');
+    if (zoomToolbar) zoomToolbar.classList.add('d-none');
 
     if (errorDiv) {
         if (errorMsg && msg) errorMsg.textContent = msg;
         errorDiv.classList.remove('d-none');
     }
+}
+
+/**
+ * Setup responsive zoom controls & touch pinch-to-zoom for Word, PDF & Excel documents
+ */
+function setupPreviewZoom(targetEl, type) {
+    teardownPreviewZoom();
+    if (!targetEl) return;
+
+    activeZoomTarget = targetEl;
+    const toolbar = document.getElementById('previewZoomToolbar');
+    const outBtn = document.getElementById('previewZoomOutBtn');
+    const inBtn = document.getElementById('previewZoomInBtn');
+    const fitBtn = document.getElementById('previewZoomFitBtn');
+    const label = document.getElementById('previewZoomLabel');
+
+    if (!toolbar) return;
+
+    toolbar.classList.remove('d-none');
+
+    const isMobile = window.innerWidth <= 768;
+
+    // Calculate smart initial fit for A4 documents (docx, pdf, doc) on mobile
+    if (isMobile && (type === 'docx' || type === 'pdf' || type === 'doc')) {
+        const modalBody = document.querySelector('#filePreviewModal .modal-body');
+        const availableWidth = modalBody ? modalBody.clientWidth : window.innerWidth;
+        // Standard A4 width is ~794px at 96 DPI
+        const a4Width = 794;
+        defaultFitZoom = Math.min(1.0, Math.max(0.42, (availableWidth - 20) / a4Width));
+        currentPreviewZoom = defaultFitZoom;
+    } else {
+        defaultFitZoom = 1.0;
+        currentPreviewZoom = 1.0;
+    }
+
+    applyPreviewZoom(targetEl, currentPreviewZoom, label);
+
+    inBtn.onclick = (e) => {
+        e.stopPropagation();
+        currentPreviewZoom = Math.min(2.5, Math.round((currentPreviewZoom + 0.15) * 100) / 100);
+        applyPreviewZoom(targetEl, currentPreviewZoom, label);
+    };
+
+    outBtn.onclick = (e) => {
+        e.stopPropagation();
+        currentPreviewZoom = Math.max(0.35, Math.round((currentPreviewZoom - 0.15) * 100) / 100);
+        applyPreviewZoom(targetEl, currentPreviewZoom, label);
+    };
+
+    fitBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (Math.abs(currentPreviewZoom - 1.0) < 0.06) {
+            currentPreviewZoom = defaultFitZoom;
+        } else {
+            currentPreviewZoom = 1.0;
+        }
+        applyPreviewZoom(targetEl, currentPreviewZoom, label);
+    };
+
+    setupPinchToZoom(targetEl, label);
+}
+
+function applyPreviewZoom(targetEl, zoomLevel, label) {
+    if (!targetEl) return;
+
+    if ('zoom' in targetEl.style) {
+        targetEl.style.zoom = zoomLevel;
+    } else {
+        targetEl.style.transformOrigin = 'top center';
+        targetEl.style.transform = `scale(${zoomLevel})`;
+    }
+
+    if (label) {
+        if (Math.abs(zoomLevel - defaultFitZoom) < 0.03 && defaultFitZoom < 0.95) {
+            label.textContent = 'A4';
+        } else {
+            label.textContent = `${Math.round(zoomLevel * 100)}%`;
+        }
+    }
+}
+
+function setupPinchToZoom(targetEl, label) {
+    let initialDistance = 0;
+    let initialZoom = currentPreviewZoom;
+
+    const onTouchStart = (e) => {
+        if (e.touches.length === 2) {
+            initialDistance = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            initialZoom = currentPreviewZoom;
+        }
+    };
+
+    const onTouchMove = (e) => {
+        if (e.touches.length === 2 && initialDistance > 0) {
+            const currentDistance = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            const scaleFactor = currentDistance / initialDistance;
+            let newZoom = initialZoom * scaleFactor;
+            newZoom = Math.min(2.5, Math.max(0.35, Math.round(newZoom * 100) / 100));
+            currentPreviewZoom = newZoom;
+            applyPreviewZoom(targetEl, currentPreviewZoom, label);
+        }
+    };
+
+    const onTouchEnd = (e) => {
+        if (e.touches.length < 2) {
+            initialDistance = 0;
+        }
+    };
+
+    targetEl.addEventListener('touchstart', onTouchStart, { passive: true });
+    targetEl.addEventListener('touchmove', onTouchMove, { passive: true });
+    targetEl.addEventListener('touchend', onTouchEnd, { passive: true });
+
+    activeTouchListeners = { targetEl, onTouchStart, onTouchMove, onTouchEnd };
+}
+
+function teardownPreviewZoom() {
+    if (activeTouchListeners) {
+        const { targetEl, onTouchStart, onTouchMove, onTouchEnd } = activeTouchListeners;
+        targetEl.removeEventListener('touchstart', onTouchStart);
+        targetEl.removeEventListener('touchmove', onTouchMove);
+        targetEl.removeEventListener('touchend', onTouchEnd);
+        activeTouchListeners = null;
+    }
+    if (activeZoomTarget) {
+        activeZoomTarget.style.zoom = '';
+        activeZoomTarget.style.transform = '';
+        activeZoomTarget = null;
+    }
+    const toolbar = document.getElementById('previewZoomToolbar');
+    if (toolbar) toolbar.classList.add('d-none');
+    currentPreviewZoom = 1.0;
 }
 
 /**
@@ -1030,9 +1331,30 @@ function cleanupActivePreview() {
         activeKeydownHandler = null;
     }
 
+    teardownPreviewZoom();
+
     const docContainer = document.getElementById('previewDocContainer');
     if (docContainer) {
         docContainer.innerHTML = '';
         docContainer.classList.add('d-none');
+    }
+
+    const img = document.getElementById('previewImage');
+    if (img) {
+        img.onload = null;
+        img.onerror = null;
+        img.removeAttribute('src');
+    }
+
+    const frame = document.getElementById('previewFrame');
+    if (frame) {
+        frame.onload = null;
+        frame.onerror = null;
+        frame.removeAttribute('src');
+    }
+
+    const errorDiv = document.getElementById('previewError');
+    if (errorDiv) {
+        errorDiv.classList.add('d-none');
     }
 }

@@ -218,10 +218,10 @@
                                         %>
                                         <% if (isImageAtt) { %>
                                             <div class="position-relative overflow-hidden rounded-3 border shadow-sm bg-light" style="cursor: pointer;">
-                                                <img src="<%= att.path %>" class="img-fluid w-100" style="max-height: 250px; object-fit: cover; transition: transform 0.2s;" alt="<%= att.originalName || 'Foto' %>" title="<%= att.originalName || 'Klik om te vergroten' %>" onclick="openFilePreview('<%= att.path %>', '<%= att.originalName || 'Foto' %>')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                                                <img src="<%= att.path %>" class="img-fluid w-100" style="max-height: 250px; object-fit: cover; transition: transform 0.2s;" alt="<%= att.originalName || 'Foto' %>" title="<%= att.originalName || 'Klik om te vergroten' %>" data-preview-url="<%= att.path %>" data-preview-name="<%= att.originalName || 'Foto' %>" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName)" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                                             </div>
                                         <% } else { %>
-                                            <a href="<%= att.path %>" target="_blank" onclick="openFilePreview('<%= att.path %>', '<%= att.originalName || 'Bestand' %>'); return false;" class="btn btn-outline-secondary btn-sm w-100 text-truncate text-start rounded-3">
+                                            <a href="<%= att.path %>" target="_blank" data-preview-url="<%= att.path %>" data-preview-name="<%= att.originalName || 'Bestand' %>" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName); return false;" class="btn btn-outline-secondary btn-sm w-100 text-truncate text-start rounded-3">
                                                 <i class="bi bi-paperclip me-1"></i> <%= att.originalName %>
                                             </a>
                                         <% } %>

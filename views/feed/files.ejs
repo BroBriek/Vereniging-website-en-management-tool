@@ -188,7 +188,7 @@
             %>
               <tr data-name="<%= f.originalName.toLowerCase() %>" data-ext="<%= ext.toLowerCase() %>" data-date="<%= uploadDate ? uploadDate.toISOString() : '' %>">
                 <td class="ps-4">
-                  <a href="/download?path=<%= encodeURIComponent(f.path) %>&name=<%= encodeURIComponent(f.originalName) %>" onclick="openFilePreview('<%= f.path %>', '<%= f.originalName %>'); return false;" class="text-decoration-none fw-medium text-dark d-flex align-items-center">
+                  <a href="/download?path=<%= encodeURIComponent(f.path) %>&name=<%= encodeURIComponent(f.originalName) %>" data-preview-url="<%= f.path %>" data-preview-name="<%= f.originalName %>" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName); return false;" class="text-decoration-none fw-medium text-dark d-flex align-items-center">
                     <i class="bi bi-file-earmark-<%= ['PDF','JPG','JPEG','PNG','DOC','DOCX'].includes(ext) ? 'text' : 'code' %> me-3 fs-5 text-primary"></i>
                     <%= f.originalName %>
                   </a>
@@ -203,7 +203,7 @@
                 </td>
                 <td class="text-end pe-4">
                   <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-primary rounded-start-pill px-3" onclick="openFilePreview('<%= f.path %>', '<%= f.originalName %>')">
+                    <button class="btn btn-sm btn-outline-primary rounded-start-pill px-3" type="button" data-preview-url="<%= f.path %>" data-preview-name="<%= f.originalName %>" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName)">
                       <i class="bi bi-eye"></i>
                     </button>
                     <a class="btn btn-sm btn-outline-secondary rounded-end-pill px-3" href="<%= backUrl %>#post-<%= f.postId %>" title="Ga naar post">

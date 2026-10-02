@@ -1,6 +1,6 @@
 /* ==========================================================================
    Document Preview Styles
-   Clean, modern, responsive HTML previews for Office & Text documents
+   Clean, modern, responsive HTML previews for Office, PDF & Text documents
    ========================================================================== */
 
 #filePreviewModal .modal-content {
@@ -17,7 +17,7 @@
 
 /* --- Word Document Preview (docx-preview & fallback) --- */
 .docx-wrapper {
-    background: #eef1f5;
+    background: #525659;
     padding: 2rem 1rem;
     display: flex;
     flex-direction: column;
@@ -25,15 +25,19 @@
     min-height: 100%;
     box-sizing: border-box;
     width: 100%;
-    overflow-x: auto;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+    transform-origin: top center;
 }
 
 .docx-wrapper > section.docx {
     background: #ffffff;
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.25);
     margin-bottom: 2rem;
     box-sizing: border-box;
     position: relative;
+    flex-shrink: 0;
 }
 
 /* Ensure highlights, marker colors, and text shading are clearly visible */
@@ -52,72 +56,103 @@
     display: inline-block;
 }
 
-
-/* Responsive images and tables in docx preview */
+/* Responsive images and media in docx preview */
 .docx-wrapper img, 
-.docx-wrapper svg {
+.docx-wrapper svg,
+.docx-paper img {
     max-width: 100% !important;
     height: auto !important;
+    object-fit: contain;
 }
 
-.docx-wrapper table {
-    max-width: 100% !important;
+/* Responsive Table Wrapper */
+.docx-table-responsive {
+    width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 1rem 0;
+}
+
+.docx-table-responsive table,
+.docx-wrapper table,
+.docx-paper table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+}
+
+/* Base typography */
+.docx-wrapper p,
+.docx-paper p,
+.docx-wrapper li,
+.docx-paper li {
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.docx-wrapper h1, .docx-wrapper h2, .docx-wrapper h3,
+.docx-wrapper h4, .docx-wrapper h5, .docx-wrapper h6,
+.docx-paper h1, .docx-paper h2, .docx-paper h3,
+.docx-paper h4, .docx-paper h5, .docx-paper h6 {
+    text-wrap: balance;
+    overflow-wrap: break-word;
+    word-break: normal;
 }
 
 @media (max-width: 768px) {
     .docx-wrapper {
-        padding: 0.5rem 0.25rem !important;
-        background: #f1f3f5 !important;
+        padding: 1rem 0.5rem !important;
+        background: #4a4d50 !important;
+        overflow: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
     
     .docx-wrapper > section.docx {
-        width: 100% !important;
-        min-width: 0 !important;
-        max-width: 100% !important;
-        padding: 1.5rem 1rem !important;
-        margin-bottom: 1rem !important;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
-        border-radius: 6px !important;
-        box-sizing: border-box !important;
-    }
-
-    .docx-wrapper table {
-        display: block !important;
-        width: 100% !important;
-        overflow-x: auto !important;
+        margin-bottom: 1.25rem !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
     }
 }
 
 .docx-preview-container {
-    background-color: #eef1f5;
+    background-color: #525659;
     min-height: 100%;
     width: 100%;
     box-sizing: border-box;
+    padding: 1.5rem 1rem;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+    display: flex;
+    justify-content: center;
 }
 
 .docx-paper {
     background-color: #ffffff;
     color: #2b2f38;
-    max-width: 860px;
-    margin: 1.5rem auto;
-    padding: 3rem 3.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border-radius: 8px;
-    line-height: 1.7;
-    font-size: 1.05rem;
+    width: 794px;
+    max-width: 100%;
+    margin: 0 auto 2rem auto;
+    padding: 3.5rem 3rem;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.22);
+    border-radius: 4px;
+    line-height: 1.65;
+    font-size: 1.025rem;
     word-wrap: break-word;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 @media (max-width: 768px) {
+    .docx-preview-container {
+        padding: 1rem 0.5rem !important;
+        background-color: #4a4d50 !important;
+    }
+
     .docx-paper {
-        margin: 0.5rem auto;
-        padding: 1.5rem 1.25rem;
-        border-radius: 4px;
-        box-shadow: none;
-        font-size: 1rem;
-        line-height: 1.6;
+        margin: 0 auto 1.5rem auto !important;
+        padding: 2rem 1.5rem !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
     }
 }
 
@@ -141,10 +176,9 @@
 .docx-paper img {
     max-width: 100% !important;
     height: auto !important;
-    border-radius: 6px;
+    border-radius: 4px;
     margin: 1.25rem auto;
     display: block;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .docx-paper table {
@@ -152,8 +186,6 @@
     border-collapse: collapse;
     margin: 1.5rem 0;
     font-size: 0.95rem;
-    display: block;
-    overflow-x: auto;
 }
 
 .docx-paper table, .docx-paper th, .docx-paper td {
@@ -187,24 +219,80 @@
     font-style: italic;
 }
 
+/* --- PDF Document Preview (PDF.js Canvas) --- */
+.pdf-preview-wrapper {
+    background: #525659;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100%;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+    transform-origin: top center;
+}
+
+.pdf-pages-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    transform-origin: top center;
+}
+
+.pdf-page-card {
+    background: #ffffff;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.25);
+    margin-bottom: 1.75rem;
+    box-sizing: border-box;
+    position: relative;
+    flex-shrink: 0;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.pdf-page-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+@media (max-width: 768px) {
+    .pdf-preview-wrapper {
+        padding: 1rem 0.5rem !important;
+        background: #4a4d50 !important;
+    }
+
+    .pdf-page-card {
+        margin-bottom: 1.25rem !important;
+        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.2) !important;
+    }
+}
+
 /* --- Excel Spreadsheet Preview --- */
 .excel-preview-container {
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: #ffffff;
+    background: #f8f9fa;
+    position: relative;
+    overflow: hidden;
 }
 
 .excel-toolbar {
-    background: #f8f9fa;
+    background: #ffffff;
     border-bottom: 1px solid #dee2e6;
-    padding: 0.6rem 1rem;
+    padding: 0.5rem 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 0.75rem;
     flex-shrink: 0;
+    z-index: 10;
 }
 
 .excel-sheet-tabs {
@@ -215,18 +303,18 @@
 }
 
 .excel-sheet-tabs .nav-link {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     padding: 0.35rem 0.85rem;
     color: #495057;
     border-radius: 20px;
-    background: transparent;
+    background: #f1f3f5;
     border: 1px solid #dee2e6;
     transition: all 0.15s ease;
     white-space: nowrap;
 }
 
 .excel-sheet-tabs .nav-link:hover {
-    background-color: #e9ecef;
+    background-color: #e2e6ea;
 }
 
 .excel-sheet-tabs .nav-link.active {
@@ -241,36 +329,130 @@
     flex: 1 1 auto;
     overflow: auto;
     position: relative;
-    background: #ffffff;
+    background: #eef1f5;
+    padding: 0.75rem;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y pinch-zoom;
+    transform-origin: top left;
 }
 
-.sheetjs-table {
-    border-collapse: separate !important;
+.excel-table {
+    border-collapse: collapse !important;
     border-spacing: 0;
-    font-size: 0.875rem;
+    font-size: 0.84rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     width: max-content;
-    min-width: 100%;
-    margin-bottom: 0;
+    margin: 0;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
 }
 
-.sheetjs-table th, .sheetjs-table td {
-    border-right: 1px solid #dee2e6;
-    border-bottom: 1px solid #dee2e6;
-    padding: 0.45rem 0.75rem;
+.excel-table th, .excel-table td {
+    border: 1px solid #dcdfe6 !important;
+    padding: 0.45rem 0.75rem !important;
+    min-width: 65px;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
+    vertical-align: middle;
+    color: #212529;
+    box-sizing: border-box;
 }
 
-.sheetjs-table tr:first-child td, .sheetjs-table tr:first-child th {
-    background-color: #e9ecef;
-    font-weight: 600;
+/* First row is header row: styled like Excel column header */
+.excel-table tr:first-child td,
+.excel-table tr:first-child th {
+    background-color: #e9ecef !important;
+    font-weight: 600 !important;
+    color: #343a40 !important;
     position: sticky;
     top: 0;
     z-index: 5;
+    border-bottom: 2px solid #ced4da !important;
     box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
 
-.sheetjs-table tr:hover td {
-    background-color: #f1f8ff;
+.excel-table tr:nth-child(even):not(:first-child) td {
+    background-color: #f8fafc;
+}
+
+.excel-table tr:hover td {
+    background-color: #e8f4fd !important;
+}
+
+/* Expanded cell when tapped on mobile */
+.excel-table td.cell-expanded {
+    white-space: normal !important;
+    max-width: none !important;
+    background-color: #fff9db !important;
+    word-break: break-word;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+    position: relative;
+}
+
+/* --- Floating Zoom Toolbar --- */
+.preview-zoom-toolbar {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(33, 37, 41, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 6px 12px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1055;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    user-select: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.preview-zoom-toolbar .zoom-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.preview-zoom-toolbar .zoom-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+.preview-zoom-toolbar .zoom-btn:active {
+    transform: scale(0.92);
+}
+
+.preview-zoom-toolbar .zoom-btn-label {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 58px;
+    text-align: center;
+    padding: 4px 10px;
+    letter-spacing: 0.3px;
+}
+
+.preview-zoom-toolbar .zoom-btn-label:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
 }
 
 /* --- PowerPoint Presentation Preview --- */
@@ -372,4 +554,9 @@
     white-space: pre-wrap;
     word-break: break-word;
     margin: 0;
+}
+
+/* Error Fallback Card */
+#previewError {
+    z-index: 20;
 }

@@ -312,7 +312,7 @@
                                     <div class="entry-image-grid <%= allImages.length === 1 ? 'grid-1' : (allImages.length === 2 ? 'grid-2' : '') %>">
                                         <% allImages.forEach(img => { %>
                                             <div class="position-relative overflow-hidden rounded-3 border shadow-sm">
-                                                <img src="<%= img.path %>" alt="<%= img.originalName || 'Foto' %>" title="<%= img.originalName || 'Klik om te vergroten' %>" onclick="openFilePreview('<%= img.path %>', '<%= img.originalName || 'Foto' %>')">
+                                                <img src="<%= img.path %>" alt="<%= img.originalName || 'Foto' %>" title="<%= img.originalName || 'Klik om te vergroten' %>" data-preview-url="<%= img.path %>" data-preview-name="<%= img.originalName || 'Foto' %>" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName)">
                                             </div>
                                         <% }) %>
                                     </div>

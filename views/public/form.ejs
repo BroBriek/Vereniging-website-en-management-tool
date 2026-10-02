@@ -112,7 +112,7 @@
                         <% } else if (field.type === 'image') { %>
                             <% if (field.url) { %>
                                 <div class="text-center">
-                                    <a href="<%= field.url %>" onclick="openFilePreview('<%= field.url %>', '<%= field.url.split('/').pop() %>'); return false;" class="d-inline-block">
+                                    <a href="<%= field.url %>" data-preview-url="<%= field.url %>" data-preview-name="<%= field.url.split('/').pop() %>" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName); return false;" class="d-inline-block">
                                         <img src="<%= field.url %>" class="img-fluid rounded shadow-sm" alt="Form afbeelding" style="cursor: pointer;">
                                     </a>
                                 </div>

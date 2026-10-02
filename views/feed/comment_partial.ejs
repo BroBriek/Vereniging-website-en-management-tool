@@ -37,17 +37,17 @@ function highlightMentions(text) {
                         extraAttrs = ' onerror="handleBrokenImage(this)"';
                     }
                     const modifiedImg = part.replace('>', extraAttrs + '>');
-                    return `<a href="${src}" onclick="openFilePreview('${src}', '${filename}'); return false;" class="d-inline-block">${modifiedImg}</a>`;
+                    return `<a href="${src}" data-preview-url="${src}" data-preview-name="${filename}" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName); return false;" class="d-inline-block">${modifiedImg}</a>`;
                 }
             }
             // Document link wrapping (if it's an <a> tag pointing to a .pdf, .docx, .xlsx, .pptx, etc.)
             if (lowerPart.startsWith('<a')) {
-                const hrefMatch = part.match(/href="([^"]+\.(pdf|docx?|xlsx?|pptx?))"/i);
+                const hrefMatch = part.match(/href="([^"]+\.(pdf|docx?|xlsx?|pptx?|odt|ods|odp|csv|tsv|txt))"/i);
                 if (hrefMatch) {
                     const href = hrefMatch[1];
                     const filename = href.split('/').pop();
                     if (!part.includes('onclick=')) {
-                        return part.replace('>', ` onclick="openFilePreview('${href}', '${filename}'); return false;">`);
+                        return part.replace('>', ` data-preview-url="${href}" data-preview-name="${filename}" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName); return false;">`);
                     }
                 }
             }

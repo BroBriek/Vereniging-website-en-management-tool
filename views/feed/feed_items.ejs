@@ -60,7 +60,7 @@
                                 <% imageFiles.forEach(img => { %>
                                     <div class="<%= imageFiles.length === 1 ? 'col-12' : (imageFiles.length === 2 ? 'col-6' : 'col-6 col-md-4') %>">
                                         <div class="position-relative overflow-hidden rounded-3 border shadow-sm bg-light" style="cursor: pointer;">
-                                            <img src="<%= img.path %>" class="img-fluid w-100" style="max-height: 280px; object-fit: cover; transition: transform 0.2s;" alt="<%= img.originalName %>" title="<%= img.originalName || 'Klik om te vergroten' %>" onclick="openFilePreview('<%= img.path %>', '<%= img.originalName %>')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                                            <img src="<%= img.path %>" class="img-fluid w-100" style="max-height: 280px; object-fit: cover; transition: transform 0.2s;" alt="<%= img.originalName %>" title="<%= img.originalName || 'Klik om te vergroten' %>" data-preview-url="<%= img.path %>" data-preview-name="<%= img.originalName || 'Afbeelding' %>" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName)" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                                         </div>
                                     </div>
                                 <% }) %>
@@ -71,7 +71,7 @@
                         <% if (otherFiles.length > 0) { %>
                             <div class="mt-2 d-flex flex-wrap gap-2">
                                 <% otherFiles.forEach(file => { %>
-                                    <a href="/download?path=<%= encodeURIComponent(file.path) %>&name=<%= encodeURIComponent(file.originalName) %>" onclick="openFilePreview('<%= file.path %>', '<%= file.originalName %>'); return false;" class="btn btn-light btn-sm border text-primary">
+                                    <a href="/download?path=<%= encodeURIComponent(file.path) %>&name=<%= encodeURIComponent(file.originalName) %>" data-preview-url="<%= file.path %>" data-preview-name="<%= file.originalName %>" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName); return false;" class="btn btn-light btn-sm border text-primary">
                                         <i class="bi bi-file-earmark-text me-1"></i> <%= file.originalName %>
                                     </a>
                                 <% }) %>
