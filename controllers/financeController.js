@@ -97,13 +97,22 @@ exports.postItem = async (req, res) => {
         finalAmount = parseFloat(amount);
     }
 
-    await FinanceItem.create({
+    const item = await FinanceItem.create({
         name,
         amount: finalAmount,
         date: date || new Date(),
         parentId,
         paid: paid === 'on' || paid === true
     });
+
+    // Return JSON for AJAX requests so the page doesn't need to reload
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+        const data = item.toJSON();
+        if (data.amount === null) {
+            data.total = 0;
+        }
+        return res.json({ success: true, item: data });
+    }
 
     res.redirect(parentId ? `/admin/finance/${parentId}` : '/admin/finance');
 };
