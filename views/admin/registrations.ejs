@@ -22,13 +22,89 @@
         </div>
     </div>
 
+<%
+    const sortConfigMap = {
+        default: {
+            label: 'Groep',
+            fullLabel: 'Groep (Chiro volgorde)',
+            icon: 'bi-diagram-3',
+            ascLabel: 'Ribbels → Leiding (Chiro volgorde)',
+            descLabel: 'Leiding → Ribbels (Omgekeerd)',
+            ascBtn: 'Ribbels → Leiding',
+            descBtn: 'Leiding → Ribbels',
+            ascIcon: 'bi-sort-down',
+            descIcon: 'bi-sort-up'
+        },
+        group: {
+            label: 'Groep',
+            fullLabel: 'Groep (Chiro volgorde)',
+            icon: 'bi-diagram-3',
+            ascLabel: 'Ribbels → Leiding (Chiro volgorde)',
+            descLabel: 'Leiding → Ribbels (Omgekeerd)',
+            ascBtn: 'Ribbels → Leiding',
+            descBtn: 'Leiding → Ribbels',
+            ascIcon: 'bi-sort-down',
+            descIcon: 'bi-sort-up'
+        },
+        name: {
+            label: 'Naam',
+            fullLabel: 'Naam',
+            icon: 'bi-person',
+            ascLabel: 'A → Z (Oplopend)',
+            descLabel: 'Z → A (Aflopend)',
+            ascBtn: 'A-Z',
+            descBtn: 'Z-A',
+            ascIcon: 'bi-sort-alpha-down',
+            descIcon: 'bi-sort-alpha-down-alt'
+        },
+        birthdate: {
+            label: 'Leeftijd',
+            fullLabel: 'Leeftijd',
+            icon: 'bi-calendar3',
+            ascLabel: 'Jongste eerst (Jong → Oud)',
+            descLabel: 'Oudste eerst (Oud → Jong)',
+            ascBtn: 'Jongste eerst',
+            descBtn: 'Oudste eerst',
+            ascIcon: 'bi-sort-numeric-down',
+            descIcon: 'bi-sort-numeric-down-alt'
+        },
+        type: {
+            label: 'Rol',
+            fullLabel: 'Rol',
+            icon: 'bi-shield-check',
+            ascLabel: 'Leiding eerst',
+            descLabel: 'Leden eerst',
+            ascBtn: 'Leiding eerst',
+            descBtn: 'Leden eerst',
+            ascIcon: 'bi-arrow-down',
+            descIcon: 'bi-arrow-up'
+        },
+        period: {
+            label: 'Werkjaar',
+            fullLabel: 'Werkjaar',
+            icon: 'bi-clock-history',
+            ascLabel: 'Oudste eerst (Oplopend)',
+            descLabel: 'Nieuwste eerst (Aflopend)',
+            ascBtn: 'Oudste eerst',
+            descBtn: 'Nieuwste eerst',
+            ascIcon: 'bi-sort-numeric-down',
+            descIcon: 'bi-sort-numeric-down-alt'
+        }
+    };
+
+    const currentSort = sortConfigMap[sortField] || sortConfigMap.default;
+    const isAsc = (sortDirection || 'ASC') === 'ASC';
+    const activeDirBtnLabel = isAsc ? currentSort.ascBtn : currentSort.descBtn;
+    const activeDirIcon = isAsc ? currentSort.ascIcon : currentSort.descIcon;
+%>
+
     <!-- Controls Row -->
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-        <div class="d-flex flex-grow-1 justify-content-end gap-3 flex-wrap align-items-center w-100">
+        <div class="d-flex flex-grow-1 justify-content-between justify-content-md-end gap-3 flex-wrap align-items-center w-100">
             <!-- Search & Sort Bar -->
-            <div class="d-flex gap-2 flex-wrap align-items-center" style="max-width: 800px; flex: 1 1 300px;">
+            <div class="d-flex gap-2 flex-wrap align-items-center flex-grow-1 flex-xl-grow-0" style="max-width: 860px;">
                 <!-- Registration Counter -->
-                <div class="bg-white px-3 py-1 rounded shadow-sm d-flex align-items-center gap-2 border-0 h-100" style="min-height: 38px;">
+                <div class="bg-white px-3 py-1 rounded shadow-sm d-flex align-items-center gap-2 border-0" style="min-height: 38px;">
                     <i class="bi bi-people-fill text-primary"></i>
                     <div class="lh-1">
                         <span class="fw-bold d-block"><%= registrations.length %></span>
@@ -36,33 +112,93 @@
                     </div>
                 </div>
 
-                <form action="/admin/registrations" method="GET" class="d-flex flex-grow-1">
+                <form action="/admin/registrations" method="GET" class="d-flex flex-grow-1" style="min-width: 190px;">
                     <input type="hidden" name="period" value="<%= selectedPeriod %>">
                     <input type="hidden" name="sort" value="<%= sortField %>">
                     <input type="hidden" name="direction" value="<%= sortDirection %>">
                     <div class="input-group">
                         <input type="text" name="search" class="form-control shadow-sm border-0" placeholder="Zoek op naam, email..." value="<%= searchQuery %>">
                         <% if (searchQuery) { %>
-                            <a href="/admin/registrations?period=<%= selectedPeriod %>&sort=<%= sortField %>&direction=<%= sortDirection %>" class="btn btn-white border-0 shadow-sm" title="Zoekopdracht wissen"><i class="bi bi-x-lg"></i></a>
+                            <a href="/admin/registrations?period=<%= selectedPeriod %>&sort=<%= sortField %>&direction=<%= sortDirection %>" class="btn btn-white bg-white border-0 shadow-sm" title="Zoekopdracht wissen"><i class="bi bi-x-lg"></i></a>
                         <% } %>
                         <button class="btn btn-primary shadow-sm" type="submit"><i class="bi bi-search"></i></button>
                     </div>
                 </form>
 
-                <div class="dropdown">
-                    <button class="btn btn-white shadow-sm border-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-sort-alpha-down"></i> Sorteer
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                        <li><h6 class="dropdown-header">Sorteer op</h6></li>
-                        <li><a class="dropdown-item <%= sortField === 'default' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=default&direction=ASC">Standaard (Groep)</a></li>
-                        <li><a class="dropdown-item <%= sortField === 'name' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=name&direction=ASC">Naam (A-Z)</a></li>
-                        <li><a class="dropdown-item <%= sortField === 'birthdate' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=birthdate&direction=ASC">Leeftijd</a></li>
-                        <li><a class="dropdown-item <%= sortField === 'type' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=type&direction=ASC">Rol (Leiding eerst)</a></li>
-                        <% if (selectedPeriod === 'all') { %>
-                            <li><a class="dropdown-item <%= sortField === 'period' ? 'active' : '' %>" href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= searchQuery %>&sort=period&direction=DESC">Jaar (Nieuwste eerst)</a></li>
-                        <% } %>
-                    </ul>
+                <!-- Desktop Sort Field & Direction Controls -->
+                <div class="d-none d-lg-flex gap-2 sort-controls-wrap">
+                    <!-- Sorteerveld Dropdown -->
+                    <div class="dropdown sort-dropdown">
+                        <button class="btn btn-white bg-white shadow-sm border-0 dropdown-toggle d-flex align-items-center justify-content-between gap-2 h-100" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 38px;" title="Kies sorteerveld">
+                            <span class="d-inline-flex align-items-center gap-1 text-truncate">
+                                <i class="bi <%= currentSort.icon %> text-muted"></i>
+                                <span class="d-none d-md-inline text-muted small">Sorteer:</span>
+                                <span class="fw-semibold text-truncate"><%= currentSort.label %></span>
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                            <li><h6 class="dropdown-header">Sorteer op</h6></li>
+                            <li>
+                                <a class="dropdown-item <%= (sortField === 'default' || sortField === 'group') ? 'active' : '' %>" 
+                                   href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=default&direction=<%= sortDirection %>">
+                                    <i class="bi bi-diagram-3 me-2"></i>Groep (Chiro volgorde)
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item <%= sortField === 'name' ? 'active' : '' %>" 
+                                   href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=name&direction=<%= sortDirection %>">
+                                    <i class="bi bi-person me-2"></i>Naam
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item <%= sortField === 'birthdate' ? 'active' : '' %>" 
+                                   href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=birthdate&direction=<%= sortDirection %>">
+                                    <i class="bi bi-calendar3 me-2"></i>Leeftijd
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item <%= sortField === 'type' ? 'active' : '' %>" 
+                                   href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=type&direction=<%= sortDirection %>">
+                                    <i class="bi bi-shield-check me-2"></i>Rol
+                                </a>
+                            </li>
+                            <% if (selectedPeriod === 'all') { %>
+                                <li>
+                                    <a class="dropdown-item <%= sortField === 'period' ? 'active' : '' %>" 
+                                       href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=period&direction=<%= sortDirection %>">
+                                        <i class="bi bi-clock-history me-2"></i>Werkjaar
+                                    </a>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </div>
+
+                    <!-- Sorteerrichting Dropdown (Vakje) -->
+                    <div class="dropdown direction-dropdown">
+                        <button class="btn btn-white bg-white shadow-sm border-0 dropdown-toggle d-flex align-items-center justify-content-between gap-2 h-100" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 38px;" title="Sorteerrichting aanpassen">
+                            <span class="d-inline-flex align-items-center gap-1 text-truncate">
+                                <i class="bi <%= activeDirIcon %> text-primary"></i>
+                                <span class="fw-semibold text-truncate"><%= activeDirBtnLabel %></span>
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                            <li><h6 class="dropdown-header">Sorteerrichting</h6></li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center justify-content-between <%= isAsc ? 'active' : '' %>" 
+                                   href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=<%= sortField %>&direction=ASC">
+                                    <span><i class="bi <%= currentSort.ascIcon %> me-2"></i><%= currentSort.ascLabel %></span>
+                                    <% if (isAsc) { %><i class="bi bi-check2 ms-2 text-primary"></i><% } %>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center justify-content-between <%= !isAsc ? 'active' : '' %>" 
+                                   href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=<%= sortField %>&direction=DESC">
+                                    <span><i class="bi <%= currentSort.descIcon %> me-2"></i><%= currentSort.descLabel %></span>
+                                    <% if (!isAsc) { %><i class="bi bi-check2 ms-2 text-primary"></i><% } %>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
@@ -125,11 +261,11 @@
                 <div class="list-group-item bg-dark text-white border-0 py-3">
                     <i class="bi bi-archive"></i> Archief
                 </div>
-                <a href="/admin/registrations?period=all" class="list-group-item list-group-item-action border-0 <%= selectedPeriod === 'all' ? 'active' : '' %>">
+                <a href="/admin/registrations?period=all&sort=<%= sortField %>&direction=<%= sortDirection %>" class="list-group-item list-group-item-action border-0 <%= selectedPeriod === 'all' ? 'active' : '' %>">
                     Alles Tonen
                 </a>
                 <% allPeriods.forEach(p => { %>
-                    <a href="/admin/registrations?period=<%= p.period %>" class="list-group-item list-group-item-action border-0 <%= selectedPeriod === p.period ? 'active' : '' %> d-flex justify-content-between align-items-center">
+                    <a href="/admin/registrations?period=<%= p.period %>&sort=<%= sortField %>&direction=<%= sortDirection %>" class="list-group-item list-group-item-action border-0 <%= selectedPeriod === p.period ? 'active' : '' %> d-flex justify-content-between align-items-center">
                         <%= p.period %>
                         <% if (p.period === currentPeriod) { %>
                             <span class="badge bg-success rounded-pill" title="Huidige actieve periode" style="font-size: 0.6rem;">Actief</span>
@@ -141,6 +277,82 @@
 
         <!-- Main Content -->
         <div class="col-lg-10 col-md-8">
+            <!-- Mobile Sort Controls (Directly above member names on mobile) -->
+            <div class="d-flex d-lg-none mb-3 gap-2 sort-controls-wrap w-100">
+                <!-- Sorteerveld Dropdown -->
+                <div class="dropdown sort-dropdown flex-fill">
+                    <button class="btn btn-white bg-white shadow-sm border-0 dropdown-toggle d-flex align-items-center justify-content-between gap-2 h-100 w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 38px;" title="Kies sorteerveld">
+                        <span class="d-inline-flex align-items-center gap-1 text-truncate">
+                            <i class="bi <%= currentSort.icon %> text-muted"></i>
+                            <span class="d-none d-sm-inline text-muted small">Sorteer:</span>
+                            <span class="fw-semibold text-truncate"><%= currentSort.label %></span>
+                        </span>
+                    </button>
+                    <ul class="dropdown-menu shadow border-0">
+                        <li><h6 class="dropdown-header">Sorteer op</h6></li>
+                        <li>
+                            <a class="dropdown-item <%= (sortField === 'default' || sortField === 'group') ? 'active' : '' %>" 
+                               href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=default&direction=<%= sortDirection %>">
+                                <i class="bi bi-diagram-3 me-2"></i>Groep (Chiro volgorde)
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item <%= sortField === 'name' ? 'active' : '' %>" 
+                               href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=name&direction=<%= sortDirection %>">
+                                <i class="bi bi-person me-2"></i>Naam
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item <%= sortField === 'birthdate' ? 'active' : '' %>" 
+                               href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=birthdate&direction=<%= sortDirection %>">
+                                <i class="bi bi-calendar3 me-2"></i>Leeftijd
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item <%= sortField === 'type' ? 'active' : '' %>" 
+                               href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=type&direction=<%= sortDirection %>">
+                                <i class="bi bi-shield-check me-2"></i>Rol
+                            </a>
+                        </li>
+                        <% if (selectedPeriod === 'all') { %>
+                            <li>
+                                <a class="dropdown-item <%= sortField === 'period' ? 'active' : '' %>" 
+                                   href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=period&direction=<%= sortDirection %>">
+                                    <i class="bi bi-clock-history me-2"></i>Werkjaar
+                                </a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </div>
+
+                <!-- Sorteerrichting Dropdown (Vakje) -->
+                <div class="dropdown direction-dropdown flex-fill">
+                    <button class="btn btn-white bg-white shadow-sm border-0 dropdown-toggle d-flex align-items-center justify-content-between gap-2 h-100 w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 38px;" title="Sorteerrichting aanpassen">
+                        <span class="d-inline-flex align-items-center gap-1 text-truncate">
+                            <i class="bi <%= activeDirIcon %> text-primary"></i>
+                            <span class="fw-semibold text-truncate"><%= activeDirBtnLabel %></span>
+                        </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                        <li><h6 class="dropdown-header">Sorteerrichting</h6></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center justify-content-between <%= isAsc ? 'active' : '' %>" 
+                               href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=<%= sortField %>&direction=ASC">
+                                <span><i class="bi <%= currentSort.ascIcon %> me-2"></i><%= currentSort.ascLabel %></span>
+                                <% if (isAsc) { %><i class="bi bi-check2 ms-2 text-primary"></i><% } %>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center justify-content-between <%= !isAsc ? 'active' : '' %>" 
+                               href="/admin/registrations?period=<%= selectedPeriod %>&search=<%= encodeURIComponent(searchQuery) %>&sort=<%= sortField %>&direction=DESC">
+                                <span><i class="bi <%= currentSort.descIcon %> me-2"></i><%= currentSort.descLabel %></span>
+                                <% if (!isAsc) { %><i class="bi bi-check2 ms-2 text-primary"></i><% } %>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
             <!-- Desktop View: Vertical List of Cards -->
             <div class="d-none d-lg-block">
                 <% registrations.forEach(reg => { %>
@@ -599,6 +811,37 @@
 </script>
 
 <style>
+    .btn-white {
+        background-color: #fff !important;
+        color: #212529 !important;
+    }
+    .btn-white:hover, .btn-white:focus {
+        background-color: #f8f9fa !important;
+        color: var(--bs-primary) !important;
+    }
+    .sort-controls-wrap {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+    }
+    .sort-dropdown, .direction-dropdown {
+        flex: 0 0 auto;
+    }
+    @media (max-width: 575.98px) {
+        .sort-controls-wrap {
+            width: 100%;
+        }
+        .sort-dropdown, .direction-dropdown {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+        .sort-dropdown button, .direction-dropdown button {
+            width: 100%;
+            font-size: 0.85rem;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+    }
     .registration-card {
         cursor: pointer;
         transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;

@@ -474,6 +474,28 @@ exports.getInfo = (req, res) => {
     res.render('admin/info', { title: 'Handleiding', user: req.user });
 };
 
+const getChiroGroupOrderLiteral = () => sequelize.literal(`CASE LOWER(TRIM("Registration"."group"))
+    WHEN 'ribbel' THEN 1
+    WHEN 'ribbels' THEN 1
+    WHEN 'speelclub' THEN 2
+    WHEN 'speelclubbers' THEN 2
+    WHEN 'rakwi' THEN 3
+    WHEN 'rakwis' THEN 3
+    WHEN 'rakwi''s' THEN 3
+    WHEN 'tito' THEN 4
+    WHEN 'titos' THEN 4
+    WHEN 'tito''s' THEN 4
+    WHEN 'keti' THEN 5
+    WHEN 'ketis' THEN 5
+    WHEN 'keti''s' THEN 5
+    WHEN 'aspi' THEN 6
+    WHEN 'aspis' THEN 6
+    WHEN 'aspi''s' THEN 6
+    WHEN 'leiding' THEN 7
+    WHEN 'hoofdleiding' THEN 7
+    ELSE 8
+END`);
+
 exports.getRegistrations = async (req, res) => {
     try {
         const { Op } = require('sequelize');
@@ -509,25 +531,55 @@ exports.getRegistrations = async (req, res) => {
         const sortField = req.query.sort || 'default';
         const sortDirection = req.query.direction === 'DESC' ? 'DESC' : 'ASC';
 
+        const groupOrderCase = getChiroGroupOrderLiteral();
+
         let order = [];
         switch (sortField) {
             case 'name':
                 order = [['lastName', sortDirection], ['firstName', sortDirection]];
                 break;
             case 'group':
-                order = [['group', sortDirection], ['type', 'DESC'], ['lastName', 'ASC']];
+            case 'default':
+                order = [
+                    [groupOrderCase, sortDirection],
+                    ['type', 'DESC'],
+                    ['lastName', 'ASC'],
+                    ['firstName', 'ASC']
+                ];
                 break;
             case 'birthdate':
-                order = [['birthdate', sortDirection]];
+                order = [
+                    [sequelize.literal('CASE WHEN "Registration"."birthdate" IS NULL THEN 1 ELSE 0 END'), 'ASC'],
+                    ['birthdate', sortDirection === 'DESC' ? 'ASC' : 'DESC'],
+                    ['lastName', 'ASC'],
+                    ['firstName', 'ASC']
+                ];
                 break;
-            case 'type':
-                order = [['type', sortDirection], ['group', 'ASC'], ['lastName', 'ASC']];
+            case 'type': {
+                const typeOrderCase = sequelize.literal(`CASE "Registration"."type" WHEN 'leiding' THEN 1 ELSE 2 END`);
+                order = [
+                    [typeOrderCase, sortDirection],
+                    [groupOrderCase, 'ASC'],
+                    ['lastName', 'ASC'],
+                    ['firstName', 'ASC']
+                ];
                 break;
+            }
             case 'period':
-                order = [['period', sortDirection], ['group', 'ASC']];
+                order = [
+                    ['period', sortDirection],
+                    [groupOrderCase, 'ASC'],
+                    ['lastName', 'ASC'],
+                    ['firstName', 'ASC']
+                ];
                 break;
             default:
-                order = [['group', 'ASC'], ['type', 'DESC'], ['lastName', 'ASC']];
+                order = [
+                    [groupOrderCase, sortDirection],
+                    ['type', 'DESC'],
+                    ['lastName', 'ASC'],
+                    ['firstName', 'ASC']
+                ];
                 break;
         }
 
@@ -636,7 +688,7 @@ exports.exportRegistrationsExcel = async (req, res) => {
     const registrations = await Registration.findAll({
         where: where, // Apply the filter for the period
         order: [
-            ['group', 'ASC'],
+            [getChiroGroupOrderLiteral(), 'ASC'],
             ['type', 'ASC'],
             ['lastName', 'ASC']
         ]
@@ -846,7 +898,7 @@ exports.exportRegistrationsPDF = async (req, res) => {
 
         const registrations = await Registration.findAll({
             where,
-            order: [['period', 'DESC'], ['group', 'ASC'], ['lastName', 'ASC']]
+            order: [['period', 'DESC'], [getChiroGroupOrderLiteral(), 'ASC'], ['lastName', 'ASC']]
         });
 
         const doc = new PDFDocument();
