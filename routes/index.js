@@ -36,6 +36,7 @@ router.get('/contact', checkVisibility('/contact'), publicController.getContact)
 router.post('/contact', checkVisibility('/contact'), publicController.postContact);
 router.get('/help', publicController.getHelp);
 router.get('/download', publicController.downloadFile);
+router.get('/api/document-preview', publicController.previewDocumentHtml);
 router.get('/robots.txt', publicController.getRobotsTxt);
 router.get('/sitemap.xml', publicController.getSitemapXml);
 router.get('/manifest.json', publicController.getManifestJson);

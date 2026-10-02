@@ -933,3 +933,134 @@ exports.downloadFile = (req, res) => {
         res.status(500).json({ error: 'Fout bij downloaden bestand' });
     }
 };
+
+const { execFile } = require('child_process');
+const os = require('os');
+const sanitizeHtml = require('sanitize-html');
+
+exports.previewDocumentHtml = async (req, res) => {
+    try {
+        let reqPath = req.query.path || '';
+        if (reqPath.startsWith('/uploads/feed/')) {
+            reqPath = reqPath.replace('/uploads/feed/', '/feed_uploads/');
+        } else if (reqPath.startsWith('uploads/feed/')) {
+            reqPath = reqPath.replace('uploads/feed/', 'feed_uploads/');
+        }
+        reqPath = reqPath.replace(/^\/+/, '');
+
+        const publicDir = path.join(__dirname, '..', 'public');
+        const filePath = path.normalize(path.join(publicDir, reqPath));
+        
+        // Security: prevent path traversal
+        const relative = path.relative(publicDir, filePath);
+        if (relative.startsWith('..') || path.isAbsolute(relative)) {
+            return res.status(403).json({ success: false, error: 'Toegang geweigerd' });
+        }
+        
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ success: false, error: 'Bestand niet gevonden' });
+        }
+
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+            return res.status(400).json({ success: false, error: 'Dit is een map, geen bestand' });
+        }
+
+        const ext = path.extname(filePath).toLowerCase();
+        const supportedOfficeExts = ['.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx', '.rtf', '.odt', '.ods', '.odp'];
+        const textExts = ['.txt', '.csv', '.tsv', '.json', '.md', '.log'];
+
+        if (textExts.includes(ext)) {
+            const rawText = fs.readFileSync(filePath, 'utf8');
+            return res.json({ success: true, type: 'text', content: rawText });
+        }
+
+        if (!supportedOfficeExts.includes(ext)) {
+            return res.status(400).json({ success: false, error: 'Dit bestandstype kan niet worden omgezet naar HTML' });
+        }
+
+        // Check if soffice / libreoffice is available
+        const sofficeBin = fs.existsSync('/usr/bin/soffice') 
+            ? '/usr/bin/soffice' 
+            : (fs.existsSync('/usr/bin/libreoffice') ? '/usr/bin/libreoffice' : null);
+
+        if (!sofficeBin) {
+            return res.status(501).json({ 
+                success: false, 
+                error: 'LibreOffice converter is niet beschikbaar op de server' 
+            });
+        }
+
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chiro-preview-'));
+
+        const filter = ['.doc', '.docx', '.rtf', '.odt'].includes(ext) ? 'html:HTML:EmbedImages' : 'html';
+
+        try {
+            await new Promise((resolve, reject) => {
+                execFile(sofficeBin, [
+                    '--headless',
+                    '--convert-to',
+                    filter,
+                    '--outdir',
+                    tempDir,
+                    filePath
+                ], { timeout: 15000 }, (error, stdout, stderr) => {
+                    if (error) return reject(error);
+                    resolve();
+                });
+            });
+
+            const files = fs.readdirSync(tempDir);
+            const htmlFileName = files.find(f => f.endsWith('.html'));
+
+            if (!htmlFileName) {
+                throw new Error('Geen HTML-uitvoer gegenereerd');
+            }
+
+            const rawHtml = fs.readFileSync(path.join(tempDir, htmlFileName), 'utf8');
+
+            const sanitizedHtml = sanitizeHtml(rawHtml, {
+                allowedTags: [
+                    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'div',
+                    'ul', 'ol', 'li', 'strong', 'em', 'b', 'i', 'u', 'strike', 's',
+                    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+                    'img', 'br', 'hr', 'pre', 'code', 'blockquote', 'a', 'sub', 'sup',
+                    'font', 'mark', 'style'
+                ],
+                allowedAttributes: {
+                    '*': ['style', 'class', 'align', 'dir'],
+                    'a': ['href', 'title', 'target'],
+                    'img': ['src', 'alt', 'title', 'width', 'height'],
+                    'font': ['color', 'face', 'size'],
+                    'mark': ['style', 'class'],
+                    'table': ['border', 'cellpadding', 'cellspacing', 'width'],
+                    'th': ['colspan', 'rowspan', 'width', 'align'],
+                    'td': ['colspan', 'rowspan', 'width', 'align']
+                },
+                allowedSchemes: ['http', 'https', 'data']
+            });
+
+            return res.json({ 
+                success: true, 
+                type: 'html',
+                html: sanitizedHtml 
+            });
+
+        } finally {
+            // Clean up temporary files immediately to preserve storage
+            try {
+                fs.rmSync(tempDir, { recursive: true, force: true });
+            } catch (cleanupErr) {
+                console.error('Error cleaning up tempDir:', cleanupErr);
+            }
+        }
+
+    } catch (error) {
+        console.error('Document preview conversion error:', error);
+        return res.status(500).json({ 
+            success: false, 
+            error: 'Fout bij het converteren van het document naar HTML' 
+        });
+    }
+};
+

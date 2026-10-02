@@ -63,33 +63,54 @@
 
     <!-- File Preview Modal -->
     <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-dialog modal-xl modal-fullscreen-lg-down modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content rounded-4 border-0 shadow" style="height: 90vh;">
-          <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title font-playful text-truncate" id="previewFileName" style="max-width: 80%;">Bestand</h5>
-            <div class="d-flex gap-2">
-                <a id="previewDownloadBtn" href="#" class="btn btn-primary btn-sm rounded-pill" download>
-                    <i class="bi bi-download"></i> Download
+          <div class="modal-header border-0 pb-2 px-3 px-md-4 pt-3">
+            <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 75%;">
+                <span id="previewFileIcon" class="fs-4 text-primary d-flex align-items-center"><i class="bi bi-file-earmark-text"></i></span>
+                <h5 class="modal-title font-playful text-truncate mb-0" id="previewFileName">Bestand</h5>
+                <span id="previewFileBadge" class="badge rounded-pill bg-light text-secondary border d-none"></span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a id="previewDownloadBtn" href="#" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" download>
+                    <i class="bi bi-download me-1"></i> <span class="d-none d-sm-inline">Origineel</span> Downloaden
                 </a>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
             </div>
           </div>
-          <div class="modal-body p-0 h-100 position-relative bg-light">
-            <div id="previewLoader" class="position-absolute top-50 start-50 translate-middle text-center">
-                <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-2 text-muted">Laden...</p>
+          <div class="modal-body p-0 h-100 position-relative bg-light overflow-hidden">
+            <!-- Loader -->
+            <div id="previewLoader" class="position-absolute top-50 start-50 translate-middle text-center p-3">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                <p id="previewLoaderText" class="mt-3 text-muted fw-medium">Laden...</p>
             </div>
+
+            <!-- PDF Iframe -->
             <iframe id="previewFrame" src="" class="w-100 h-100 border-0 rounded-bottom-4 d-none"></iframe>
-            <div id="previewImageContainer" class="w-100 h-100 d-none d-flex align-items-center justify-content-center bg-white rounded-bottom-4 overflow-auto">
-                <img id="previewImage" src="" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+
+            <!-- Image Container -->
+            <div id="previewImageContainer" class="w-100 h-100 d-none d-flex align-items-center justify-content-center bg-white rounded-bottom-4 overflow-auto p-2">
+                <img id="previewImage" src="" class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: contain;">
             </div>
-            <div id="previewError" class="d-none position-absolute top-50 start-50 translate-middle text-center p-4 w-100">
-                <i class="bi bi-file-earmark-x display-1 text-muted"></i>
-                <h5 class="mt-3">Voorbeeld niet beschikbaar</h5>
-                <p class="text-muted mb-3">Dit bestandstype kan niet worden weergegeven in de browser of we kunnen er niet bij.</p>
-                <a id="previewErrorDownloadBtn" href="#" class="btn btn-primary rounded-pill mt-2">
-                    <i class="bi bi-download"></i> Download Bestand
-                </a>
+
+            <!-- Converted Document Container (Word, Excel, PowerPoint, Text) -->
+            <div id="previewDocContainer" class="w-100 h-100 d-none overflow-auto rounded-bottom-4 position-relative"></div>
+
+            <!-- Error fallback -->
+            <div id="previewError" class="d-none position-absolute top-50 start-50 translate-middle text-center p-4 w-100" style="max-width: 500px;">
+                <div class="bg-white p-4 rounded-4 shadow-sm border">
+                    <i class="bi bi-file-earmark-x display-3 text-secondary mb-3 d-inline-block"></i>
+                    <h5 class="fw-bold">Voorbeeld niet beschikbaar</h5>
+                    <p class="text-muted mb-3" id="previewErrorMessage">Dit bestandstype kan niet worden weergegeven in de browser of er trad een fout op.</p>
+                    <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+                        <a id="previewErrorDownloadBtn" href="#" class="btn btn-primary rounded-pill px-4">
+                            <i class="bi bi-download me-1"></i> Download Origineel
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">
+                            Sluiten
+                        </button>
+                    </div>
+                </div>
             </div>
           </div>
         </div>
@@ -182,7 +203,7 @@
     <% } %>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/download-helper.js?v=1.0.1"></script>
+    <script src="/js/download-helper.js?v=2.0.2"></script>
     <script src="/js/rich-editor.js?v=1.3"></script>
 </body>
 </html>
