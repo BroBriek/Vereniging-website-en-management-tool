@@ -1,22 +1,31 @@
 const passport = require('passport');
 
 exports.getLogin = (req, res) => {
-  res.render('auth/login', { title: 'Login - Leiding', error: null }); // Handle error flash later
+  res.render('auth/login', { title: 'Login - Leiding', error: req.query.error || null });
 };
 
 exports.postLogin = (req, res, next) => {
   // Capture the returnTo value BEFORE passport regenerates the session
-  const returnTo = req.session.returnTo;
+  const returnTo = req.session ? req.session.returnTo : null;
 
   passport.authenticate('local', (err, user, info) => {
     if (err) { return next(err); }
-    if (!user) { return res.redirect('/auth/login'); }
+    if (!user) {
+      const msg = info && info.message ? info.message : 'Ongeldige gebruikersnaam of wachtwoord.';
+      return res.redirect('/auth/login?error=' + encodeURIComponent(msg));
+    }
     req.logIn(user, (err) => {
       if (err) { return next(err); }
 
       const REMEMBER_ME_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-      if (req.body.remember_me) {
+      // Support 'true', 'on', '1', or boolean true from various browser form submissions
+      const isRememberMe = req.body.remember_me === 'true' || 
+                           req.body.remember_me === 'on' || 
+                           req.body.remember_me === '1' || 
+                           req.body.remember_me === true;
+
+      if (isRememberMe) {
         // Extend cookie AND tell the session it was modified so the store updates the expiry
         req.session.cookie.maxAge = REMEMBER_ME_MS;
         req.session.rememberMe = true; // flag so the store persists the extended TTL
@@ -31,8 +40,12 @@ exports.postLogin = (req, res, next) => {
           delete req.session.returnTo;
       }
 
-      req.session.save(() => {
-          res.redirect(returnTo || '/feed');
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error('Session save error on login:', saveErr);
+          return next(saveErr);
+        }
+        res.redirect(returnTo || '/feed');
       });
     });
   })(req, res, next);
@@ -65,6 +78,17 @@ exports.logout = async (req, res, next) => {
 
   req.logout((err) => {
     if (err) { return next(err); }
-    res.redirect('/');
+    if (req.session) {
+      req.session.destroy((destroyErr) => {
+        if (destroyErr) {
+          console.error('Session destroy on logout error:', destroyErr);
+        }
+        res.clearCookie('connect.sid');
+        res.redirect('/');
+      });
+    } else {
+      res.clearCookie('connect.sid');
+      res.redirect('/');
+    }
   });
 };

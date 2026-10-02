@@ -170,13 +170,76 @@ if (!sessionSecret) {
 
 const REMEMBER_ME_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in ms
 
+// Patch express-session Cookie prototype so that serialized cookie headers include 'Max-Age' (in seconds).
+// Modern mobile browsers (especially Android Chromium / PWA WebAPKs) use Max-Age to maintain persistent
+// sessions reliably across reboots and network switches, preventing premature session eviction due to clock skew.
+const Cookie = require('express-session/session/cookie');
+const origCookieData = Object.getOwnPropertyDescriptor(Cookie.prototype, 'data');
+if (origCookieData && origCookieData.get) {
+  Object.defineProperty(Cookie.prototype, 'data', {
+    get: function() {
+      const data = origCookieData.get.call(this);
+      if (this._expires && this.maxAge != null) {
+        data.maxAge = Math.max(0, Math.floor(this.maxAge / 1000));
+      }
+      return data;
+    }
+  });
+}
+
+// Patch connect-sqlite3 methods to prevent double-callbacks on errors and handle edge cases safely
+SQLiteStore.prototype.get = function(sid, fn) {
+  const now = new Date().getTime();
+  this.db.get('SELECT sess FROM ' + this.table + ' WHERE sid = ? AND ? <= expired', [sid, now],
+    (err, row) => {
+      if (err) return fn(err);
+      if (!row) return fn();
+      try {
+        fn(null, JSON.parse(row.sess));
+      } catch (parseErr) {
+        fn(parseErr);
+      }
+    }
+  );
+};
+
+SQLiteStore.prototype.touch = function(sid, session, fn) {
+  if (session && session.cookie && session.cookie.expires) {
+    const now = new Date().getTime();
+    const cookieExpires = new Date(session.cookie.expires).getTime();
+    this.db.run('UPDATE ' + this.table + ' SET expired=? WHERE sid = ? AND ? <= expired',
+      [cookieExpires, sid, now],
+      (err) => {
+        if (fn) {
+          if (err) return fn(err);
+          return fn();
+        }
+      }
+    );
+  } else {
+    if (fn) fn();
+  }
+};
+
+const sessionStore = new SQLiteStore({
+  db: 'sessions.sqlite',
+  dir: '.',
+  concurrentDb: true, // Enables SQLite WAL mode for concurrency
+  table: 'sessions',
+  // Keep sessions in the DB for up to 30 days so that "remember me" sessions survive
+  ttl: REMEMBER_ME_DURATION / 1000, // connect-sqlite3 expects seconds
+});
+
+// Configure busy timeout on SQLite connection so concurrent requests retry instead of throwing SQLITE_BUSY
+if (sessionStore.db) {
+  if (typeof sessionStore.db.configure === 'function') {
+    sessionStore.db.configure('busyTimeout', 5000);
+  }
+  sessionStore.db.run('PRAGMA busy_timeout = 5000;');
+}
+
 app.use(session({
-  store: new SQLiteStore({
-    db: 'sessions.sqlite',
-    dir: '.',
-    // Keep sessions in the DB for up to 30 days so that "remember me" sessions survive
-    ttl: REMEMBER_ME_DURATION / 1000, // connect-sqlite3 expects seconds
-  }),
+  store: sessionStore,
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
@@ -192,6 +255,16 @@ app.use(session({
 // Passport Middleware
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Persistent Session Refresh Middleware:
+// For users who checked "Blijf ingelogd" (rememberMe: true), ensure their cookie maxAge
+// is continuously maintained at 30 days on each active request, matching SQLite store TTL.
+app.use((req, res, next) => {
+  if (req.session && req.session.rememberMe) {
+    req.session.cookie.maxAge = REMEMBER_ME_DURATION;
+  }
+  next();
+});
 
 const crypto = require('crypto');
 

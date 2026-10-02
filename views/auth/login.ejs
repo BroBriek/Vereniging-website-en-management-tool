@@ -4,23 +4,59 @@
         <div class="card mt-5">
             <div class="card-header bg-danger text-white">Login Leiding</div>
             <div class="card-body">
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                        <div><%= error %></div>
+                    </div>
+                <% } %>
                 <form action="/auth/login" method="POST">
                     <div class="mb-3">
                         <label for="username" class="form-label">Gebruikersnaam (niet hoofdletter gevoelig)</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                        <input type="text" class="form-control" id="username" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Wachtwoord</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                        <input type="password" class="form-control" id="password" name="password" autocomplete="current-password" required>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me">
-                        <label class="form-check-label" for="remember_me">Blijf ingelogd</label>
+                    <div class="mb-3">
+                        <div class="form-check d-flex align-items-center p-2 rounded border" style="min-height: 48px; cursor: pointer; user-select: none; -webkit-user-select: none; background-color: rgba(0,0,0,0.02);">
+                            <input type="checkbox" class="form-check-input my-0 ms-1 me-2" id="remember_me" name="remember_me" value="true" style="cursor: pointer; width: 1.25em; height: 1.25em;">
+                            <label class="form-check-label w-100 mb-0" for="remember_me" style="cursor: pointer; padding: 6px 0;">Blijf ingelogd (30 dagen)</label>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-danger w-100">Inloggen</button>
+                    <button type="submit" class="btn btn-danger w-100 py-2">Inloggen</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    (function() {
+        try {
+            var cb = document.getElementById('remember_me');
+            if (!cb) return;
+            var saved = localStorage.getItem('chiro_remember_me');
+            if (saved === 'true') {
+                cb.checked = true;
+            } else if (saved === 'false') {
+                cb.checked = false;
+            }
+            cb.addEventListener('change', function() {
+                try {
+                    localStorage.setItem('chiro_remember_me', cb.checked ? 'true' : 'false');
+                } catch (e) {}
+            });
+            var form = cb.closest('form');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    try {
+                        localStorage.setItem('chiro_remember_me', cb.checked ? 'true' : 'false');
+                    } catch (e) {}
+                });
+            }
+        } catch (e) {}
+    })();
+</script>
 <%- include('../partials/footer') %>

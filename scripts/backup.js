@@ -34,6 +34,14 @@ if (fs.existsSync(dbFile)) {
 // 2. Backup Sessions (Optional)
 if (fs.existsSync(sessionFile)) {
     fs.copyFileSync(sessionFile, path.join(targetDir, 'sessions.sqlite'));
+    const sessionWal = `${sessionFile}-wal`;
+    const sessionShm = `${sessionFile}-shm`;
+    if (fs.existsSync(sessionWal)) {
+        fs.copyFileSync(sessionWal, path.join(targetDir, 'sessions.sqlite-wal'));
+    }
+    if (fs.existsSync(sessionShm)) {
+        fs.copyFileSync(sessionShm, path.join(targetDir, 'sessions.sqlite-shm'));
+    }
     console.log('✅ Sessions backed up.');
 }
 

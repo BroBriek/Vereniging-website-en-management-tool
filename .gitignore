@@ -6,6 +6,7 @@ node_modules/
 
 # Database & Sessions (Local data)
 *.sqlite
+*.sqlite*
 database.sqlite
 sessions.sqlite
 
