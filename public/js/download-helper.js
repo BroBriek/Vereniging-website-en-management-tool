@@ -11,7 +11,12 @@ let activeKeydownHandler = null;
 let currentPreviewZoom = 1.0;
 let defaultFitZoom = 1.0;
 let activeZoomTarget = null;
+let activeZoomSizer = null;
+let activeScrollContainer = null;
 let activeTouchListeners = null;
+let activeDocScrollHandler = null;
+let activeDocKeyHandler = null;
+let activeResizeHandler = null;
 const previewCache = new Map();
 const loadedVendorScripts = new Map();
 
@@ -394,7 +399,9 @@ async function handlePdfPreview(url, container, loader) {
     if (previewCache.has(url)) {
         container.innerHTML = previewCache.get(url);
         showPreviewSuccess(container);
-        setupPreviewZoom(container.querySelector('#pdfPreviewWrapper'), 'pdf');
+        const stage = container.querySelector('.docx-stage');
+        const sizer = container.querySelector('.docx-stage-sizer');
+        setupPreviewZoom(stage || container.querySelector('#pdfPreviewWrapper') || container, 'pdf', container, sizer);
         return;
     }
 
@@ -422,14 +429,24 @@ async function handlePdfPreview(url, container, loader) {
         const pdfDoc = await loadingTask.promise;
         const totalPages = pdfDoc.numPages;
 
-        container.innerHTML = `
-            <div class="pdf-preview-wrapper docx-wrapper" id="pdfPreviewWrapper">
-                <div class="pdf-pages-container" id="pdfPagesContainer">
-                </div>
-            </div>
-        `;
+        container.innerHTML = '';
+        const sizer = document.createElement('div');
+        sizer.className = 'docx-stage-sizer';
+        const stage = document.createElement('div');
+        stage.className = 'docx-stage';
 
-        const pagesContainer = container.querySelector('#pdfPagesContainer');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pdf-preview-wrapper docx-wrapper';
+        wrapper.id = 'pdfPreviewWrapper';
+
+        const pagesContainer = document.createElement('div');
+        pagesContainer.className = 'pdf-pages-container';
+        pagesContainer.id = 'pdfPagesContainer';
+
+        wrapper.appendChild(pagesContainer);
+        stage.appendChild(wrapper);
+        sizer.appendChild(stage);
+        container.appendChild(sizer);
 
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
             const page = await pdfDoc.getPage(pageNum);
@@ -457,7 +474,7 @@ async function handlePdfPreview(url, container, loader) {
 
         previewCache.set(url, container.innerHTML);
         showPreviewSuccess(container);
-        setupPreviewZoom(container.querySelector('#pdfPreviewWrapper'), 'pdf');
+        setupPreviewZoom(stage, 'pdf', container, sizer);
 
     } catch (pdfErr) {
         console.warn('PDF.js rendering failed, attempting fallback...', pdfErr);
@@ -655,7 +672,9 @@ async function handleWordPreview(url, ext, container, loader) {
     if (previewCache.has(url)) {
         container.innerHTML = previewCache.get(url);
         showPreviewSuccess(container);
-        setupPreviewZoom(container.querySelector('.docx-wrapper') || container, 'docx');
+        const stage = container.querySelector('.docx-stage');
+        const sizer = container.querySelector('.docx-stage-sizer');
+        setupPreviewZoom(stage || container.querySelector('.docx-wrapper') || container, 'docx', container, sizer);
         return;
     }
 
@@ -680,12 +699,16 @@ async function handleWordPreview(url, ext, container, loader) {
             const cleanArrayBuffer = await normalizeDocxSymbols(arrayBuffer);
 
             container.innerHTML = '';
-            const renderWrapper = document.createElement('div');
-            renderWrapper.className = 'w-100 h-100';
-            container.appendChild(renderWrapper);
+            const sizer = document.createElement('div');
+            sizer.className = 'docx-stage-sizer';
+            const stage = document.createElement('div');
+            stage.className = 'docx-stage';
+
+            sizer.appendChild(stage);
+            container.appendChild(sizer);
 
             // Keep true A4 format! Do NOT ignore width or height!
-            await window.docx.renderAsync(cleanArrayBuffer, renderWrapper, null, {
+            await window.docx.renderAsync(cleanArrayBuffer, stage, null, {
                 className: "docx",
                 inWrapper: true,
                 ignoreWidth: false,
@@ -701,7 +724,7 @@ async function handleWordPreview(url, ext, container, loader) {
 
             previewCache.set(url, container.innerHTML);
             showPreviewSuccess(container);
-            setupPreviewZoom(container.querySelector('.docx-wrapper') || renderWrapper, 'docx');
+            setupPreviewZoom(stage, 'docx', container, sizer);
             return;
         } catch (docxErr) {
             console.warn('docx-preview failed, attempting mammoth fallback...', docxErr);
@@ -722,6 +745,12 @@ async function handleWordPreview(url, ext, container, loader) {
                     html = '<p class="text-muted text-center py-4"><em>Dit Word-document bevat geen zichtbare tekst of secties.</em></p>';
                 }
 
+                container.innerHTML = '';
+                const sizer = document.createElement('div');
+                sizer.className = 'docx-stage-sizer';
+                const stage = document.createElement('div');
+                stage.className = 'docx-stage';
+
                 const markup = `
                     <div class="docx-preview-container">
                         <div class="docx-paper">
@@ -730,10 +759,13 @@ async function handleWordPreview(url, ext, container, loader) {
                     </div>
                 `;
 
-                container.innerHTML = markup;
+                stage.innerHTML = markup;
+                sizer.appendChild(stage);
+                container.appendChild(sizer);
+
                 previewCache.set(url, container.innerHTML);
                 showPreviewSuccess(container);
-                setupPreviewZoom(container.querySelector('.docx-paper') || container, 'docx');
+                setupPreviewZoom(stage, 'docx', container, sizer);
                 return;
             } catch (clientErr) {
                 console.warn('Client-side Mammoth conversion also failed, falling back to server preview...', clientErr);
@@ -1079,6 +1111,12 @@ async function handleServerDocPreview(url, container, loader) {
             throw new Error(data.error || 'Geen HTML beschikbaar');
         }
 
+        container.innerHTML = '';
+        const sizer = document.createElement('div');
+        sizer.className = 'docx-stage-sizer';
+        const stage = document.createElement('div');
+        stage.className = 'docx-stage';
+
         const markup = `
             <div class="docx-preview-container">
                 <div class="docx-paper">
@@ -1087,10 +1125,13 @@ async function handleServerDocPreview(url, container, loader) {
             </div>
         `;
 
-        container.innerHTML = markup;
+        stage.innerHTML = markup;
+        sizer.appendChild(stage);
+        container.appendChild(sizer);
+
         previewCache.set(url, container.innerHTML);
         showPreviewSuccess(container);
-        setupPreviewZoom(container.querySelector('.docx-paper') || container, 'doc');
+        setupPreviewZoom(stage, 'doc', container, sizer);
     } catch (serverErr) {
         console.error('Server document conversion failed:', serverErr);
         showPreviewError('Dit bestandstype kan niet direct worden weergegeven in de browser.');
@@ -1171,13 +1212,16 @@ function showPreviewError(msg) {
 }
 
 /**
- * Setup responsive zoom controls & touch pinch-to-zoom for Word, PDF & Excel documents
+ * Setup responsive zoom controls, touch pinch-to-zoom & page navigation for Word, PDF & Excel documents
  */
-function setupPreviewZoom(targetEl, type) {
+function setupPreviewZoom(targetEl, type, scrollContainer, sizerEl) {
     teardownPreviewZoom();
     if (!targetEl) return;
 
     activeZoomTarget = targetEl;
+    activeZoomSizer = sizerEl || null;
+    activeScrollContainer = scrollContainer || document.getElementById('previewDocContainer');
+
     const toolbar = document.getElementById('previewZoomToolbar');
     const outBtn = document.getElementById('previewZoomOutBtn');
     const inBtn = document.getElementById('previewZoomInBtn');
@@ -1188,92 +1232,255 @@ function setupPreviewZoom(targetEl, type) {
 
     toolbar.classList.remove('d-none');
 
+    const containerEl = activeScrollContainer || document.querySelector('#filePreviewModal .modal-body');
+    const availableWidth = containerEl ? containerEl.clientWidth : window.innerWidth;
+
+    // Detect natural content width (e.g. 794px for A4 docx/pdf)
+    let naturalWidth = 794;
+    const pageEl = targetEl.querySelector('section.docx, .pdf-page-card, .docx-paper');
+    if (pageEl && pageEl.offsetWidth > 100) {
+        naturalWidth = pageEl.offsetWidth;
+    } else if (targetEl.offsetWidth > 100) {
+        naturalWidth = targetEl.offsetWidth;
+    }
+
     const isMobile = window.innerWidth <= 768;
 
-    // Calculate smart initial fit for A4 documents (docx, pdf, doc) on mobile
-    if (isMobile && (type === 'docx' || type === 'pdf' || type === 'doc')) {
-        const modalBody = document.querySelector('#filePreviewModal .modal-body');
-        const availableWidth = modalBody ? modalBody.clientWidth : window.innerWidth;
-        // Standard A4 width is ~794px at 96 DPI
-        const a4Width = 794;
-        defaultFitZoom = Math.min(1.0, Math.max(0.42, (availableWidth - 20) / a4Width));
+    if (type === 'docx' || type === 'pdf' || type === 'doc') {
+        const paddingOffset = isMobile ? 16 : 32;
+        defaultFitZoom = Math.min(1.0, Math.max(0.28, (availableWidth - paddingOffset) / naturalWidth));
         currentPreviewZoom = defaultFitZoom;
     } else {
         defaultFitZoom = 1.0;
         currentPreviewZoom = 1.0;
     }
 
-    applyPreviewZoom(targetEl, currentPreviewZoom, label);
+    applyPreviewZoom(targetEl, currentPreviewZoom, label, activeScrollContainer, activeZoomSizer, naturalWidth);
 
     inBtn.onclick = (e) => {
         e.stopPropagation();
-        currentPreviewZoom = Math.min(2.5, Math.round((currentPreviewZoom + 0.15) * 100) / 100);
-        applyPreviewZoom(targetEl, currentPreviewZoom, label);
+        currentPreviewZoom = Math.min(3.0, Math.round((currentPreviewZoom + 0.15) * 100) / 100);
+        applyPreviewZoom(targetEl, currentPreviewZoom, label, activeScrollContainer, activeZoomSizer, naturalWidth);
     };
 
     outBtn.onclick = (e) => {
         e.stopPropagation();
-        currentPreviewZoom = Math.max(0.35, Math.round((currentPreviewZoom - 0.15) * 100) / 100);
-        applyPreviewZoom(targetEl, currentPreviewZoom, label);
+        currentPreviewZoom = Math.max(defaultFitZoom * 0.7, Math.round((currentPreviewZoom - 0.15) * 100) / 100);
+        applyPreviewZoom(targetEl, currentPreviewZoom, label, activeScrollContainer, activeZoomSizer, naturalWidth);
     };
 
     fitBtn.onclick = (e) => {
         e.stopPropagation();
-        if (Math.abs(currentPreviewZoom - 1.0) < 0.06) {
-            currentPreviewZoom = defaultFitZoom;
-        } else {
+        if (Math.abs(currentPreviewZoom - defaultFitZoom) < 0.04) {
             currentPreviewZoom = 1.0;
+        } else {
+            currentPreviewZoom = defaultFitZoom;
         }
-        applyPreviewZoom(targetEl, currentPreviewZoom, label);
+        applyPreviewZoom(targetEl, currentPreviewZoom, label, activeScrollContainer, activeZoomSizer, naturalWidth);
     };
 
-    setupPinchToZoom(targetEl, label);
+    // Setup multi-page navigation for multi-page Word & PDF
+    setupDocumentPageNavigation(activeScrollContainer, targetEl);
+
+    // Setup anchored pinch-to-zoom & double-tap zoom
+    setupPinchToZoom(activeScrollContainer, targetEl, label, activeZoomSizer, naturalWidth);
+
+    // Window resize handler to maintain fit
+    activeResizeHandler = () => {
+        if (!activeZoomTarget) return;
+        const newAvailableWidth = activeScrollContainer ? activeScrollContainer.clientWidth : window.innerWidth;
+        const paddingOffset = window.innerWidth <= 768 ? 16 : 32;
+        defaultFitZoom = Math.min(1.0, Math.max(0.28, (newAvailableWidth - paddingOffset) / naturalWidth));
+        if (Math.abs(currentPreviewZoom - defaultFitZoom) < 0.08) {
+            currentPreviewZoom = defaultFitZoom;
+            applyPreviewZoom(targetEl, currentPreviewZoom, label, activeScrollContainer, activeZoomSizer, naturalWidth);
+        }
+    };
+    window.addEventListener('resize', activeResizeHandler);
 }
 
-function applyPreviewZoom(targetEl, zoomLevel, label) {
+function applyPreviewZoom(targetEl, zoomLevel, label, scrollContainer, sizerEl, contentNaturalWidth) {
     if (!targetEl) return;
+    currentPreviewZoom = zoomLevel;
 
-    if ('zoom' in targetEl.style) {
-        targetEl.style.zoom = zoomLevel;
+    const baseWidth = contentNaturalWidth || 794;
+    const baseHeight = targetEl.scrollHeight || targetEl.offsetHeight || 1123;
+    const scaledWidth = Math.round(baseWidth * zoomLevel);
+    const scaledHeight = Math.round(baseHeight * zoomLevel);
+
+    // Use transform scale for GPU acceleration without mutating physical document layout
+    targetEl.style.transformOrigin = 'top left';
+    targetEl.style.transform = `scale(${zoomLevel})`;
+
+    if (sizerEl) {
+        sizerEl.style.width = `${scaledWidth}px`;
+        sizerEl.style.height = `${scaledHeight}px`;
+
+        const vWidth = scrollContainer ? scrollContainer.clientWidth : window.innerWidth;
+        if (scaledWidth < vWidth) {
+            const offset = Math.max(0, Math.floor((vWidth - scaledWidth) / 2));
+            sizerEl.style.marginLeft = `${offset}px`;
+            sizerEl.style.marginRight = 'auto';
+        } else {
+            // When zoomed in, align strictly to 0 so the left side is never cut off
+            sizerEl.style.marginLeft = '0px';
+            sizerEl.style.marginRight = '0px';
+        }
     } else {
-        targetEl.style.transformOrigin = 'top center';
-        targetEl.style.transform = `scale(${zoomLevel})`;
+        // Fallback for elements without a sizer (e.g. table areas)
+        if ('zoom' in targetEl.style && targetEl.tagName === 'DIV') {
+            targetEl.style.zoom = zoomLevel;
+            targetEl.style.transform = '';
+        } else {
+            targetEl.style.transformOrigin = 'top left';
+            targetEl.style.transform = `scale(${zoomLevel})`;
+        }
     }
 
     if (label) {
-        if (Math.abs(zoomLevel - defaultFitZoom) < 0.03 && defaultFitZoom < 0.95) {
-            label.textContent = 'A4';
+        if (Math.abs(zoomLevel - defaultFitZoom) < 0.04) {
+            label.textContent = 'Passend';
         } else {
             label.textContent = `${Math.round(zoomLevel * 100)}%`;
         }
     }
 }
 
-function setupPinchToZoom(targetEl, label) {
+/**
+ * Setup intuitive document page navigation (Page counter, Next/Prev buttons, scroll-spy)
+ */
+function setupDocumentPageNavigation(scrollContainer, stageEl) {
+    const pageNav = document.getElementById('previewPageNav');
+    const prevBtn = document.getElementById('previewPrevPageBtn');
+    const nextBtn = document.getElementById('previewNextPageBtn');
+    const pageLabel = document.getElementById('previewPageLabel');
+
+    if (!pageNav || !prevBtn || !nextBtn || !pageLabel || !stageEl || !scrollContainer) return;
+
+    const pages = stageEl.querySelectorAll('section.docx, .pdf-page-card');
+    const totalPages = pages.length;
+
+    if (totalPages <= 1) {
+        pageNav.classList.add('d-none');
+        return;
+    }
+
+    pageNav.classList.remove('d-none');
+
+    let activePageIndex = 0;
+
+    const updateControls = () => {
+        prevBtn.disabled = (activePageIndex <= 0);
+        nextBtn.disabled = (activePageIndex >= totalPages - 1);
+        pageLabel.textContent = `${activePageIndex + 1} / ${totalPages}`;
+    };
+
+    updateControls();
+
+    prevBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (activePageIndex > 0) {
+            activePageIndex--;
+            pages[activePageIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updateControls();
+        }
+    };
+
+    nextBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (activePageIndex < totalPages - 1) {
+            activePageIndex++;
+            pages[activePageIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            updateControls();
+        }
+    };
+
+    // Track scroll to update current page indicator smoothly
+    let isTicking = false;
+    activeDocScrollHandler = () => {
+        if (isTicking) return;
+        isTicking = true;
+        window.requestAnimationFrame(() => {
+            const vRect = scrollContainer.getBoundingClientRect();
+            const checkY = vRect.top + vRect.height * 0.35;
+            for (let i = 0; i < totalPages; i++) {
+                const pRect = pages[i].getBoundingClientRect();
+                if (pRect.top <= checkY && pRect.bottom >= checkY) {
+                    if (activePageIndex !== i) {
+                        activePageIndex = i;
+                        updateControls();
+                    }
+                    break;
+                }
+            }
+            isTicking = false;
+        });
+    };
+    scrollContainer.addEventListener('scroll', activeDocScrollHandler, { passive: true });
+
+    // Keyboard navigation (PageUp / PageDown)
+    activeDocKeyHandler = (e) => {
+        if (e.key === 'PageDown' || (e.key === 'ArrowDown' && (e.altKey || e.metaKey))) {
+            e.preventDefault();
+            nextBtn.click();
+        } else if (e.key === 'PageUp' || (e.key === 'ArrowUp' && (e.altKey || e.metaKey))) {
+            e.preventDefault();
+            prevBtn.click();
+        }
+    };
+    window.addEventListener('keydown', activeDocKeyHandler);
+}
+
+/**
+ * Enhanced Touch Gestures: Anchored pinch-to-zoom & double-tap to zoom
+ */
+function setupPinchToZoom(scrollContainer, targetEl, label, sizerEl, contentNaturalWidth) {
+    if (!scrollContainer || !targetEl) return;
+
     let initialDistance = 0;
     let initialZoom = currentPreviewZoom;
+    let initialScrollLeft = 0;
+    let initialScrollTop = 0;
+    let focalX = 0;
+    let focalY = 0;
 
     const onTouchStart = (e) => {
         if (e.touches.length === 2) {
+            e.preventDefault();
             initialDistance = Math.hypot(
                 e.touches[0].clientX - e.touches[1].clientX,
                 e.touches[0].clientY - e.touches[1].clientY
             );
             initialZoom = currentPreviewZoom;
+            initialScrollLeft = scrollContainer.scrollLeft;
+            initialScrollTop = scrollContainer.scrollTop;
+
+            focalX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            focalY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
         }
     };
 
     const onTouchMove = (e) => {
         if (e.touches.length === 2 && initialDistance > 0) {
+            e.preventDefault();
             const currentDistance = Math.hypot(
                 e.touches[0].clientX - e.touches[1].clientX,
                 e.touches[0].clientY - e.touches[1].clientY
             );
             const scaleFactor = currentDistance / initialDistance;
             let newZoom = initialZoom * scaleFactor;
-            newZoom = Math.min(2.5, Math.max(0.35, Math.round(newZoom * 100) / 100));
+            newZoom = Math.min(3.0, Math.max(defaultFitZoom * 0.7, Math.round(newZoom * 100) / 100));
+
+            const prevZoom = currentPreviewZoom;
             currentPreviewZoom = newZoom;
-            applyPreviewZoom(targetEl, currentPreviewZoom, label);
+            applyPreviewZoom(targetEl, currentPreviewZoom, label, scrollContainer, sizerEl, contentNaturalWidth);
+
+            // Anchor scroll position to focal point so content under fingers stays steady
+            if (prevZoom > 0) {
+                const ratio = currentPreviewZoom / prevZoom;
+                scrollContainer.scrollLeft = Math.max(0, (initialScrollLeft + focalX) * ratio - focalX);
+                scrollContainer.scrollTop = Math.max(0, (initialScrollTop + focalY) * ratio - focalY);
+            }
         }
     };
 
@@ -1283,28 +1490,71 @@ function setupPinchToZoom(targetEl, label) {
         }
     };
 
-    targetEl.addEventListener('touchstart', onTouchStart, { passive: true });
-    targetEl.addEventListener('touchmove', onTouchMove, { passive: true });
-    targetEl.addEventListener('touchend', onTouchEnd, { passive: true });
+    scrollContainer.addEventListener('touchstart', onTouchStart, { passive: false });
+    scrollContainer.addEventListener('touchmove', onTouchMove, { passive: false });
+    scrollContainer.addEventListener('touchend', onTouchEnd, { passive: false });
 
-    activeTouchListeners = { targetEl, onTouchStart, onTouchMove, onTouchEnd };
+    // Double-tap to toggle between fit-to-screen and comfortable reading zoom (1.5x)
+    let lastTapTime = 0;
+    const onDoubleTap = (e) => {
+        if (e.touches.length > 0) return;
+        const now = Date.now();
+        if (now - lastTapTime < 320) {
+            e.preventDefault();
+            if (Math.abs(currentPreviewZoom - defaultFitZoom) < 0.08) {
+                currentPreviewZoom = Math.min(2.0, defaultFitZoom * 1.6);
+            } else {
+                currentPreviewZoom = defaultFitZoom;
+            }
+            applyPreviewZoom(targetEl, currentPreviewZoom, label, scrollContainer, sizerEl, contentNaturalWidth);
+        }
+        lastTapTime = now;
+    };
+    scrollContainer.addEventListener('touchend', onDoubleTap, { passive: false });
+
+    activeTouchListeners = { scrollContainer, onTouchStart, onTouchMove, onTouchEnd, onDoubleTap };
 }
 
 function teardownPreviewZoom() {
     if (activeTouchListeners) {
-        const { targetEl, onTouchStart, onTouchMove, onTouchEnd } = activeTouchListeners;
-        targetEl.removeEventListener('touchstart', onTouchStart);
-        targetEl.removeEventListener('touchmove', onTouchMove);
-        targetEl.removeEventListener('touchend', onTouchEnd);
+        const { scrollContainer, onTouchStart, onTouchMove, onTouchEnd, onDoubleTap } = activeTouchListeners;
+        if (scrollContainer) {
+            scrollContainer.removeEventListener('touchstart', onTouchStart);
+            scrollContainer.removeEventListener('touchmove', onTouchMove);
+            scrollContainer.removeEventListener('touchend', onTouchEnd);
+            scrollContainer.removeEventListener('touchend', onDoubleTap);
+        }
         activeTouchListeners = null;
+    }
+    if (activeDocScrollHandler && activeScrollContainer) {
+        activeScrollContainer.removeEventListener('scroll', activeDocScrollHandler);
+        activeDocScrollHandler = null;
+    }
+    if (activeDocKeyHandler) {
+        window.removeEventListener('keydown', activeDocKeyHandler);
+        activeDocKeyHandler = null;
+    }
+    if (activeResizeHandler) {
+        window.removeEventListener('resize', activeResizeHandler);
+        activeResizeHandler = null;
     }
     if (activeZoomTarget) {
         activeZoomTarget.style.zoom = '';
         activeZoomTarget.style.transform = '';
         activeZoomTarget = null;
     }
+    if (activeZoomSizer) {
+        activeZoomSizer.style.width = '';
+        activeZoomSizer.style.height = '';
+        activeZoomSizer.style.marginLeft = '';
+        activeZoomSizer.style.marginRight = '';
+        activeZoomSizer = null;
+    }
+    activeScrollContainer = null;
     const toolbar = document.getElementById('previewZoomToolbar');
     if (toolbar) toolbar.classList.add('d-none');
+    const pageNav = document.getElementById('previewPageNav');
+    if (pageNav) pageNav.classList.add('d-none');
     currentPreviewZoom = 1.0;
 }
 
