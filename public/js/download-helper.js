@@ -848,23 +848,33 @@ async function handleExcelPreview(url, ext, container, loader) {
             sheetMap[sheetName] = rawTable.replace('<table', '<table class="excel-table"');
         });
 
+
         const tabsHtml = workbook.SheetNames.map((name, idx) => `
-            <button type="button" class="nav-link ${idx === 0 ? 'active' : ''} px-3 py-1 btn-sm" data-sheet="${escapeHtml(name)}">
-                <i class="bi bi-file-earmark-spreadsheet me-1"></i>${escapeHtml(name)}
+            <button type="button" class="excel-tab-btn ${idx === 0 ? 'active' : ''}" data-sheet="${escapeHtml(name)}">
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+                <span class="excel-tab-label">${escapeHtml(name)}</span>
             </button>
         `).join('');
 
         const firstSheetName = workbook.SheetNames[0];
+        // Only show the tab carousel row if there are multiple sheets
+        const showTabs = workbook.SheetNames.length > 1;
         const markup = `
             <div class="excel-preview-container">
                 <div class="excel-toolbar">
-                    <div class="excel-sheet-tabs nav nav-pills" id="excelTabs">
-                        ${tabsHtml}
-                    </div>
-                    <div class="d-flex align-items-center gap-2 ms-auto">
-                        <input type="search" class="form-control form-control-sm rounded-pill" id="excelSearchInput" placeholder="Zoeken in tabel..." style="max-width: 170px;">
+                    ${showTabs ? `
+                    <div class="excel-tabs-row">
+                        <div class="excel-tab-carousel" id="excelTabs" role="tablist" aria-label="Werkbladen">
+                            ${tabsHtml}
+                        </div>
+                    </div>` : ''}
+                    <div class="excel-search-row">
+                        <div class="position-relative excel-search-wrap">
+                            <i class="bi bi-search excel-search-icon"></i>
+                            <input type="search" class="form-control form-control-sm rounded-pill excel-search-input" id="excelSearchInput" placeholder="Zoeken in tabel…" autocomplete="off">
+                        </div>
                         <span class="text-muted small text-nowrap d-none d-sm-inline" id="excelSheetCounter">
-                            ${workbook.SheetNames.length} werkblad(en)
+                            ${workbook.SheetNames.length} werkblad${workbook.SheetNames.length !== 1 ? 'en' : ''}
                         </span>
                     </div>
                 </div>
@@ -901,6 +911,8 @@ function initExcelInteractiveEvents(container, sheetMap) {
             if (!btn) return;
             tabsContainer.querySelectorAll('button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            // Scroll active tab into view within the carousel
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             const sheetName = btn.getAttribute('data-sheet');
             if (sheetMap[sheetName]) {
                 tableArea.innerHTML = sheetMap[sheetName];

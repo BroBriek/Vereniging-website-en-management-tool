@@ -65,17 +65,17 @@
     <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-xl modal-fullscreen-lg-down modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content rounded-4 border-0 shadow" style="height: 90vh;">
-          <div class="modal-header border-0 pb-2 px-3 px-md-4 pt-3">
-            <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 75%;">
-                <span id="previewFileIcon" class="fs-4 text-primary d-flex align-items-center"><i class="bi bi-file-earmark-text"></i></span>
+          <div class="modal-header border-bottom py-2 px-3 px-md-4 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2 text-truncate me-2" style="min-width: 0; flex: 1 1 auto;">
+                <span id="previewFileIcon" class="text-primary d-flex align-items-center fs-5"><i class="bi bi-file-earmark-text"></i></span>
                 <h5 class="modal-title font-playful text-truncate mb-0" id="previewFileName">Bestand</h5>
                 <span id="previewFileBadge" class="badge rounded-pill bg-light text-secondary border d-none"></span>
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <a id="previewDownloadBtn" href="#" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" download>
-                    <i class="bi bi-download me-1"></i> <span class="d-none d-sm-inline">Origineel</span> Downloaden
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                <a id="previewDownloadBtn" href="#" class="btn btn-primary btn-sm preview-download-btn" download title="Download bestand">
+                    <i class="bi bi-download"></i> <span class="preview-download-text">Downloaden</span>
                 </a>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+                <button type="button" class="btn-close preview-modal-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
             </div>
           </div>
           <div class="modal-body p-0 h-100 position-relative bg-light overflow-hidden">
