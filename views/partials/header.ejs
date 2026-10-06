@@ -1,3 +1,29 @@
+<%
+var orgName = (typeof locals !== 'undefined' && locals.orgName) || process.env.ORG_NAME || process.env.ORGANIZATION_NAME || 'Chiro Vreugdeland';
+var orgLocation = (typeof locals !== 'undefined' && locals.orgLocation) || process.env.ORG_LOCATION || 'Meeuwen';
+var orgFullName = (typeof locals !== 'undefined' && locals.orgFullName) || process.env.ORG_FULL_NAME || (orgName + ' ' + orgLocation).trim();
+var appUrl = (typeof locals !== 'undefined' && locals.appUrl) || (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+var contactEmail = (typeof locals !== 'undefined' && locals.contactEmail) || process.env.CONTACT_EMAIL || 'contact@example.com';
+var currentPath = (typeof locals !== 'undefined' && locals.currentPath) || '';
+var settings = (typeof locals !== 'undefined' && locals.settings) || {
+    theme_color_primary: '#dc3545',
+    theme_color_secondary: '#0d6efd',
+    theme_color_accent: '#ffc107',
+    theme_color_neutral: '#6c757d',
+    theme_color_bg: '#ffffff',
+    theme_color_text: '#212529',
+    hidden_nav_pages: ''
+};
+var user = (typeof locals !== 'undefined' && locals.user) || null;
+var navbarPages = (typeof locals !== 'undefined' && Array.isArray(locals.navbarPages)) ? locals.navbarPages : [];
+var capitalizeName = (typeof locals !== 'undefined' && typeof locals.capitalizeName === 'function') ? locals.capitalizeName : function(name) {
+    if (!name) return '';
+    return name.toString().split(' ').map(function(w) { return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); }).join(' ');
+};
+var originalAdminId = (typeof locals !== 'undefined' && locals.originalAdminId) || null;
+var enablePublicRegistrations = (typeof locals !== 'undefined' && locals.enablePublicRegistrations) || false;
+var showGamesToAll = (typeof locals !== 'undefined' && locals.showGamesToAll) || false;
+%>
 <!DOCTYPE html>
 <html lang="nl">
 <head>

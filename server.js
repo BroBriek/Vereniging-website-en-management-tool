@@ -129,6 +129,20 @@ if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// App-level default locals to ensure all views have baseline globals even on early error rendering
+const defaultOrgName = process.env.ORG_NAME || process.env.ORGANIZATION_NAME || 'Chiro Vreugdeland';
+const defaultOrgLocation = process.env.ORG_LOCATION || 'Meeuwen';
+app.locals.orgName = defaultOrgName;
+app.locals.orgLocation = defaultOrgLocation;
+app.locals.orgFullName = process.env.ORG_FULL_NAME || `${defaultOrgName} ${defaultOrgLocation}`.trim();
+app.locals.contactEmail = process.env.CONTACT_EMAIL || 'contact@example.com';
+app.locals.appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+app.locals.settings = {};
+app.locals.navbarPages = [];
+app.locals.user = null;
+app.locals.csrfToken = null;
+app.locals.currentPath = '';
+
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -266,6 +280,83 @@ app.use((req, res, next) => {
   next();
 });
 
+// Prevent caching of session-authenticated routes to avoid session leaks via proxies
+app.use((req, res, next) => {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
+
+// Global Variables & Alert Middleware
+app.use((req, res, next) => {
+  onlineUserService.recordActivity(req);
+  res.locals.settings = SettingsService.getAll() || {};
+  res.locals.navbarPages = CustomPageService.getNavbarPages();
+  res.locals.user = req.user || null;
+  res.locals.originalAdminId = req.session ? req.session.originalAdminId : null;
+  res.locals.enablePublicRegistrations = res.locals.settings.enable_public_registrations_view;
+  res.locals.showGamesToAll = res.locals.settings.show_games_to_all;
+  
+  // Organization and contact configuration
+  res.locals.orgName = process.env.ORG_NAME || process.env.ORGANIZATION_NAME || 'Chiro Vreugdeland';
+  res.locals.orgLocation = process.env.ORG_LOCATION || 'Meeuwen';
+  res.locals.orgFullName = process.env.ORG_FULL_NAME || `${res.locals.orgName} ${res.locals.orgLocation}`.trim();
+  res.locals.contactEmail = process.env.CONTACT_EMAIL || 'contact@example.com';
+  res.locals.appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+  
+  // Normalize currentPath for SEO (remove trailing slash unless root)
+  let normalizedPath = req.path;
+  if (normalizedPath.length > 1 && normalizedPath.endsWith('/')) {
+    normalizedPath = normalizedPath.slice(0, -1);
+  }
+  res.locals.currentPath = normalizedPath;
+  
+  // Helper for capitalizing names
+  res.locals.capitalizeName = (name) => {
+    if (!name) return '';
+    return name.toString().split(' ').map(word => {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(' ');
+  };
+
+  // Helper for avatar colors
+  res.locals.getAvatarColor = (username) => {
+    if (!username) return '#db3e41';
+    const vibrantColors = ['#f1c40f', '#2ecc71', '#e67e22', '#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#d35400'];
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return vibrantColors[Math.abs(hash) % vibrantColors.length];
+  };
+
+  // Helper for initials
+  res.locals.getInitials = (username) => {
+    if (!username) return '?';
+    return username.substring(0, 2).toUpperCase();
+  };
+  
+  // Security headers
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.quilljs.com https://www.google.com https://www.gstatic.com blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.quilljs.com https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; frame-src 'self' https://www.google.com https://docs.google.com https://view.officeapps.live.com https://recaptcha.google.com blob:; connect-src 'self' https://www.google.com https://cdn.jsdelivr.net;");
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  
+  // Extract alerts from query params
+  if (req.query.error) {
+    res.locals.error = req.query.error;
+  }
+  if (req.query.success) {
+    res.locals.success = req.query.success;
+  }
+  next();
+});
+
 const crypto = require('crypto');
 
 // Helper to safely format form action URL: only keeps/adds _csrf for multipart forms, cleans it from standard forms
@@ -387,7 +478,8 @@ function csrfProtection(req, res, next) {
         status: 404,
         message: 'Oeps! Pagina niet gevonden',
         description: 'De pagina die je zoekt bestaat niet of is verplaatst.',
-        user: req.user || null
+        user: req.user || null,
+        appUrl: res.locals.appUrl || app.locals.appUrl || ''
       });
     }
 
@@ -398,83 +490,6 @@ function csrfProtection(req, res, next) {
 }
 
 app.use(csrfProtection);
-
-// Prevent caching of session-authenticated routes to avoid session leaks via proxies
-app.use((req, res, next) => {
-  if (req.isAuthenticated && req.isAuthenticated()) {
-    res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-  }
-  next();
-});
-
-// Global Variables & Alert Middleware
-app.use((req, res, next) => {
-  onlineUserService.recordActivity(req);
-  res.locals.settings = SettingsService.getAll() || {};
-  res.locals.navbarPages = CustomPageService.getNavbarPages();
-  res.locals.user = req.user || null;
-  res.locals.originalAdminId = req.session ? req.session.originalAdminId : null;
-  res.locals.enablePublicRegistrations = res.locals.settings.enable_public_registrations_view;
-  res.locals.showGamesToAll = res.locals.settings.show_games_to_all;
-  
-  // Organization and contact configuration
-  res.locals.orgName = process.env.ORG_NAME || process.env.ORGANIZATION_NAME || 'Chiro Vreugdeland';
-  res.locals.orgLocation = process.env.ORG_LOCATION || 'Meeuwen';
-  res.locals.orgFullName = process.env.ORG_FULL_NAME || `${res.locals.orgName} ${res.locals.orgLocation}`.trim();
-  res.locals.contactEmail = process.env.CONTACT_EMAIL || 'contact@example.com';
-  res.locals.appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
-  
-  // Normalize currentPath for SEO (remove trailing slash unless root)
-  let normalizedPath = req.path;
-  if (normalizedPath.length > 1 && normalizedPath.endsWith('/')) {
-    normalizedPath = normalizedPath.slice(0, -1);
-  }
-  res.locals.currentPath = normalizedPath;
-  
-  // Helper for capitalizing names
-  res.locals.capitalizeName = (name) => {
-    if (!name) return '';
-    return name.toString().split(' ').map(word => {
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    }).join(' ');
-  };
-
-  // Helper for avatar colors
-  res.locals.getAvatarColor = (username) => {
-    if (!username) return '#db3e41';
-    const vibrantColors = ['#f1c40f', '#2ecc71', '#e67e22', '#e74c3c', '#3498db', '#9b59b6', '#1abc9c', '#d35400'];
-    let hash = 0;
-    for (let i = 0; i < username.length; i++) {
-        hash = username.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return vibrantColors[Math.abs(hash) % vibrantColors.length];
-  };
-
-  // Helper for initials
-  res.locals.getInitials = (username) => {
-    if (!username) return '?';
-    return username.substring(0, 2).toUpperCase();
-  };
-  
-  // Security headers
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.quilljs.com https://www.google.com https://www.gstatic.com blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.quilljs.com https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; frame-src 'self' https://www.google.com https://docs.google.com https://view.officeapps.live.com https://recaptcha.google.com blob:; connect-src 'self' https://www.google.com https://cdn.jsdelivr.net;");
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  
-  // Extract alerts from query params
-  if (req.query.error) {
-    res.locals.error = req.query.error;
-  }
-  if (req.query.success) {
-    res.locals.success = req.query.success;
-  }
-  next();
-});
 
 const rateLimit = require('express-rate-limit');
 
@@ -520,7 +535,8 @@ app.use((req, res) => {
       status: 404,
       message: 'Oeps! Pagina niet gevonden',
       description: 'De pagina die je zoekt bestaat niet of is verplaatst.',
-      user: req.user || null
+      user: req.user || null,
+      appUrl: res.locals.appUrl || app.locals.appUrl || ''
   });
 });
 
@@ -533,7 +549,8 @@ app.use((err, req, res, next) => {
       status: 500,
       message: 'Er ging iets mis',
       description: 'Onze excuses, er is een interne serverfout opgetreden.',
-      user: req.user || null
+      user: req.user || null,
+      appUrl: res.locals.appUrl || app.locals.appUrl || ''
   });
 });
 

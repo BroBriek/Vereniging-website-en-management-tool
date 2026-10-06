@@ -1,3 +1,8 @@
+<%
+var status = typeof status !== 'undefined' ? status : 500;
+var user = typeof user !== 'undefined' ? user : null;
+var description = typeof description !== 'undefined' ? description : '';
+%>
 <%- include('partials/header') %>
 
 <div class="container text-center mt-5">

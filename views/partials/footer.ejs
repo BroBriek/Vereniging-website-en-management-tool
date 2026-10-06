@@ -1,3 +1,8 @@
+<%
+var orgLocation = (typeof locals !== 'undefined' && locals.orgLocation) || process.env.ORG_LOCATION || 'Meeuwen';
+var orgName = (typeof locals !== 'undefined' && locals.orgName) || process.env.ORG_NAME || 'Chiro Vreugdeland';
+var user = (typeof locals !== 'undefined' && locals.user) || null;
+%>
     <% if (typeof fullWidth === 'undefined' || !fullWidth) { %>
         </div> <!-- End Container -->
     <% } %>
