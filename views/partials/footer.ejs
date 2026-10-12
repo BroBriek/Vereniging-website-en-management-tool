@@ -91,11 +91,11 @@ var user = (typeof locals !== 'undefined' && locals.user) || null;
             </div>
 
             <!-- PDF Iframe -->
-            <iframe id="previewFrame" src="" class="w-100 h-100 border-0 rounded-bottom-4 d-none"></iframe>
+            <iframe id="previewFrame" src="about:blank" class="w-100 h-100 border-0 rounded-bottom-4 d-none"></iframe>
 
             <!-- Image Container -->
             <div id="previewImageContainer" class="w-100 h-100 d-none d-flex align-items-center justify-content-center bg-white rounded-bottom-4 overflow-auto p-2">
-                <img id="previewImage" src="" class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                <img id="previewImage" class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: contain;">
             </div>
 
             <!-- Converted Document Container (Word, Excel, PowerPoint, Text) -->

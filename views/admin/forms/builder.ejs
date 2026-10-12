@@ -498,12 +498,17 @@
             case 'image':
                 html = `
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Afbeelding URL</label>
-                        <div class="input-group">
+                        <label class="form-label fw-bold">Afbeelding URL of Bestand</label>
+                        <div class="input-group mb-2">
                             <input type="text" id="edit_image_url" class="form-control" value="${field.url || ''}" placeholder="/uploads/afbeelding.jpg">
-                            <button class="btn btn-outline-secondary" type="button" onclick="openFilePicker()">Kies bestand</button>
+                            <button class="btn btn-outline-secondary" type="button" onclick="openFilePicker()">Kies uit Bestanden</button>
                         </div>
-                        <small class="text-muted">Tip: Gebruik de "Bestanden & Foto's" tool om afbeeldingen te uploaden en kopieer de link hierheen.</small>
+                        <div class="mb-2">
+                            <label class="form-label small text-muted">Of upload direct een foto van je apparaat:</label>
+                            <input type="file" id="edit_image_file" class="form-control" accept="image/*" onchange="uploadDirectImage(this)">
+                            <div id="image_upload_status" class="small mt-1 text-muted"></div>
+                        </div>
+                        <small class="text-muted">Let op: Gebruik geen lokale paden (zoals file:/// of C:\\). Upload de afbeelding om deze zichtbaar te maken voor iedereen.</small>
                     </div>
                 `;
                 break;
@@ -680,7 +685,12 @@
                 field.content = document.getElementById('edit_text_content').value;
                 break;
             case 'image':
-                field.url = document.getElementById('edit_image_url').value;
+                const imgUrl = document.getElementById('edit_image_url').value.trim();
+                if (imgUrl.toLowerCase().startsWith('file:') || /^[a-zA-Z]:[\\/]/.test(imgUrl)) {
+                    alert('Lokale bestandspaden (zoals file:/// of C:\\) werken niet op het internet. Upload de afbeelding a.u.b. via de uploadknop.');
+                    return;
+                }
+                field.url = imgUrl;
                 break;
             case 'short_text':
             case 'long_text':
@@ -816,6 +826,29 @@
                 win.close();
             }
         };
+    }
+
+    async function uploadDirectImage(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const statusEl = document.getElementById('image_upload_status');
+        statusEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Uploaden...';
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+            const res = await fetch('/admin/api/upload-image', {
+                method: 'POST',
+                body: formData
+            });
+            if (!res.ok) throw new Error('Upload mislukt');
+            const data = await res.json();
+            document.getElementById('edit_image_url').value = data.url;
+            statusEl.innerHTML = '<span class="text-success fw-bold"><i class="bi bi-check-circle me-1"></i> Afbeelding succesvol geüpload!</span>';
+        } catch (err) {
+            console.error(err);
+            statusEl.innerHTML = '<span class="text-danger fw-bold"><i class="bi bi-exclamation-circle me-1"></i> Fout bij uploaden. Probeer opnieuw.</span>';
+        }
     }
 
     // Initialize on load

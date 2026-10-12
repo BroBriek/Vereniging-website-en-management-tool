@@ -149,7 +149,14 @@ window.initializeRichEditors = function(elements) {
             let isFetchingMentions = false;
 
             quill.on('text-change', function(delta, oldDelta, source) {
-                textarea.value = quill.root.innerHTML;
+                let html = quill.root.innerHTML;
+                if (html.includes('file://')) {
+                    html = html
+                        .replace(/src=["']file:\/\/[^"']*["']/gi, 'src=""')
+                        .replace(/href=["']file:\/\/[^"']*["']/gi, 'href="#"');
+                    quill.root.innerHTML = html;
+                }
+                textarea.value = html;
 
                 // Dispatch input event to notify any live preview listeners
                 textarea.dispatchEvent(new Event('input', { bubbles: true }));

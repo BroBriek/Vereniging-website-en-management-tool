@@ -84,7 +84,7 @@
     <% } %>
 
     <div class="form-public-container mt-0">
-        <% if (form.bannerEnabled && form.bannerImage) { %>
+        <% if (form.bannerEnabled && form.bannerImage && !form.bannerImage.startsWith('file:') && !/^[a-zA-Z]:[\\/]/.test(form.bannerImage)) { %>
             <div class="form-banner">
                 <img src="<%= form.bannerImage %>" alt="Form Banner">
             </div>
@@ -110,7 +110,7 @@
                                 <%- field.content %>
                             </div>
                         <% } else if (field.type === 'image') { %>
-                            <% if (field.url) { %>
+                            <% if (field.url && !field.url.startsWith('file:') && !/^[a-zA-Z]:[\\/]/.test(field.url)) { %>
                                 <div class="text-center">
                                     <a href="<%= field.url %>" data-preview-url="<%= field.url %>" data-preview-name="<%= field.url.split('/').pop() %>" onclick="openFilePreview(this.dataset.previewUrl, this.dataset.previewName); return false;" class="d-inline-block">
                                         <img src="<%= field.url %>" class="img-fluid rounded shadow-sm" alt="Form afbeelding" style="cursor: pointer;">
@@ -203,6 +203,15 @@
                                 <input type="checkbox" style="opacity: 0; position: absolute; pointer-events: none;" class="pricing-required-check" id="req-<%= field.id %>" required>
                                 <div class="invalid-feedback">Selecteer minstens één item.</div>
                             <% } %>
+                        <% } else if (field.type === 'total_box') { %>
+                            <div class="card border-danger bg-light rounded-4 shadow-sm my-4 smart-total-box" id="total-box-<%= field.id %>">
+                                <div class="card-body text-center py-4">
+                                    <h3 class="text-danger mb-0 font-playful"><%= field.label || 'TOTAAL' %></h3>
+                                    <div class="display-4 fw-bold text-danger mt-2 smart-grand-total-display">€0,00</div>
+                                    <input type="hidden" name="<%= field.id %>" class="smart-grand-total-input" value="0">
+                                    <p class="text-muted small mt-2 mb-0">Deze box telt automatisch alle prijsmodules in het formulier bij elkaar op.</p>
+                                </div>
+                            </div>
                         <% } %>
                     </div>
                 <% }) %>
@@ -221,6 +230,21 @@
 
 <script>
     // triggerDownload and openFilePreview are now provided by /js/download-helper.js
+
+    function updateGrandTotal() {
+        let grandTotal = 0;
+        document.querySelectorAll('input[id^="total-input-"]').forEach(input => {
+            grandTotal += parseFloat(input.value) || 0;
+        });
+
+        document.querySelectorAll('.smart-grand-total-display').forEach(display => {
+            display.innerText = '€' + grandTotal.toLocaleString('nl-BE', { minimumFractionDigits: 2 });
+        });
+
+        document.querySelectorAll('.smart-grand-total-input').forEach(input => {
+            input.value = grandTotal;
+        });
+    }
 
     function calculatePricingTotal(fieldId) {
         const container = document.querySelector(`[name^="${fieldId}"][class*="pricing-qty"]`).closest('.pricing-module');
@@ -245,6 +269,8 @@
         if (reqCheck) {
             reqCheck.checked = total > 0;
         }
+
+        updateGrandTotal();
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -254,10 +280,17 @@
             return new bootstrap.Tooltip(tooltipTriggerEl)
         });
 
-        // Wrap images in rich text content with preview links
+        // Initialize grand total
+        updateGrandTotal();
+
+        // Wrap images in rich text content with preview links (filter out local file paths)
         document.querySelectorAll('.rich-text-content img').forEach(img => {
-            if (img.closest('a')) return; // Already wrapped
             const src = img.getAttribute('src');
+            if (!src || src.startsWith('file:') || /^[a-zA-Z]:[\\/]/.test(src)) {
+                img.remove();
+                return;
+            }
+            if (img.closest('a')) return; // Already wrapped
             const filename = src.split('/').pop();
             const wrapper = document.createElement('a');
             wrapper.href = src;
@@ -273,15 +306,21 @@
         });
 
         // Handle Document links (PDF, Word, Excel, PPT) in rich text content
-        document.querySelectorAll('.rich-text-content a[href$=".pdf"], .rich-text-content a[href$=".doc"], .rich-text-content a[href$=".docx"], .rich-text-content a[href$=".xls"], .rich-text-content a[href$=".xlsx"], .rich-text-content a[href$=".ppt"], .rich-text-content a[href$=".pptx"]').forEach(link => {
-            link.classList.add('document-preview-link');
-            link.onclick = function(e) {
-                e.preventDefault();
-                const src = this.getAttribute('href');
-                const filename = src.split('/').pop();
-                openFilePreview(src, filename);
-                return false;
-            };
+        document.querySelectorAll('.rich-text-content a').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && (href.startsWith('file:') || /^[a-zA-Z]:[\\/]/.test(href))) {
+                link.removeAttribute('href');
+                return;
+            }
+            if (href && /\.(pdf|docx?|xlsx?|pptx?)$/i.test(href)) {
+                link.classList.add('document-preview-link');
+                link.onclick = function(e) {
+                    e.preventDefault();
+                    const filename = href.split('/').pop();
+                    openFilePreview(href, filename);
+                    return false;
+                };
+            }
         });
     });
 </script>

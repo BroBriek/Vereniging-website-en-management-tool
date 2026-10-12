@@ -4,6 +4,24 @@ const PDFDocument = require('pdfkit');
 const { Op } = require('sequelize');
 const { sendMail } = require('../config/mailer');
 
+function sanitizeFormFields(fields) {
+    if (!Array.isArray(fields)) return [];
+    return fields.map(field => {
+        const cleanField = { ...field };
+        if (cleanField.type === 'image' && cleanField.url) {
+            if (/^file:\/\//i.test(cleanField.url) || /^[a-zA-Z]:[\\/]/.test(cleanField.url)) {
+                cleanField.url = '';
+            }
+        }
+        if (cleanField.type === 'text' && cleanField.content) {
+            cleanField.content = cleanField.content
+                .replace(/src=["']file:\/\/[^"']*["']/gi, 'src="" style="display:none;"')
+                .replace(/href=["']file:\/\/[^"']*["']/gi, 'href="#"');
+        }
+        return cleanField;
+    });
+}
+
 exports.getForms = async (req, res) => {
     try {
         const forms = await Form.findAll({
@@ -34,7 +52,7 @@ exports.postCreateForm = async (req, res) => {
             slug += '-' + Math.random().toString(36).substring(2, 7);
         }
 
-        const parsedFields = typeof fields === 'string' ? JSON.parse(fields) : fields;
+        const parsedFields = sanitizeFormFields(typeof fields === 'string' ? JSON.parse(fields) : fields);
 
         await Form.create({
             title,
@@ -74,7 +92,7 @@ exports.postEditForm = async (req, res) => {
         const form = await Form.findByPk(req.params.id);
         if (!form) return res.redirect('/admin/forms?error=Formulier niet gevonden');
 
-        const parsedFields = typeof fields === 'string' ? JSON.parse(fields) : fields;
+        const parsedFields = sanitizeFormFields(typeof fields === 'string' ? JSON.parse(fields) : fields);
 
         const updateData = {
             title,
@@ -422,6 +440,10 @@ exports.getPublicForm = async (req, res) => {
             return res.status(403).render('error', { status: 403, description: 'Dit formulier is nog niet openbaar.', user: req.user || null });
         }
 
+        if (form.fields && Array.isArray(form.fields)) {
+            form.fields = sanitizeFormFields(form.fields);
+        }
+
         res.render('public/form', { title: form.title, form, user: req.user || null, isAdmin });
     } catch (error) {
         console.error('Error fetching public form:', error);
@@ -443,7 +465,7 @@ exports.postSubmitForm = async (req, res) => {
         // Validate and extract answers
         const answers = {};
         form.fields.forEach(f => {
-            if (['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi', 'pricing'].includes(f.type)) {
+            if (['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi', 'pricing', 'total_box'].includes(f.type)) {
                 answers[f.id] = req.body[f.id];
             }
         });
@@ -463,7 +485,7 @@ exports.postSubmitForm = async (req, res) => {
                 // Build summary HTML
                 let summaryTableRows = '';
                 form.fields.forEach(f => {
-                    if (['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi', 'pricing'].includes(f.type)) {
+                    if (['short_text', 'long_text', 'multiple_choice', 'multiple_choice_multi', 'pricing', 'total_box'].includes(f.type)) {
                         const answer = answers[f.id];
                         let displayAnswer = answer || '-';
 
@@ -478,6 +500,14 @@ exports.postSubmitForm = async (req, res) => {
                                 displayAnswer += `<li style="margin-top: 5px; border-top: 1px dashed #ccc; padding-top: 5px;">Totaal: <strong>€${answer.total || 0}</strong></li>`;
                                 displayAnswer += '</ul>';
                             }
+                        } else if (f.type === 'total_box') {
+                            let grandTotal = 0;
+                            form.fields.filter(pf => pf.type === 'pricing').forEach(pf => {
+                                if (answers[pf.id] && answers[pf.id].total) {
+                                    grandTotal += parseFloat(answers[pf.id].total) || 0;
+                                }
+                            });
+                            displayAnswer = `<strong style="font-size: 15px; color: #db3e41;">€${grandTotal.toLocaleString('nl-BE', { minimumFractionDigits: 2 })}</strong>`;
                         } else if (Array.isArray(answer)) {
                             displayAnswer = answer.join(', ');
                         }
