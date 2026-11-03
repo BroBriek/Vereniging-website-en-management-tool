@@ -10,7 +10,6 @@ var defaultPolaroids = [
 ];
 
 var heroImage = (content.hero_image && content.hero_image.content) ? content.hero_image.content : '/uploads/image-1791810054939-717577279.jpeg';
-var heroBadge = (content.hero_badge && content.hero_badge.content) ? content.hero_badge.content : ('📍 Zondag = Chirodag • ' + orgLocation);
 var heroTitle = (content.hero_title && content.hero_title.content) ? content.hero_title.content : ('Welkom bij ' + orgFullName);
 var heroText = (content.hero_text && content.hero_text.content) ? content.hero_text.content : 'Samen spelen, samen leven.';
 var heroPhotoCaption = (content.hero_photo_caption && content.hero_photo_caption.content) ? content.hero_photo_caption.content : 'Welkom bij onze Chiro-bende! ⛺';
@@ -115,15 +114,6 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
         <div class="row align-items-center g-4 g-lg-5">
             <!-- Left: Handcrafted Greeting & Welcome -->
             <div class="col-lg-6">
-                <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
-                    <span class="scrapbook-pill-badge" data-live-edit="hero_badge" data-live-edit-type="text">
-                        <i class="bi bi-geo-alt-fill text-danger me-1"></i><%= heroBadge %>
-                    </span>
-                    <span class="badge bg-light text-muted border rounded-pill font-playful px-3 py-2">
-                        ★ Chiro Meeuwen
-                    </span>
-                </div>
-
                 <h1 class="journal-main-title" data-live-edit="hero_title" data-live-edit-type="text">
                     <%= heroTitle %>
                 </h1>
@@ -141,12 +131,7 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                     </a>
                 </div>
 
-                <div class="d-flex align-items-center gap-3 pt-3 border-top border-dashed">
-                    <div class="passport-stamp stamp-sm" title="Chiro Meeuwen Avontuur">
-                        <span class="passport-stamp-top"><%= orgLocation.toUpperCase() %></span>
-                        <i class="bi bi-award passport-stamp-icon"></i>
-                        <span class="passport-stamp-bottom">100% CHIRO</span>
-                    </div>
+                <div class="pt-3 border-top border-dashed">
                     <div class="text-muted font-playful fs-5 lh-sm">
                         "Samen spelen, ravotten en onvergetelijke herinneringen maken!"
                     </div>
@@ -156,10 +141,6 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
             <!-- Right: The Hero Photo Cluster (Central design feature, NOT a background image!) -->
             <div class="col-lg-6">
                 <div class="hero-photo-cluster">
-                    <div class="travel-sticker-badge d-none d-sm-block">
-                        <span>Zondag = Chirodag ☀️</span>
-                    </div>
-
                     <!-- Main Feature Polaroid -->
                     <div class="feature-polaroid polaroid-main">
                         <span class="washi-tape washi-tape-kraft washi-tape-top-center"></span>
@@ -210,18 +191,11 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                     <span class="washi-tape washi-tape-yellow washi-tape-top-right"></span>
 
                     <div class="journal-notebook-inner">
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 pb-3 border-bottom border-dashed">
-                            <div>
-                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill font-playful mb-2" data-live-edit="logbook_badge" data-live-edit-type="text">
-                                    <%= logbookBadge %>
-                                </span>
-                                <h2 class="notebook-title m-0" data-live-edit="logbook_title" data-live-edit-type="text"><%= logbookTitle %></h2>
-                            </div>
-                            <div class="passport-stamp d-none d-sm-inline-flex" title="100% Avontuur">
-                                <span class="passport-stamp-top">AVONTUUR</span>
-                                <i class="bi bi-tree passport-stamp-icon text-success"></i>
-                                <span class="passport-stamp-bottom">CHIRO</span>
-                            </div>
+                        <div class="mb-4 pb-3 border-bottom border-dashed">
+                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill font-playful mb-2" data-live-edit="logbook_badge" data-live-edit-type="text">
+                                <%= logbookBadge %>
+                            </span>
+                            <h2 class="notebook-title m-0" data-live-edit="logbook_title" data-live-edit-type="text"><%= logbookTitle %></h2>
                         </div>
 
                         <div class="notebook-body mb-4" data-live-edit="intro" data-live-edit-type="rich">
@@ -339,9 +313,6 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                         <div class="postcard-icon-box bg-warning">
                             <i class="bi bi-puzzle-fill"></i>
                         </div>
-                        <div class="postcard-stamp-mini">
-                            <i class="bi bi-gem"></i>
-                        </div>
                     </div>
                     <h3 class="postcard-title">Onze Afdelingen</h3>
                     <p class="postcard-desc">Ontdek in welke groep jij thuishoort, van Ribbels (6j) tot en met Aspi's (17j).</p>
@@ -357,9 +328,6 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                     <div class="postcard-top">
                         <div class="postcard-icon-box bg-danger">
                             <i class="bi bi-calendar-event"></i>
-                        </div>
-                        <div class="postcard-stamp-mini">
-                            <i class="bi bi-calendar-check"></i>
                         </div>
                     </div>
                     <h3 class="postcard-title">De Kalender</h3>
@@ -377,9 +345,6 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                         <div class="postcard-icon-box bg-primary">
                             <i class="bi bi-info-circle-fill"></i>
                         </div>
-                        <div class="postcard-stamp-mini">
-                            <i class="bi bi-clock"></i>
-                        </div>
                     </div>
                     <h3 class="postcard-title">Praktische Info</h3>
                     <p class="postcard-desc">Alle afspraken over zondaguren, vieruurtjes, lidgeld en ons uniform.</p>
@@ -395,9 +360,6 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                     <div class="postcard-top">
                         <div class="postcard-icon-box bg-secondary">
                             <i class="bi bi-people-fill"></i>
-                        </div>
-                        <div class="postcard-stamp-mini">
-                            <i class="bi bi-star-fill"></i>
                         </div>
                     </div>
                     <h3 class="postcard-title">De Leiding</h3>
