@@ -200,6 +200,17 @@ exports.getEditPage = async (req, res) => {
 exports.postEditPage = async (req, res) => {
     const slug = req.params.page;
     
+    // Gather all uploaded files (from upload.any() or upload.single())
+    const uploadedFiles = [];
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        uploadedFiles.push(...req.files);
+    } else if (req.file) {
+        uploadedFiles.push(req.file);
+    }
+
+    // Set of keys that received an uploaded file
+    const fileKeys = new Set(uploadedFiles.map(f => (f.fieldname === 'image' ? (req.body.image_key || 'hero_image') : f.fieldname)));
+
     // Handle text fields
     for (const key in req.body) {
         if (key === 'image_key' || key === 'formConfigJson' || key === '_csrf') continue;
@@ -212,6 +223,21 @@ exports.postEditPage = async (req, res) => {
             contentVal = '';
         }
 
+        // If field is an image URL fallback (e.g. polaroid_img_1_url)
+        if (key.endsWith('_url') && contentVal) {
+            const targetKey = key.replace(/_url$/, '');
+            // Only use if no actual file was uploaded for this targetKey
+            if (!fileKeys.has(targetKey)) {
+                const existingTarget = await PageContent.findOne({ where: { slug, section_key: targetKey }, order: [['id', 'DESC']] });
+                if (existingTarget) {
+                    existingTarget.content = contentVal;
+                    await existingTarget.save();
+                } else {
+                    await PageContent.create({ slug, section_key: targetKey, content: contentVal });
+                }
+            }
+        }
+
         const existing = await PageContent.findOne({ where: { slug, section_key: key }, order: [['id', 'DESC']] });
         if (existing) {
             existing.content = contentVal;
@@ -221,15 +247,15 @@ exports.postEditPage = async (req, res) => {
         }
     }
 
-    // Handle Image Upload
-    if (req.file) {
-        const imageKey = req.body.image_key || 'hero_image';
+    // Handle Image Uploads
+    for (const file of uploadedFiles) {
+        const imageKey = (file.fieldname === 'image') ? (req.body.image_key || 'hero_image') : file.fieldname;
         const existingImage = await PageContent.findOne({ where: { slug, section_key: imageKey }, order: [['id', 'DESC']] });
         if (existingImage) {
-            existingImage.content = `/uploads/${req.file.filename}`;
+            existingImage.content = `/uploads/${file.filename}`;
             await existingImage.save();
         } else {
-            await PageContent.create({ slug, section_key: imageKey, content: `/uploads/${req.file.filename}` });
+            await PageContent.create({ slug, section_key: imageKey, content: `/uploads/${file.filename}` });
         }
     }
     

@@ -863,6 +863,766 @@ body.navbar-open {
     }
 }
 
+/* ==========================================================================
+   TRAVEL BLOG & SCRAPBOOK STYLES (HOME PAGE)
+   ========================================================================== */
+
+/* Washi Tape Accent */
+.washi-tape {
+    position: absolute;
+    height: 28px;
+    width: 105px;
+    background-color: rgba(242, 169, 0, 0.75); /* Chiro Yellow */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    z-index: 5;
+    pointer-events: none;
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 50%, rgba(0,0,0,0.04) 100%);
+    /* Jagged torn edges left and right */
+    clip-path: polygon(
+        0% 8%, 3% 0%, 97% 0%, 100% 10%,
+        98% 30%, 100% 50%, 97% 70%, 100% 90%, 97% 100%,
+        3% 100%, 0% 88%, 2% 65%, 0% 45%, 2% 25%
+    );
+}
+
+.washi-tape-yellow {
+    background-color: rgba(242, 169, 0, 0.78);
+}
+
+.washi-tape-red {
+    background-color: rgba(219, 62, 65, 0.72);
+}
+
+.washi-tape-blue {
+    background-color: rgba(29, 78, 137, 0.68);
+}
+
+.washi-tape-kraft {
+    background-color: rgba(228, 216, 192, 0.88);
+}
+
+.washi-tape-top-center {
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-1.5deg);
+}
+
+.washi-tape-top-left {
+    top: -12px;
+    left: -12px;
+    transform: rotate(-24deg);
+    width: 85px;
+}
+
+.washi-tape-top-right {
+    top: -12px;
+    right: -12px;
+    transform: rotate(24deg);
+    width: 85px;
+}
+
+/* ==========================================================================
+   INTEGRATED SCRAPBOOK & TRAVEL BLOG STYLES (HOME PAGE)
+   ========================================================================== */
+
+/* Overall Page Layout Wrapper */
+.scrapbook-canvas {
+    overflow-x: clip;
+    padding-bottom: 2rem;
+}
+
+/* Spread 1: The Integrated Scrapbook Hero Spread */
+.scrapbook-hero-spread {
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 3rem 2.5rem;
+    position: relative;
+    margin-bottom: 3.5rem;
+}
+
+@media (max-width: 991px) {
+    .scrapbook-hero-spread {
+        padding: 2.25rem 1.5rem;
+        border-radius: 22px;
+        margin-bottom: 2.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .scrapbook-hero-spread {
+        padding: 1.75rem 1rem;
+        border-radius: 18px;
+    }
+}
+
+.scrapbook-pill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #fde68a;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 5px 16px;
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.journal-main-title {
+    font-family: var(--font-heading);
+    font-size: clamp(2.2rem, 4.2vw, 3.2rem);
+    font-weight: 700;
+    color: var(--chiro-blue);
+    line-height: 1.15;
+    margin-bottom: 0.85rem;
+}
+
+.journal-main-lead {
+    font-family: var(--font-body);
+    font-size: clamp(1.25rem, 2.5vw, 1.55rem);
+    line-height: 1.45;
+    color: #475569;
+    margin-bottom: 1.75rem;
+}
+
+.btn-chiro-outline {
+    background-color: transparent;
+    color: var(--chiro-blue);
+    font-family: var(--font-heading);
+    border: 2.5px solid var(--chiro-blue);
+    padding: 10px 24px;
+    border-radius: 35px;
+    font-size: 1.15rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.btn-chiro-outline:hover {
+    background-color: var(--chiro-blue);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(29, 78, 137, 0.25);
+}
+
+.btn-chiro-outline:active {
+    transform: translateY(2px);
+}
+
+/* Hero Polaroid Cluster (Images integrated as central collage!) */
+.hero-photo-cluster {
+    position: relative;
+    min-height: 380px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 0;
+}
+
+@media (max-width: 991px) {
+    .hero-photo-cluster {
+        min-height: auto;
+        padding-top: 1.5rem;
+    }
+}
+
+.feature-polaroid {
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.1), 0 3px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.35s ease, z-index 0.1s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.feature-polaroid .polaroid-img-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background: #f1f5f9;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.feature-polaroid .polaroid-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.feature-polaroid .polaroid-caption {
+    font-family: var(--font-body);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #1e293b;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 2px;
+    line-height: 1.25;
+}
+
+.feature-polaroid .polaroid-tag {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+/* Main Hero Polaroid */
+.polaroid-main {
+    width: 85%;
+    max-width: 380px;
+    padding: 14px 14px 22px 14px;
+    transform: rotate(-2.5deg);
+    z-index: 2;
+}
+
+.polaroid-main .polaroid-img-wrapper {
+    aspect-ratio: 4 / 3;
+}
+
+/* Secondary Overlapping Polaroid */
+.polaroid-secondary {
+    position: absolute;
+    width: 55%;
+    max-width: 240px;
+    bottom: -15px;
+    right: 5%;
+    padding: 10px 10px 18px 10px;
+    transform: rotate(4deg);
+    z-index: 3;
+}
+
+.polaroid-secondary .polaroid-img-wrapper {
+    aspect-ratio: 1 / 1;
+}
+
+.polaroid-secondary .polaroid-caption {
+    font-size: 1.15rem;
+    margin-top: 8px;
+}
+
+/* Hover Lift on Hero Photos */
+.polaroid-main:hover,
+.polaroid-main:focus-within {
+    transform: rotate(0deg) translateY(-8px) scale(1.02);
+    box-shadow: 0 24px 45px rgba(0, 0, 0, 0.16);
+    z-index: 5;
+}
+
+.polaroid-secondary:hover,
+.polaroid-secondary:focus-within {
+    transform: rotate(0deg) translateY(-8px) scale(1.04);
+    box-shadow: 0 24px 45px rgba(0, 0, 0, 0.18);
+    z-index: 6;
+}
+
+.feature-polaroid:hover .polaroid-img,
+.feature-polaroid:focus-within .polaroid-img {
+    transform: scale(1.04);
+}
+
+/* Mobile adjustments for hero polaroid cluster */
+@media (max-width: 767px) {
+    .polaroid-main {
+        width: 100%;
+        max-width: 320px;
+        transform: rotate(-1deg);
+        margin: 0 auto;
+    }
+    .polaroid-secondary {
+        position: relative;
+        width: 75%;
+        max-width: 220px;
+        bottom: auto;
+        right: auto;
+        margin: -25px auto 0 auto;
+        transform: rotate(2deg);
+    }
+}
+
+/* Travel Sticker Badge */
+.travel-sticker-badge {
+    position: absolute;
+    top: 5px;
+    left: 10px;
+    background: #fef08a;
+    color: #854d0e;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 16px;
+    border: 1.5px dashed #ca8a04;
+    transform: rotate(-10deg);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    z-index: 4;
+}
+
+/* Vintage Passport Stamp */
+.passport-stamp {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 75px;
+    height: 75px;
+    border: 2.5px dashed var(--chiro-red);
+    border-radius: 50%;
+    color: var(--chiro-red);
+    transform: rotate(-10deg);
+    padding: 6px;
+    text-align: center;
+    font-family: var(--font-heading);
+    user-select: none;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.passport-stamp.stamp-sm {
+    width: 65px;
+    height: 65px;
+}
+
+.passport-stamp:hover {
+    transform: rotate(0deg) scale(1.06);
+}
+
+.passport-stamp-top {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.passport-stamp-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+    margin: 2px 0;
+}
+
+.passport-stamp-bottom {
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Spread 2: The Integrated Journal & Story Spread */
+.journal-notebook-page {
+    position: relative;
+    background: #fffdf9;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 2.75rem 2.25rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 767px) {
+    .journal-notebook-page {
+        padding: 2rem 1.25rem;
+        border-radius: 18px;
+    }
+}
+
+/* Notebook left-side margin line */
+.journal-notebook-page::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    bottom: 25px;
+    left: 26px;
+    width: 2px;
+    background: repeating-linear-gradient(
+        to bottom,
+        var(--chiro-yellow) 0px,
+        var(--chiro-yellow) 6px,
+        transparent 6px,
+        transparent 10px
+    );
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+@media (max-width: 767px) {
+    .journal-notebook-page::before {
+        display: none;
+    }
+}
+
+.journal-notebook-inner {
+    position: relative;
+    z-index: 2;
+    padding-left: 22px;
+}
+
+@media (max-width: 767px) {
+    .journal-notebook-inner {
+        padding-left: 0;
+    }
+}
+
+.notebook-title {
+    font-family: var(--font-heading);
+    font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+    color: var(--chiro-blue);
+    font-weight: 700;
+}
+
+.notebook-body {
+    font-size: 1.25rem;
+    line-height: 1.7;
+    color: #334155;
+}
+
+.notebook-body p {
+    margin-bottom: 1.25rem;
+}
+
+.notebook-body strong {
+    color: #0f172a;
+}
+
+/* Scrapbook Sidebar Snapshots */
+.sidebar-polaroid {
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    padding: 12px 12px 18px 12px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sidebar-polaroid .polaroid-img-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #f1f5f9;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.sidebar-polaroid .polaroid-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.sidebar-polaroid .polaroid-caption {
+    font-family: var(--font-body);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 2px;
+    line-height: 1.25;
+}
+
+.sidebar-polaroid .polaroid-tag {
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.polaroid-tilt-right {
+    transform: rotate(2deg);
+}
+
+.polaroid-tilt-left {
+    transform: rotate(-2deg);
+}
+
+.sidebar-polaroid:hover {
+    transform: rotate(0deg) translateY(-6px) scale(1.02);
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.14);
+}
+
+.sidebar-polaroid:hover .polaroid-img {
+    transform: scale(1.04);
+}
+
+@media (max-width: 767px) {
+    .polaroid-tilt-right,
+    .polaroid-tilt-left {
+        transform: rotate(0deg);
+    }
+}
+
+/* Passport Visa Sheet (Stats Integrated as Travel Visas) */
+.passport-visa-sheet {
+    background: #fcf9f2;
+    border: 2px dashed #d1c7b7;
+    border-radius: 20px;
+    padding: 1.5rem 1.25rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    position: relative;
+}
+
+.visa-sheet-header {
+    text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed #d1c7b7;
+}
+
+.visa-title {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #78350f;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.visa-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+}
+
+.visa-stamp {
+    background: #ffffff;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.visa-stamp:hover {
+    transform: translateY(-2px) scale(1.02);
+}
+
+.visa-stamp.visa-red {
+    border-color: var(--chiro-red);
+    background: rgba(219, 62, 65, 0.04);
+}
+
+.visa-stamp.visa-blue {
+    border-color: var(--chiro-blue);
+    background: rgba(29, 78, 137, 0.04);
+}
+
+.visa-stamp.visa-yellow {
+    border-color: var(--chiro-yellow);
+    background: rgba(242, 169, 0, 0.05);
+}
+
+.visa-stamp.visa-brown {
+    border-color: var(--chiro-brown);
+    background: rgba(114, 76, 42, 0.04);
+}
+
+.visa-num {
+    font-family: var(--font-heading);
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.2rem;
+}
+
+.visa-stamp.visa-red .visa-num { color: var(--chiro-red); }
+.visa-stamp.visa-blue .visa-num { color: var(--chiro-blue); }
+.visa-stamp.visa-yellow .visa-num { color: #d69400; }
+.visa-stamp.visa-brown .visa-num { color: var(--chiro-brown); }
+
+.visa-lbl {
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    color: #64748b;
+    line-height: 1.15;
+}
+
+/* Spread 3: Travel Postcards (Integrated Quick Navigation) */
+.scrapbook-section-header {
+    text-align: center;
+    margin-bottom: 2.25rem;
+    position: relative;
+}
+
+.scrapbook-stamp-label {
+    display: inline-block;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--chiro-red);
+    background: rgba(219, 62, 65, 0.08);
+    border: 2px dashed var(--chiro-red);
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 0.5rem;
+    transform: rotate(-1.5deg);
+}
+
+.scrapbook-section-title {
+    font-family: var(--font-heading);
+    font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+    font-weight: 700;
+    color: var(--chiro-blue);
+    margin-bottom: 0.4rem;
+}
+
+.scrapbook-section-subtitle {
+    font-family: var(--font-body);
+    font-size: 1.25rem;
+    color: #64748b;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.postcard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3.5rem;
+}
+
+.postcard-nav-card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.postcard-nav-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: repeating-linear-gradient(
+        45deg,
+        var(--chiro-red) 0px,
+        var(--chiro-red) 12px,
+        #ffffff 12px,
+        #ffffff 18px,
+        var(--chiro-blue) 18px,
+        var(--chiro-blue) 30px,
+        #ffffff 30px,
+        #ffffff 36px
+    );
+}
+
+.postcard-nav-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.1);
+    color: inherit;
+}
+
+.postcard-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.postcard-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.postcard-stamp-mini {
+    width: 38px;
+    height: 46px;
+    border: 1.5px dashed #94a3b8;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #94a3b8;
+    background: #f8fafc;
+    transform: rotate(4deg);
+}
+
+.postcard-title {
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    color: var(--chiro-blue);
+    margin-bottom: 0.35rem;
+}
+
+.postcard-desc {
+    font-family: var(--font-body);
+    font-size: 1.15rem;
+    line-height: 1.35;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+}
+
+.postcard-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--chiro-red);
+    transition: transform 0.2s ease;
+}
+
+.postcard-nav-card:hover .postcard-arrow {
+    transform: translateX(4px);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .feature-polaroid,
+    .feature-polaroid:hover,
+    .sidebar-polaroid,
+    .sidebar-polaroid:hover,
+    .passport-stamp,
+    .visa-stamp,
+    .postcard-nav-card {
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
 
 
 
