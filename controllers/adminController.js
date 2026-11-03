@@ -53,15 +53,24 @@ const DEFAULT_REGISTER_FORM_CONFIG = {
     customQuestions: []
 };
 const BUILT_IN_PAGES = [
-    { name: 'Home', path: '/home', editPath: '/admin/page/home', slug: 'home' },
-    { name: 'Praktisch', path: '/praktisch', editPath: '/admin/page/practical', slug: 'practical' },
-    { name: 'Afdelingen', path: '/afdelingen', editPath: '/admin/page/departments', slug: 'departments' },
+    { name: 'Home', path: '/home', editPath: '/home?edit=1', slug: 'home' },
+    { name: 'Praktisch', path: '/praktisch', editPath: '/praktisch?edit=1', slug: 'practical' },
+    { name: 'Afdelingen', path: '/afdelingen', editPath: '/afdelingen?edit=1', slug: 'departments' },
     { name: 'Leiding', path: '/leiding', editPath: '/admin/leaders', slug: 'leaders' },
     { name: 'Kalender', path: '/kalender', editPath: '/admin/events', slug: 'kalender' },
-    { name: 'T-Shirts', path: '/t-shirts', editPath: '/admin/page/shirts', slug: 'shirts' },
-    { name: 'Inschrijven', path: '/inschrijven', editPath: '/admin/page/register', slug: 'register' },
-    { name: 'Contact', path: '/contact', editPath: null, slug: 'contact' }
+    { name: 'T-Shirts', path: '/t-shirts', editPath: '/t-shirts?edit=1', slug: 'shirts' },
+    { name: 'Inschrijven', path: '/inschrijven', editPath: '/inschrijven?edit=1', slug: 'register' },
+    { name: 'Contact', path: '/contact', editPath: '/contact?edit=1', slug: 'contact' }
 ];
+
+const PUBLIC_PAGE_REDIRECTS = {
+    home: '/home',
+    practical: '/praktisch',
+    departments: '/afdelingen',
+    shirts: '/t-shirts',
+    register: '/inschrijven',
+    contact: '/contact'
+};
 
 exports.getDashboard = (req, res) => {
     res.render('admin/dashboard', { title: 'Admin Dashboard', user: req.user });
@@ -163,12 +172,12 @@ exports.resetSettings = async (req, res) => {
 exports.getEditPage = async (req, res) => {
     const slug = req.params.page;
 
-    if (slug === 'home' && req.query.classic !== '1') {
+    if (PUBLIC_PAGE_REDIRECTS[slug] && req.query.classic !== '1') {
         const queryParams = new URLSearchParams();
         queryParams.set('edit', '1');
         if (req.query.success) queryParams.set('success', req.query.success);
         if (req.query.error) queryParams.set('error', req.query.error);
-        return res.redirect(`/home?${queryParams.toString()}`);
+        return res.redirect(`${PUBLIC_PAGE_REDIRECTS[slug]}?${queryParams.toString()}`);
     }
 
     const contents = await PageContent.findAll({ where: { slug } });
@@ -232,8 +241,8 @@ exports.postEditPage = async (req, res) => {
             contentVal = '';
         }
 
-        // If field is an image URL fallback (e.g. polaroid_img_1_url)
-        if ((key.startsWith('polaroid_img_') || key === 'hero_image_url') && key.endsWith('_url') && contentVal) {
+        // If field is an image URL fallback (e.g. any key ending with _url)
+        if (key.endsWith('_url') && contentVal) {
             const targetKey = key.replace(/_url$/, '');
             // Only use if no actual file was uploaded for this targetKey
             if (!fileKeys.has(targetKey)) {
@@ -272,8 +281,8 @@ exports.postEditPage = async (req, res) => {
         return res.json({ success: true, message: 'Pagina succesvol bijgewerkt!' });
     }
 
-    if (slug === 'home' && req.query.classic !== '1') {
-        return res.redirect(`/home?edit=1&success=${encodeURIComponent('Pagina succesvol bijgewerkt!')}`);
+    if (PUBLIC_PAGE_REDIRECTS[slug] && req.query.classic !== '1') {
+        return res.redirect(`${PUBLIC_PAGE_REDIRECTS[slug]}?edit=1&success=${encodeURIComponent('Pagina succesvol bijgewerkt!')}`);
     }
 
     res.redirect(`/admin/page/${slug}?success=${encodeURIComponent('Pagina succesvol bijgewerkt!')}`);

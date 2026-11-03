@@ -62,7 +62,7 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
     <link rel="stylesheet" href="/vendor/cropper.min.css">
 <% } %>
 
-<div class="scrapbook-canvas<% if (user && (user.role === 'admin' || user.role === 'media')) { %> admin-logged-in<% } %>">
+<div class="scrapbook-canvas<% if (user && (user.role === 'admin' || user.role === 'media')) { %> admin-logged-in<% } %>" data-page-slug="home">
     <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
         <!-- Default Admin Banner (when edit mode is closed) -->
         <div id="live-edit-banner-default" class="mb-4">
@@ -75,9 +75,6 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                     <button type="button" id="btn-toggle-edit-mode" class="btn btn-chiro btn-sm shadow-sm">
                         <i class="bi bi-pencil-square me-1"></i> Bewerkmodus inschakelen
                     </button>
-                    <a href="/admin/page/home?classic=1" class="btn btn-outline-secondary btn-sm rounded-pill" title="Klassiek formulier">
-                        <i class="bi bi-sliders me-1"></i> Formulier
-                    </a>
                 </div>
             </div>
         </div>

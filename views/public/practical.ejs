@@ -1,20 +1,152 @@
 <%- include('../partials/header') %>
 
-<div class="mb-5">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <h1 class="display-4 fw-bold mb-0">Praktisch</h1>
-        <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-            <a href="/admin/page/practical" class="btn btn-chiro btn-sm btn-edit-page shadow-sm">
-                <i class="bi bi-pencil-square"></i><span class="d-none d-sm-inline ms-1">Bewerk Pagina</span><span class="d-sm-none ms-1">Bewerken</span>
-            </a>
-        <% } %>
-    </div>
+<%
+var practicalBadge = (content.practical_badge && content.practical_badge.content) ? content.practical_badge.content : ('📍 Handige Info • Chiro ' + orgName);
+var practicalTitle = (content.practical_title && content.practical_title.content) ? content.practical_title.content : 'Praktische Informatie';
+var practicalLead = (content.practical_lead && content.practical_lead.content) ? content.practical_lead.content : 'Van uren en vieruurtjes tot uniformen en lidgeld: ontdek hier alles wat je moet weten voor een topjaar!';
 
-    <div class="card p-4 p-md-5">
-        <div class="card-body fs-5">
-            <%- (content.main && content.main.content) ? content.main.content : '<div class="text-center py-5 text-muted"><i class="bi bi-info-circle display-1 mb-3 d-block"></i><p>Hier komt praktische info.</p></div>' %>
+var practicalImg = (content.practical_polaroid_img && content.practical_polaroid_img.content) ? content.practical_polaroid_img.content : '/uploads/image-1778686732775-690747244.JPG';
+var practicalCap = (content.practical_polaroid_cap && content.practical_polaroid_cap.content) ? content.practical_polaroid_cap.content : 'Klaar om te ravotten! 🌲';
+var practicalTag = (content.practical_polaroid_tag && content.practical_polaroid_tag.content) ? content.practical_polaroid_tag.content : 'ZONDAGMIDDAG 14U-17U';
+%>
+
+<div class="scrapbook-canvas<% if (user && (user.role === 'admin' || user.role === 'media')) { %> admin-logged-in<% } %>" data-page-slug="practical">
+    <%- include('../partials/live_editor_top', { pageSlug: 'practical', pageTitle: 'Praktisch' }) %>
+
+    <!-- Header Spread -->
+    <header class="scrapbook-page-header">
+        <span class="washi-tape washi-tape-yellow washi-tape-top-left"></span>
+        <span class="washi-tape washi-tape-kraft washi-tape-top-right"></span>
+
+        <h1 class="journal-main-title mb-3" data-live-edit="practical_title" data-live-edit-type="text">
+            <%= practicalTitle %>
+        </h1>
+
+        <p class="journal-main-lead mb-4" data-live-edit="practical_lead" data-live-edit-type="text">
+            <%= practicalLead %>
+        </p>
+
+        <!-- Quick Info Visas -->
+        <div class="visa-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); max-width: 800px;">
+            <div class="visa-stamp visa-blue">
+                <div class="visa-num fs-5"><i class="bi bi-clock me-1"></i>14u - 17u</div>
+                <div class="visa-lbl">Uren zondag</div>
+            </div>
+            <div class="visa-stamp visa-yellow">
+                <div class="visa-num fs-5"><i class="bi bi-geo-alt me-1"></i>Middenschool</div>
+                <div class="visa-lbl">Speelplaats</div>
+            </div>
+            <div class="visa-stamp visa-red">
+                <div class="visa-num fs-5"><i class="bi bi-cash me-1"></i>€35</div>
+                <div class="visa-lbl">Lidgeld / jaar</div>
+            </div>
+            <div class="visa-stamp visa-brown">
+                <div class="visa-num fs-5"><i class="bi bi-cup-straw me-1"></i>€1 / €0,50</div>
+                <div class="visa-lbl">Drankje & koek</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="row g-4 mb-5">
+        <!-- Left: Notebook Content Area -->
+        <div class="col-lg-8">
+            <div class="scrapbook-notebook-card">
+                <span class="washi-tape washi-tape-red washi-tape-top-center"></span>
+                <div class="scrapbook-notebook-inner">
+                    <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-3">
+                        <span class="scrapbook-stamp-label mb-0">
+                            <i class="bi bi-journal-text me-1"></i> Leidraad & Afspraken
+                        </span>
+                        <span class="badge bg-light text-muted border rounded-pill small font-playful px-3 py-1">
+                            Elke 2 weken zondag
+                        </span>
+                    </div>
+
+                    <div class="notebook-body" data-live-edit="main" data-live-edit-type="rich">
+                        <%- (content.main && content.main.content) ? content.main.content : `
+                        <h2 class="text-chiro-blue fw-bold mb-3">Onze Chiro-zondagen</h2>
+                        <p>Om de twee weken verwelkomen we iedereen om <strong>14u00</strong> op onze formatieplaats (speelplaats oude Middenschool). Na een korte gezamenlijke start splitsen we ons op in onze <strong>zes leeftijdsgroepen</strong>, van Ribbels tot Aspi’s.</p>
+                        <p>Om <strong>17u00</strong> sluiten we onze Chirozondag af in een slotformatie met ons avondlied. Moe, een tikkeltje vuil, maar dolgelukkig keren we daarna weer huiswaarts!</p>
+                        
+                        <h3 class="text-chiro-blue fw-bold mt-4 mb-2">Vieruurtje</h3>
+                        <p>Van al dat ravotten krijgt iedereen honger en dorst. Wij voorzien een fris drankje (€1) en een lekkere koek (€0,50). Eigen drankjes meenemen mag uiteraard ook!</p>
+                        
+                        <h3 class="text-chiro-blue fw-bold mt-4 mb-2">Uniform</h3>
+                        <p>Doorheen het jaar spelen we in kleren die tegen een stootje en een spatje slijk kunnen. Op ons legendarische bivak gaan we in vol ornaat in het officiële Chiro-uniform!</p>
+                        ` %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Polaroid & Quick Links -->
+        <div class="col-lg-4">
+            <div class="d-flex flex-column gap-4">
+                <!-- Polaroid Photo -->
+                <div class="sidebar-polaroid polaroid-tilt-right">
+                    <span class="washi-tape washi-tape-yellow washi-tape-top-center"></span>
+                    <div class="polaroid-img-wrapper" data-live-edit="practical_polaroid_img" data-live-edit-type="image" data-live-edit-ratio="1">
+                        <img src="<%= practicalImg %>" alt="<%= practicalCap %>" class="polaroid-img" loading="lazy">
+                        <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                            <div class="live-image-overlay">
+                                <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
+                            </div>
+                        <% } %>
+                    </div>
+                    <div class="polaroid-caption" data-live-edit="practical_polaroid_cap" data-live-edit-type="text"><%= practicalCap %></div>
+                    <div class="polaroid-tag" data-live-edit="practical_polaroid_tag" data-live-edit-type="text"><%= practicalTag %></div>
+                </div>
+
+                <!-- Navigation Postcards -->
+                <a href="/inschrijven" class="postcard-nav-card">
+                    <div class="postcard-top">
+                        <div class="postcard-icon-box bg-danger">
+                            <i class="bi bi-pen-fill"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="postcard-title">Online Inschrijven</h4>
+                        <p class="postcard-desc mb-2">Schrijf je kind snel in voor het nieuwe werkjaar.</p>
+                    </div>
+                    <div class="postcard-arrow">
+                        Inschrijvingsformulier <i class="bi bi-arrow-right"></i>
+                    </div>
+                </a>
+
+                <a href="/t-shirts" class="postcard-nav-card">
+                    <div class="postcard-top">
+                        <div class="postcard-icon-box bg-primary">
+                            <i class="bi bi-bag-check-fill"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="postcard-title">Onze T-Shirts</h4>
+                        <p class="postcard-desc mb-2">Bestel het officiële Chiro <%= orgName %> T-shirt.</p>
+                    </div>
+                    <div class="postcard-arrow">
+                        T-shirt Bestellen <i class="bi bi-arrow-right"></i>
+                    </div>
+                </a>
+
+                <a href="/contact" class="postcard-nav-card">
+                    <div class="postcard-top">
+                        <div class="postcard-icon-box bg-warning text-dark">
+                            <i class="bi bi-chat-dots-fill"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="postcard-title">Vragen of Contact?</h4>
+                        <p class="postcard-desc mb-2">Stuur ons een berichtje, we antwoorden snel!</p>
+                    </div>
+                    <div class="postcard-arrow">
+                        Contacteer Leiding <i class="bi bi-arrow-right"></i>
+                    </div>
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
+<%- include('../partials/live_editor_bottom') %>
 <%- include('../partials/footer') %>

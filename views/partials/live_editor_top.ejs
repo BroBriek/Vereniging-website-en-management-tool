@@ -1,0 +1,45 @@
+<% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+    <link rel="stylesheet" href="/vendor/cropper.min.css">
+
+    <!-- Default Admin Banner (when edit mode is closed) -->
+    <div id="live-edit-banner-default" class="mb-4">
+        <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2 shadow-sm rounded-4 mb-0 border-0" style="background: linear-gradient(135deg, #e0f2fe 0%, #ede9fe 100%);">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary text-white rounded-pill px-3 py-2"><i class="bi bi-shield-check me-1"></i>Beheermodus</span>
+                <span class="fw-bold text-dark">Wil je deze pagina aanpassen?</span>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="button" id="btn-toggle-edit-mode" class="btn btn-chiro btn-sm shadow-sm">
+                    <i class="bi bi-pencil-square me-1"></i> Bewerkmodus inschakelen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticky Floating Toolbar (when edit mode is active) -->
+    <div id="live-edit-toolbar" class="live-edit-toolbar d-none mb-4 rounded-4 overflow-hidden shadow-sm">
+        <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center gap-3 py-2 px-3">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="d-inline-flex align-items-center gap-2 fw-bold text-dark">
+                    <span class="live-edit-pulse"></span>
+                    Bewerkmodus actief
+                </span>
+                <span class="badge bg-light text-muted border rounded-pill px-3 py-2 d-none d-md-inline-block">
+                    <i class="bi bi-hand-index-thumb text-primary me-1"></i> Klik op een foto om te vervangen of klik op tekst om te typen
+                </span>
+                <span id="live-edit-dirty-badge" class="d-none"></span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" id="btn-save-inline" class="btn btn-success btn-sm px-3 fw-bold rounded-pill shadow-sm" disabled>
+                    <i class="bi bi-cloud-check-fill me-1"></i> <span id="btn-save-text">Opslaan</span>
+                </button>
+                <button type="button" id="btn-cancel-inline" class="btn btn-outline-secondary btn-sm rounded-pill px-3" title="Herstel wijzigingen">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Herstel
+                </button>
+                <button type="button" id="btn-close-edit-mode" class="btn btn-outline-dark btn-sm rounded-pill px-3" title="Bewerkmodus sluiten">
+                    <i class="bi bi-x-lg me-1"></i> Sluiten
+                </button>
+            </div>
+        </div>
+    </div>
+<% } %>

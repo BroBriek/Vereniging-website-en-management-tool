@@ -297,16 +297,17 @@
                 if (gear) gear.remove();
             });
 
-            const richToolbar = document.getElementById('live-rich-toolbar');
-            if (richToolbar) richToolbar.remove();
+            document.querySelectorAll('.live-rich-toolbar').forEach(el => el.remove());
         }
 
         // Setup sleek rich text toolbar for notebook
         function setupRichToolbar(richEl) {
-            let toolbarEl = document.getElementById('live-rich-toolbar');
+            const key = richEl.dataset.liveEdit || 'default';
+            const toolbarId = 'live-rich-toolbar-' + key;
+            let toolbarEl = document.getElementById(toolbarId);
             if (!toolbarEl) {
                 toolbarEl = document.createElement('div');
-                toolbarEl.id = 'live-rich-toolbar';
+                toolbarEl.id = toolbarId;
                 toolbarEl.className = 'live-rich-toolbar d-flex align-items-center gap-1 p-1 mb-2 bg-white border rounded-pill shadow-sm';
                 toolbarEl.innerHTML = `
                     <button type="button" class="btn btn-sm btn-light rounded-circle px-2" data-cmd="bold" title="Vetgedrukt (Ctrl+B)"><b>B</b></button>
@@ -336,7 +337,6 @@
                             document.execCommand(cmd, false, val);
                         }
 
-                        const key = richEl.dataset.liveEdit;
                         currentState[key] = richEl.innerHTML.trim();
                         updateDirtyStatus();
                     });
@@ -376,6 +376,24 @@
             activeTargetWrapper = wrapper;
             scaleX = 1;
             scaleY = 1;
+
+            if (wrapper.dataset.liveEditRatio) {
+                const parsed = parseFloat(wrapper.dataset.liveEditRatio);
+                currentAspectRatio = isNaN(parsed) ? NaN : parsed;
+            } else {
+                currentAspectRatio = 1;
+            }
+
+            // Sync aspect ratio buttons in modal
+            const ratioButtons = document.querySelectorAll('#crop-ratio-group button');
+            ratioButtons.forEach(btn => {
+                const r = parseFloat(btn.dataset.ratio);
+                if ((isNaN(currentAspectRatio) && isNaN(r)) || (Math.abs(r - currentAspectRatio) < 0.05)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
 
             const img = wrapper.querySelector('img');
             const currentSrc = img ? img.getAttribute('src') : '';
@@ -736,8 +754,10 @@
                 formData.append(key, currentState[key]);
             }
 
+            const targetSlug = canvas.dataset.pageSlug || document.body.dataset.pageSlug || 'home';
+
             try {
-                const response = await fetch('/admin/page/home', {
+                const response = await fetch('/admin/page/' + encodeURIComponent(targetSlug), {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',

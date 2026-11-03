@@ -363,6 +363,18 @@ input:focus, textarea:focus, select:focus {
     scroll-snap-align: center;
 }
 
+.leader-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.leader-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08) !important;
+}
+
 /* Carousel Controls */
 .carousel-container {
     position: relative;
@@ -1822,6 +1834,377 @@ body.navbar-open {
 #live-edit-toast-container .toast {
     border-radius: 14px;
     font-family: var(--font-heading);
+}
+
+/* ==========================================================================
+   GENERALIZED SCRAPBOOK & PLAYFUL STYLES FOR PUBLIC PAGES
+   ========================================================================== */
+
+/* Additional washi tape positioning */
+.washi-tape-bottom-left {
+    bottom: -12px;
+    left: -12px;
+    transform: rotate(24deg);
+    width: 85px;
+}
+
+.washi-tape-bottom-right {
+    bottom: -12px;
+    right: -12px;
+    transform: rotate(-24deg);
+    width: 85px;
+}
+
+.washi-tape-bottom-center {
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%) rotate(1.5deg);
+}
+
+.washi-tape-tilt-left {
+    transform: rotate(-3deg);
+}
+
+.washi-tape-tilt-right {
+    transform: rotate(3deg);
+}
+
+.washi-tape-straight {
+    transform: none;
+}
+
+/* Generalized Scrapbook Page Header */
+.scrapbook-page-header {
+    background: #ffffff;
+    border-radius: 26px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 2.75rem 2.25rem;
+    position: relative;
+    margin-bottom: 2.5rem;
+}
+
+@media (max-width: 991px) {
+    .scrapbook-page-header {
+        padding: 2rem 1.5rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .scrapbook-page-header {
+        padding: 1.5rem 1rem;
+        border-radius: 16px;
+    }
+}
+
+/* General Scrapbook Card */
+.scrapbook-card {
+    background: #ffffff;
+    border-radius: 24px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.02);
+    position: relative;
+    padding: 2.25rem;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+@media (max-width: 767px) {
+    .scrapbook-card {
+        padding: 1.5rem 1.25rem;
+        border-radius: 18px;
+    }
+}
+
+/* Notebook Page Styled Card */
+.scrapbook-notebook-card {
+    background: #fffdfa;
+    border-radius: 24px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    position: relative;
+    padding: 2.5rem 2.25rem;
+}
+
+.scrapbook-notebook-card::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    bottom: 25px;
+    left: 24px;
+    width: 2px;
+    background: repeating-linear-gradient(
+        to bottom,
+        var(--chiro-yellow) 0px,
+        var(--chiro-yellow) 6px,
+        transparent 6px,
+        transparent 10px
+    );
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+@media (max-width: 767px) {
+    .scrapbook-notebook-card::before {
+        display: none;
+    }
+    .scrapbook-notebook-card {
+        padding: 1.75rem 1.25rem;
+        border-radius: 18px;
+    }
+}
+
+.scrapbook-notebook-inner {
+    padding-left: 20px;
+}
+
+@media (max-width: 767px) {
+    .scrapbook-notebook-inner {
+        padding-left: 0;
+    }
+}
+
+/* Department Cards (Afdelingen) */
+.dept-card {
+    background: #ffffff;
+    border-radius: 22px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+    position: relative;
+    padding: 1.75rem;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.dept-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.08);
+}
+
+.dept-age-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 14px;
+    letter-spacing: 0.3px;
+}
+
+/* Department Themes */
+.dept-ribbels .dept-age-badge { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+.dept-ribbels .dept-title { color: #7c3aed; }
+.dept-ribbels .washi-tape-dept { background-color: rgba(139, 92, 246, 0.72); }
+
+.dept-speelclub .dept-age-badge { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+.dept-speelclub .dept-title { color: #d97706; }
+.dept-speelclub .washi-tape-dept { background-color: rgba(245, 158, 11, 0.72); }
+
+.dept-rakwis .dept-age-badge { background: #d1fae5; color: #047857; border: 1px solid #a7f3d0; }
+.dept-rakwis .dept-title { color: #059669; }
+.dept-rakwis .washi-tape-dept { background-color: rgba(16, 185, 129, 0.72); }
+
+.dept-titos .dept-age-badge { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.dept-titos .dept-title { color: #dc2626; }
+.dept-titos .washi-tape-dept { background-color: rgba(239, 68, 68, 0.72); }
+
+.dept-ketis .dept-age-badge { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.dept-ketis .dept-title { color: #2563eb; }
+.dept-ketis .washi-tape-dept { background-color: rgba(37, 99, 235, 0.72); }
+
+.dept-aspis .dept-age-badge { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+.dept-aspis .dept-title { color: #ea580c; }
+.dept-aspis .washi-tape-dept { background-color: rgba(249, 115, 22, 0.72); }
+
+/* Leader Polaroids (Leiding) */
+.leader-polaroid-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 12px 12px 18px 12px;
+    position: relative;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.leader-tilt-left {
+    transform: rotate(-1.5deg);
+}
+
+.leader-tilt-right {
+    transform: rotate(1.5deg);
+}
+
+.leader-polaroid-card:hover {
+    transform: rotate(0deg) translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 38px rgba(0, 0, 0, 0.14);
+    z-index: 4;
+}
+
+.leader-polaroid-img-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: #f1f5f9;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.leader-polaroid-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    transition: transform 0.5s ease;
+}
+
+.leader-polaroid-card:hover .leader-polaroid-img-wrapper img {
+    transform: scale(1.05);
+}
+
+.leader-polaroid-caption {
+    font-family: var(--font-body);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #1e293b;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+.leader-polaroid-sub {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    text-align: center;
+}
+
+/* Calendar Ticket Cards */
+.calendar-ticket-item {
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1.5px dashed #cbd5e1;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.03);
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+}
+
+.calendar-ticket-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
+    border-color: var(--chiro-blue);
+}
+
+.calendar-ticket-stamp {
+    width: 72px;
+    height: 72px;
+    background: #ffffff;
+    border: 2px solid var(--chiro-blue);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(29, 78, 137, 0.12);
+    flex-shrink: 0;
+}
+
+.calendar-ticket-stamp .calendar-ticket-day {
+    font-family: var(--font-heading);
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--chiro-blue);
+}
+
+.calendar-ticket-stamp .calendar-ticket-month {
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--chiro-red);
+}
+
+/* Shirt Merchandise Cards */
+.shirt-showcase-box {
+    background: #ffffff;
+    border-radius: 24px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+    padding: 2rem;
+    position: relative;
+    text-align: center;
+}
+
+.shirt-price-stamp {
+    position: absolute;
+    top: -15px;
+    right: -10px;
+    background: var(--chiro-yellow);
+    color: #1e293b;
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: 700;
+    padding: 6px 18px;
+    border-radius: 30px;
+    transform: rotate(6deg);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    border: 2px dashed rgba(0, 0, 0, 0.15);
+    z-index: 4;
+}
+
+.shirt-receipt-box {
+    background: #fffdf7;
+    border: 2px dashed #e2d9c8;
+    border-radius: 20px;
+    padding: 1.75rem;
+    position: relative;
+}
+
+/* Contact Postcard Letter */
+.contact-postcard-box {
+    background: #ffffff;
+    border-radius: 22px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.contact-postcard-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: repeating-linear-gradient(
+        45deg,
+        var(--chiro-red) 0px,
+        var(--chiro-red) 14px,
+        #ffffff 14px,
+        #ffffff 20px,
+        var(--chiro-blue) 20px,
+        var(--chiro-blue) 34px,
+        #ffffff 34px,
+        #ffffff 40px
+    );
 }
 
 

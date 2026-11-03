@@ -1,57 +1,101 @@
 <%- include('../partials/header') %>
 
-<div class="container my-5 pt-4">
-    <div class="row g-5">
-        <!-- Product Image Section -->
-        <div class="col-lg-6">
-            <div class="product-gallery position-sticky" style="top: 110px;">
-                <div class="product-main-image shadow-sm bg-white rounded-5 p-4 text-center border-3 border-chiro-blue border">
-                    <!-- Placeholder for Light Blue T-shirt -->
-                    <div class="position-relative py-5">
-                        <div class="bg-light-blue rounded-circle mx-auto d-flex align-items-center justify-content-center shadow-inner" style="width: 300px; height: 300px; background-color: #e3f2fd;">
-                            <span style="font-size: 10rem; line-height: 1;">👕</span>
-                        </div>
-                        <div class="badge-price position-absolute top-0 end-0 bg-chiro-yellow text-dark fs-4 fw-bold px-4 py-2 rounded-pill shadow-sm">
-                            €15
-                        </div>
+<%
+var shirtsBadge = (content.shirts_badge && content.shirts_badge.content) ? content.shirts_badge.content : ('👕 Officiële Chiro ' + orgName + ' Kledij');
+var shirtsTitle = (content.shirts_title && content.shirts_title.content) ? content.shirts_title.content : (orgName + ' T-shirt');
+var shirtsLead = (content.shirts_lead && content.shirts_lead.content) ? content.shirts_lead.content : 'Herkenbaar, oersterk en supercomfortabel voor elke zondag, uitstap en kamp!';
+var shirtPrice = (content.shirt_price && content.shirt_price.content) ? content.shirt_price.content : '€15';
+var shirtImg = (content.shirt_image && content.shirt_image.content) ? content.shirt_image.content : null;
+%>
+
+<div class="scrapbook-canvas<% if (user && (user.role === 'admin' || user.role === 'media')) { %> admin-logged-in<% } %>" data-page-slug="shirts">
+    <%- include('../partials/live_editor_top', { pageSlug: 'shirts', pageTitle: 'T-Shirts' }) %>
+
+    <!-- Header Spread -->
+    <header class="scrapbook-page-header">
+        <span class="washi-tape washi-tape-red washi-tape-top-left"></span>
+        <span class="washi-tape washi-tape-yellow washi-tape-top-right"></span>
+
+        <h1 class="journal-main-title mb-3" data-live-edit="shirts_title" data-live-edit-type="text">
+            <%= shirtsTitle %>
+        </h1>
+
+        <p class="journal-main-lead mb-0" data-live-edit="shirts_lead" data-live-edit-type="text">
+            <%= shirtsLead %>
+        </p>
+    </header>
+
+    <div class="row g-5 mb-5">
+        <!-- Product Image Section (Left) -->
+        <div class="col-lg-5">
+            <div class="position-sticky" style="top: 100px;">
+                <div class="sidebar-polaroid shirt-showcase-box p-4" style="box-shadow: 0 16px 35px rgba(0,0,0,0.08);">
+                    <span class="washi-tape washi-tape-yellow washi-tape-top-center"></span>
+                    <div class="shirt-price-stamp" data-live-edit="shirt_price" data-live-edit-type="text"><%= shirtPrice %></div>
+
+                    <div class="polaroid-img-wrapper my-3" data-live-edit="shirt_image" data-live-edit-type="image" data-live-edit-ratio="1" style="aspect-ratio: 1/1; background-color: #f0f7ff;">
+                        <% if (shirtImg) { %>
+                            <img src="<%= shirtImg %>" alt="<%= orgName %> T-shirt" class="polaroid-img" style="object-fit: contain; padding: 1.5rem;">
+                        <% } else { %>
+                            <div class="d-flex align-items-center justify-content-center h-100 py-4">
+                                <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 220px; height: 220px; background-color: #e3f2fd;">
+                                    <span style="font-size: 7.5rem; line-height: 1;">👕</span>
+                                </div>
+                            </div>
+                        <% } %>
+                        <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                            <div class="live-image-overlay">
+                                <i class="bi bi-crop"></i> <span>T-shirt foto aanpassen</span>
+                            </div>
+                        <% } %>
                     </div>
+
+                    <div class="polaroid-caption font-playful fs-4"><%= orgName %> Shirt</div>
+                    <div class="polaroid-tag">ORIGINAL MERCHANDISE</div>
                 </div>
-                
-                <div class="mt-4 p-4 bg-white rounded-5 shadow-sm border border-light">
-                    <h5 class="fw-bold text-chiro-blue mb-3"><i class="bi bi-info-circle me-2"></i>Product details</h5>
+
+                <!-- Product Details Box -->
+                <div class="scrapbook-card mt-4 p-4">
+                    <span class="washi-tape washi-tape-kraft washi-tape-top-left" style="width: 70px;"></span>
+                    <h5 class="fw-bold text-chiro-blue mb-3 font-playful">
+                        <i class="bi bi-patch-check-fill text-success me-2"></i>Product details
+                    </h5>
                     <ul class="list-unstyled mb-0 text-muted">
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 100% Kwaliteitskatoen</li>
-                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Kleur: Chiro-blauw</li>
-                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Duurzame bedrukking</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 100% Duurzaam kwaliteitskatoen</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Originele Chiro-blauwe kleur</li>
+                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Slijtvaste, wasbare zeefdruk</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Ideaal voor zondagen, weekends & kamp</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Product Info & Order Form Section -->
-        <div class="col-lg-6">
-            <div class="ps-lg-4">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                    <h1 class="display-4 fw-bold text-chiro-blue mb-0"><%= orgName %> T-shirt</h1>
-                    <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-                        <a href="/admin/page/shirts" class="btn btn-chiro btn-sm btn-edit-page shadow-sm" title="Bewerk Pagina">
-                            <i class="bi bi-pencil-square"></i><span class="d-none d-sm-inline ms-1">Bewerk Pagina</span><span class="d-sm-none ms-1">Bewerken</span>
-                        </a>
-                    <% } %>
+        <!-- Product Info & Order Form Section (Right) -->
+        <div class="col-lg-7">
+            <div class="scrapbook-notebook-card p-4 p-md-5">
+                <span class="washi-tape washi-tape-red washi-tape-top-right"></span>
+
+                <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-3">
+                    <span class="scrapbook-stamp-label mb-0">
+                        <i class="bi bi-bag-check me-1"></i> Bestelformulier
+                    </span>
+                    <span class="badge bg-light text-muted border rounded-pill font-playful px-3 py-1">
+                        Snel en eenvoudig
+                    </span>
                 </div>
 
                 <!-- Editable Content Area (Price/Description) -->
-                <div class="mb-5 page-content-editable fs-5 text-muted">
+                <div class="notebook-body mb-4" data-live-edit="main" data-live-edit-type="rich">
                     <%- (content.main && content.main.content) ? content.main.content : `
-                    <p>Het officiële T-shirt van ${orgFullName}! Perfect voor op zondagen, uitstappen en kamp. Zo zijn we in één oogopslag herkenbaar als één grote familie.</p>
+                    <p>Het officiële T-shirt van ${orgFullName}! Perfect voor op zondagen, uitstappen en ons legendarische zomerkamp. Zo zijn we in één oogopslag herkenbaar als één grote familie.</p>
                     ` %>
                 </div>
 
-                <hr class="my-5 opacity-10">
+                <hr class="my-4 opacity-10">
 
                 <!-- Step 1: Size -->
                 <div class="mb-5">
-                    <label class="h5 fw-bold text-chiro-blue mb-4 d-flex align-items-center">
+                    <label class="h5 fw-bold text-chiro-blue mb-3 d-flex align-items-center font-playful">
                         <span class="step-number me-3">1</span> Kies je maat
                     </label>
                     
@@ -66,7 +110,7 @@
                     </div>
 
                     <div>
-                        <small class="text-uppercase fw-bold text-muted ls-1 mb-2 d-block">Volwassenen</small>
+                        <small class="text-uppercase fw-bold text-muted ls-1 mb-2 d-block">Volwassenen / Leiding</small>
                         <div class="d-flex flex-wrap gap-2">
                             <% ['S', 'M', 'L', 'XL', 'XXL'].forEach(size => { %>
                                 <input type="radio" class="btn-check" name="size" id="size-<%= size %>" value="<%= size %>" autocomplete="off" onchange="updateUI()">
@@ -78,55 +122,57 @@
 
                 <!-- Step 2: Name -->
                 <div class="mb-5">
-                    <label for="memberName" class="h5 fw-bold text-chiro-blue mb-4 d-flex align-items-center">
-                        <span class="step-number me-3">2</span> Voor wie is het?
+                    <label for="memberName" class="h5 fw-bold text-chiro-blue mb-3 d-flex align-items-center font-playful">
+                        <span class="step-number me-3">2</span> Voor wie is het T-shirt?
                     </label>
                     <div class="input-group input-group-lg shadow-sm border rounded-pill overflow-hidden bg-white">
-                        <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-person text-chiro-red"></i></span>
+                        <span class="input-group-text bg-white border-0 ps-4"><i class="bi bi-person text-chiro-red fs-5"></i></span>
                         <input type="text" id="memberName" class="form-control border-0 py-3" placeholder="Naam + Voornaam lid" oninput="updateUI()">
                     </div>
                 </div>
 
                 <!-- Step 3: Payment (Dynamically shown) -->
-                <div id="paymentBox" class="payment-instructions rounded-5 p-4 p-md-5 border-0 d-none">
-                    <label class="h5 fw-bold text-chiro-blue mb-4 d-flex align-items-center">
+                <div id="paymentBox" class="shirt-receipt-box d-none">
+                    <span class="washi-tape washi-tape-yellow washi-tape-top-center"></span>
+                    <label class="h5 fw-bold text-chiro-blue mb-3 d-flex align-items-center font-playful">
                         <span class="step-number me-3">3</span> Bestellen maar!
                     </label>
                     
-                    <p class="mb-4">Top! Stort <span class="fw-bold text-chiro-red">€15</span> op het onderstaande rekeningnummer om je bestelling te bevestigen.</p>
+                    <p class="mb-4">Top! Stort <span class="fw-bold text-chiro-red fs-5"><%= shirtPrice %></span> op het onderstaande rekeningnummer om je bestelling te voltooien.</p>
                     
                     <div class="order-summary-card p-4 rounded-4 mb-4 bg-white shadow-sm border-start border-4 border-chiro-yellow">
                         <div class="mb-3">
                             <small class="text-muted d-block mb-1">Rekeningnummer (IBAN)</small>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <span class="fw-bold fs-5">BE71 7845 4208 8869</span>
-                                <button class="btn btn-sm btn-light rounded-circle" onclick="copyText('BE71 7845 4208 8869', this)">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <span class="fw-bold fs-5 text-dark font-monospace">BE71 7845 4208 8869</span>
+                                <button type="button" class="btn btn-sm btn-light rounded-circle shadow-sm" onclick="copyText('BE71 7845 4208 8869', this)" title="Kopieer IBAN">
                                     <i class="bi bi-clipboard"></i>
                                 </button>
                             </div>
                         </div>
                         <div class="mb-0">
-                            <small class="text-muted d-block mb-1">Vermelding (Omschrijving)</small>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <span id="summaryRef" class="fw-bold fs-5 text-chiro-red" style="white-space: pre-line;">...</span>
-                                <button class="btn btn-sm btn-light rounded-circle" onclick="copyRef(this)">
+                            <small class="text-muted d-block mb-1">Vermelding / Mededeling</small>
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <span id="summaryRef" class="fw-bold fs-5 text-chiro-red font-monospace" style="white-space: pre-line;">...</span>
+                                <button type="button" class="btn btn-sm btn-light rounded-circle shadow-sm" onclick="copyRef(this)" title="Kopieer mededeling">
                                     <i class="bi bi-clipboard"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="alert alert-info border-0 rounded-4 bg-light-blue d-flex align-items-start gap-3 p-4">
+                    <div class="alert alert-info border-0 rounded-4 bg-light-blue d-flex align-items-start gap-3 p-4 mb-0">
                         <i class="bi bi-truck fs-3 mt-n1 text-primary"></i>
                         <p class="mb-0 small text-muted">
-                            Wanneer de betaling ontvangen is, zorgen wij dat het T-shirt zo snel mogelijk bij jullie terechtkomt. Meestal kan je het ophalen op de eerstvolgende Chiro-zondag!
+                            Wanneer de betaling ontvangen is, leggen we het T-shirt voor je klaar. Je kan het dan eenvoudig ophalen op de eerstvolgende Chiro-zondag!
                         </p>
                     </div>
                 </div>
 
-                <!-- Prompt -->
-                <div id="formPrompt" class="text-center p-5 rounded-5 border-2 border-dashed border-light bg-light mt-4">
-                    <p class="mb-0 text-muted">Maak een keuze uit de maten en vul de naam in om de betaalgegevens te zien.</p>
+                <!-- Prompt when not yet selected -->
+                <div id="formPrompt" class="text-center p-4 p-md-5 rounded-4 border-2 border-dashed border-secondary border-opacity-25 bg-light mt-3">
+                    <i class="bi bi-arrow-up-circle fs-2 text-chiro-blue mb-2 d-block"></i>
+                    <p class="mb-0 text-muted font-playful">Kies hierboven een maat en vul de naam in om de betaalinstructies te ontgrendelen.</p>
                 </div>
             </div>
         </div>
@@ -157,10 +203,11 @@
         border: 2px solid #edf2f7;
         background: white;
         color: #4a5568;
-        padding: 10px 20px;
-        border-radius: 15px;
+        padding: 10px 18px;
+        border-radius: 16px;
         font-weight: 600;
-        transition: all 0.2s;
+        font-family: var(--font-heading);
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .btn-size-select:hover {
@@ -173,54 +220,18 @@
         background-color: var(--chiro-blue);
         border-color: var(--chiro-blue);
         color: white;
-        box-shadow: 0 4px 12px rgba(29, 78, 137, 0.2);
+        box-shadow: 0 4px 12px rgba(29, 78, 137, 0.25);
     }
 
-    .payment-instructions {
-        background-color: #f8faff;
-        border: 1px solid #e2e8f0 !important;
-        animation: fadeIn 0.5s ease-out forwards;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .product-main-image {
-        min-height: 400px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-image: radial-gradient(circle at 50% 50%, #fff 0%, #f9fafb 100%);
-    }
-
-    .shadow-inner {
-        box-shadow: inset 0 2px 15px rgba(0,0,0,0.05);
-    }
-
-    .ls-1 { letter-spacing: 0.5px; }
-    
-    .ls-2 { letter-spacing: 1.5px; }
-
-    .btn-light {
-        background-color: #f1f5f9;
-        border: none;
-    }
-
-    .btn-light:hover {
-        background-color: #e2e8f0;
-    }
-
-    @media (max-width: 991px) {
-        .product-gallery { position: static !important; margin-bottom: 3rem; }
+    .order-summary-card {
+        border-left: 5px solid var(--chiro-yellow) !important;
     }
 </style>
 
 <script>
     function updateUI() {
         const nameInput = document.getElementById('memberName');
-        const name = nameInput.value.trim();
+        const name = nameInput ? nameInput.value.trim() : '';
         const sizeElement = document.querySelector('input[name="size"]:checked');
         const size = sizeElement ? sizeElement.value : null;
         
@@ -252,4 +263,5 @@
     }
 </script>
 
+<%- include('../partials/live_editor_bottom') %>
 <%- include('../partials/footer') %>

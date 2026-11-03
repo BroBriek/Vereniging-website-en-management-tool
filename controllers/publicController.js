@@ -314,6 +314,7 @@ exports.getPractical = async (req, res) => {
 exports.getLeaders = async (req, res) => {
     try {
         const { orgName, orgFullName } = getOrgConfig();
+        const content = await getContent('leaders');
         const leaders = await Leader.findAll({ order: [['group', 'ASC'], ['name', 'ASC']] });
         const groups = {};
         const groupOrder = ['Hoofdleiding', 'Ribbels', 'Speelclub', 'Rakwi\'s', 'Tito\'s', 'Keti\'s', 'Aspi\'s'];
@@ -325,7 +326,8 @@ exports.getLeaders = async (req, res) => {
         res.render('public/leaders', { 
             title: `Onze Leiding - ${orgFullName}`, 
             description: `Maak kennis met het team van vrijwilligers en jeugdleiders van ${orgName}.`,
-            groups 
+            groups,
+            content
         });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
@@ -338,6 +340,7 @@ exports.getCalendar = async (req, res) => {
     }
     try {
         const { orgName } = getOrgConfig();
+        const content = await getContent('calendar');
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -360,7 +363,8 @@ exports.getCalendar = async (req, res) => {
         res.render('public/calendar', { 
             title: `Kalender & Activiteiten - ${orgName}`, 
             description: `De volledige kalender van ${orgName}: mis geen activiteiten, zondagen of speciale evenementen.`,
-            events 
+            events,
+            content
         });
     } catch (error) {
         console.error('Error in getCalendar:', error);
@@ -691,15 +695,17 @@ const isCaptchaEnabled = () => {
     return true;
 };
 
-exports.getContact = (req, res) => {
+exports.getContact = async (req, res) => {
     const { orgFullName } = getOrgConfig();
     const captchaEnabled = isCaptchaEnabled();
+    const content = await getContent('contact');
     res.render('public/contact', { 
         title: `Contact - ${orgFullName}`, 
         description: `Contacteer de leiding van ${orgFullName}. Stel je vragen of geef feedback.`,
         contactFormDisabled: SettingsService.get('disable_contact_form'),
         recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null,
-        captchaEnabled
+        captchaEnabled,
+        content
     });
 };
 

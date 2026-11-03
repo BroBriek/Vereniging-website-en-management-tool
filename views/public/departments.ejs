@@ -1,20 +1,189 @@
 <%- include('../partials/header') %>
 
-<div class="mb-5">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <h1 class="display-4 fw-bold mb-0">Afdelingen</h1>
-        <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-            <a href="/admin/page/departments" class="btn btn-chiro btn-sm btn-edit-page shadow-sm">
-                <i class="bi bi-pencil-square"></i><span class="d-none d-sm-inline ms-1">Bewerk Pagina</span><span class="d-sm-none ms-1">Bewerken</span>
-            </a>
-        <% } %>
+<%
+var deptBadge = (content.dept_badge && content.dept_badge.content) ? content.dept_badge.content : '🌈 Voor iedereen van 6 tot 18 jaar';
+var deptTitle = (content.dept_title && content.dept_title.content) ? content.dept_title.content : 'Onze Afdelingen';
+var deptLead = (content.dept_lead && content.dept_lead.content) ? content.dept_lead.content : 'Bij onze Chiro spelen we in zes verschillende leeftijdsgroepen, elk met hun eigen enthousiaste leiding, te gekke spellen en onvergetelijke avonturen!';
+
+var departmentsList = [
+    {
+        key: 'ribbels',
+        name: 'Ribbels',
+        themeClass: 'dept-ribbels',
+        tapeClass: 'washi-tape-dept',
+        badge: '6 - 8 jaar • 1ste & 2de leerjaar',
+        emoji: '🦄',
+        tagline: 'Fantasie, verwondering en voor het eerst op kamp!',
+        imgKey: 'dept_img_ribbels',
+        defaultImg: '/uploads/image-1791810054939-717577279.jpeg'
+    },
+    {
+        key: 'speelclub',
+        name: 'Speelclub',
+        themeClass: 'dept-speelclub',
+        tapeClass: 'washi-tape-dept',
+        badge: '8 - 10 jaar • 3de & 4de leerjaar',
+        emoji: '🌟',
+        tagline: 'Spelletjestochten, plezante liedjes en 10 dagen kampplezier!',
+        imgKey: 'dept_img_speelclub',
+        defaultImg: '/uploads/image-1778686732775-690747244.JPG'
+    },
+    {
+        key: 'rakwis',
+        name: "Rakwi's",
+        themeClass: 'dept-rakwis',
+        tapeClass: 'washi-tape-dept',
+        badge: '10 - 12 jaar • 5de & 6de leerjaar',
+        emoji: '🌲',
+        tagline: 'Grote bosspelen, ravotten in regen en wind en Rakwidag!',
+        imgKey: 'dept_img_rakwis',
+        defaultImg: '/uploads/image-1778686957173-275221558.jpg'
+    },
+    {
+        key: 'titos',
+        name: "Tito's",
+        themeClass: 'dept-titos',
+        tapeClass: 'washi-tape-dept',
+        badge: '12 - 14 jaar • 1ste & 2de middelbaar',
+        emoji: '🔥',
+        tagline: 'Dorpsspelen, voor het eerst op tweedaagse en buitenlands kamp!',
+        imgKey: 'dept_img_titos',
+        defaultImg: '/uploads/image-1778686818929-846254521.JPG'
+    },
+    {
+        key: 'ketis',
+        name: "Keti's",
+        themeClass: 'dept-ketis',
+        tapeClass: 'washi-tape-dept',
+        badge: '14 - 16 jaar • 3de & 4de middelbaar',
+        emoji: '⚡',
+        tagline: 'Uitdagingen, dropping, stadsspelen en hechte vriendschap!',
+        imgKey: 'dept_img_ketis',
+        defaultImg: '/uploads/image-1791810054939-717577279.jpeg'
+    },
+    {
+        key: 'aspis',
+        name: "Aspi's",
+        themeClass: 'dept-aspis',
+        tapeClass: 'washi-tape-dept',
+        badge: '16 - 18 jaar • 5de & 6de middelbaar',
+        emoji: '⛺',
+        tagline: 'De oudste leden, hechte groep, projecten en klaargestoomd voor leiding!',
+        imgKey: 'dept_img_aspis',
+        defaultImg: '/uploads/image-1778686818929-846254521.JPG'
+    }
+];
+%>
+
+<div class="scrapbook-canvas<% if (user && (user.role === 'admin' || user.role === 'media')) { %> admin-logged-in<% } %>" data-page-slug="departments">
+    <%- include('../partials/live_editor_top', { pageSlug: 'departments', pageTitle: 'Afdelingen' }) %>
+
+    <!-- Header Spread -->
+    <header class="scrapbook-page-header">
+        <span class="washi-tape washi-tape-yellow washi-tape-top-left"></span>
+        <span class="washi-tape washi-tape-blue washi-tape-top-right"></span>
+
+        <h1 class="journal-main-title mb-3" data-live-edit="dept_title" data-live-edit-type="text">
+            <%= deptTitle %>
+        </h1>
+
+        <p class="journal-main-lead mb-0" data-live-edit="dept_lead" data-live-edit-type="text">
+            <%= deptLead %>
+        </p>
+    </header>
+
+    <!-- Visual Department Cards Grid -->
+    <div class="row g-4 mb-5">
+        <% departmentsList.forEach(dept => { 
+            var currentImg = (content[dept.imgKey] && content[dept.imgKey].content) ? content[dept.imgKey].content : dept.defaultImg;
+        %>
+            <div class="col-md-6 col-lg-4">
+                <div class="dept-card <%= dept.themeClass %>">
+                    <span class="washi-tape <%= dept.tapeClass %> washi-tape-top-center"></span>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3 pt-2">
+                        <span class="dept-age-badge">
+                            <%= dept.badge %>
+                        </span>
+                        <span class="fs-4"><%= dept.emoji %></span>
+                    </div>
+
+                    <h3 class="dept-title font-playful fw-bold mb-2"><%= dept.name %></h3>
+                    <p class="text-muted small mb-3 flex-grow-1"><%= dept.tagline %></p>
+
+                    <!-- Polaroid Photo of the group -->
+                    <div class="sidebar-polaroid p-2 mt-auto" style="box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                        <div class="polaroid-img-wrapper" data-live-edit="<%= dept.imgKey %>" data-live-edit-type="image" data-live-edit-ratio="1.33333" style="aspect-ratio: 4/3;">
+                            <img src="<%= currentImg %>" alt="<%= dept.name %>" class="polaroid-img" loading="lazy">
+                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                <div class="live-image-overlay">
+                                    <i class="bi bi-crop"></i> <span>Foto aanpassen</span>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
     </div>
 
-    <div class="card p-4 p-md-5">
-        <div class="card-body fs-5">
-            <%- (content.main && content.main.content) ? content.main.content : '<div class="text-center py-5 text-muted"><i class="bi bi-people display-1 mb-3 d-block"></i><p>Info over afdelingen.</p></div>' %>
+    <!-- Detailed Group Description Notebook -->
+    <div class="scrapbook-notebook-card mb-5">
+        <span class="washi-tape washi-tape-kraft washi-tape-top-center"></span>
+        <div class="scrapbook-notebook-inner">
+            <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-3 flex-wrap gap-2">
+                <span class="scrapbook-stamp-label mb-0">
+                    <i class="bi bi-journal-richtext me-1"></i> Volledige Afdelingen Info
+                </span>
+                <span class="badge bg-light text-muted border rounded-pill small font-playful px-3 py-1">
+                    Lees alles over de groepen
+                </span>
+            </div>
+
+            <div class="notebook-body" data-live-edit="main" data-live-edit-type="rich">
+                <%- (content.main && content.main.content) ? content.main.content : `
+                <p>Op onze Chiro zijn alle jongens en meisjes van 6 tot 18 jaar welkom. Naast onze fantastische gezamenlijke activiteiten verdelen we ons in 6 leeftijdsgroepen. Iedere groep heeft eigen leiding en activiteiten op maat!</p>
+                ` %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Call to Action Postcards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <a href="/inschrijven" class="postcard-nav-card h-100">
+                <div class="postcard-top">
+                    <div class="postcard-icon-box bg-danger">
+                        <i class="bi bi-pencil-square"></i>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="postcard-title">Schrijf Je Vandaag In</h4>
+                    <p class="postcard-desc mb-2">Word lid van één van onze afdelingen en beleef de leukste zondagen.</p>
+                </div>
+                <div class="postcard-arrow">
+                    Inschrijven <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a href="/leiding" class="postcard-nav-card h-100">
+                <div class="postcard-top">
+                    <div class="postcard-icon-box bg-primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="postcard-title">Ontmoet Onze Leiding</h4>
+                    <p class="postcard-desc mb-2">Maak kennis met de leiding die elke activiteit voor jouw groep organiseert.</p>
+                </div>
+                <div class="postcard-arrow">
+                    Bekijk Leiding <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
         </div>
     </div>
 </div>
 
+<%- include('../partials/live_editor_bottom') %>
 <%- include('../partials/footer') %>

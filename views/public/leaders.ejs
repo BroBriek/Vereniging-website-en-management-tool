@@ -1,25 +1,52 @@
 <%- include('../partials/header') %>
 
-<div class="mb-5">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <h1 class="display-4 fw-bold mb-0">Onze Leiding</h1>
-        <% if (user) { %>
-            <a href="/admin/leaders" class="btn btn-chiro btn-sm btn-edit-page shadow-sm">
-                <i class="bi bi-pencil-square"></i><span class="d-none d-sm-inline ms-1">Leiding Bewerken</span><span class="d-sm-none ms-1">Bewerken</span>
-            </a>
-        <% } %>
-    </div>
-    <hr class="mb-5 opacity-10">
+<%
+var leadersTitle = (content && content.leaders_title && content.leaders_title.content) ? content.leaders_title.content : 'De Leidingsploeg';
+var leadersLead = (content && content.leaders_lead && content.leaders_lead.content) ? content.leaders_lead.content : 'Elke zondag staan deze enthousiaste leiders en leidsters paraat om de leukste spelen, onvergetelijke weekends en het legendarische zomerkamp te organiseren!';
+%>
 
+<div class="scrapbook-canvas<% if (user && (user.role === 'admin' || user.role === 'media')) { %> admin-logged-in<% } %>" data-page-slug="leaders">
+    <%- include('../partials/live_editor_top', { pageSlug: 'leaders', pageTitle: 'Leiding' }) %>
+
+    <!-- Header Spread -->
+    <header class="scrapbook-page-header">
+        <span class="washi-tape washi-tape-yellow washi-tape-top-left"></span>
+        <span class="washi-tape washi-tape-red washi-tape-top-right"></span>
+
+        <h1 class="journal-main-title mb-3" data-live-edit="leaders_title" data-live-edit-type="text">
+            <%= leadersTitle %>
+        </h1>
+
+        <p class="journal-main-lead mb-3" data-live-edit="leaders_lead" data-live-edit-type="text">
+            <%= leadersLead %>
+        </p>
+
+        <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+            <div class="d-flex align-items-center gap-2 mt-3 pt-2 border-top">
+                <a href="/admin/leaders" class="btn btn-outline-primary btn-sm rounded-pill shadow-sm">
+                    <i class="bi bi-person-lines-fill me-1"></i> Leiders toevoegen / bewerken in beheer
+                </a>
+            </div>
+        <% } %>
+    </header>
+
+    <!-- Leaders Groups -->
     <% Object.keys(groups).forEach(groupName => { %>
-        <% if(groups[groupName].length > 0) { %>
-            <div class="mb-5">
-                <h3 class="group-header group-<%= groupName.toLowerCase().replace(/[^a-z]/g, '') %> px-4 py-2 rounded-pill shadow-sm">
-                    <%= groupName %>
-                </h3>
-                
+        <% if (groups[groupName].length > 0) { 
+            var groupClass = groupName.toLowerCase().replace(/[^a-z]/g, '');
+        %>
+            <section class="mb-5">
+                <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                    <h3 class="group-header group-<%= groupClass %> px-4 py-2 rounded-pill shadow-sm mb-0 fs-4 fw-bold">
+                        <%= groupName %>
+                    </h3>
+                    <span class="badge bg-light text-muted border rounded-pill px-3 py-2">
+                        <%= groups[groupName].length %> <%= groups[groupName].length === 1 ? 'leider/leidster' : 'leiders & leidsters' %>
+                    </span>
+                </div>
+
                 <% if (groups[groupName].length > 4) { %>
-                    <!-- Carousel Layout for many items -->
+                    <!-- Carousel Layout for many items (Original Structure) -->
                     <div class="carousel-container">
                         <button class="carousel-control-prev d-none d-md-flex" onclick="scrollCarousel(this, -1)" aria-label="Vorige">
                             <i class="bi bi-chevron-left"></i>
@@ -30,11 +57,11 @@
                                      data-leader="<%= JSON.stringify(leader) %>"
                                      onclick="openLeaderModal(this)">
                                     <div class="card h-100 leader-card border-0 shadow-sm">
-                                        <% if(leader.image) { %>
+                                        <% if (leader.image) { %>
                                             <div class="position-relative">
                                                 <img src="<%= leader.image %>" class="card-img-top" alt="<%= leader.name %>" 
                                                      style="height: 280px; object-fit: cover;" draggable="false">
-                                                <% if(leader.is_head_leader) { %>
+                                                <% if (leader.is_head_leader) { %>
                                                     <div class="position-absolute top-0 end-0 m-2">
                                                         <span class="badge bg-warning text-dark shadow-sm">Hoofdleiding</span>
                                                     </div>
@@ -67,11 +94,11 @@
                                  data-leader="<%= JSON.stringify(leader) %>"
                                  onclick="openLeaderModal(this)">
                                 <div class="card h-100 leader-card border-0 shadow-sm">
-                                    <% if(leader.image) { %>
+                                    <% if (leader.image) { %>
                                         <div class="position-relative">
                                             <img src="<%= leader.image %>" class="card-img-top" alt="<%= leader.name %>" 
                                                  style="height: 280px; object-fit: cover;" draggable="false">
-                                            <% if(leader.is_head_leader) { %>
+                                            <% if (leader.is_head_leader) { %>
                                                 <div class="position-absolute top-0 end-0 m-2">
                                                     <span class="badge bg-warning text-dark shadow-sm">Hoofdleiding</span>
                                                 </div>
@@ -94,17 +121,17 @@
                     </div>
 
                     <!-- Desktop: Standard Grid Layout for few items -->
-                    <div class="row d-none d-md-flex g-4">
+                    <div class="row d-none d-md-flex g-4 mb-4">
                         <% groups[groupName].forEach(leader => { %>
                             <div class="col-md-6 col-lg-3 mb-4" style="cursor: pointer;" 
                                  data-leader="<%= JSON.stringify(leader) %>"
                                  onclick="openLeaderModal(this)">
                                 <div class="card h-100 leader-card border-0 shadow-sm">
-                                    <% if(leader.image) { %>
+                                    <% if (leader.image) { %>
                                         <div class="position-relative">
                                             <img src="<%= leader.image %>" class="card-img-top" alt="<%= leader.name %>" 
-                                                 style="height: 280px; object-fit: cover;">
-                                            <% if(leader.is_head_leader) { %>
+                                                 style="height: 280px; object-fit: cover;" draggable="false">
+                                            <% if (leader.is_head_leader) { %>
                                                 <div class="position-absolute top-0 end-0 m-2">
                                                     <span class="badge bg-warning text-dark shadow-sm">Hoofdleiding</span>
                                                 </div>
@@ -126,55 +153,58 @@
                         <% }) %>
                     </div>
                 <% } %>
-            </div>
+            </section>
         <% } %>
     <% }) %>
 </div>
 
-<!-- Zwoele Modal -->
-<div class="modal fade" id="leaderModal" tabindex="-1" aria-hidden="true">
+<!-- Leader Details Modal -->
+<div class="modal fade" id="leaderModal" tabindex="-1" aria-labelledby="leaderModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="position-relative">
-                <img id="modalImage" src="" class="leader-modal-img w-100" alt="Leader" style="height: 300px; object-fit: cover; border-top-left-radius: calc(0.3rem - 1px); border-top-right-radius: calc(0.3rem - 1px);">
-                <button type="button" class="btn-close bg-white position-absolute top-0 end-0 m-3 p-2 shadow-sm opacity-100" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden position-relative">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Sluiten"></button>
             </div>
-            
-            <div class="modal-body px-4 py-4">
-                <h2 class="modal-title text-center fw-bold mb-4" id="modalName"></h2>
+            <div class="modal-body p-4 pt-0">
+                <div class="text-center mb-3">
+                    <div class="mx-auto rounded-circle overflow-hidden shadow mb-3 border border-3 border-white" style="width: 140px; height: 140px; background: #f1f5f9;">
+                        <img id="modalImage" src="" alt="Leider foto" class="w-100 h-100 object-fit-cover">
+                    </div>
+                    <h3 class="fw-bold mb-1 text-chiro-blue font-playful" id="modalName"></h3>
+                    <span class="badge bg-light text-muted border rounded-pill px-3 py-1 font-playful">Chiro <%= orgName %></span>
+                </div>
 
-                <!-- Info Stats Row -->
-                <div class="row justify-content-center g-3 mb-4">
+                <div class="row g-2 justify-content-center mb-3">
                     <div class="col-auto">
-                        <div class="p-2 border rounded bg-light text-center" style="min-width: 100px;">
+                        <div class="p-2 border rounded-3 bg-light text-center" style="min-width: 110px;">
                             <div class="text-muted small text-uppercase mb-1"><i class="bi bi-hourglass-split text-primary"></i> Ervaring</div>
                             <div class="fw-bold text-dark"><span id="modalYears"></span> jaar</div>
                         </div>
                     </div>
                     
                     <div class="col-auto" id="modalBirthDateWrapper" style="display:none;">
-                        <div class="p-2 border rounded bg-light text-center" style="min-width: 120px;">
-                            <div class="text-muted small text-uppercase mb-1"><i class="bi bi-gift text-primary"></i> Verjaardag</div>
+                        <div class="p-2 border rounded-3 bg-light text-center" style="min-width: 110px;">
+                            <div class="text-muted small text-uppercase mb-1"><i class="bi bi-gift text-danger"></i> Verjaardag</div>
                             <div class="fw-bold text-dark" id="modalBirthDate"></div>
                         </div>
                     </div>
 
                     <div class="col-auto" id="modalPhoneWrapper" style="display:none;">
-                        <div class="p-2 border rounded bg-light text-center" style="min-width: 120px;">
-                            <div class="text-muted small text-uppercase mb-1"><i class="bi bi-telephone text-primary"></i> Telefoon</div>
+                        <div class="p-2 border rounded-3 bg-light text-center" style="min-width: 110px;">
+                            <div class="text-muted small text-uppercase mb-1"><i class="bi bi-telephone text-success"></i> Telefoon</div>
                             <div class="fw-bold text-dark"><a id="modalPhone" href="" class="text-decoration-none text-dark"></a></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="text-center">
-                    <h5 class="mb-3 text-primary fw-bold" id="modalStudy"></h5>
+                    <h6 class="mb-2 text-primary fw-bold font-playful" id="modalStudy"></h6>
                     <div class="d-flex justify-content-center">
-                        <p class="lead fst-italic text-muted" id="modalExtra" style="max-width: 80%;"></p>
+                        <p class="fst-italic text-muted small" id="modalExtra" style="max-width: 85%;"></p>
                     </div>
-                    <% if (user) { %>
-                        <div class="mt-3 pt-2 border-top">
-                            <a id="modalEditLink" href="#" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                    <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                        <div class="mt-3 pt-3 border-top">
+                            <a id="modalEditLink" href="#" class="btn btn-sm btn-outline-primary rounded-pill px-4">
                                 <i class="bi bi-pencil me-1"></i> Deze leiding bewerken
                             </a>
                         </div>
@@ -201,7 +231,6 @@
         const birthDateSpan = document.getElementById('modalBirthDate');
         if (leader.birth_date) {
             const date = new Date(leader.birth_date);
-            // Format: 12 mei 2001
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             birthDateSpan.textContent = date.toLocaleDateString('nl-BE', options);
             birthDateWrapper.style.display = 'block';
@@ -228,12 +257,6 @@
         if (leader.image) {
             img.src = leader.image;
             img.style.display = 'block';
-            if (leader.is_head_leader) {
-                // Optionally add a border inside the modal too, or leave it clean
-                img.style.borderBottom = "5px solid #ffc107"; // Gold bottom border for HL
-            } else {
-                img.style.borderBottom = "none";
-            }
         } else {
             img.style.display = 'none';
         }
@@ -253,4 +276,5 @@
     }
 </script>
 
+<%- include('../partials/live_editor_bottom') %>
 <%- include('../partials/footer') %>

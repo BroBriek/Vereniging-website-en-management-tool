@@ -15,16 +15,28 @@
 </div>
 
 <form action="/admin/page/<%= slug %>" method="POST" enctype="multipart/form-data">
-    <% if (slug === 'home') { %>
+    <% 
+    const visualUrls = {
+        home: '/home?edit=1',
+        practical: '/praktisch?edit=1',
+        departments: '/afdelingen?edit=1',
+        shirts: '/t-shirts?edit=1',
+        register: '/inschrijven?edit=1',
+        contact: '/contact?edit=1'
+    };
+    %>
+    <% if (visualUrls[slug]) { %>
         <div class="alert alert-primary d-flex flex-wrap justify-content-between align-items-center gap-3 rounded-4 mb-4 shadow-sm border-0" style="background: linear-gradient(135deg, #e0f2fe 0%, #ede9fe 100%);">
             <div>
-                <h5 class="fw-bold mb-1 text-primary"><i class="bi bi-magic me-2"></i>Nieuw: Intuïtieve Visuele Bewerker!</h5>
-                <p class="mb-0 text-muted small">Klik direct op teksten en foto's op de hoofdpagina om ze aan te passen zonder formulieren.</p>
+                <h5 class="fw-bold mb-1 text-primary"><i class="bi bi-magic me-2"></i>Intuïtieve Visuele Bewerker</h5>
+                <p class="mb-0 text-muted small">Je kan deze pagina rechtstreeks en interactief bewerken via de visuele bewerker!</p>
             </div>
-            <a href="/home?edit=1" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">
+            <a href="<%= visualUrls[slug] %>" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">
                 <i class="bi bi-pencil-square me-1"></i> Open Visuele Bewerker
             </a>
         </div>
+    <% } %>
+    <% if (slug === 'home') { %>
         <div class="row g-4 mb-4">
             <!-- Left Column: Hero & Intro -->
             <div class="col-lg-7">
