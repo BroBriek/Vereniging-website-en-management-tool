@@ -50,16 +50,62 @@ var stat3Lbl = (content.stat_3_lbl && content.stat_3_lbl.content) ? content.stat
 
 var stat4Num = (content.stat_4_num && content.stat_4_num.content) ? content.stat_4_num.content : '10';
 var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat_4_lbl.content : 'Dagen zomerkamp';
+
+var heroImagePos = (content.hero_image_pos && content.hero_image_pos.content) ? content.hero_image_pos.content : 'center 20%';
+var cardPos1 = (content.polaroid_img_1_pos && content.polaroid_img_1_pos.content) ? content.polaroid_img_1_pos.content : 'center 20%';
+var cardPos2 = (content.polaroid_img_2_pos && content.polaroid_img_2_pos.content) ? content.polaroid_img_2_pos.content : 'center 20%';
+var cardPos3 = (content.polaroid_img_3_pos && content.polaroid_img_3_pos.content) ? content.polaroid_img_3_pos.content : 'center 20%';
+var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content) ? content.polaroid_img_4_pos.content : 'center 20%';
 %>
 
-<div class="scrapbook-canvas">
+<% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+    <link rel="stylesheet" href="/vendor/cropper.min.css">
+<% } %>
+
+<div class="scrapbook-canvas<% if (user && (user.role === 'admin' || user.role === 'media')) { %> admin-logged-in<% } %>">
     <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-        <div class="mb-4">
-            <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2 shadow-sm rounded-4">
-                <span class="fw-bold"><i class="bi bi-shield-check me-2"></i>Beheer modus actief</span>
-                <a href="/admin/page/home" class="btn btn-chiro btn-sm btn-edit-page shadow-sm">
-                    <i class="bi bi-pencil-square"></i><span class="d-none d-sm-inline ms-1">Bewerk deze pagina</span><span class="d-sm-none ms-1">Bewerken</span>
-                </a>
+        <!-- Default Admin Banner (when edit mode is closed) -->
+        <div id="live-edit-banner-default" class="mb-4">
+            <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2 shadow-sm rounded-4 mb-0">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary text-white rounded-pill px-3 py-2"><i class="bi bi-shield-check me-1"></i>Beheermodus</span>
+                    <span class="fw-bold">Wil je de hoofdpagina aanpassen?</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button type="button" id="btn-toggle-edit-mode" class="btn btn-chiro btn-sm shadow-sm">
+                        <i class="bi bi-pencil-square me-1"></i> Bewerkmodus inschakelen
+                    </button>
+                    <a href="/admin/page/home?classic=1" class="btn btn-outline-secondary btn-sm rounded-pill" title="Klassiek formulier">
+                        <i class="bi bi-sliders me-1"></i> Formulier
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sticky Floating Toolbar (when edit mode is active) -->
+        <div id="live-edit-toolbar" class="live-edit-toolbar d-none mb-4 rounded-4 overflow-hidden">
+            <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center gap-3 py-2 px-3">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="d-inline-flex align-items-center gap-2 fw-bold text-dark">
+                        <span class="live-edit-pulse"></span>
+                        Bewerkmodus actief
+                    </span>
+                    <span class="badge bg-light text-muted border rounded-pill px-3 py-2 d-none d-md-inline-block">
+                        <i class="bi bi-hand-index-thumb text-primary me-1"></i> Klik op een foto om te vervangen of klik op tekst om te typen
+                    </span>
+                    <span id="live-edit-dirty-badge" class="d-none"></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" id="btn-save-inline" class="btn btn-success btn-sm px-3 fw-bold rounded-pill shadow-sm" disabled>
+                        <i class="bi bi-cloud-check-fill me-1"></i> <span id="btn-save-text">Opslaan</span>
+                    </button>
+                    <button type="button" id="btn-cancel-inline" class="btn btn-outline-secondary btn-sm rounded-pill px-3" title="Herstel wijzigingen">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Herstel
+                    </button>
+                    <button type="button" id="btn-close-edit-mode" class="btn btn-outline-dark btn-sm rounded-pill px-3" title="Bewerkmodus sluiten">
+                        <i class="bi bi-x-lg me-1"></i> Sluiten
+                    </button>
+                </div>
             </div>
         </div>
     <% } %>
@@ -73,7 +119,7 @@ var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat
             <!-- Left: Handcrafted Greeting & Welcome -->
             <div class="col-lg-6">
                 <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
-                    <span class="scrapbook-pill-badge">
+                    <span class="scrapbook-pill-badge" data-live-edit="hero_badge" data-live-edit-type="text">
                         <i class="bi bi-geo-alt-fill text-danger me-1"></i><%= heroBadge %>
                     </span>
                     <span class="badge bg-light text-muted border rounded-pill font-playful px-3 py-2">
@@ -81,20 +127,20 @@ var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat
                     </span>
                 </div>
 
-                <h1 class="journal-main-title">
+                <h1 class="journal-main-title" data-live-edit="hero_title" data-live-edit-type="text">
                     <%= heroTitle %>
                 </h1>
 
-                <p class="journal-main-lead">
+                <p class="journal-main-lead" data-live-edit="hero_text" data-live-edit-type="text" data-multiline="true">
                     <%= heroText %>
                 </p>
 
                 <div class="d-flex flex-wrap gap-3 align-items-center mb-4">
-                    <a href="<%= heroBtn1Url %>" class="btn btn-chiro">
-                        <i class="bi bi-compass me-1"></i> <%= heroBtn1Text %>
+                    <a href="<%= heroBtn1Url %>" class="btn btn-chiro" data-live-edit-btn data-live-edit-text="hero_btn1_text" data-live-edit-url="hero_btn1_url">
+                        <i class="bi bi-compass me-1"></i> <span class="btn-label"><%= heroBtn1Text %></span>
                     </a>
-                    <a href="<%= heroBtn2Url %>" class="btn btn-chiro-outline">
-                        <i class="bi bi-journal-richtext me-1"></i> <%= heroBtn2Text %>
+                    <a href="<%= heroBtn2Url %>" class="btn btn-chiro-outline" data-live-edit-btn data-live-edit-text="hero_btn2_text" data-live-edit-url="hero_btn2_url">
+                        <i class="bi bi-journal-richtext me-1"></i> <span class="btn-label"><%= heroBtn2Text %></span>
                     </a>
                 </div>
 
@@ -120,10 +166,15 @@ var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat
                     <!-- Main Feature Polaroid -->
                     <div class="feature-polaroid polaroid-main">
                         <span class="washi-tape washi-tape-kraft washi-tape-top-center"></span>
-                        <div class="polaroid-img-wrapper">
+                        <div class="polaroid-img-wrapper" data-live-edit="hero_image" data-live-edit-type="image">
                             <img src="<%= heroImage %>" alt="<%= heroTitle %>" class="polaroid-img">
+                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                <div class="live-image-overlay">
+                                    <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
+                                </div>
+                            <% } %>
                         </div>
-                        <div class="polaroid-caption">
+                        <div class="polaroid-caption" data-live-edit="hero_photo_caption" data-live-edit-type="text">
                             <%= heroPhotoCaption %>
                         </div>
                         <div class="polaroid-tag">📍 <%= orgFullName %></div>
@@ -132,12 +183,20 @@ var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat
                     <!-- Secondary Overlapping Polaroid (companion snapshot) -->
                     <div class="feature-polaroid polaroid-secondary d-none d-sm-flex">
                         <span class="washi-tape washi-tape-yellow washi-tape-top-right"></span>
-                        <div class="polaroid-img-wrapper">
+                        <div class="polaroid-img-wrapper" data-live-edit="polaroid_img_1" data-live-edit-type="image">
                             <img src="<%= cardImg1 %>" alt="<%= cardCap1 %>" class="polaroid-img">
+                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                <div class="live-image-overlay">
+                                    <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
+                                </div>
+                            <% } %>
                         </div>
-                        <div class="polaroid-caption">
+                        <div class="polaroid-caption" data-live-edit="polaroid_cap_1" data-live-edit-type="text">
                             <%= cardCap1 %>
                         </div>
+                        <% if (cardTag1) { %>
+                            <div class="polaroid-tag" data-live-edit="polaroid_tag_1" data-live-edit-type="text"><%= cardTag1 %></div>
+                        <% } %>
                     </div>
                 </div>
             </div>
@@ -156,10 +215,10 @@ var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat
                     <div class="journal-notebook-inner">
                         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 pb-3 border-bottom border-dashed">
                             <div>
-                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill font-playful mb-2">
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill font-playful mb-2" data-live-edit="logbook_badge" data-live-edit-type="text">
                                     <%= logbookBadge %>
                                 </span>
-                                <h2 class="notebook-title m-0"><%= logbookTitle %></h2>
+                                <h2 class="notebook-title m-0" data-live-edit="logbook_title" data-live-edit-type="text"><%= logbookTitle %></h2>
                             </div>
                             <div class="passport-stamp d-none d-sm-inline-flex" title="100% Avontuur">
                                 <span class="passport-stamp-top">AVONTUUR</span>
@@ -168,7 +227,7 @@ var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat
                             </div>
                         </div>
 
-                        <div class="notebook-body mb-4">
+                        <div class="notebook-body mb-4" data-live-edit="intro" data-live-edit-type="rich">
                             <%- (content.intro && content.intro.content) ? content.intro.content : '<p class="text-center py-4">Welkom op onze website. Hier vind je alle info over onze werking.</p>' %>
                         </div>
 
@@ -195,13 +254,16 @@ var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat
                     <!-- Taped Polaroid 2 -->
                     <div class="sidebar-polaroid polaroid-tilt-right">
                         <span class="washi-tape washi-tape-blue washi-tape-top-center"></span>
-                        <div class="polaroid-img-wrapper">
+                        <div class="polaroid-img-wrapper" data-live-edit="polaroid_img_2" data-live-edit-type="image">
                             <img src="<%= cardImg2 %>" alt="<%= cardCap2 %>" class="polaroid-img" loading="lazy">
+                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                <div class="live-image-overlay">
+                                    <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
+                                </div>
+                            <% } %>
                         </div>
-                        <div class="polaroid-caption"><%= cardCap2 %></div>
-                        <% if (cardTag2) { %>
-                            <div class="polaroid-tag"><%= cardTag2 %></div>
-                        <% } %>
+                        <div class="polaroid-caption" data-live-edit="polaroid_cap_2" data-live-edit-type="text"><%= cardCap2 %></div>
+                        <div class="polaroid-tag" data-live-edit="polaroid_tag_2" data-live-edit-type="text"><%= cardTag2 %></div>
                     </div>
 
                     <!-- Reispaspoort Visa Sheet -->
@@ -212,20 +274,20 @@ var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat
                         </div>
                         <div class="visa-grid">
                             <div class="visa-stamp visa-red">
-                                <div class="visa-num"><%= stat1Num %></div>
-                                <div class="visa-lbl"><%= stat1Lbl %></div>
+                                <div class="visa-num" data-live-edit="stat_1_num" data-live-edit-type="text"><%= stat1Num %></div>
+                                <div class="visa-lbl" data-live-edit="stat_1_lbl" data-live-edit-type="text"><%= stat1Lbl %></div>
                             </div>
                             <div class="visa-stamp visa-blue">
-                                <div class="visa-num"><%= stat2Num %></div>
-                                <div class="visa-lbl"><%= stat2Lbl %></div>
+                                <div class="visa-num" data-live-edit="stat_2_num" data-live-edit-type="text"><%= stat2Num %></div>
+                                <div class="visa-lbl" data-live-edit="stat_2_lbl" data-live-edit-type="text"><%= stat2Lbl %></div>
                             </div>
                             <div class="visa-stamp visa-yellow">
-                                <div class="visa-num"><%= stat3Num %></div>
-                                <div class="visa-lbl"><%= stat3Lbl %></div>
+                                <div class="visa-num" data-live-edit="stat_3_num" data-live-edit-type="text"><%= stat3Num %></div>
+                                <div class="visa-lbl" data-live-edit="stat_3_lbl" data-live-edit-type="text"><%= stat3Lbl %></div>
                             </div>
                             <div class="visa-stamp visa-brown">
-                                <div class="visa-num"><%= stat4Num %></div>
-                                <div class="visa-lbl"><%= stat4Lbl %></div>
+                                <div class="visa-num" data-live-edit="stat_4_num" data-live-edit-type="text"><%= stat4Num %></div>
+                                <div class="visa-lbl" data-live-edit="stat_4_lbl" data-live-edit-type="text"><%= stat4Lbl %></div>
                             </div>
                         </div>
                     </div>
@@ -233,13 +295,31 @@ var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat
                     <!-- Taped Polaroid 3 -->
                     <div class="sidebar-polaroid polaroid-tilt-left d-none d-lg-flex">
                         <span class="washi-tape washi-tape-yellow washi-tape-top-left"></span>
-                        <div class="polaroid-img-wrapper">
+                        <div class="polaroid-img-wrapper" data-live-edit="polaroid_img_3" data-live-edit-type="image">
                             <img src="<%= cardImg3 %>" alt="<%= cardCap3 %>" class="polaroid-img" loading="lazy">
+                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                <div class="live-image-overlay">
+                                    <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
+                                </div>
+                            <% } %>
                         </div>
-                        <div class="polaroid-caption"><%= cardCap3 %></div>
-                        <% if (cardTag3) { %>
-                            <div class="polaroid-tag"><%= cardTag3 %></div>
-                        <% } %>
+                        <div class="polaroid-caption" data-live-edit="polaroid_cap_3" data-live-edit-type="text"><%= cardCap3 %></div>
+                        <div class="polaroid-tag" data-live-edit="polaroid_tag_3" data-live-edit-type="text"><%= cardTag3 %></div>
+                    </div>
+
+                    <!-- Taped Polaroid 4 -->
+                    <div class="sidebar-polaroid polaroid-tilt-right d-none d-lg-flex">
+                        <span class="washi-tape washi-tape-kraft washi-tape-top-center"></span>
+                        <div class="polaroid-img-wrapper" data-live-edit="polaroid_img_4" data-live-edit-type="image">
+                            <img src="<%= cardImg4 %>" alt="<%= cardCap4 %>" class="polaroid-img" loading="lazy">
+                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                <div class="live-image-overlay">
+                                    <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
+                                </div>
+                            <% } %>
+                        </div>
+                        <div class="polaroid-caption" data-live-edit="polaroid_cap_4" data-live-edit-type="text"><%= cardCap4 %></div>
+                        <div class="polaroid-tag" data-live-edit="polaroid_tag_4" data-live-edit-type="text"><%= cardTag4 %></div>
                     </div>
                 </div>
             </div>
@@ -333,5 +413,101 @@ var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat
         </div>
     </section>
 </div>
+
+<% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+    <!-- Image Crop & Edit Modal -->
+    <div class="modal fade" id="imageCropperModal" tabindex="-1" aria-labelledby="imageCropperModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-xl cropper-modal-dialog">
+            <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+                <div class="modal-header bg-light border-0 py-3 px-4">
+                    <h5 class="modal-title font-playful fs-4 text-dark m-0" id="imageCropperModalLabel">
+                        <i class="bi bi-crop text-primary me-2"></i>Foto Bijsnijden & Bewerken
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Dropzone (Shown when no image is loaded yet or clicking 'Andere foto') -->
+                    <div id="cropper-dropzone" class="cropper-dropzone text-center p-5 rounded-4 border border-2 border-dashed bg-light mb-0">
+                        <input type="file" id="modal-file-input" class="d-none" accept="image/*">
+                        <div class="mb-3">
+                            <i class="bi bi-cloud-arrow-up display-3 text-primary opacity-75"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Klik hier om een foto te kiezen</h5>
+                        <p class="text-muted small mb-3">Of sleep een afbeelding rechtstreeks naar dit vak (JPG, PNG, WebP)</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-chiro rounded-pill px-4 shadow-sm" id="btn-browse-file">
+                                <i class="bi bi-folder2-open me-1"></i> Bestand Kiezen
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-3 d-none" id="btn-use-current">
+                                Huidige foto behouden
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Crop Canvas Workspace -->
+                    <div id="cropper-workspace" class="d-none">
+                        <div class="cropper-container-box rounded-3 overflow-hidden d-flex align-items-center justify-content-center mb-3">
+                            <img id="cropper-target-img" src="" alt="Bijsnijden">
+                        </div>
+
+                        <!-- Editing Toolbar (Rotate, Flip, Zoom, Ratio, Reset) -->
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-2 bg-light rounded-3 border">
+                            <!-- Rotation & Flip -->
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Draaien">
+                                <button type="button" class="btn btn-outline-secondary" id="btn-crop-rotate-left" title="90° naar links draaien">
+                                    <i class="bi bi-arrow-counterclockwise"></i> <span class="d-none d-sm-inline ms-1">-90°</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btn-crop-rotate-right" title="90° naar rechts draaien">
+                                    <i class="bi bi-arrow-clockwise"></i> <span class="d-none d-sm-inline ms-1">+90°</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btn-crop-flip-x" title="Horizontaal spiegelen">
+                                    <i class="bi bi-symmetry-vertical"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btn-crop-flip-y" title="Verticaal spiegelen">
+                                    <i class="bi bi-symmetry-horizontal"></i>
+                                </button>
+                            </div>
+
+                            <!-- Zoom & Reset -->
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Zoom en herstel">
+                                <button type="button" class="btn btn-outline-secondary" id="btn-crop-zoom-in" title="Inzoomen">
+                                    <i class="bi bi-zoom-in"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btn-crop-zoom-out" title="Uitzoomen">
+                                    <i class="bi bi-zoom-out"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btn-crop-reset" title="Uitsnede herstellen">
+                                    <i class="bi bi-arrow-repeat"></i> Herstel
+                                </button>
+                            </div>
+
+                            <!-- Aspect Ratios -->
+                            <div class="btn-group btn-group-sm" role="group" id="crop-ratio-group" aria-label="Verhouding">
+                                <button type="button" class="btn btn-outline-primary active" data-ratio="1" title="1:1 Vierkant (Polaroid)">1:1</button>
+                                <button type="button" class="btn btn-outline-primary" data-ratio="1.33333" title="4:3 Liggend">4:3</button>
+                                <button type="button" class="btn btn-outline-primary" data-ratio="0.75" title="3:4 Staand">3:4</button>
+                                <button type="button" class="btn btn-outline-primary" data-ratio="NaN" title="Vrije uitsnede">Vrij</button>
+                            </div>
+
+                            <!-- Change file -->
+                            <button type="button" class="btn btn-outline-dark btn-sm rounded-pill" id="btn-crop-change-file" title="Andere afbeelding uploaden">
+                                <i class="bi bi-folder2-open me-1"></i> Andere foto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Annuleren</button>
+                    <button type="button" class="btn btn-chiro rounded-pill px-4 shadow-sm" id="btn-crop-apply" disabled>
+                        <i class="bi bi-check-lg me-1"></i> <span id="btn-crop-apply-text">Foto Toepassen</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/vendor/cropper.min.js"></script>
+    <script src="/js/live-editor.js"></script>
+<% } %>
 
 <%- include('../partials/footer') %>

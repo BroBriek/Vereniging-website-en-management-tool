@@ -162,6 +162,15 @@ exports.resetSettings = async (req, res) => {
 
 exports.getEditPage = async (req, res) => {
     const slug = req.params.page;
+
+    if (slug === 'home' && req.query.classic !== '1') {
+        const queryParams = new URLSearchParams();
+        queryParams.set('edit', '1');
+        if (req.query.success) queryParams.set('success', req.query.success);
+        if (req.query.error) queryParams.set('error', req.query.error);
+        return res.redirect(`/home?${queryParams.toString()}`);
+    }
+
     const contents = await PageContent.findAll({ where: { slug } });
     const contentMap = {};
     contents.forEach(c => contentMap[c.section_key] = c);
@@ -224,7 +233,7 @@ exports.postEditPage = async (req, res) => {
         }
 
         // If field is an image URL fallback (e.g. polaroid_img_1_url)
-        if (key.endsWith('_url') && contentVal) {
+        if ((key.startsWith('polaroid_img_') || key === 'hero_image_url') && key.endsWith('_url') && contentVal) {
             const targetKey = key.replace(/_url$/, '');
             // Only use if no actual file was uploaded for this targetKey
             if (!fileKeys.has(targetKey)) {
@@ -259,6 +268,14 @@ exports.postEditPage = async (req, res) => {
         }
     }
     
+    if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json')) || req.body._ajax === '1' || req.query.ajax === '1') {
+        return res.json({ success: true, message: 'Pagina succesvol bijgewerkt!' });
+    }
+
+    if (slug === 'home' && req.query.classic !== '1') {
+        return res.redirect(`/home?edit=1&success=${encodeURIComponent('Pagina succesvol bijgewerkt!')}`);
+    }
+
     res.redirect(`/admin/page/${slug}?success=${encodeURIComponent('Pagina succesvol bijgewerkt!')}`);
 };
 

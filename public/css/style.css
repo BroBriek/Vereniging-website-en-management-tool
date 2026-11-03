@@ -1059,6 +1059,7 @@ body.navbar-open {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center 20%;
     transition: transform 0.6s ease;
 }
 
@@ -1093,7 +1094,7 @@ body.navbar-open {
 }
 
 .polaroid-main .polaroid-img-wrapper {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 1 / 1;
 }
 
 /* Secondary Overlapping Polaroid */
@@ -1315,7 +1316,7 @@ body.navbar-open {
 .sidebar-polaroid .polaroid-img-wrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 1 / 1;
     overflow: hidden;
     background: #f1f5f9;
     border-radius: 3px;
@@ -1326,6 +1327,7 @@ body.navbar-open {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center 20%;
     transition: transform 0.5s ease;
 }
 
@@ -1621,6 +1623,205 @@ body.navbar-open {
         transition: none !important;
         transform: none !important;
     }
+}
+
+/* ==========================================================================
+   Live In-Place Scrapbook Editor (Admin / Media Mode)
+   ========================================================================== */
+
+.live-edit-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 1055;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--chiro-blue);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s ease;
+}
+
+.live-edit-pulse {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #198754;
+    box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+    animation: livePulse 1.8s infinite;
+}
+
+@keyframes livePulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+    }
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 8px rgba(25, 135, 84, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(25, 135, 84, 0);
+    }
+}
+
+.live-editing-active {
+    position: relative;
+}
+
+/* Editable Text Elements */
+.live-editing-active [data-live-edit][data-live-edit-type="text"],
+.live-editing-active [data-live-edit][data-live-edit-type="rich"],
+.live-editing-active [data-live-edit-btn] .btn-label {
+    cursor: text;
+    border-radius: 6px;
+    outline: 2px dashed rgba(13, 110, 253, 0.4);
+    outline-offset: 3px;
+    transition: outline-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.live-editing-active [data-live-edit][data-live-edit-type="text"]:hover,
+.live-editing-active [data-live-edit][data-live-edit-type="rich"]:hover,
+.live-editing-active [data-live-edit-btn] .btn-label:hover {
+    outline-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.06);
+}
+
+.live-editing-active [data-live-edit][data-live-edit-type="text"]:focus,
+.live-editing-active [data-live-edit][data-live-edit-type="rich"]:focus,
+.live-editing-active [data-live-edit-btn] .btn-label:focus {
+    outline: 2.5px solid #0d6efd !important;
+    outline-offset: 3px;
+    background-color: rgba(13, 110, 253, 0.08) !important;
+    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+}
+
+/* Editable Image Wrappers */
+.live-editing-active [data-live-edit][data-live-edit-type="image"] {
+    cursor: pointer;
+    position: relative;
+    border-radius: 4px;
+    outline: 3px dashed rgba(220, 53, 69, 0.55);
+    outline-offset: 4px;
+    transition: outline-color 0.2s ease, transform 0.2s ease;
+}
+
+.live-editing-active [data-live-edit][data-live-edit-type="image"]:hover,
+.live-editing-active [data-live-edit][data-live-edit-type="image"].live-drop-hover {
+    outline-color: #dc3545;
+    outline-style: solid;
+    outline-width: 3.5px;
+}
+
+.live-editing-active [data-live-edit][data-live-edit-type="image"].live-drop-hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Image Overlay Badge */
+.live-image-overlay {
+    display: none;
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.9);
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: 20px;
+    white-space: nowrap;
+    align-items: center;
+    gap: 7px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+
+.live-editing-active .live-image-overlay,
+.scrapbook-canvas.admin-logged-in .live-image-overlay {
+    display: flex;
+}
+
+.scrapbook-canvas.admin-logged-in [data-live-edit][data-live-edit-type="image"]:hover .live-image-overlay {
+    background: var(--chiro-blue);
+    transform: translateX(-50%) scale(1.05);
+}
+
+/* Image Cropper Modal & Workspace */
+.cropper-modal-dialog {
+    max-width: 94vw;
+    width: 1280px;
+    margin: 1.25rem auto;
+}
+
+@media (min-width: 1600px) {
+    .cropper-modal-dialog {
+        max-width: 1440px;
+    }
+}
+
+.cropper-dropzone {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f8fafc;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.cropper-dropzone:hover,
+.cropper-dropzone.drag-over {
+    background: #f1f5f9;
+    border-color: var(--chiro-blue) !important;
+}
+
+.cropper-container-box {
+    background: #0b1120;
+    width: 100%;
+    height: 65vh;
+    min-height: 480px;
+    max-height: 75vh;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cropper-container-box .cropper-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.cropper-container-box img {
+    max-width: 100%;
+    display: block;
+}
+
+/* Rich Toolbar */
+.live-rich-toolbar {
+    position: sticky;
+    top: 65px;
+    z-index: 20;
+    max-width: fit-content;
+}
+
+.live-rich-toolbar .btn {
+    font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+/* Toast container */
+#live-edit-toast-container .toast {
+    border-radius: 14px;
+    font-family: var(--font-heading);
 }
 
 
