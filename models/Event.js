@@ -10,7 +10,8 @@ const Event = sequelize.define('Event', {
   description: { type: DataTypes.TEXT },
   attachments: { type: DataTypes.TEXT, defaultValue: '[]' },
   isPrivate: { type: DataTypes.BOOLEAN, defaultValue: false },
-  isArchived: { type: DataTypes.BOOLEAN, defaultValue: false }
+  isArchived: { type: DataTypes.BOOLEAN, defaultValue: false },
+  showOnPublicPage: { type: DataTypes.BOOLEAN, defaultValue: false }
 });
 
 module.exports = Event;

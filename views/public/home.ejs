@@ -217,6 +217,134 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                         </div>
                     </div>
                 </div>
+
+                <!-- Integrated Agenda / Upcoming Calendar Events Board -->
+                <% 
+                var hasUpcomingEvents = typeof upcomingEvents !== 'undefined' && upcomingEvents && upcomingEvents.length > 0;
+                %>
+                <% if (hasUpcomingEvents) { %>
+                    <div class="journal-agenda-board">
+                        <span class="washi-tape washi-tape-yellow washi-tape-top-left" style="width: 70px;"></span>
+                        <span class="washi-tape washi-tape-kraft washi-tape-top-right" style="width: 55px;"></span>
+
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 pb-3 border-bottom border-dashed">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-warning text-dark px-3 py-1 rounded-pill font-playful">
+                                        <i class="bi bi-calendar-event me-1"></i> Agenda
+                                    </span>
+                                    <h3 class="notebook-title fs-3 m-0">Aankomende Activiteiten</h3>
+                                </div>
+                                <p class="text-muted small m-0">Mis geen enkel avontuur! Klik op een activiteit voor uren en details.</p>
+                            </div>
+                            <a href="/kalender" class="btn btn-chiro-outline btn-sm rounded-pill px-3 font-playful d-inline-flex align-items-center flex-shrink-0">
+                                <span>Volledige kalender</span> <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+
+                        <div class="agenda-items-list mt-3">
+                            <% upcomingEvents.forEach((event) => { 
+                                const [y, m, d] = event.date.split('-').map(Number);
+                                const dateObj = new Date(y, m - 1, d);
+                                const day = dateObj.getDate();
+                                const monthNames = ["JAN", "FEB", "MRT", "APR", "MEI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
+                                const month = monthNames[dateObj.getMonth()];
+
+                                const hasEndDate = event.endDate && event.endDate !== event.date;
+                                let dateRangeText = '';
+                                if (hasEndDate) {
+                                    const [ey, em, ed] = event.endDate.split('-').map(Number);
+                                    const endDateObj = new Date(ey, em - 1, ed);
+                                    const endDay = endDateObj.getDate();
+                                    const endMonth = monthNames[endDateObj.getMonth()];
+                                    dateRangeText = `${day} ${month} t/m ${endDay} ${endMonth}`;
+                                }
+
+                                const plainDesc = (event.description || '').replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ').trim();
+                                const shortDesc = plainDesc.length > 95 ? plainDesc.slice(0, 92) + '...' : plainDesc;
+                                
+                                let attCount = 0;
+                                try {
+                                    const parsedAtts = typeof event.attachments === 'string' ? JSON.parse(event.attachments) : (event.attachments || []);
+                                    attCount = parsedAtts.length;
+                                } catch(e) {}
+                            %>
+                                <article class="agenda-item"
+                                         data-event="<%= JSON.stringify(event) %>"
+                                         onclick="openEventModal(this)"
+                                         role="button"
+                                         tabindex="0"
+                                         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEventModal(this);}"
+                                         aria-label="Bekijk details van <%= event.title %>">
+                                    
+                                    <!-- Date Stamp -->
+                                    <div class="agenda-date-box">
+                                        <span class="agenda-day"><%= day %></span>
+                                        <span class="agenda-month"><%= month %></span>
+                                    </div>
+
+                                    <!-- Content -->
+                                    <div class="agenda-content">
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                            <h4 class="agenda-title font-playful m-0"><%= event.title %></h4>
+                                        </div>
+
+                                        <div class="agenda-badges">
+                                            <% if (hasEndDate) { %>
+                                                <span class="badge bg-warning text-dark rounded-pill">
+                                                    <i class="bi bi-calendar-range me-1"></i> <%= dateRangeText %>
+                                                </span>
+                                            <% } %>
+                                            <% if (event.startTime) { %>
+                                                <span class="badge bg-white text-secondary border rounded-pill">
+                                                    <i class="bi bi-clock me-1 text-primary"></i> <%= event.startTime %><% if (event.endTime) { %> - <%= event.endTime %><% } %>
+                                                </span>
+                                            <% } %>
+                                            <% if (attCount > 0) { %>
+                                                <span class="badge bg-white text-muted border rounded-pill">
+                                                    <i class="bi bi-paperclip me-1 text-secondary"></i> Bijlage
+                                                </span>
+                                            <% } %>
+                                        </div>
+
+                                        <% if (shortDesc) { %>
+                                            <p class="agenda-desc mt-1 mb-0"><%= shortDesc %></p>
+                                        <% } %>
+                                    </div>
+
+                                    <!-- Arrow Button -->
+                                    <div class="agenda-arrow">
+                                        <span class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-none d-md-inline-flex align-items-center font-playful">
+                                            Details <i class="bi bi-chevron-right ms-1"></i>
+                                        </span>
+                                        <i class="bi bi-chevron-right text-muted fs-5 d-md-none"></i>
+                                    </div>
+                                </article>
+                            <% }) %>
+                        </div>
+
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-3 mt-3 border-top border-dashed">
+                            <span class="small text-muted"><i class="bi bi-info-circle me-1"></i> Zondagse activiteiten zijn van 14u tot 17u.</span>
+                            <a href="/kalender" class="text-chiro-blue fw-bold small text-decoration-none font-playful">
+                                Bekijk de volledige kalender <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                <% } else if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                    <div class="journal-agenda-board">
+                        <span class="washi-tape washi-tape-yellow washi-tape-top-left" style="width: 70px;"></span>
+                        <div class="text-center py-4 px-3 bg-light rounded-4 border border-dashed">
+                            <i class="bi bi-calendar-plus text-primary fs-2 mb-2 d-block"></i>
+                            <h4 class="font-playful fw-bold text-dark mb-1">Aankomende Activiteiten</h4>
+                            <p class="text-muted small mb-3" style="max-width: 460px; margin: 0 auto;">
+                                Er zijn momenteel geen activiteiten aangevinkt voor de startpagina. Vink in het kalenderbeheer <strong>'Toon op openbare pagina'</strong> aan om dit vak automatisch te vullen!
+                            </p>
+                            <a href="/admin/events" class="btn btn-chiro btn-sm shadow-sm rounded-pill px-4">
+                                <i class="bi bi-gear-fill me-1"></i> Activiteiten Beheren
+                            </a>
+                        </div>
+                    </div>
+                <% } %>
             </div>
 
             <!-- Sidebar: Snapshots & Reispaspoort Visa Sheet -->
@@ -469,4 +597,5 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
     <script src="/js/live-editor.js"></script>
 <% } %>
 
+<%- include('../partials/event_modal') %>
 <%- include('../partials/footer') %>

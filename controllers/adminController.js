@@ -442,6 +442,7 @@ exports.postEvent = async (req, res) => {
     try {
         const { title, date, endDate, startTime, endTime, description } = req.body;
         const isPrivate = req.body.isPrivate === 'on';
+        const showOnPublicPage = (req.body.showOnPublicPage === 'on' || req.body.showOnPublicPage === 'true' || req.body.showOnPublicPage === true) && !isPrivate;
         // If endDate is empty string, set it to null
         const finalEndDate = endDate && endDate.trim() !== '' ? endDate : null;
         const finalStartTime = startTime && startTime.trim() !== '' ? startTime : null;
@@ -460,6 +461,7 @@ exports.postEvent = async (req, res) => {
             endTime: finalEndTime, 
             description, 
             isPrivate,
+            showOnPublicPage,
             attachments: JSON.stringify(attachments)
         });
         res.redirect('/admin/events');
@@ -473,6 +475,7 @@ exports.updateEvent = async (req, res) => {
     try {
         const { title, date, endDate, startTime, endTime, description, existingAttachments } = req.body;
         const isPrivate = req.body.isPrivate === 'on';
+        const showOnPublicPage = (req.body.showOnPublicPage === 'on' || req.body.showOnPublicPage === 'true' || req.body.showOnPublicPage === true) && !isPrivate;
         const finalEndDate = endDate && endDate.trim() !== '' ? endDate : null;
         const finalStartTime = startTime && startTime.trim() !== '' ? startTime : null;
         const finalEndTime = endTime && endTime.trim() !== '' ? endTime : null;
@@ -502,6 +505,7 @@ exports.updateEvent = async (req, res) => {
                 endTime: finalEndTime, 
                 description, 
                 isPrivate,
+                showOnPublicPage,
                 attachments: JSON.stringify(attachments)
             });
         }
@@ -509,6 +513,23 @@ exports.updateEvent = async (req, res) => {
     } catch (error) {
         console.error('Error updating event:', error);
         res.redirect('/admin/events?error=Kon evenement niet bijwerken');
+    }
+};
+
+exports.toggleEventPublic = async (req, res) => {
+    try {
+        const event = await Event.findByPk(req.params.id);
+        if (event) {
+            const newShow = !event.showOnPublicPage;
+            await event.update({
+                showOnPublicPage: newShow,
+                isPrivate: newShow ? false : event.isPrivate
+            });
+        }
+        res.redirect('/admin/events');
+    } catch (error) {
+        console.error('Error toggling event public status:', error);
+        res.redirect('/admin/events?error=Kon status niet wijzigen');
     }
 };
 

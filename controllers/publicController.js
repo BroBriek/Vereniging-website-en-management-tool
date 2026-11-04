@@ -264,6 +264,35 @@ exports.getCalendarICS = async (req, res) => {
     }
 };
 
+const getUpcomingPublicEvents = async () => {
+    try {
+        const now = new Date();
+        const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+        return await Event.findAll({
+            where: {
+                showOnPublicPage: true,
+                isPrivate: false,
+                isArchived: false,
+                [Op.or]: [
+                    { date: { [Op.gte]: localToday } },
+                    {
+                        [Op.and]: [
+                            { endDate: { [Op.ne]: null } },
+                            { endDate: { [Op.gte]: localToday } }
+                        ]
+                    }
+                ]
+            },
+            order: [['date', 'ASC']],
+            limit: 6
+        });
+    } catch (e) {
+        console.error('Error fetching upcoming public events:', e);
+        return [];
+    }
+};
+
 exports.getHome = async (req, res) => {
     // If user is logged in, redirect to feed/leaders corner
     if (req.user) {
@@ -273,10 +302,12 @@ exports.getHome = async (req, res) => {
     try {
         const { orgLocation, orgFullName } = getOrgConfig();
         const content = await getContent('home');
+        const upcomingEvents = await getUpcomingPublicEvents();
         res.render('public/home', { 
             title: `${orgFullName} - Jeugdbeweging ${orgLocation}`, 
             description: `${orgFullName}: jeugdbeweging voor kinderen in ${orgLocation}. Elke zondag spelen, activiteiten, vriendschap en plezier. Word lid!`,
-            content 
+            content,
+            upcomingEvents
         });
     } catch (error) {
         res.status(500).send('Er ging iets mis');
@@ -287,10 +318,12 @@ exports.getPublicHome = async (req, res) => {
     try {
         const { orgLocation, orgFullName } = getOrgConfig();
         const content = await getContent('home');
+        const upcomingEvents = await getUpcomingPublicEvents();
         res.render('public/home', { 
             title: `${orgFullName} - Jeugdbeweging ${orgLocation}`, 
             description: `${orgFullName}: jeugdbeweging voor kinderen in ${orgLocation}. Elke zondag spelen, activiteiten, vriendschap en plezier. Word lid!`,
-            content 
+            content,
+            upcomingEvents
         });
     } catch (error) {
         res.status(500).send('Er ging iets mis');

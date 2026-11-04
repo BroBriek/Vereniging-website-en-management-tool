@@ -99,6 +99,7 @@ router.put('/events/:id', ensureMedia, upload.array('attachments', 5), adminCont
 router.delete('/events/:id', ensureMedia, adminController.deleteEvent);
 router.post('/events/:id/archive', ensureMedia, adminController.archiveEvent);
 router.post('/events/:id/unarchive', ensureMedia, adminController.unarchiveEvent);
+router.post('/events/:id/toggle-public', ensureMedia, adminController.toggleEventPublic);
 
 // Upload Manager
 router.get('/uploads', ensureMedia, uploadController.getUploads);

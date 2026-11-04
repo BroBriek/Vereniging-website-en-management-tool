@@ -211,6 +211,10 @@ class MigrationService {
                     await sequelize.query("ALTER TABLE Events ADD COLUMN attachments TEXT DEFAULT '[]';");
                     console.log('Added Events.attachments');
                 }
+                if (!await columnExists('Events', 'showOnPublicPage')) {
+                    await sequelize.query('ALTER TABLE Events ADD COLUMN showOnPublicPage BOOLEAN DEFAULT 0;');
+                    console.log('Added Events.showOnPublicPage');
+                }
             } catch (eventsErr) {
                 console.error('Error migrating Events table schema:', eventsErr);
             }
