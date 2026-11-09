@@ -4,6 +4,7 @@
 var deptBadge = (content.dept_badge && content.dept_badge.content) ? content.dept_badge.content : '🌈 Voor iedereen van 6 tot 18 jaar';
 var deptTitle = (content.dept_title && content.dept_title.content) ? content.dept_title.content : 'Onze Afdelingen';
 var deptLead = (content.dept_lead && content.dept_lead.content) ? content.dept_lead.content : 'Bij onze Chiro spelen we in zes verschillende leeftijdsgroepen, elk met hun eigen enthousiaste leiding, te gekke spellen en onvergetelijke avonturen!';
+var showPhotos = (content.show_dept_photos && content.show_dept_photos.content) ? (content.show_dept_photos.content !== '0' && content.show_dept_photos.content !== 'false') : true;
 
 var departmentsList = [
     {
@@ -92,37 +93,71 @@ var departmentsList = [
         </p>
     </header>
 
-    <!-- Visual Department Cards Grid -->
-    <div class="row g-4 mb-5">
-        <% departmentsList.forEach(dept => { 
-            var currentImg = (content[dept.imgKey] && content[dept.imgKey].content) ? content[dept.imgKey].content : dept.defaultImg;
-        %>
-            <div class="col-md-6 col-lg-4">
-                <div class="dept-card <%= dept.themeClass %>">
-                    <span class="washi-tape <%= dept.tapeClass %> washi-tape-top-center"></span>
-                    
-                    <div class="d-flex justify-content-end align-items-center mb-3 pt-2">
-                        <span class="fs-4"><%= dept.emoji %></span>
-                    </div>
+    <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+        <!-- Live Editor Department Groups & Photos Control Bar -->
+        <div class="dept-live-controls mb-4 p-3 rounded-4 bg-white border shadow-sm align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-primary-subtle text-primary p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink: 0;">
+                    <i class="bi bi-grid-fill fs-5"></i>
+                </div>
+                <div>
+                    <strong class="text-dark d-block">Afdelingen & Groepsfoto's sectie</strong>
+                    <span class="text-muted small">Toon of verberg de groepsvakjes (post-its) met foto's op deze pagina. Wanneer uitgeschakeld is deze hele sectie onzichtbaar voor bezoekers en grijs in bewerkmodus.</span>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                <div class="form-check form-switch fs-4 m-0 d-flex align-items-center gap-2">
+                    <input class="form-check-input" type="checkbox" id="toggle-dept-photos" data-live-edit-toggle="show_dept_photos" role="switch" <%= showPhotos ? 'checked' : '' %>>
+                    <label class="form-check-label fs-6 fw-bold user-select-none text-nowrap" for="toggle-dept-photos" id="toggle-dept-photos-label">
+                        <%= showPhotos ? 'Groepen Zichtbaar' : 'Groepen Verborgen' %>
+                    </label>
+                </div>
+            </div>
+        </div>
 
-                    <h3 class="dept-title font-playful fw-bold mb-2"><%= dept.name %></h3>
-                    <p class="text-muted small mb-3 flex-grow-1"><%= dept.tagline %></p>
+        <!-- Indicator banner shown in live editing when section is hidden -->
+        <div id="dept-hidden-section-notice" class="alert alert-secondary border-dashed align-items-center gap-2 rounded-4 mb-4<%= showPhotos ? ' d-none' : ' d-flex' %>">
+            <i class="bi bi-eye-slash-fill fs-5 text-secondary"></i>
+            <div>
+                <strong>Groepensectie (post-its met foto's) is verborgen voor bezoekers</strong>
+                <div class="small text-muted">Deze sectie wordt grijs weergegeven in bewerkmodus zodat je deze nog kan bewerken. Op de live website is deze volledig onzichtbaar.</div>
+            </div>
+        </div>
+    <% } %>
 
-                    <!-- Polaroid Photo of the group -->
-                    <div class="sidebar-polaroid p-2 mt-auto" style="box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
-                        <div class="polaroid-img-wrapper" data-live-edit="<%= dept.imgKey %>" data-live-edit-type="image" data-live-edit-ratio="1.33333" style="aspect-ratio: 4/3;">
-                            <img src="<%= currentImg %>" alt="<%= dept.name %>" class="polaroid-img" loading="lazy">
-                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-                                <div class="live-image-overlay">
-                                    <i class="bi bi-crop"></i> <span>Foto aanpassen</span>
-                                </div>
-                            <% } %>
+    <% if (showPhotos || (user && (user.role === 'admin' || user.role === 'media'))) { %>
+        <!-- Visual Department Cards Grid (Group Post-its) -->
+        <div class="row g-4 mb-5 dept-cards-section<%= !showPhotos ? ' dept-section-hidden' : '' %>" id="dept-cards-section">
+            <% departmentsList.forEach(dept => { 
+                var currentImg = (content[dept.imgKey] && content[dept.imgKey].content) ? content[dept.imgKey].content : dept.defaultImg;
+            %>
+                <div class="col-md-6 col-lg-4">
+                    <div class="dept-card <%= dept.themeClass %>">
+                        <span class="washi-tape <%= dept.tapeClass %> washi-tape-top-center"></span>
+                        
+                        <div class="dept-card-header d-flex justify-content-between align-items-center mb-1">
+                            <h3 class="dept-title font-playful fw-bold mb-0"><%= dept.name %></h3>
+                            <span class="fs-4 ms-2"><%= dept.emoji %></span>
+                        </div>
+
+                        <p class="text-muted small mb-3 flex-grow-1"><%= dept.tagline %></p>
+
+                        <!-- Polaroid Photo of the group -->
+                        <div class="sidebar-polaroid dept-photo-box p-2 mt-auto" style="box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                            <div class="polaroid-img-wrapper" data-live-edit="<%= dept.imgKey %>" data-live-edit-type="image" data-live-edit-ratio="1.33333" style="aspect-ratio: 4/3;">
+                                <img src="<%= currentImg %>" alt="<%= dept.name %>" class="polaroid-img" loading="lazy">
+                                <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                    <div class="live-image-overlay">
+                                        <i class="bi bi-crop"></i> <span>Foto aanpassen</span>
+                                    </div>
+                                <% } %>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        <% }) %>
-    </div>
+            <% }) %>
+        </div>
+    <% } %>
 
     <!-- Detailed Group Description Notebook -->
     <div class="scrapbook-notebook-card mb-5">

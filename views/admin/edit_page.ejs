@@ -743,6 +743,21 @@
         </script>
         <% } %>
     <% } else { %>
+        <% if (slug === 'departments') { %>
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-grid-fill me-2 text-primary"></i>Afdelingen Weergave (Post-its met foto's)</h5>
+                    <div class="form-check form-switch fs-5">
+                        <input type="hidden" name="show_dept_photos" value="0">
+                        <input class="form-check-input" type="checkbox" id="show_dept_photos_classic" name="show_dept_photos" value="1" <%= (!contentMap.show_dept_photos || (contentMap.show_dept_photos.content !== '0' && contentMap.show_dept_photos.content !== 'false')) ? 'checked' : '' %>>
+                        <label class="form-check-label fs-6 fw-bold ms-2" for="show_dept_photos_classic">
+                            Toon de groepensectie (post-its met namen en foto's) op de pagina
+                        </label>
+                    </div>
+                    <div class="text-muted small mt-2">Wanneer uitgeschakeld, wordt deze hele sectie onzichtbaar voor gewone bezoekers en grijs weergegeven in de visuele bewerkmodus.</div>
+                </div>
+            </div>
+        <% } %>
         <div class="mb-3">
             <label class="form-label">Hoofdtekst (HTML toegestaan)</label>
             <textarea class="form-control rich-editor" name="main" rows="10"><%= contentMap.main ? contentMap.main.content : '' %></textarea>

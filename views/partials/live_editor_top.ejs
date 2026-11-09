@@ -30,6 +30,11 @@
                 <span id="live-edit-dirty-badge" class="d-none"></span>
             </div>
             <div class="d-flex align-items-center gap-2">
+                <% if (typeof pageSlug !== 'undefined' && pageSlug === 'departments') { %>
+                    <button type="button" id="btn-toolbar-toggle-dept-photos" class="btn <%= (typeof showPhotos !== 'undefined' && !showPhotos) ? 'btn-warning' : 'btn-outline-secondary' %> btn-sm rounded-pill px-3" title="Groepensectie (post-its met foto's) in- of uitschakelen">
+                        <i class="bi bi-grid-fill me-1"></i> <span id="toolbar-dept-photos-text"><%= (typeof showPhotos !== 'undefined' && !showPhotos) ? "Groepen: Uit" : "Groepen: Aan" %></span>
+                    </button>
+                <% } %>
                 <button type="button" id="btn-save-inline" class="btn btn-success btn-sm px-3 fw-bold rounded-pill shadow-sm" disabled>
                     <i class="bi bi-cloud-check-fill me-1"></i> <span id="btn-save-text">Opslaan</span>
                 </button>

@@ -96,6 +96,14 @@
                     currentState[urlKey] = val;
                 }
             });
+
+            // Toggle elements (switches)
+            document.querySelectorAll('[data-live-edit-toggle]').forEach(el => {
+                const key = el.dataset.liveEditToggle;
+                const val = el.checked ? '1' : '0';
+                initialState[key] = val;
+                currentState[key] = val;
+            });
         }
 
         // Calculate and update dirty status
@@ -275,6 +283,17 @@
                     updateDirtyStatus();
                 };
             });
+
+            // Toggle elements (switches)
+            document.querySelectorAll('[data-live-edit-toggle]').forEach(el => {
+                el.onchange = function() {
+                    const key = el.dataset.liveEditToggle;
+                    const val = el.checked ? '1' : '0';
+                    currentState[key] = val;
+                    syncToggleVisuals(key, el.checked);
+                    updateDirtyStatus();
+                };
+            });
         }
 
         // Disable in-place editing
@@ -284,6 +303,10 @@
                 el.removeAttribute('title');
                 el.onkeydown = null;
                 el.oninput = null;
+            });
+
+            document.querySelectorAll('[data-live-edit-toggle]').forEach(el => {
+                el.onchange = null;
             });
 
             document.querySelectorAll('[data-live-edit-btn]').forEach(el => {
@@ -833,9 +856,59 @@
                 }
             });
 
+            // Restore toggles
+            document.querySelectorAll('[data-live-edit-toggle]').forEach(el => {
+                const key = el.dataset.liveEditToggle;
+                if (initialState[key] !== undefined) {
+                    el.checked = (initialState[key] === '1');
+                    syncToggleVisuals(key, el.checked);
+                }
+            });
+
             isDirty = false;
             updateDirtyStatus();
             showToast('Alle wijzigingen zijn hersteld.', 'info');
+        }
+
+        function syncToggleVisuals(key, isChecked) {
+            if (key === 'show_dept_photos') {
+                const label = document.getElementById('toggle-dept-photos-label');
+                if (label) {
+                    label.textContent = isChecked ? "Groepen Zichtbaar" : "Groepen Verborgen";
+                }
+                const toolbarText = document.getElementById('toolbar-dept-photos-text');
+                if (toolbarText) {
+                    toolbarText.textContent = isChecked ? "Groepen: Aan" : "Groepen: Uit";
+                }
+                const toolbarBtn = document.getElementById('btn-toolbar-toggle-dept-photos');
+                if (toolbarBtn) {
+                    if (isChecked) {
+                        toolbarBtn.classList.remove('btn-warning');
+                        toolbarBtn.classList.add('btn-outline-secondary');
+                    } else {
+                        toolbarBtn.classList.remove('btn-outline-secondary');
+                        toolbarBtn.classList.add('btn-warning');
+                    }
+                }
+                const section = document.getElementById('dept-cards-section');
+                if (section) {
+                    if (isChecked) {
+                        section.classList.remove('dept-section-hidden');
+                    } else {
+                        section.classList.add('dept-section-hidden');
+                    }
+                }
+                const notice = document.getElementById('dept-hidden-section-notice');
+                if (notice) {
+                    if (isChecked) {
+                        notice.classList.add('d-none');
+                        notice.classList.remove('d-flex');
+                    } else {
+                        notice.classList.remove('d-none');
+                        notice.classList.add('d-flex');
+                    }
+                }
+            }
         }
 
         // Attach Toolbar Listeners
@@ -860,6 +933,21 @@
                     revertChanges();
                 }
                 setEditMode(false);
+            });
+        }
+
+        const toolbarDeptPhotosBtn = document.getElementById('btn-toolbar-toggle-dept-photos');
+        if (toolbarDeptPhotosBtn) {
+            toolbarDeptPhotosBtn.addEventListener('click', () => {
+                const toggleInput = document.getElementById('toggle-dept-photos');
+                if (toggleInput) {
+                    toggleInput.checked = !toggleInput.checked;
+                    const key = toggleInput.dataset.liveEditToggle;
+                    const val = toggleInput.checked ? '1' : '0';
+                    currentState[key] = val;
+                    syncToggleVisuals(key, toggleInput.checked);
+                    updateDirtyStatus();
+                }
             });
         }
 
