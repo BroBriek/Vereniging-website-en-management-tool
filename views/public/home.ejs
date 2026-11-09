@@ -1,14 +1,6 @@
-<%- include('../partials/header') %>
+<%- include('../partials/header', { fullWidth: true }) %>
 
 <% 
-// Helper defaults for polaroid cards
-var defaultPolaroids = [
-    { img: '/uploads/image-1791810054939-717577279.jpeg', cap: 'Samen op avontuur! ⛺', tag: 'Zomerkamp & Weekends' },
-    { img: '/uploads/image-1778686732775-690747244.JPG', cap: 'Elke zondag ravotten 🌲', tag: 'Zondagmiddag 14u-17u' },
-    { img: '/uploads/image-1778686957173-275221558.jpg', cap: 'Vriendschap voor het leven ✨', tag: 'Onze Chiro-bende' },
-    { img: '/uploads/image-1778686818929-846254521.JPG', cap: 'Klaar voor de leiding! 🔥', tag: 'Leidingsploeg' }
-];
-
 var heroImage = (content.hero_image && content.hero_image.content) ? content.hero_image.content : '/uploads/image-1791810054939-717577279.jpeg';
 var heroTitle = (content.hero_title && content.hero_title.content) ? content.hero_title.content : ('Welkom bij ' + orgFullName);
 var heroText = (content.hero_text && content.hero_text.content) ? content.hero_text.content : 'Samen spelen, samen leven.';
@@ -22,22 +14,6 @@ var heroBtn2Url = (content.hero_btn2_url && content.hero_btn2_url.content) ? con
 var logbookTitle = (content.logbook_title && content.logbook_title.content) ? content.logbook_title.content : 'Uit Ons Chiro Logboek';
 var logbookBadge = (content.logbook_badge && content.logbook_badge.content) ? content.logbook_badge.content : '📖 Reisverslag • Elke Zondag Avontuur';
 
-var cardImg1 = (content.polaroid_img_1 && content.polaroid_img_1.content) ? content.polaroid_img_1.content : defaultPolaroids[0].img;
-var cardCap1 = (content.polaroid_cap_1 && content.polaroid_cap_1.content) ? content.polaroid_cap_1.content : defaultPolaroids[0].cap;
-var cardTag1 = (content.polaroid_tag_1 && content.polaroid_tag_1.content) ? content.polaroid_tag_1.content : defaultPolaroids[0].tag;
-
-var cardImg2 = (content.polaroid_img_2 && content.polaroid_img_2.content) ? content.polaroid_img_2.content : defaultPolaroids[1].img;
-var cardCap2 = (content.polaroid_cap_2 && content.polaroid_cap_2.content) ? content.polaroid_cap_2.content : defaultPolaroids[1].cap;
-var cardTag2 = (content.polaroid_tag_2 && content.polaroid_tag_2.content) ? content.polaroid_tag_2.content : defaultPolaroids[1].tag;
-
-var cardImg3 = (content.polaroid_img_3 && content.polaroid_img_3.content) ? content.polaroid_img_3.content : defaultPolaroids[2].img;
-var cardCap3 = (content.polaroid_cap_3 && content.polaroid_cap_3.content) ? content.polaroid_cap_3.content : defaultPolaroids[2].cap;
-var cardTag3 = (content.polaroid_tag_3 && content.polaroid_tag_3.content) ? content.polaroid_tag_3.content : defaultPolaroids[2].tag;
-
-var cardImg4 = (content.polaroid_img_4 && content.polaroid_img_4.content) ? content.polaroid_img_4.content : defaultPolaroids[3].img;
-var cardCap4 = (content.polaroid_cap_4 && content.polaroid_cap_4.content) ? content.polaroid_cap_4.content : defaultPolaroids[3].cap;
-var cardTag4 = (content.polaroid_tag_4 && content.polaroid_tag_4.content) ? content.polaroid_tag_4.content : defaultPolaroids[3].tag;
-
 var stat1Num = (content.stat_1_num && content.stat_1_num.content) ? content.stat_1_num.content : '170+';
 var stat1Lbl = (content.stat_1_lbl && content.stat_1_lbl.content) ? content.stat_1_lbl.content : 'Enthousiaste leden';
 
@@ -50,21 +26,26 @@ var stat3Lbl = (content.stat_3_lbl && content.stat_3_lbl.content) ? content.stat
 var stat4Num = (content.stat_4_num && content.stat_4_num.content) ? content.stat_4_num.content : '10';
 var stat4Lbl = (content.stat_4_lbl && content.stat_4_lbl.content) ? content.stat_4_lbl.content : 'Dagen zomerkamp';
 
-var heroImagePos = (content.hero_image_pos && content.hero_image_pos.content) ? content.hero_image_pos.content : 'center 20%';
-var cardPos1 = (content.polaroid_img_1_pos && content.polaroid_img_1_pos.content) ? content.polaroid_img_1_pos.content : 'center 20%';
-var cardPos2 = (content.polaroid_img_2_pos && content.polaroid_img_2_pos.content) ? content.polaroid_img_2_pos.content : 'center 20%';
-var cardPos3 = (content.polaroid_img_3_pos && content.polaroid_img_3_pos.content) ? content.polaroid_img_3_pos.content : 'center 20%';
-var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content) ? content.polaroid_img_4_pos.content : 'center 20%';
+var boxJoinTitle = (content.box_join_title && content.box_join_title.content) ? content.box_join_title.content : 'Nieuw bij de Chiro?';
+var boxJoinText = (content.box_join_text && content.box_join_text.content) ? content.box_join_text.content : 'Iedereen tussen 6 en 18 jaar is van harte welkom! Je mag altijd 3 zondagen helemaal gratis en vrijblijvend meespelen om de sfeer te proeven.';
+var boxJoinBtnText = (content.box_join_btn_text && content.box_join_btn_text.content) ? content.box_join_btn_text.content : 'Praktische info & uren';
+var boxJoinBtnUrl = (content.box_join_btn_url && content.box_join_btn_url.content) ? content.box_join_btn_url.content : '/praktisch';
+
+var boxInfoTitle = (content.box_info_title && content.box_info_title.content) ? content.box_info_title.content : 'Goed om te weten';
+var boxInfoItem1 = (content.box_info_item_1 && content.box_info_item_1.content) ? content.box_info_item_1.content : 'Elke zondag voorzien wij een lekker vieruurtje en drankje.';
+var boxInfoItem2 = (content.box_info_item_2 && content.box_info_item_2.content) ? content.box_info_item_2.content : 'Uniform is pas verplicht vanaf de Tito\'s (12 jaar).';
+var boxInfoItem3 = (content.box_info_item_3 && content.box_info_item_3.content) ? content.box_info_item_3.content : '26 enthousiaste leid(st)ers staan elke week paraat!';
+var boxInfoBtnText = (content.box_info_btn_text && content.box_info_btn_text.content) ? content.box_info_btn_text.content : 'Ontdek alle afdelingen';
+var boxInfoBtnUrl = (content.box_info_btn_url && content.box_info_btn_url.content) ? content.box_info_btn_url.content : '/afdelingen';
 %>
 
 <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
     <link rel="stylesheet" href="/vendor/cropper.min.css">
-<% } %>
 
-<div class="scrapbook-canvas<% if (user && (user.role === 'admin' || user.role === 'media')) { %> admin-logged-in<% } %>" data-page-slug="home">
-    <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+    <!-- Admin Toolbar & Banner in Container -->
+    <div class="container pt-3">
         <!-- Default Admin Banner (when edit mode is closed) -->
-        <div id="live-edit-banner-default" class="mb-4">
+        <div id="live-edit-banner-default" class="mb-3">
             <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2 shadow-sm rounded-4 mb-0">
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge bg-primary text-white rounded-pill px-3 py-2"><i class="bi bi-shield-check me-1"></i>Beheermodus</span>
@@ -79,7 +60,7 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
         </div>
 
         <!-- Sticky Floating Toolbar (when edit mode is active) -->
-        <div id="live-edit-toolbar" class="live-edit-toolbar d-none mb-4 rounded-4 overflow-hidden">
+        <div id="live-edit-toolbar" class="live-edit-toolbar d-none mb-3 rounded-4 overflow-hidden">
             <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center gap-3 py-2 px-3">
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="d-inline-flex align-items-center gap-2 fw-bold text-dark">
@@ -87,7 +68,7 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                         Bewerkmodus actief
                     </span>
                     <span class="badge bg-light text-muted border rounded-pill px-3 py-2 d-none d-md-inline-block">
-                        <i class="bi bi-hand-index-thumb text-primary me-1"></i> Klik op een foto om te vervangen of klik op tekst om te typen
+                        <i class="bi bi-hand-index-thumb text-primary me-1"></i> Klik op de hero foto om te vervangen of klik op tekst om te typen
                     </span>
                     <span id="live-edit-dirty-badge" class="d-none"></span>
                 </div>
@@ -104,25 +85,44 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                 </div>
             </div>
         </div>
-    <% } %>
+    </div>
+<% } %>
 
-    <!-- Spread 1: The Integrated Scrapbook Hero Spread (Photos as central design elements!) -->
-    <section class="scrapbook-hero-spread">
-        <span class="washi-tape washi-tape-yellow washi-tape-top-left"></span>
-        <span class="washi-tape washi-tape-kraft washi-tape-top-right"></span>
+<!-- Full-Width Hero Section at Top -->
+<section class="hero-fullwidth-section">
+    <div class="hero-fullwidth-media" data-live-edit="hero_image" data-live-edit-type="image" data-live-edit-ratio="2.2">
+        <img src="<%= heroImage %>" alt="<%= heroTitle %>" class="hero-fullwidth-img" fetchpriority="high">
+        <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+            <div class="live-image-overlay">
+                <i class="bi bi-crop"></i> <span>Hero foto bijsnijden / vervangen</span>
+            </div>
+        <% } %>
+    </div>
+    <div class="hero-wave-divider" aria-hidden="true">
+        <svg viewBox="0 0 1440 70" preserveAspectRatio="none">
+            <path d="M0,28 C360,65 540,10 720,40 C980,72 1200,18 1440,42 L1440,70 L0,70 Z" fill="var(--bg-color, #fdfbf7)"></path>
+        </svg>
+    </div>
+</section>
 
-        <div class="row align-items-center g-4 g-lg-5">
-            <!-- Left: Handcrafted Greeting & Welcome -->
-            <div class="col-lg-6">
-                <h1 class="journal-main-title" data-live-edit="hero_title" data-live-edit-type="text">
+<!-- Scrapbook Canvas & Main Content inside Container -->
+<div class="container">
+    <div class="scrapbook-canvas<% if (user && (user.role === 'admin' || user.role === 'media')) { %> admin-logged-in<% } %>" data-page-slug="home">
+        <!-- Spread 1: Overlapping Playful Welcome Spread -->
+        <section class="hero-welcome-spread mb-5">
+            <span class="washi-tape washi-tape-yellow washi-tape-top-left"></span>
+            <span class="washi-tape washi-tape-kraft washi-tape-top-right"></span>
+
+            <div class="text-center py-2">
+                <h1 class="journal-main-title mb-3" data-live-edit="hero_title" data-live-edit-type="text">
                     <%= heroTitle %>
                 </h1>
 
-                <p class="journal-main-lead" data-live-edit="hero_text" data-live-edit-type="text" data-multiline="true">
+                <p class="journal-main-lead mx-auto mb-4" style="max-width: 720px;" data-live-edit="hero_text" data-live-edit-type="text" data-multiline="true">
                     <%= heroText %>
                 </p>
 
-                <div class="d-flex flex-wrap gap-3 align-items-center mb-4">
+                <div class="d-flex flex-wrap justify-content-center gap-3 align-items-center">
                     <a href="<%= heroBtn1Url %>" class="btn btn-chiro" data-live-edit-btn data-live-edit-text="hero_btn1_text" data-live-edit-url="hero_btn1_url">
                         <i class="bi bi-compass me-1"></i> <span class="btn-label"><%= heroBtn1Text %></span>
                     </a>
@@ -130,56 +130,8 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                         <i class="bi bi-journal-richtext me-1"></i> <span class="btn-label"><%= heroBtn2Text %></span>
                     </a>
                 </div>
-
-                <div class="pt-3 border-top border-dashed">
-                    <div class="text-muted font-playful fs-5 lh-sm">
-                        "Samen spelen, ravotten en onvergetelijke herinneringen maken!"
-                    </div>
-                </div>
             </div>
-
-            <!-- Right: The Hero Photo Cluster (Central design feature, NOT a background image!) -->
-            <div class="col-lg-6">
-                <div class="hero-photo-cluster">
-                    <!-- Main Feature Polaroid -->
-                    <div class="feature-polaroid polaroid-main">
-                        <span class="washi-tape washi-tape-kraft washi-tape-top-center"></span>
-                        <div class="polaroid-img-wrapper" data-live-edit="hero_image" data-live-edit-type="image">
-                            <img src="<%= heroImage %>" alt="<%= heroTitle %>" class="polaroid-img">
-                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-                                <div class="live-image-overlay">
-                                    <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
-                                </div>
-                            <% } %>
-                        </div>
-                        <div class="polaroid-caption" data-live-edit="hero_photo_caption" data-live-edit-type="text">
-                            <%= heroPhotoCaption %>
-                        </div>
-                        <div class="polaroid-tag">📍 <%= orgFullName %></div>
-                    </div>
-
-                    <!-- Secondary Overlapping Polaroid (companion snapshot) -->
-                    <div class="feature-polaroid polaroid-secondary d-none d-sm-flex">
-                        <span class="washi-tape washi-tape-yellow washi-tape-top-right"></span>
-                        <div class="polaroid-img-wrapper" data-live-edit="polaroid_img_1" data-live-edit-type="image">
-                            <img src="<%= cardImg1 %>" alt="<%= cardCap1 %>" class="polaroid-img">
-                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-                                <div class="live-image-overlay">
-                                    <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
-                                </div>
-                            <% } %>
-                        </div>
-                        <div class="polaroid-caption" data-live-edit="polaroid_cap_1" data-live-edit-type="text">
-                            <%= cardCap1 %>
-                        </div>
-                        <% if (cardTag1) { %>
-                            <div class="polaroid-tag" data-live-edit="polaroid_tag_1" data-live-edit-type="text"><%= cardTag1 %></div>
-                        <% } %>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+        </section>
 
     <!-- Spread 2: The Integrated Journal & Story Spread (Notebook Page + Sidebar Snapshots) -->
     <section id="logboek" class="mb-5">
@@ -347,24 +299,9 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                 <% } %>
             </div>
 
-            <!-- Sidebar: Snapshots & Reispaspoort Visa Sheet -->
+            <!-- Sidebar: Reispaspoort & Playful Info Cards (NO photos!) -->
             <div class="col-lg-4">
                 <div class="d-flex flex-column gap-4">
-                    <!-- Taped Polaroid 2 -->
-                    <div class="sidebar-polaroid polaroid-tilt-right">
-                        <span class="washi-tape washi-tape-blue washi-tape-top-center"></span>
-                        <div class="polaroid-img-wrapper" data-live-edit="polaroid_img_2" data-live-edit-type="image">
-                            <img src="<%= cardImg2 %>" alt="<%= cardCap2 %>" class="polaroid-img" loading="lazy">
-                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-                                <div class="live-image-overlay">
-                                    <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
-                                </div>
-                            <% } %>
-                        </div>
-                        <div class="polaroid-caption" data-live-edit="polaroid_cap_2" data-live-edit-type="text"><%= cardCap2 %></div>
-                        <div class="polaroid-tag" data-live-edit="polaroid_tag_2" data-live-edit-type="text"><%= cardTag2 %></div>
-                    </div>
-
                     <!-- Reispaspoort Visa Sheet -->
                     <div class="passport-visa-sheet">
                         <span class="washi-tape washi-tape-kraft washi-tape-top-center" style="width: 75px; height: 18px; top: -9px;"></span>
@@ -391,34 +328,43 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
                         </div>
                     </div>
 
-                    <!-- Taped Polaroid 3 -->
-                    <div class="sidebar-polaroid polaroid-tilt-left d-none d-lg-flex">
-                        <span class="washi-tape washi-tape-yellow washi-tape-top-left"></span>
-                        <div class="polaroid-img-wrapper" data-live-edit="polaroid_img_3" data-live-edit-type="image">
-                            <img src="<%= cardImg3 %>" alt="<%= cardCap3 %>" class="polaroid-img" loading="lazy">
-                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-                                <div class="live-image-overlay">
-                                    <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
-                                </div>
-                            <% } %>
+                    <!-- Playful Invitation Notice Card: 3x Gratis Meespelen -->
+                    <div class="sidebar-notice-card note-yellow">
+                        <span class="washi-tape washi-tape-red washi-tape-top-center" style="width: 75px; height: 18px; top: -9px;"></span>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-balloon-heart-fill text-danger fs-4"></i>
+                            <h4 class="font-playful fs-5 m-0 text-dark" data-live-edit="box_join_title" data-live-edit-type="text"><%= boxJoinTitle %></h4>
                         </div>
-                        <div class="polaroid-caption" data-live-edit="polaroid_cap_3" data-live-edit-type="text"><%= cardCap3 %></div>
-                        <div class="polaroid-tag" data-live-edit="polaroid_tag_3" data-live-edit-type="text"><%= cardTag3 %></div>
+                        <p class="text-muted small mb-3" data-live-edit="box_join_text" data-live-edit-type="text" data-multiline="true"><%= boxJoinText %></p>
+                        <a href="<%= boxJoinBtnUrl %>" class="btn btn-chiro-outline btn-sm rounded-pill w-100 font-playful d-inline-flex justify-content-center align-items-center gap-1" data-live-edit-btn data-live-edit-text="box_join_btn_text" data-live-edit-url="box_join_btn_url">
+                            <i class="bi bi-info-circle"></i> <span class="btn-label"><%= boxJoinBtnText %></span>
+                        </a>
                     </div>
 
-                    <!-- Taped Polaroid 4 -->
-                    <div class="sidebar-polaroid polaroid-tilt-right d-none d-lg-flex">
-                        <span class="washi-tape washi-tape-kraft washi-tape-top-center"></span>
-                        <div class="polaroid-img-wrapper" data-live-edit="polaroid_img_4" data-live-edit-type="image">
-                            <img src="<%= cardImg4 %>" alt="<%= cardCap4 %>" class="polaroid-img" loading="lazy">
-                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-                                <div class="live-image-overlay">
-                                    <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
-                                </div>
-                            <% } %>
+                    <!-- Playful Quick Facts Notice Card: Goed om te weten -->
+                    <div class="sidebar-notice-card note-blue">
+                        <span class="washi-tape washi-tape-yellow washi-tape-top-center" style="width: 75px; height: 18px; top: -9px;"></span>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="bi bi-lightbulb-fill text-warning fs-4"></i>
+                            <h4 class="font-playful fs-5 m-0 text-dark" data-live-edit="box_info_title" data-live-edit-type="text"><%= boxInfoTitle %></h4>
                         </div>
-                        <div class="polaroid-caption" data-live-edit="polaroid_cap_4" data-live-edit-type="text"><%= cardCap4 %></div>
-                        <div class="polaroid-tag" data-live-edit="polaroid_tag_4" data-live-edit-type="text"><%= cardTag4 %></div>
+                        <ul class="list-unstyled small text-muted mb-3 d-flex flex-column gap-2">
+                            <li class="d-flex align-items-start gap-2">
+                                <i class="bi bi-check-circle-fill text-success flex-shrink-0 mt-1"></i>
+                                <span data-live-edit="box_info_item_1" data-live-edit-type="text"><%= boxInfoItem1 %></span>
+                            </li>
+                            <li class="d-flex align-items-start gap-2">
+                                <i class="bi bi-check-circle-fill text-success flex-shrink-0 mt-1"></i>
+                                <span data-live-edit="box_info_item_2" data-live-edit-type="text"><%= boxInfoItem2 %></span>
+                            </li>
+                            <li class="d-flex align-items-start gap-2">
+                                <i class="bi bi-check-circle-fill text-success flex-shrink-0 mt-1"></i>
+                                <span data-live-edit="box_info_item_3" data-live-edit-type="text"><%= boxInfoItem3 %></span>
+                            </li>
+                        </ul>
+                        <a href="<%= boxInfoBtnUrl %>" class="text-chiro-blue fw-bold small text-decoration-none font-playful d-inline-flex align-items-center" data-live-edit-btn data-live-edit-text="box_info_btn_text" data-live-edit-url="box_info_btn_url">
+                            <span class="btn-label"><%= boxInfoBtnText %></span> <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -499,7 +445,8 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
             </a>
         </div>
     </section>
-</div>
+</div> <!-- End scrapbook-canvas -->
+</div> <!-- End container -->
 
 <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
     <!-- Image Crop & Edit Modal -->
@@ -570,9 +517,10 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
 
                             <!-- Aspect Ratios -->
                             <div class="btn-group btn-group-sm" role="group" id="crop-ratio-group" aria-label="Verhouding">
-                                <button type="button" class="btn btn-outline-primary active" data-ratio="1" title="1:1 Vierkant (Polaroid)">1:1</button>
+                                <button type="button" class="btn btn-outline-primary" data-ratio="2.2" title="Banner (Breed)">Breed</button>
+                                <button type="button" class="btn btn-outline-primary" data-ratio="1.77778" title="16:9 Breedbeeld">16:9</button>
                                 <button type="button" class="btn btn-outline-primary" data-ratio="1.33333" title="4:3 Liggend">4:3</button>
-                                <button type="button" class="btn btn-outline-primary" data-ratio="0.75" title="3:4 Staand">3:4</button>
+                                <button type="button" class="btn btn-outline-primary active" data-ratio="1" title="1:1 Vierkant">1:1</button>
                                 <button type="button" class="btn btn-outline-primary" data-ratio="NaN" title="Vrije uitsnede">Vrij</button>
                             </div>
 
@@ -598,4 +546,4 @@ var cardPos4 = (content.polaroid_img_4_pos && content.polaroid_img_4_pos.content
 <% } %>
 
 <%- include('../partials/event_modal') %>
-<%- include('../partials/footer') %>
+<%- include('../partials/footer', { fullWidth: true }) %>

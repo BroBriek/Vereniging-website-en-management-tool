@@ -1030,6 +1030,148 @@ body.navbar-open {
     transform: translateY(2px);
 }
 
+/* ==========================================================================
+   FULL-WIDTH HERO SECTION
+   ========================================================================== */
+
+.hero-fullwidth-section {
+    position: relative;
+    width: 100%;
+    background-color: #0f172a;
+    overflow: hidden;
+    margin-top: 0;
+}
+
+.hero-fullwidth-media {
+    position: relative;
+    width: 100%;
+    height: 480px;
+    background: #0f172a;
+    overflow: hidden;
+}
+
+@media (min-width: 1400px) {
+    .hero-fullwidth-media {
+        height: 520px;
+    }
+}
+
+@media (max-width: 991px) {
+    .hero-fullwidth-media {
+        height: 380px;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-fullwidth-media {
+        height: 280px;
+    }
+}
+
+.hero-fullwidth-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+    display: block;
+    transition: transform 0.8s ease;
+}
+
+/* Subtle top and bottom vignette so image transitions elegantly */
+.hero-fullwidth-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.2) 0%,
+        rgba(0, 0, 0, 0) 35%,
+        rgba(0, 0, 0, 0.3) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Organic Wave Divider transitioning photo into page */
+.hero-wave-divider {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 50px;
+    z-index: 2;
+    pointer-events: none;
+    line-height: 0;
+}
+
+@media (min-width: 768px) {
+    .hero-wave-divider {
+        height: 70px;
+    }
+}
+
+.hero-wave-divider svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Overlapping Welcome Spread Card */
+.hero-welcome-spread {
+    position: relative;
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.06), 0 3px 10px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 3rem 2.5rem;
+    margin-top: -55px;
+    z-index: 10;
+    transition: transform 0.3s ease;
+}
+
+@media (max-width: 991px) {
+    .hero-welcome-spread {
+        padding: 2.25rem 1.5rem;
+        border-radius: 22px;
+        margin-top: -40px;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-welcome-spread {
+        padding: 1.75rem 1.25rem;
+        border-radius: 18px;
+        margin-top: -30px;
+    }
+}
+
+/* Sidebar Info & Notice Cards (Spread 2) */
+.sidebar-notice-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem 1.35rem;
+    position: relative;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.sidebar-notice-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-notice-card.note-yellow {
+    background: #fffdf5;
+    border: 1.5px dashed #fde68a;
+}
+
+.sidebar-notice-card.note-blue {
+    background: #f8faff;
+    border: 1.5px dashed #bae6fd;
+}
+
 /* Hero Polaroid Cluster (Images integrated as central collage!) */
 .hero-photo-cluster {
     position: relative;

@@ -163,52 +163,73 @@
                 </div>
             </div>
 
-            <!-- Right Column: Polaroid Scrapbook Photos -->
+            <!-- Right Column: Zijbalk Infovakken -->
             <div class="col-lg-5">
+                <!-- Vak 1: Nieuw bij de Chiro? -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
                         <h4 class="fw-bold mb-0 text-danger">
-                            <i class="bi bi-camera me-2"></i>Scrapbook Kiekjes (Polaroids met Tape)
+                            <i class="bi bi-balloon-heart me-2"></i>Zijbalk: Nieuw bij de Chiro?
                         </h4>
-                        <p class="text-muted small mb-0 mt-1">Foto's die met tape en speelse hoekjes als polaroids op de homepagina getoond worden.</p>
+                        <p class="text-muted small mb-0 mt-1">Het uitnodigingsvak in de zijbalk van de startpagina.</p>
                     </div>
                     <div class="card-body p-4">
-                        <% 
-                        const defaultPolaroids = [
-                            { cap: 'Samen op avontuur! ⛺', tag: 'Zomerkamp & Weekends' },
-                            { cap: 'Elke zondag ravotten 🌲', tag: 'Zondagmiddag 14u-17u' },
-                            { cap: 'Vriendschap voor het leven ✨', tag: 'Onze Chiro-bende' },
-                            { cap: 'Klaar voor de leiding! 🔥', tag: 'Leidingsploeg' }
-                        ];
-                        for (let i = 1; i <= 4; i++) { 
-                            const def = defaultPolaroids[i - 1] || { cap: '', tag: '' };
-                            const imgKey = 'polaroid_img_' + i;
-                            const capKey = 'polaroid_cap_' + i;
-                            const tagKey = 'polaroid_tag_' + i;
-                        %>
-                            <div class="border rounded-3 p-3 mb-3 bg-light">
-                                <h6 class="fw-bold text-dark mb-2">📸 Polaroid <%= i %></h6>
-                                <div class="mb-2">
-                                    <% if (contentMap[imgKey] && contentMap[imgKey].content) { %>
-                                        <div class="mb-2">
-                                            <img src="<%= contentMap[imgKey].content %>" alt="Polaroid <%= i %>" class="img-fluid rounded shadow-sm" style="max-height: 90px;">
-                                        </div>
-                                    <% } %>
-                                    <label class="form-label small fw-bold">Nieuwe foto uploaden</label>
-                                    <input type="file" class="form-control form-control-sm mb-2" name="polaroid_img_<%= i %>" accept="image/*">
-                                    <label class="form-label small text-muted">Of foto URL / pad</label>
-                                    <input type="text" class="form-control form-control-sm" name="polaroid_img_<%= i %>_url" value="<%= contentMap[imgKey] ? contentMap[imgKey].content : '' %>" placeholder="bijv. /uploads/... of https://...">
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label small fw-bold">Bijschrift (Handschrift)</label>
-                                    <input type="text" class="form-control form-control-sm" name="<%= capKey %>" value="<%= contentMap[capKey] ? contentMap[capKey].content : def.cap %>" placeholder="Handschrift tekst">
-                                </div>
-                                <div class="mb-0">
-                                    <label class="form-label small fw-bold">Klein labeltje / Thema</label>
-                                    <input type="text" class="form-control form-control-sm" name="<%= tagKey %>" value="<%= contentMap[tagKey] ? contentMap[tagKey].content : def.tag %>" placeholder="Thema of locatie">
-                                </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Titel</label>
+                            <input type="text" class="form-control form-control-sm" name="box_join_title" value="<%= contentMap.box_join_title ? contentMap.box_join_title.content : 'Nieuw bij de Chiro?' %>">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Tekst</label>
+                            <textarea class="form-control form-control-sm" name="box_join_text" rows="3"><%= contentMap.box_join_text ? contentMap.box_join_text.content : 'Iedereen tussen 6 en 18 jaar is van harte welkom! Je mag altijd 3 zondagen helemaal gratis en vrijblijvend meespelen om de sfeer te proeven.' %></textarea>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Knop Tekst</label>
+                                <input type="text" class="form-control form-control-sm" name="box_join_btn_text" value="<%= contentMap.box_join_btn_text ? contentMap.box_join_btn_text.content : 'Praktische info & uren' %>">
                             </div>
-                        <% } %>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Knop Link</label>
+                                <input type="text" class="form-control form-control-sm" name="box_join_btn_url" value="<%= contentMap.box_join_btn_url ? contentMap.box_join_btn_url.content : '/praktisch' %>">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vak 2: Goed om te weten -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                        <h4 class="fw-bold mb-0 text-primary">
+                            <i class="bi bi-lightbulb me-2"></i>Zijbalk: Goed om te weten
+                        </h4>
+                        <p class="text-muted small mb-0 mt-1">De weetjeslijst in de zijbalk van de startpagina.</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Titel</label>
+                            <input type="text" class="form-control form-control-sm" name="box_info_title" value="<%= contentMap.box_info_title ? contentMap.box_info_title.content : 'Goed om te weten' %>">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Weetje 1</label>
+                            <input type="text" class="form-control form-control-sm" name="box_info_item_1" value="<%= contentMap.box_info_item_1 ? contentMap.box_info_item_1.content : 'Elke zondag voorzien wij een lekker vieruurtje en drankje.' %>">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Weetje 2</label>
+                            <input type="text" class="form-control form-control-sm" name="box_info_item_2" value="<%= contentMap.box_info_item_2 ? contentMap.box_info_item_2.content : 'Uniform is pas verplicht vanaf de Tito\'s (12 jaar).' %>">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Weetje 3</label>
+                            <input type="text" class="form-control form-control-sm" name="box_info_item_3" value="<%= contentMap.box_info_item_3 ? contentMap.box_info_item_3.content : '26 enthousiaste leid(st)ers staan elke week paraat!' %>">
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Link Tekst</label>
+                                <input type="text" class="form-control form-control-sm" name="box_info_btn_text" value="<%= contentMap.box_info_btn_text ? contentMap.box_info_btn_text.content : 'Ontdek alle afdelingen' %>">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-bold">Link URL</label>
+                                <input type="text" class="form-control form-control-sm" name="box_info_btn_url" value="<%= contentMap.box_info_btn_url ? contentMap.box_info_btn_url.content : '/afdelingen' %>">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
