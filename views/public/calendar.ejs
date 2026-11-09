@@ -12,7 +12,7 @@ var calendarLead = (content && content.calendar_lead && content.calendar_lead.co
     <!-- Header Spread -->
     <header class="scrapbook-page-header">
         <span class="washi-tape washi-tape-yellow washi-tape-top-left"></span>
-        <span class="washi-tape washi-tape-kraft washi-tape-top-right"></span>
+        <span class="washi-tape washi-tape-yellow washi-tape-top-right"></span>
 
         <h1 class="journal-main-title mb-3" data-live-edit="calendar_title" data-live-edit-type="text">
             <%= calendarTitle %>
@@ -36,7 +36,6 @@ var calendarLead = (content && content.calendar_lead && content.calendar_lead.co
 
     <!-- Subscription Tip Note -->
     <div class="scrapbook-card mb-4 p-3 bg-light border-0">
-        <span class="washi-tape washi-tape-yellow washi-tape-top-left" style="width: 70px;"></span>
         <div class="d-flex align-items-center gap-3">
             <i class="bi bi-lightbulb-fill fs-3 text-warning"></i>
             <div class="small text-muted">
@@ -81,7 +80,6 @@ var calendarLead = (content && content.calendar_lead && content.calendar_lead.co
                         
                         <!-- Ticket Date Stamp -->
                         <div class="calendar-ticket-stamp">
-                            <span class="washi-tape washi-tape-yellow washi-tape-top-center" style="width: 45px; height: 16px; top: -8px;"></span>
                             <span class="calendar-ticket-day"><%= day %></span>
                             <span class="calendar-ticket-month"><%= month %></span>
                         </div>
