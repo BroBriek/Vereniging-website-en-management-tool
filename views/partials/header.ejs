@@ -86,7 +86,7 @@ var showGamesToAll = (typeof locals !== 'undefined' && locals.showGamesToAll) ||
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css?v=1.0.4">
+    <link rel="stylesheet" href="/css/style.css?v=1.0.6">
     <link rel="stylesheet" href="/css/document-preview.css?v=2.3.0">
     <style>
         :root {
@@ -335,6 +335,7 @@ var showGamesToAll = (typeof locals !== 'undefined' && locals.showGamesToAll) ||
     <% } %>
         
     <!-- Global Alert System -->
+    <% if ((typeof error !== 'undefined' && error) || (typeof success !== 'undefined' && success)) { %>
     <div class="<%= (typeof fullWidth !== 'undefined' && fullWidth) ? 'container mt-4' : '' %>">
         <% if (typeof error !== 'undefined' && error) { %>
             <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
@@ -352,6 +353,7 @@ var showGamesToAll = (typeof locals !== 'undefined' && locals.showGamesToAll) ||
             </div>
         <% } %>
     </div>
+    <% } %>
 
     <script>
     if ('serviceWorker' in navigator) {

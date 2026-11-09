@@ -20,6 +20,7 @@ body {
     font-size: 1.2rem;
     line-height: 1.6;
     padding-top: 90px;
+    overflow-x: clip;
 }
 
 @media (max-width: 991px) {
@@ -941,7 +942,7 @@ body.navbar-open {
 
 /* Overall Page Layout Wrapper */
 .scrapbook-canvas {
-    overflow-x: clip;
+    overflow: visible;
     padding-bottom: 2rem;
 }
 
@@ -1039,6 +1040,10 @@ body.navbar-open {
     width: 100%;
     background-color: #0f172a;
     overflow: hidden;
+    margin-top: -10px;
+}
+
+.container + .hero-fullwidth-section {
     margin-top: 0;
 }
 
@@ -1674,7 +1679,6 @@ body.navbar-open {
     flex-direction: column;
     justify-content: space-between;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    overflow: hidden;
 }
 
 .postcard-nav-card::before {
@@ -1684,6 +1688,7 @@ body.navbar-open {
     left: 0;
     right: 0;
     height: 5px;
+    border-radius: 18px 18px 0 0;
     background: repeating-linear-gradient(
         45deg,
         var(--chiro-red) 0px,
@@ -2326,7 +2331,6 @@ body.navbar-open {
     border: 1px solid rgba(0, 0, 0, 0.06);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
     position: relative;
-    overflow: hidden;
 }
 
 .contact-postcard-box::before {
@@ -2336,6 +2340,7 @@ body.navbar-open {
     left: 0;
     right: 0;
     height: 6px;
+    border-radius: 22px 22px 0 0;
     background: repeating-linear-gradient(
         45deg,
         var(--chiro-red) 0px,
