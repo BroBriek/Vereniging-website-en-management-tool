@@ -85,8 +85,61 @@
         border: 2px dashed #db3e41;
         cursor: grabbing;
     }
-    .form-item-preview.drag-over {
+    .form-item-preview.drag-over,
+    .form-item-preview.drag-over-top {
         border-top: 3px solid #db3e41 !important;
+    }
+    .form-item-preview.drag-over-bottom {
+        border-bottom: 3px solid #db3e41 !important;
+    }
+    /* Radio & Checkbox Choice Cards (matching Public Form page layout) */
+    .form-choices-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+    .form-choice-card {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.8rem 1.1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        background-color: #ffffff;
+        cursor: grab;
+        transition: all 0.2s ease;
+        user-select: none;
+        margin-bottom: 0;
+    }
+    .form-choice-card:hover {
+        border-color: #cbd5e1;
+        background-color: #f8fafc;
+    }
+    .form-choice-card .form-check-input {
+        width: 1.25rem !important;
+        height: 1.25rem !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        flex-shrink: 0;
+        border: 2px solid #94a3b8 !important;
+        border-radius: 50% !important;
+        background-position: center;
+        pointer-events: none;
+    }
+    .form-choice-card .form-check-input[type="checkbox"] {
+        border-radius: 6px !important;
+    }
+    .form-choice-card .form-check-label {
+        font-family: var(--font-body);
+        font-size: 1.15rem;
+        line-height: 1.35;
+        color: #1e293b;
+        flex: 1;
+        pointer-events: none;
+    }
+    .form-choice-card .form-check-input:disabled,
+    .form-choice-card .form-check-input[disabled] ~ .form-check-label {
+        opacity: 1;
     }
     .form-item-actions {
         position: absolute;
@@ -235,13 +288,13 @@
                 <i class="bi bi-plus-slash-minus text-danger"></i> Slimme Totaal Box
             </div>
             <hr>
-            <div class="draggable-item" onclick="enableEmailOverview()">
+            <div class="draggable-item" onclick="enableEmailOverview()" draggable="true" ondragstart="handleDragStart(event, 'email_overview')">
                 <i class="bi bi-envelope-check text-primary"></i> Verplicht E-mail Veld
             </div>
         </div>
 
         <!-- Main Area -->
-        <div class="builder-main shadow-sm" id="builderPreviewArea" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+        <div class="builder-main shadow-sm" id="builderPreviewArea" ondragover="handleDragOver(event)" ondragleave="handleBuilderDragLeave(event)" ondrop="handleDrop(event)">
             <input type="hidden" name="sendEmailOverview" id="sendEmailOverviewInput" value="<%= form ? (form.sendEmailOverview ? 'true' : 'false') : 'false' %>">
             <input type="hidden" name="emailFieldId" id="emailFieldIdInput" value="<%= form ? form.emailFieldId : '' %>">
             <div id="emptyState" class="empty-state">
@@ -335,11 +388,18 @@
                     break;
                 case 'multiple_choice':
                 case 'multiple_choice_multi':
-                    content = `<label class="form-label fw-bold">${field.label || 'Meerkeuzevraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>${field.extraExplanation ? `<div class="small text-muted mb-1">${field.extraExplanation}</div>` : ''}`;
+                    content = `<label class="form-label fw-bold">${field.label || 'Meerkeuzevraag'}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>${field.extraExplanation ? `<div class="small text-muted mb-2">${field.extraExplanation}</div>` : ''}`;
                     const options = field.options || ['Optie 1', 'Optie 2'];
+                    content += `<div class="form-choices-list">`;
                     options.forEach(opt => {
-                        content += `<div class="form-check"><input class="form-check-input" type="${field.type === 'multiple_choice' ? 'radio' : 'checkbox'}" disabled><label class="form-check-label">${opt}</label></div>`;
+                        content += `
+                            <label class="form-choice-card">
+                                <input class="form-check-input" type="${field.type === 'multiple_choice' ? 'radio' : 'checkbox'}" disabled>
+                                <span class="form-check-label form-choice-label">${opt}</span>
+                            </label>
+                        `;
                     });
+                    content += `</div>`;
                     break;
                 case 'pricing':
                     content = `
@@ -388,7 +448,11 @@
         document.getElementById('fieldsJsonInput').value = JSON.stringify(fields);
     }
 
-    function addField(type) {
+    function addField(type, insertIndex = -1) {
+        if (type === 'email_overview') {
+            enableEmailOverview(insertIndex);
+            return;
+        }
         markDirty();
         const id = 'field_' + Math.random().toString(36).substring(2, 11);
         let newField = { id, type, label: '', required: false };
@@ -404,19 +468,23 @@
             newField.label = 'Totaal te betalen';
         }
         
-        fields.push(newField);
+        let targetIndex;
+        if (insertIndex >= 0 && insertIndex <= fields.length) {
+            fields.splice(insertIndex, 0, newField);
+            targetIndex = insertIndex;
+        } else {
+            fields.push(newField);
+            targetIndex = fields.length - 1;
+        }
         renderFields();
         
-        // Automatically open edit modal for certain types
-        if (type !== 'text') {
-            editField(fields.length - 1);
-        } else {
-            // For text, we might want to initialize Quill directly if possible, or use the modal
-            editField(fields.length - 1);
-        }
+        // Automatically open edit modal for the newly added field
+        setTimeout(() => {
+            editField(targetIndex);
+        }, 50);
     }
 
-    function enableEmailOverview() {
+    function enableEmailOverview(insertIndex = -1) {
         // Check if email field already exists
         const emailFieldIdInput = document.getElementById('emailFieldIdInput');
         const sendEmailOverviewInput = document.getElementById('sendEmailOverviewInput');
@@ -429,6 +497,7 @@
             return;
         }
 
+        markDirty();
         // Create new field
         const id = 'field_email_' + Math.random().toString(36).substring(2, 11);
         let newField = { 
@@ -440,7 +509,11 @@
             isEmailField: true // Helper flag
         };
         
-        fields.push(newField);
+        if (insertIndex >= 0 && insertIndex <= fields.length) {
+            fields.splice(insertIndex, 0, newField);
+        } else {
+            fields.push(newField);
+        }
         emailFieldIdInput.value = id;
         sendEmailOverviewInput.value = 'true';
         
@@ -621,7 +694,7 @@
         }
 
         modalBody.innerHTML = html;
-        const modal = new bootstrap.Modal(document.getElementById('editFieldModal'));
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editFieldModal'));
         modal.show();
 
         // Initialize Rich Editor if needed
@@ -726,11 +799,30 @@
         }
 
         renderFields();
-        bootstrap.Modal.getInstance(document.getElementById('editFieldModal')).hide();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('editFieldModal')).hide();
     });
+
+    function clearDragHighlights() {
+        document.querySelectorAll('.form-item-preview').forEach(el => {
+            el.classList.remove('drag-over', 'drag-over-top', 'drag-over-bottom');
+        });
+    }
+
+    function getDropInsertIndex(clientY) {
+        const previews = Array.from(document.querySelectorAll('#formPreviewList .form-item-preview'));
+        for (let i = 0; i < previews.length; i++) {
+            const rect = previews[i].getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+            if (clientY < midY) {
+                return i;
+            }
+        }
+        return fields.length;
+    }
 
     // Drag and Drop Handlers (Sidebar to Main)
     function handleDragStart(e, type) {
+        draggedIndex = -1;
         e.dataTransfer.setData('text/plain', type);
         e.dataTransfer.effectAllowed = 'copy';
     }
@@ -742,15 +834,47 @@
         } else {
             e.dataTransfer.dropEffect = 'copy';
         }
+
+        const previews = Array.from(document.querySelectorAll('#formPreviewList .form-item-preview'));
+        clearDragHighlights();
+
+        if (previews.length > 0) {
+            const insertIdx = getDropInsertIndex(e.clientY);
+            if (insertIdx < previews.length) {
+                if (draggedIndex !== insertIdx) {
+                    previews[insertIdx].classList.add('drag-over-top');
+                }
+            } else {
+                const lastIdx = previews.length - 1;
+                if (draggedIndex !== lastIdx) {
+                    previews[lastIdx].classList.add('drag-over-bottom');
+                }
+            }
+        }
+    }
+
+    function handleBuilderDragLeave(e) {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+            clearDragHighlights();
+        }
     }
 
     function handleDrop(e) {
         e.preventDefault();
+        clearDragHighlights();
+
+        let insertIndex = getDropInsertIndex(e.clientY);
         
-        // Handle internal reordering drop on container background (move to end)
+        // Handle internal reordering drop on container background
         if (draggedIndex !== -1) {
-            const item = fields.splice(draggedIndex, 1)[0];
-            fields.push(item);
+            if (draggedIndex !== insertIndex) {
+                markDirty();
+                const item = fields.splice(draggedIndex, 1)[0];
+                if (draggedIndex < insertIndex) {
+                    insertIndex--;
+                }
+                fields.splice(insertIndex, 0, item);
+            }
             draggedIndex = -1;
             renderFields();
             return;
@@ -758,11 +882,11 @@
 
         const type = e.dataTransfer.getData('text/plain');
         if (type) {
-            addField(type);
+            addField(type, insertIndex);
         }
     }
 
-    // Internal Drag and Drop (Reordering)
+    // Internal Drag and Drop (Reordering & Sidebar Drop on Items)
     let draggedIndex = -1;
 
     function handleInternalDragStart(e, index) {
@@ -780,31 +904,58 @@
         e.preventDefault();
         e.stopPropagation();
         
-        if (draggedIndex === -1 || draggedIndex === index) return;
-        
-        // Clear other highlights
-        document.querySelectorAll('.form-item-preview').forEach(el => el.classList.remove('drag-over'));
-        
-        // Add highlight to current target
-        e.currentTarget.classList.add('drag-over');
+        e.dataTransfer.dropEffect = draggedIndex !== -1 ? 'move' : 'copy';
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const isBottom = (e.clientY - rect.top) > rect.height / 2;
+
+        clearDragHighlights();
+
+        if (draggedIndex === index) return;
+
+        if (isBottom) {
+            e.currentTarget.classList.add('drag-over-bottom');
+        } else {
+            e.currentTarget.classList.add('drag-over-top');
+        }
     }
 
     function handleInternalDragLeave(e, index) {
-        e.currentTarget.classList.remove('drag-over');
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+            e.currentTarget.classList.remove('drag-over', 'drag-over-top', 'drag-over-bottom');
+        }
     }
 
     function handleInternalDrop(e, index) {
         e.preventDefault();
         e.stopPropagation();
-        
-        if (draggedIndex === -1 || draggedIndex === index) {
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const isBottom = (e.clientY - rect.top) > rect.height / 2;
+        let insertIndex = isBottom ? index + 1 : index;
+
+        clearDragHighlights();
+
+        // Sidebar item dropped onto a specific item position
+        if (draggedIndex === -1) {
+            const type = e.dataTransfer.getData('text/plain');
+            if (type) {
+                addField(type, insertIndex);
+            }
+            return;
+        }
+
+        if (draggedIndex === index) {
             handleInternalDragEnd();
             return;
         }
         
         markDirty();
         const item = fields.splice(draggedIndex, 1)[0];
-        fields.splice(index, 0, item);
+        if (draggedIndex < insertIndex) {
+            insertIndex--;
+        }
+        fields.splice(insertIndex, 0, item);
         
         draggedIndex = -1;
         renderFields();
@@ -813,7 +964,7 @@
     function handleInternalDragEnd(e) {
         draggedIndex = -1;
         document.querySelectorAll('.form-item-preview').forEach(el => {
-            el.classList.remove('dragging', 'drag-over');
+            el.classList.remove('dragging', 'drag-over', 'drag-over-top', 'drag-over-bottom');
         });
     }
 
