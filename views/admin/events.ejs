@@ -1,522 +1,864 @@
 <%- include('../partials/header') %>
-<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
-    <h1 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Kalender Beheren</h1>
-    <div class="d-flex gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end">
-        <a href="/admin" class="btn btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
-            <i class="bi bi-arrow-left me-1"></i> <span class="d-none d-sm-inline">Terug naar Dashboard</span><span class="d-inline d-sm-none">Terug</span>
-        </a>
-        <button class="btn btn-success rounded-pill px-3 d-inline-flex align-items-center flex-grow-1 flex-sm-grow-0 justify-content-center" data-bs-toggle="modal" data-bs-target="#addEventModal">
-            <i class="bi bi-plus-circle me-1"></i> Activiteit Toevoegen
+
+<%
+const nowDate = new Date();
+const fallbackToday = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}-${String(nowDate.getDate()).padStart(2, '0')}`;
+const currentToday = typeof todayStr !== 'undefined' ? todayStr : fallbackToday;
+
+const allCombinedEvents = [
+    ...activeEvents.map(e => ({ ...(e.toJSON ? e.toJSON() : e), _bucket: ((e.endDate || e.date) >= currentToday) ? 'upcoming' : 'past' })),
+    ...archivedEvents.map(e => ({ ...(e.toJSON ? e.toJSON() : e), _bucket: 'archived' }))
+];
+
+const countUpcoming = allCombinedEvents.filter(e => e._bucket === 'upcoming').length;
+const countAllActive = activeEvents.length;
+const countHomepage = activeEvents.filter(e => e.showOnPublicPage && !e.isPrivate).length;
+const countPublic = activeEvents.filter(e => !e.isPrivate).length;
+const countPrivate = activeEvents.filter(e => e.isPrivate).length;
+const countPast = allCombinedEvents.filter(e => e._bucket === 'past').length;
+const countArchived = archivedEvents.length;
+
+const defaultFilter = countUpcoming > 0 ? 'upcoming' : 'all-active';
+%>
+
+<!-- Top Header -->
+<div class="admin-events-header mb-4">
+    <div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <a href="/admin" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="bi bi-arrow-left me-1"></i> Dashboard
+            </a>
+            <a href="/kalender?view=public" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center" title="Bekijk en bewerk rechtstreeks op de publieke kalenderpagina">
+                <i class="bi bi-globe2 me-1"></i> Publieke Kalender
+            </a>
+            <a href="/feed/calendar" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center" title="Bekijk de interne leidingskalender">
+                <i class="bi bi-calendar3 me-1"></i> Leidingskalender
+            </a>
+        </div>
+        <h1 class="mb-1 fw-bold"><i class="bi bi-calendar-event text-primary me-2"></i>Kalender Beheren</h1>
+        <p class="text-muted small mb-0">Zoek, filter, voeg toe of bewerk activiteiten. Tip: je kunt activiteiten ook rechtstreeks op de publieke kalender aanklikken en bewerken!</p>
+    </div>
+    <div class="admin-events-header-actions">
+        <button type="button" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center flex-grow-1 flex-sm-grow-0" onclick="openAddEventModal()">
+            <i class="bi bi-plus-circle-fill me-2"></i> Nieuwe Activiteit
         </button>
-        <a href="/admin/info" class="btn btn-info text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Algemene Hulp & Info">
+        <a href="/admin/info" class="btn btn-info text-white rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;" title="Algemene Hulp & Info">
             <i class="bi bi-info-circle"></i>
         </a>
     </div>
 </div>
 
-<!-- Add Event Modal -->
-<div class="modal fade" id="addEventModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Nieuwe Activiteit Toevoegen</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form action="/admin/events" method="POST" enctype="multipart/form-data">
-                    <div class="row">
-                        <div class="col-12 col-md-6 mb-3">
-                            <label class="fw-bold">Titel</label>
-                            <input type="text" class="form-control" name="title" required placeholder="bv. Zondagse Vergadering">
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <label class="fw-bold">Begindatum</label>
-                            <input type="date" class="form-control" name="date" required>
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <label class="fw-bold">Einddatum (optioneel)</label>
-                            <input type="date" class="form-control" name="endDate">
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <label class="fw-bold">Startuur (optioneel)</label>
-                            <input type="time" class="form-control" name="startTime">
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <label class="fw-bold">Einduur (optioneel)</label>
-                            <input type="time" class="form-control" name="endTime">
-                        </div>
-                        <div class="col-12 col-md-6 mb-3">
-                            <div class="p-3 border rounded-3 bg-light h-100 d-flex flex-column justify-content-center gap-2">
-                                <div class="form-check form-switch mb-1">
-                                    <input class="form-check-input" type="checkbox" name="showOnPublicPage" id="showOnPublicPage" role="switch">
-                                    <label class="form-check-label fw-bold text-dark" for="showOnPublicPage">
-                                        <i class="bi bi-megaphone-fill text-warning me-1"></i> Toon op openbare pagina
-                                    </label>
-                                    <div class="small text-muted" style="font-size: 0.8rem;">Laat dit evenement zien bij aankomende activiteiten op de openbare homepagina.</div>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="isPrivate" id="isPrivate" role="switch">
-                                    <label class="form-check-label fw-semibold text-secondary" for="isPrivate">
-                                        <i class="bi bi-lock-fill text-muted me-1"></i> Alleen voor leiding (interne kalender)
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label class="fw-bold">Beschrijving</label>
-                            <textarea class="form-control rich-editor" name="description" rows="3"></textarea>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label class="fw-bold">Bijlagen / Documenten</label>
-                            <input type="file" class="form-control" name="attachments" multiple>
-                            <small class="text-muted">Max. 5 bestanden tegelijk.</small>
-                        </div>
-                    </div>
-                    <div class="text-end mt-3">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
-                        <button type="submit" class="btn btn-success">Opslaan & Toevoegen</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<h3>Geplande Activiteiten</h3>
-<!-- Mobile Layout for Active Events -->
-<div class="d-md-none mb-4">
-    <% if (activeEvents.length === 0) { %>
-        <div class="text-center text-muted py-4 card shadow-sm border-0 rounded-4 mb-3">
-            <div class="card-body">Geen geplande activiteiten gevonden.</div>
-        </div>
-    <% } else { %>
-        <% activeEvents.forEach(event => { %>
-            <div class="card shadow-sm border-0 rounded-4 mb-3">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="d-flex flex-wrap gap-1 align-items-center">
-                            <span class="badge <%= event.isPrivate ? 'bg-warning text-dark' : 'bg-info text-white' %> rounded-pill px-3">
-                                <%= event.isPrivate ? 'Leiding' : 'Publiek' %>
-                            </span>
-                            <% if (event.showOnPublicPage && !event.isPrivate) { %>
-                                <span class="badge bg-success text-white rounded-pill px-2">
-                                    <i class="bi bi-megaphone-fill me-1"></i> Op Openbare Pagina
-                                </span>
-                            <% } %>
-                        </div>
-                        <div class="text-muted small fw-bold">
-                            <i class="bi bi-calendar3 me-1"></i><%= event.date %>
-                            <% if (event.endDate && event.endDate !== event.date) { %>
-                                <span>t/m <%= event.endDate %></span>
-                            <% } %>
-                        </div>
-                    </div>
-                    <h5 class="card-title fw-bold mb-3"><%= event.title %></h5>
-                    <% if (event.startTime || event.endTime) { %>
-                        <p class="card-text text-muted small mb-3">
-                            <i class="bi bi-clock me-1"></i>
-                            <%= event.startTime || '00:00' %> <%= event.endTime ? 't/m ' + event.endTime : '' %>
-                        </p>
-                    <% } %>
-                    <div class="d-flex justify-content-end gap-2 border-top pt-2 mt-2 flex-wrap">
-                        <% if (!event.isPrivate) { %>
-                            <form action="/admin/events/<%= event.id %>/toggle-public" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-sm <%= event.showOnPublicPage ? 'btn-success text-white' : 'btn-outline-secondary' %> rounded-pill px-3" title="<%= event.showOnPublicPage ? 'Verwijder van openbare pagina' : 'Zet op openbare pagina' %>">
-                                    <i class="bi <%= event.showOnPublicPage ? 'bi-megaphone-fill' : 'bi-megaphone' %> me-1"></i> <%= event.showOnPublicPage ? 'Op Pagina' : '+ Op Pagina' %>
-                                </button>
-                            </form>
-                        <% } %>
-                        <form action="/admin/events/<%= event.id %>/archive" method="POST" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-3" title="Archiveren">
-                                <i class="bi bi-archive me-1"></i> Archiveren
-                            </button>
-                        </form>
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
-                            <i class="bi bi-pencil me-1"></i> Bewerken
-                        </button>
-                        <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-trash me-1"></i> Wis</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        <% }) %>
-    <% } %>
-</div>
-
-<div class="d-none d-md-block table-responsive mb-4">
-    <table class="table table-striped align-middle">
-        <thead>
-            <tr>
-                <th>Datum</th>
-                <th>Titel</th>
-                <th class="d-none d-md-table-cell">Type</th>
-                <th class="text-end">Actie</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% if (activeEvents.length === 0) { %>
-                <tr>
-                    <td colspan="4" class="text-center text-muted py-4">Geen geplande activiteiten gevonden.</td>
-                </tr>
-            <% } else { %>
-                <% activeEvents.forEach(event => { %>
-                    <tr>
-                        <td>
-                            <div class="fw-bold"><%= event.date %></div>
-                            <% if (event.endDate && event.endDate !== event.date) { %>
-                                <div class="small text-muted">t/m <%= event.endDate %></div>
-                            <% } %>
-                        </td>
-                        <td>
-                            <%= event.title %>
-                            <div class="d-md-none small mt-1">
-                                <% if (event.isPrivate) { %>
-                                    <span class="badge bg-warning text-dark">Leiding</span>
-                                <% } else { %>
-                                    <span class="badge bg-info">Publiek</span>
-                                    <% if (event.showOnPublicPage) { %>
-                                        <span class="badge bg-success ms-1"><i class="bi bi-megaphone-fill me-1"></i>Home</span>
-                                    <% } %>
-                                <% } %>
-                            </div>
-                        </td>
-                        <td class="d-none d-md-table-cell">
-                            <% if (event.isPrivate) { %>
-                                <span class="badge bg-warning text-dark"><i class="bi bi-lock-fill me-1"></i>Leiding</span>
-                            <% } else { %>
-                                <span class="badge bg-info text-white"><i class="bi bi-calendar3 me-1"></i>Publiek</span>
-                                <% if (event.showOnPublicPage) { %>
-                                    <span class="badge bg-success text-white ms-1"><i class="bi bi-megaphone-fill me-1"></i>Op Homepagina</span>
-                                <% } %>
-                            <% } %>
-                        </td>
-                        <td class="text-end">
-                            <div class="btn-group">
-                                <% if (!event.isPrivate) { %>
-                                    <form action="/admin/events/<%= event.id %>/toggle-public" method="POST" style="display:inline;">
-                                        <button type="submit" class="btn btn-sm <%= event.showOnPublicPage ? 'btn-success text-white' : 'btn-outline-secondary' %>" title="<%= event.showOnPublicPage ? 'Verwijder van openbare pagina' : 'Zet op openbare pagina' %>">
-                                            <i class="bi <%= event.showOnPublicPage ? 'bi-megaphone-fill' : 'bi-megaphone' %>"></i>
-                                        </button>
-                                    </form>
-                                <% } %>
-                                <form action="/admin/events/<%= event.id %>/archive" method="POST" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Archiveren">
-                                        <i class="bi bi-archive"></i>
-                                    </button>
-                                </form>
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                <% }) %>
+<!-- Filter Tabs & Search / Sort Toolbar Card -->
+<div class="admin-toolbar-card shadow-sm rounded-4 mb-4">
+    <div class="p-3 p-md-4">
+        <!-- Category / Status Pills -->
+        <div class="admin-filter-pills pb-3 mb-3 border-bottom" id="eventFilterPills" role="tablist">
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold event-filter-btn <%= defaultFilter === 'upcoming' ? 'btn-primary text-white shadow-sm' : 'btn-light text-secondary border' %>" data-filter="upcoming">
+                <i class="bi bi-calendar-check me-1"></i> Aankomend
+                <span class="badge rounded-pill ms-1 <%= defaultFilter === 'upcoming' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary' %>" id="badgeCountUpcoming"><%= countUpcoming %></span>
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold event-filter-btn <%= defaultFilter === 'all-active' ? 'btn-primary text-white shadow-sm' : 'btn-light text-secondary border' %>" data-filter="all-active">
+                <i class="bi bi-collection me-1"></i> Alle Actieve
+                <span class="badge rounded-pill ms-1 <%= defaultFilter === 'all-active' ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary' %>" id="badgeCountAllActive"><%= countAllActive %></span>
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold event-filter-btn btn-light text-secondary border" data-filter="homepage">
+                <i class="bi bi-megaphone-fill text-success me-1"></i> Op Startpagina
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary" id="badgeCountHomepage"><%= countHomepage %></span>
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold event-filter-btn btn-light text-secondary border" data-filter="public">
+                <i class="bi bi-globe2 text-info me-1"></i> Publiek
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary" id="badgeCountPublic"><%= countPublic %></span>
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold event-filter-btn btn-light text-secondary border" data-filter="private">
+                <i class="bi bi-lock-fill text-warning me-1"></i> Alleen Leiding
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary" id="badgeCountPrivate"><%= countPrivate %></span>
+            </button>
+            <% if (countPast > 0) { %>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold event-filter-btn btn-light text-secondary border" data-filter="past">
+                <i class="bi bi-clock-history me-1"></i> Afgelopen (Recent)
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary" id="badgeCountPast"><%= countPast %></span>
+            </button>
             <% } %>
-        </tbody>
-    </table>
-</div>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold event-filter-btn btn-light text-secondary border ms-lg-auto" data-filter="archived">
+                <i class="bi bi-archive me-1"></i> Archief
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary" id="badgeCountArchived"><%= countArchived %></span>
+            </button>
+        </div>
 
-<% if (archivedEvents.length > 0) { %>
-    <h3>Gearchiveerde Activiteiten</h3>
-    <!-- Mobile Layout for Archived Events -->
-    <div class="d-md-none mb-4">
-        <% archivedEvents.forEach(event => { %>
-            <div class="card shadow-sm border-0 rounded-4 mb-3 bg-light">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="d-flex flex-wrap gap-1 align-items-center">
-                            <span class="badge bg-secondary text-white rounded-pill px-3">Gearchiveerd</span>
-                            <% if (event.isPrivate) { %>
-                                <span class="badge bg-warning text-dark rounded-pill px-2">Leiding</span>
-                            <% } else { %>
-                                <span class="badge bg-info text-white rounded-pill px-2">Publiek</span>
-                                <% if (event.showOnPublicPage) { %>
-                                    <span class="badge bg-success text-white rounded-pill px-2">
-                                        <i class="bi bi-megaphone-fill me-1"></i> Op Openbare Pagina
-                                    </span>
-                                <% } %>
-                            <% } %>
-                        </div>
-                        <div class="text-muted small fw-bold">
-                            <i class="bi bi-calendar3 me-1"></i><%= event.date %>
-                            <% if (event.endDate && event.endDate !== event.date) { %>
-                                <span>t/m <%= event.endDate %></span>
-                            <% } %>
-                        </div>
-                    </div>
-                    <h5 class="card-title fw-bold text-muted mb-3"><%= event.title %></h5>
-                    <% if (event.startTime || event.endTime) { %>
-                        <p class="card-text text-muted small mb-3">
-                            <i class="bi bi-clock me-1"></i>
-                            <%= event.startTime || '00:00' %> <%= event.endTime ? 't/m ' + event.endTime : '' %>
-                        </p>
-                    <% } %>
-                    <div class="d-flex justify-content-end gap-2 border-top pt-2 mt-2 flex-wrap">
-                        <% if (!event.isPrivate) { %>
-                            <form action="/admin/events/<%= event.id %>/toggle-public" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-sm <%= event.showOnPublicPage ? 'btn-success text-white' : 'btn-outline-secondary' %> rounded-pill px-3" title="<%= event.showOnPublicPage ? 'Verwijder van openbare pagina' : 'Zet op openbare pagina' %>">
-                                    <i class="bi <%= event.showOnPublicPage ? 'bi-megaphone-fill' : 'bi-megaphone' %> me-1"></i> <%= event.showOnPublicPage ? 'Op Pagina' : '+ Op Pagina' %>
-                                </button>
-                            </form>
-                        <% } %>
-                        <% if (event.isArchived) { %>
-                            <form action="/admin/events/<%= event.id %>/unarchive" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3" title="Dearchiveren">
-                                    <i class="bi bi-arrow-up-circle me-1"></i> Dearchiveren
-                                </button>
-                            </form>
-                        <% } %>
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
-                            <i class="bi bi-pencil me-1"></i> Bewerken
-                        </button>
-                        <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="bi bi-trash me-1"></i> Wis</button>
-                        </form>
-                    </div>
+        <!-- Search, Month Filter & Sort Controls -->
+        <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-5 col-lg-6">
+                <div class="position-relative">
+                    <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 16px; pointer-events: none;"></i>
+                    <input type="search" id="adminEventSearch" class="form-control admin-filter-control ps-5" placeholder="Zoek op titel, datum of beschrijving (bv. Kamp, Zondag)...">
                 </div>
             </div>
-        <% }) %>
-    </div>
-
-    <div class="d-none d-md-block table-responsive mb-4">
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th>Datum</th>
-                    <th>Titel</th>
-                    <th class="d-none d-md-table-cell">Type</th>
-                    <th class="text-end">Actie</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% archivedEvents.forEach(event => { %>
-                    <tr>
-                        <td>
-                            <div class="fw-bold"><%= event.date %></div>
-                            <% if (event.endDate && event.endDate !== event.date) { %>
-                                <div class="small text-muted">t/m <%= event.endDate %></div>
-                            <% } %>
-                        </td>
-                        <td>
-                            <%= event.title %>
-                            <div class="d-md-none small mt-1">
-                                <% if (event.isPrivate) { %>
-                                    <span class="badge bg-warning text-dark">Leiding</span>
-                                <% } else { %>
-                                    <span class="badge bg-info">Publiek</span>
-                                    <% if (event.showOnPublicPage) { %>
-                                        <span class="badge bg-success ms-1"><i class="bi bi-megaphone-fill me-1"></i>Home</span>
-                                    <% } %>
-                                <% } %>
-                            </div>
-                        </td>
-                        <td class="d-none d-md-table-cell">
-                            <% if (event.isPrivate) { %>
-                                <span class="badge bg-warning text-dark"><i class="bi bi-lock-fill me-1"></i>Leiding</span>
-                            <% } else { %>
-                                <span class="badge bg-info text-white"><i class="bi bi-calendar3 me-1"></i>Publiek</span>
-                                <% if (event.showOnPublicPage) { %>
-                                    <span class="badge bg-success text-white ms-1"><i class="bi bi-megaphone-fill me-1"></i>Op Homepagina</span>
-                                <% } %>
-                            <% } %>
-                        </td>
-                        <td class="text-end">
-                            <div class="btn-group">
-                                <% if (!event.isPrivate) { %>
-                                    <form action="/admin/events/<%= event.id %>/toggle-public" method="POST" style="display:inline;">
-                                        <button type="submit" class="btn btn-sm <%= event.showOnPublicPage ? 'btn-success text-white' : 'btn-outline-secondary' %>" title="<%= event.showOnPublicPage ? 'Verwijder van openbare pagina' : 'Zet op openbare pagina' %>">
-                                            <i class="bi <%= event.showOnPublicPage ? 'bi-megaphone-fill' : 'bi-megaphone' %>"></i>
-                                        </button>
-                                    </form>
-                                <% } %>
-                                <% if (event.isArchived) { %>
-                                    <form action="/admin/events/<%= event.id %>/unarchive" method="POST" style="display:inline;">
-                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Dearchiveren">
-                                            <i class="bi bi-arrow-up-circle"></i>
-                                        </button>
-                                    </form>
-                                <% } %>
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick='openEditModal(<%- JSON.stringify(event).replace(/'/g, "&#39;") %>)'>
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <form action="/admin/events/<%= event.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                <% }) %>
-            </tbody>
-        </table>
-    </div>
-<% } %>
-
-<!-- Edit Modal -->
-<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Activiteit Bewerken</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <select id="adminEventMonthFilter" class="form-select admin-filter-control" aria-label="Filter op maand">
+                    <option value="all">📅 Alle maanden</option>
+                </select>
             </div>
-            <div class="modal-body">
-                <form id="editForm" method="POST" enctype="multipart/form-data">
-                    <div class="row">
-                        <div class="col-12 col-md-6 mb-3">
-                            <label>Titel</label>
-                            <input type="text" class="form-control" name="title" id="editTitle" required>
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <label>Begindatum</label>
-                            <input type="date" class="form-control" name="date" id="editDate" required>
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <label>Einddatum (optioneel)</label>
-                            <input type="date" class="form-control" name="endDate" id="editEndDate">
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <label>Startuur (optioneel)</label>
-                            <input type="time" class="form-control" name="startTime" id="editStartTime">
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <label>Einduur (optioneel)</label>
-                            <input type="time" class="form-control" name="endTime" id="editEndTime">
-                        </div>
-                        <div class="col-12 col-md-6 mb-3">
-                            <div class="p-3 border rounded-3 bg-light h-100 d-flex flex-column justify-content-center gap-2">
-                                <div class="form-check form-switch mb-1">
-                                    <input class="form-check-input" type="checkbox" name="showOnPublicPage" id="editShowOnPublicPage" role="switch">
-                                    <label class="form-check-label fw-bold text-dark" for="editShowOnPublicPage">
-                                        <i class="bi bi-megaphone-fill text-warning me-1"></i> Toon op openbare pagina
-                                    </label>
-                                    <div class="small text-muted" style="font-size: 0.8rem;">Laat dit evenement zien bij aankomende activiteiten op de openbare homepagina.</div>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="isPrivate" id="editIsPrivate" role="switch">
-                                    <label class="form-check-label fw-semibold text-secondary" for="editIsPrivate">
-                                        <i class="bi bi-lock-fill text-muted me-1"></i> Alleen voor leiding (interne kalender)
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label>Beschrijving</label>
-                            <textarea class="form-control rich-editor" name="description" id="editDescription" rows="2"></textarea>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label class="fw-bold">Nieuwe Bijlagen</label>
-                            <input type="file" class="form-control" name="attachments" multiple>
-                            <small class="text-muted">Laat leeg om huidige bijlagen te behouden (tenzij je ze hieronder verwijdert).</small>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label class="fw-bold">Huidige Bijlagen</label>
-                            <div id="existingAttachmentsList" class="list-group">
-                                <!-- Existing attachments will be listed here -->
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
-                        <button type="submit" class="btn btn-primary">Opslaan</button>
-                    </div>
-                </form>
+            <div class="col-12 col-sm-6 col-md-3 col-lg-3">
+                <select id="adminEventSort" class="form-select admin-filter-control" aria-label="Sorteer activiteiten">
+                    <option value="date-asc">⬆️ Eerstvolgende eerst</option>
+                    <option value="date-desc">⬇️ Nieuwste / verste eerst</option>
+                    <option value="title-asc">🔤 Titel (A - Z)</option>
+                </select>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Results Summary Bar -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 px-1">
+    <div class="text-muted small fw-medium" id="eventResultsSummary">
+        Activiteiten laden...
+    </div>
+    <button type="button" id="btnResetEventFilters" class="btn btn-link btn-sm text-decoration-none p-0 d-none">
+        <i class="bi bi-x-circle me-1"></i>Alle filters wissen
+    </button>
+</div>
+
+<!-- Dynamic Grouped Events Container -->
+<div id="adminEventsListContainer" class="mb-5"></div>
+
+<!-- Empty State -->
+<div id="adminEventsEmptyState" class="admin-toolbar-card shadow-sm rounded-4 text-center py-5 mb-5 d-none">
+    <div class="p-4">
+        <i class="bi bi-calendar2-x display-3 text-muted opacity-50 mb-3 d-block"></i>
+        <h4 class="fw-bold text-dark mb-1" id="emptyStateTitle">Geen activiteiten gevonden</h4>
+        <p class="text-muted mb-3" id="emptyStateText">Er zijn geen activiteiten die overeenkomen met je huidige zoekopdracht of filter.</p>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="resetAdminEventFilters()">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Filters herstellen
+            </button>
+            <button type="button" class="btn btn-success rounded-pill px-4" onclick="openAddEventModal()">
+                <i class="bi bi-plus-circle me-1"></i> Nieuwe Activiteit Toevoegen
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Embedded Events Data for Instant Filtering, Grouping & Sorting -->
+<script id="adminEventsDataJson" type="application/json">
+<%- JSON.stringify(allCombinedEvents).replace(/<\//g, '<\\/') %>
+</script>
+
+<style>
+    .admin-events-header {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .admin-events-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    @media (min-width: 992px) {
+        .admin-events-header {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .admin-events-header-actions {
+            width: auto;
+            flex-shrink: 0;
+        }
+    }
+    .admin-toolbar-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+    }
+    .admin-filter-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+    }
+    @media (max-width: 575.98px) {
+        .admin-filter-pills {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 0.5rem !important;
+        }
+        .admin-filter-pills::-webkit-scrollbar {
+            display: none;
+        }
+        .admin-filter-pills .event-filter-btn {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+    }
+    .admin-filter-control {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 50rem !important;
+        padding: 0.55rem 1rem !important;
+        font-size: 0.95rem !important;
+        background-color: #f8fafc !important;
+    }
+    .admin-filter-control.ps-5 {
+        padding-left: 2.5rem !important;
+    }
+    .admin-filter-control:focus {
+        background-color: #ffffff !important;
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        box-shadow: 0 0 0 3px rgba(29, 78, 137, 0.1) !important;
+    }
+    .admin-month-header {
+        font-family: var(--font-heading, 'Fredoka', sans-serif);
+        font-size: 1.05rem;
+        color: #334155;
+        letter-spacing: 0.2px;
+    }
+    .admin-event-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1rem 1.25rem;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        position: relative;
+        box-sizing: border-box;
+        width: 100%;
+    }
+    .admin-event-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+    .admin-event-card.is-past-event {
+        background: #f8fafc;
+    }
+    .admin-event-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+    }
+    .admin-event-main {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .admin-event-info {
+        flex: 1 1 0%;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .admin-event-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .admin-event-stamp {
+        width: 62px;
+        height: 62px;
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #fff;
+        font-family: var(--font-heading, 'Fredoka', sans-serif);
+        line-height: 1.05;
+    }
+    .admin-event-stamp .stamp-day {
+        font-size: 1.35rem;
+        font-weight: 700;
+    }
+    .admin-event-stamp .stamp-month {
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        opacity: 0.95;
+    }
+    .admin-event-title-link {
+        color: #1e293b;
+        text-decoration: none;
+        cursor: pointer;
+        line-height: 1.3;
+    }
+    .admin-event-title-link:hover {
+        color: var(--chiro-blue, #1d4e89);
+        text-decoration: underline;
+    }
+    .admin-event-desc-preview {
+        color: #64748b;
+        font-size: 0.9rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+        max-width: 100%;
+    }
+    @media (max-width: 767.98px) {
+        .admin-event-card {
+            padding: 0.9rem;
+            border-radius: 14px;
+        }
+        .admin-event-layout {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0.75rem;
+        }
+        .admin-event-main {
+            align-items: flex-start;
+            gap: 0.75rem;
+            width: 100%;
+        }
+        .admin-event-stamp {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+        }
+        .admin-event-stamp .stamp-day {
+            font-size: 1.15rem;
+        }
+        .admin-event-stamp .stamp-month {
+            font-size: 0.6rem;
+        }
+        .admin-event-actions {
+            width: 100%;
+            justify-content: space-between;
+            border-top: 1px solid #eef2f6;
+            padding-top: 0.65rem;
+            gap: 0.4rem;
+        }
+        .admin-event-actions .btn-mobile-expand {
+            flex: 1 1 auto;
+            justify-content: center;
+        }
+    }
+</style>
+
+<%- include('../partials/event_modal') %>
 
 <script>
-    function openEditModal(event) {
-        const form = document.getElementById('editForm');
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        form.action = `/admin/events/${event.id}?_method=PUT` + (token ? `&_csrf=${token}` : '');
-        
-        document.getElementById('editTitle').value = event.title;
-        document.getElementById('editDate').value = event.date;
-        document.getElementById('editEndDate').value = event.endDate || '';
-        document.getElementById('editStartTime').value = event.startTime || '';
-        document.getElementById('editEndTime').value = event.endTime || '';
-        document.getElementById('editIsPrivate').checked = event.isPrivate || false;
-        document.getElementById('editShowOnPublicPage').checked = Boolean(event.showOnPublicPage);
-        
-        const descField = document.getElementById('editDescription');
-        descField.value = event.description || '';
+    // Backwards-compatible alias
+    window.openEditModal = function(eventObj) {
+        window.openEditEventModal(eventObj);
+    };
 
-        // Handle existing attachments
-        const attachmentsList = document.getElementById('existingAttachmentsList');
-        attachmentsList.innerHTML = '';
-        let attachments = [];
+    (function() {
+        const TODAY_STR = '<%= currentToday %>';
+        const MONTH_NAMES_SHORT = ["JAN", "FEB", "MRT", "APR", "MEI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
+        const MONTH_NAMES_FULL = ["Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December"];
+        const DAY_NAMES_FULL = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+
+        let allEvents = [];
         try {
-            attachments = typeof event.attachments === 'string' ? JSON.parse(event.attachments) : (event.attachments || []);
+            const raw = document.getElementById('adminEventsDataJson')?.textContent || '[]';
+            allEvents = JSON.parse(raw);
         } catch (e) {
-            console.error('Error parsing attachments:', e);
+            console.error('Could not parse events JSON:', e);
+            allEvents = [];
         }
 
-        attachments.forEach((att, index) => {
-            const item = document.createElement('div');
-            item.className = 'list-group-item d-flex justify-content-between align-items-center';
-            item.innerHTML = `
-                <span>${att.name}</span>
-                <div>
-                    <input type="hidden" name="existingAttachments" value='${JSON.stringify(att)}'>
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.remove()">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            `;
-            attachmentsList.appendChild(item);
+        let activeFilter = '<%= defaultFilter %>';
+        let searchQuery = '';
+        let selectedMonth = 'all';
+        let currentSort = activeFilter === 'upcoming' ? 'date-asc' : 'date-desc';
+
+        const searchInput = document.getElementById('adminEventSearch');
+        const monthSelect = document.getElementById('adminEventMonthFilter');
+        const sortSelect = document.getElementById('adminEventSort');
+        const listContainer = document.getElementById('adminEventsListContainer');
+        const emptyState = document.getElementById('adminEventsEmptyState');
+        const summaryEl = document.getElementById('eventResultsSummary');
+        const resetBtn = document.getElementById('btnResetEventFilters');
+
+        function getCsrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function stripHtml(html) {
+            if (!html) return '';
+            return String(html).replace(/<[^>]*>?/gm, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function formatEventDateInfo(event) {
+            const [y, m, d] = (event.date || '2026-01-01').split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            const dayName = DAY_NAMES_FULL[dateObj.getDay()];
+            const dayNum = dateObj.getDate();
+            const monthShort = MONTH_NAMES_SHORT[dateObj.getMonth()];
+            const monthFull = MONTH_NAMES_FULL[dateObj.getMonth()].toLowerCase();
+
+            let fullLabel = `${dayName} ${dayNum} ${monthFull} ${y}`;
+            const hasEndDate = Boolean(event.endDate && event.endDate !== event.date);
+            if (hasEndDate) {
+                const [ey, em, ed] = event.endDate.split('-').map(Number);
+                const endObj = new Date(ey, em - 1, ed);
+                const endMonthFull = MONTH_NAMES_FULL[endObj.getMonth()].toLowerCase();
+                fullLabel = `${dayNum} ${monthFull} t/m ${endObj.getDate()} ${endMonthFull} ${ey}`;
+            }
+
+            // Relative days calculation
+            const [ty, tm, td] = TODAY_STR.split('-').map(Number);
+            const todayMidnight = new Date(ty, tm - 1, td);
+            const startMidnight = new Date(y, m - 1, d);
+            const endRef = hasEndDate ? new Date(...event.endDate.split('-').map((n, i) => i === 1 ? Number(n) - 1 : Number(n))) : startMidnight;
+            const diffDays = Math.round((startMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
+
+            let relativeBadge = '';
+            if (event._bucket === 'archived') {
+                relativeBadge = `<span class="badge bg-secondary-subtle text-secondary border rounded-pill">Gearchiveerd</span>`;
+            } else if (startMidnight <= todayMidnight && endRef >= todayMidnight) {
+                relativeBadge = `<span class="badge bg-danger text-white rounded-pill">Vandaag / Bezig</span>`;
+            } else if (diffDays === 1) {
+                relativeBadge = `<span class="badge bg-warning text-dark rounded-pill">Morgen</span>`;
+            } else if (diffDays > 1 && diffDays <= 14) {
+                relativeBadge = `<span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">Binnen ${diffDays} dagen</span>`;
+            } else if (endRef < todayMidnight) {
+                relativeBadge = `<span class="badge bg-light text-muted border rounded-pill">Afgelopen</span>`;
+            }
+
+            return {
+                dayNum,
+                monthShort,
+                monthKey: `${y}-${String(m).padStart(2, '0')}`,
+                monthGroupLabel: `${MONTH_NAMES_FULL[dateObj.getMonth()]} ${y}`,
+                fullLabel,
+                hasEndDate,
+                relativeBadge
+            };
+        }
+
+        function populateMonthDropdown() {
+            if (!monthSelect) return;
+            const currentVal = monthSelect.value;
+            const monthMap = new Map();
+
+            allEvents.forEach(ev => {
+                if (!ev.date) return;
+                const [y, m] = ev.date.split('-').map(Number);
+                if (!y || !m) return;
+                const key = `${y}-${String(m).padStart(2, '0')}`;
+                const label = `${MONTH_NAMES_FULL[m - 1]} ${y}`;
+                monthMap.set(key, (monthMap.get(key) || { label, count: 0 }));
+                monthMap.get(key).count += 1;
+            });
+
+            const sortedKeys = Array.from(monthMap.keys()).sort();
+            monthSelect.innerHTML = `<option value="all">📅 Alle maanden (${allEvents.length})</option>`;
+            sortedKeys.forEach(key => {
+                const info = monthMap.get(key);
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = `${info.label} (${info.count})`;
+                monthSelect.appendChild(opt);
+            });
+            if (sortedKeys.includes(currentVal)) {
+                monthSelect.value = currentVal;
+            }
+        }
+
+        function updateCounters() {
+            const cUpcoming = allEvents.filter(e => e._bucket === 'upcoming').length;
+            const activeList = allEvents.filter(e => e._bucket !== 'archived');
+            const cAllActive = activeList.length;
+            const cHomepage = activeList.filter(e => e.showOnPublicPage && !e.isPrivate).length;
+            const cPublic = activeList.filter(e => !e.isPrivate).length;
+            const cPrivate = activeList.filter(e => e.isPrivate).length;
+            const cPast = allEvents.filter(e => e._bucket === 'past').length;
+            const cArchived = allEvents.filter(e => e._bucket === 'archived').length;
+
+            const setBadge = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            };
+            setBadge('badgeCountUpcoming', cUpcoming);
+            setBadge('badgeCountAllActive', cAllActive);
+            setBadge('badgeCountHomepage', cHomepage);
+            setBadge('badgeCountPublic', cPublic);
+            setBadge('badgeCountPrivate', cPrivate);
+            setBadge('badgeCountPast', cPast);
+            setBadge('badgeCountArchived', cArchived);
+        }
+
+        function matchesFilter(event) {
+            if (activeFilter === 'upcoming' && event._bucket !== 'upcoming') return false;
+            if (activeFilter === 'all-active' && event._bucket === 'archived') return false;
+            if (activeFilter === 'homepage' && (event._bucket === 'archived' || !event.showOnPublicPage || event.isPrivate)) return false;
+            if (activeFilter === 'public' && (event._bucket === 'archived' || event.isPrivate)) return false;
+            if (activeFilter === 'private' && (event._bucket === 'archived' || !event.isPrivate)) return false;
+            if (activeFilter === 'past' && event._bucket !== 'past') return false;
+            if (activeFilter === 'archived' && event._bucket !== 'archived') return false;
+
+            if (selectedMonth !== 'all') {
+                const evMonth = (event.date || '').slice(0, 7);
+                if (evMonth !== selectedMonth) return false;
+            }
+
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                const dateInfo = formatEventDateInfo(event);
+                const haystack = [
+                    event.title || '',
+                    stripHtml(event.description || ''),
+                    event.date || '',
+                    event.endDate || '',
+                    dateInfo.fullLabel,
+                    dateInfo.monthGroupLabel,
+                    event.isPrivate ? 'leiding intern prive' : 'publiek openbaar',
+                    event.showOnPublicPage ? 'startpagina homepagina' : ''
+                ].join(' ').toLowerCase();
+
+                if (!haystack.includes(q)) return false;
+            }
+
+            return true;
+        }
+
+        function renderEvents() {
+            const filtered = allEvents.filter(matchesFilter);
+
+            // Sort filtered events
+            filtered.sort((a, b) => {
+                if (currentSort === 'title-asc') {
+                    return (a.title || '').localeCompare(b.title || '', 'nl');
+                }
+                if (currentSort === 'date-desc') {
+                    return (b.date || '').localeCompare(a.date || '');
+                }
+                return (a.date || '').localeCompare(b.date || '');
+            });
+
+            const hasActiveSearchOrMonth = searchQuery.length > 0 || selectedMonth !== 'all';
+            if (resetBtn) {
+                resetBtn.classList.toggle('d-none', !hasActiveSearchOrMonth);
+            }
+
+            if (summaryEl) {
+                const filterNames = {
+                    'upcoming': 'aankomende activiteiten',
+                    'all-active': 'actieve activiteiten',
+                    'homepage': 'activiteiten op de startpagina',
+                    'public': 'publieke activiteiten',
+                    'private': 'leidingsactiviteiten',
+                    'past': 'recent afgelopen activiteiten',
+                    'archived': 'gearchiveerde activiteiten'
+                };
+                summaryEl.textContent = `${filtered.length} ${filterNames[activeFilter] || 'activiteiten'} weergegeven`;
+            }
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = '';
+                emptyState.classList.remove('d-none');
+                return;
+            }
+
+            emptyState.classList.add('d-none');
+
+            // Group by Month-Year (unless sorting alphabetically)
+            const groups = [];
+            if (currentSort === 'title-asc') {
+                groups.push({ label: 'Alfabetisch overzicht (A - Z)', items: filtered });
+            } else {
+                const groupMap = new Map();
+                filtered.forEach(ev => {
+                    const info = formatEventDateInfo(ev);
+                    if (!groupMap.has(info.monthKey)) {
+                        const grp = { key: info.monthKey, label: info.monthGroupLabel, items: [] };
+                        groupMap.set(info.monthKey, grp);
+                        groups.push(grp);
+                    }
+                    groupMap.get(info.monthKey).items.push(ev);
+                });
+            }
+
+            const token = getCsrfToken();
+            let html = '';
+
+            groups.forEach(group => {
+                html += `
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+                            <h5 class="admin-month-header fw-bold mb-0 d-flex align-items-center gap-2">
+                                <i class="bi bi-calendar3 text-primary"></i> ${escapeHtml(group.label)}
+                            </h5>
+                            <span class="badge bg-light text-secondary border rounded-pill">${group.items.length} ${group.items.length === 1 ? 'activiteit' : 'activiteiten'}</span>
+                        </div>
+                        <div class="d-flex flex-column gap-2">
+                `;
+
+                group.items.forEach(ev => {
+                    const info = formatEventDateInfo(ev);
+                    const plainDesc = stripHtml(ev.description);
+                    const shortDesc = plainDesc.length > 120 ? plainDesc.slice(0, 117) + '...' : plainDesc;
+
+                    let attCount = 0;
+                    try {
+                        const parsedAtt = typeof ev.attachments === 'string' ? JSON.parse(ev.attachments) : (ev.attachments || []);
+                        attCount = Array.isArray(parsedAtt) ? parsedAtt.length : 0;
+                    } catch (e) {}
+
+                    let stampBg = 'var(--chiro-red, #db3e41)';
+                    if (ev._bucket === 'archived' || ev._bucket === 'past') {
+                        stampBg = '#64748b';
+                    } else if (ev.isPrivate) {
+                        stampBg = 'var(--chiro-blue, #1d4e89)';
+                    }
+
+                    const serializedEvent = escapeHtml(JSON.stringify(ev));
+
+                    html += `
+                        <div class="admin-event-card ${ev._bucket !== 'upcoming' ? 'is-past-event' : ''}" data-event-id="${ev.id}" data-event="${serializedEvent}">
+                            <div class="admin-event-layout">
+                                <!-- Date Stamp + Title & Meta -->
+                                <div class="admin-event-main">
+                                    <div class="admin-event-stamp shadow-sm" style="background-color: ${stampBg}; cursor: pointer;" onclick="openEventModal(this.closest('.admin-event-card'))" title="Klik om details te bekijken">
+                                        <span class="stamp-day">${info.dayNum}</span>
+                                        <span class="stamp-month">${info.monthShort}</span>
+                                    </div>
+
+                                    <div class="admin-event-info">
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                            <a class="h5 fw-bold mb-0 admin-event-title-link text-break" onclick="openEventModal(this.closest('.admin-event-card'))">
+                                                ${escapeHtml(ev.title)}
+                                            </a>
+                                            ${info.relativeBadge}
+                                            ${ev.isPrivate
+                                                ? `<span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill"><i class="bi bi-lock-fill me-1"></i>Alleen Leiding</span>`
+                                                : `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle rounded-pill"><i class="bi bi-globe2 me-1"></i>Publiek</span>`
+                                            }
+                                            ${(!ev.isPrivate && ev.showOnPublicPage)
+                                                ? `<span class="badge bg-success text-white rounded-pill"><i class="bi bi-megaphone-fill me-1"></i>Op Startpagina</span>`
+                                                : ''
+                                            }
+                                        </div>
+
+                                        <div class="d-flex flex-wrap align-items-center gap-2 text-muted small">
+                                            <span><i class="bi bi-calendar-event me-1"></i>${escapeHtml(info.fullLabel)}</span>
+                                            ${ev.startTime ? `<span class="badge bg-light text-secondary border rounded-pill"><i class="bi bi-clock me-1 text-primary"></i>${escapeHtml(ev.startTime)}${ev.endTime ? ' - ' + escapeHtml(ev.endTime) : ''}</span>` : ''}
+                                            ${attCount > 0 ? `<span class="badge bg-light text-secondary border rounded-pill"><i class="bi bi-paperclip me-1 text-primary"></i>${attCount} ${attCount === 1 ? 'bijlage' : 'bijlagen'}</span>` : ''}
+                                        </div>
+
+                                        ${shortDesc ? `<div class="admin-event-desc-preview mt-1">${escapeHtml(shortDesc)}</div>` : ''}
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons Inside Box -->
+                                <div class="admin-event-actions">
+                                    ${!ev.isPrivate ? `
+                                        <button type="button"
+                                                class="btn btn-sm ${ev.showOnPublicPage ? 'btn-success text-white' : 'btn-outline-secondary'} rounded-pill px-3 d-inline-flex align-items-center btn-mobile-expand"
+                                                title="${ev.showOnPublicPage ? 'Verwijder van de openbare startpagina' : 'Zet bij Aankomende Activiteiten op de startpagina'}"
+                                                onclick="togglePublicHomepage(${ev.id}, this)">
+                                            <i class="bi ${ev.showOnPublicPage ? 'bi-megaphone-fill' : 'bi-megaphone'} me-1"></i>
+                                            <span class="small">${ev.showOnPublicPage ? 'Op Startpagina' : '+ Startpagina'}</span>
+                                        </button>
+                                    ` : ''}
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-primary rounded-pill px-3 d-inline-flex align-items-center btn-mobile-expand"
+                                            onclick="openEditEventModal(this.closest('.admin-event-card'))">
+                                        <i class="bi bi-pencil-square me-1"></i> Bewerken
+                                    </button>
+
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-light border rounded-pill px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Meer acties">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 p-1">
+                                            <li>
+                                                <button type="button" class="dropdown-item rounded-2 small py-2" onclick="openEventModal(this.closest('.admin-event-card'))">
+                                                    <i class="bi bi-eye me-2 text-primary"></i>Voorbeeld bekijken
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button type="button" class="dropdown-item rounded-2 small py-2" onclick="duplicateAdminEvent(this.closest('.admin-event-card'))">
+                                                    <i class="bi bi-files me-2 text-info"></i>Dupliceren als nieuw
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider my-1"></li>
+                                            ${ev._bucket === 'archived' ? `
+                                                <li>
+                                                    <form action="/admin/events/${ev.id}/unarchive?_csrf=${encodeURIComponent(token)}" method="POST">
+                                                        <input type="hidden" name="_csrf" value="${escapeHtml(token)}">
+                                                        <button type="submit" class="dropdown-item rounded-2 small py-2 text-success">
+                                                            <i class="bi bi-arrow-up-circle me-2"></i>Herstellen uit archief
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            ` : `
+                                                <li>
+                                                    <form action="/admin/events/${ev.id}/archive?_csrf=${encodeURIComponent(token)}" method="POST">
+                                                        <input type="hidden" name="_csrf" value="${escapeHtml(token)}">
+                                                        <button type="submit" class="dropdown-item rounded-2 small py-2 text-warning">
+                                                            <i class="bi bi-archive me-2"></i>Archiveren
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            `}
+                                            <li>
+                                                <form action="/admin/events/${ev.id}?_method=DELETE&_csrf=${encodeURIComponent(token)}" method="POST" onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
+                                                    <input type="hidden" name="_csrf" value="${escapeHtml(token)}">
+                                                    <button type="submit" class="dropdown-item rounded-2 small py-2 text-danger">
+                                                        <i class="bi bi-trash me-2"></i>Definitief verwijderen
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            listContainer.innerHTML = html;
+        }
+
+        window.togglePublicHomepage = async function(eventId, btnEl) {
+            if (!eventId) return;
+            if (btnEl) btnEl.disabled = true;
+            try {
+                const res = await fetch(`/admin/events/${eventId}/toggle-public`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    const target = allEvents.find(e => Number(e.id) === Number(eventId));
+                    if (target) {
+                        target.showOnPublicPage = Boolean(data.showOnPublicPage);
+                        target.isPrivate = Boolean(data.isPrivate);
+                    }
+                    updateCounters();
+                    renderEvents();
+                } else {
+                    window.location.reload();
+                }
+            } catch (err) {
+                console.error('Error toggling public status:', err);
+                window.location.reload();
+            }
+        };
+
+        window.duplicateAdminEvent = function(cardEl) {
+            if (!cardEl) return;
+            try {
+                const ev = JSON.parse(cardEl.getAttribute('data-event'));
+                window.openAddEventModal({
+                    title: ev.title + ' (Kopie)',
+                    date: ev.date,
+                    endDate: ev.endDate,
+                    startTime: ev.startTime,
+                    endTime: ev.endTime,
+                    description: ev.description,
+                    isPrivate: ev.isPrivate,
+                    showOnPublicPage: ev.showOnPublicPage
+                });
+            } catch (e) {
+                console.error('Could not duplicate event:', e);
+            }
+        };
+
+        window.resetAdminEventFilters = function() {
+            searchQuery = '';
+            selectedMonth = 'all';
+            activeFilter = 'all-active';
+            currentSort = 'date-asc';
+            if (searchInput) searchInput.value = '';
+            if (monthSelect) monthSelect.value = 'all';
+            if (sortSelect) sortSelect.value = 'date-asc';
+            syncFilterPillStyles();
+            renderEvents();
+        };
+
+        function syncFilterPillStyles() {
+            const buttons = document.querySelectorAll('.event-filter-btn');
+            buttons.forEach(btn => {
+                const isSelected = btn.getAttribute('data-filter') === activeFilter;
+                btn.classList.toggle('btn-primary', isSelected);
+                btn.classList.toggle('text-white', isSelected);
+                btn.classList.toggle('shadow-sm', isSelected);
+                btn.classList.toggle('btn-light', !isSelected);
+                btn.classList.toggle('text-secondary', !isSelected);
+                btn.classList.toggle('border', !isSelected);
+
+                const badge = btn.querySelector('.badge');
+                if (badge) {
+                    badge.classList.toggle('bg-white', isSelected);
+                    badge.classList.toggle('text-primary', isSelected);
+                    badge.classList.toggle('bg-secondary-subtle', !isSelected);
+                    badge.classList.toggle('text-secondary', !isSelected);
+                }
+            });
+        }
+
+        document.querySelectorAll('.event-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                activeFilter = this.getAttribute('data-filter');
+                if (activeFilter === 'upcoming') {
+                    currentSort = 'date-asc';
+                } else if (activeFilter === 'archived' || activeFilter === 'past') {
+                    currentSort = 'date-desc';
+                }
+                if (sortSelect) sortSelect.value = currentSort;
+                syncFilterPillStyles();
+                renderEvents();
+            });
         });
-        
-        // Handle Quill editor update if it exists
-        const modalEl = document.getElementById('editModal');
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        
-        modalEl.addEventListener('shown.bs.modal', function () {
-            // If the editor isn't initialized yet, do it now
-            if (!descField.classList.contains('rich-editor-initialized')) {
-                if (window.initializeRichEditors) {
-                    window.initializeRichEditors(descField);
-                }
-            }
-            
-            const quillContainer = descField.parentElement.querySelector('.ql-container');
-            if (quillContainer) {
-                const quill = Quill.find(quillContainer);
-                if (quill) {
-                    quill.root.innerHTML = event.description || '';
-                }
-            }
-        }, { once: true });
 
-        modal.show();
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const addPublic = document.getElementById('showOnPublicPage');
-        const addPrivate = document.getElementById('isPrivate');
-        if (addPublic && addPrivate) {
-            addPublic.addEventListener('change', function() {
-                if (this.checked) addPrivate.checked = false;
-            });
-            addPrivate.addEventListener('change', function() {
-                if (this.checked) addPublic.checked = false;
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                searchQuery = this.value.trim();
+                renderEvents();
             });
         }
 
-        const editPublic = document.getElementById('editShowOnPublicPage');
-        const editPrivate = document.getElementById('editIsPrivate');
-        if (editPublic && editPrivate) {
-            editPublic.addEventListener('change', function() {
-                if (this.checked) editPrivate.checked = false;
-            });
-            editPrivate.addEventListener('change', function() {
-                if (this.checked) editPublic.checked = false;
+        if (monthSelect) {
+            monthSelect.addEventListener('change', function() {
+                selectedMonth = this.value;
+                renderEvents();
             });
         }
-    });
+
+        if (sortSelect) {
+            sortSelect.value = currentSort;
+            sortSelect.addEventListener('change', function() {
+                currentSort = this.value;
+                renderEvents();
+            });
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', window.resetAdminEventFilters);
+        }
+
+        populateMonthDropdown();
+        updateCounters();
+        renderEvents();
+    })();
 </script>
+
 <%- include('../partials/footer') %>

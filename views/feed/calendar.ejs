@@ -10,9 +10,15 @@
             <a href="/kalender/hulp" class="btn btn-chiro btn-sm shadow-sm" title="Abonneer op de Leidingskalender (Google Calendar, iCal, Outlook)">
                 <i class="bi bi-calendar-plus me-1"></i> Abonneer op Kalender
             </a>
-            <% if (user && user.role === 'admin') { %>
+            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                <button type="button" class="btn btn-success btn-sm rounded-pill px-3 shadow-sm d-inline-flex align-items-center" onclick="openAddEventModal()">
+                    <i class="bi bi-plus-circle me-1"></i> Activiteit Toevoegen
+                </button>
+                <a href="/kalender?view=public" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm d-inline-flex align-items-center" title="Bekijk de publieke kalenderpagina">
+                    <i class="bi bi-globe2 me-1"></i> Publieke Pagina
+                </a>
                 <a href="/admin/events" class="btn btn-chiro btn-sm btn-edit-page shadow-sm">
-                    <i class="bi bi-pencil-square"></i><span class="d-none d-sm-inline ms-1">Beheer Kalender</span><span class="d-sm-none ms-1">Beheer</span>
+                    <i class="bi bi-sliders"></i><span class="d-none d-sm-inline ms-1">Beheer Kalender</span><span class="d-sm-none ms-1">Beheer</span>
                 </a>
             <% } %>
         </div>
@@ -57,38 +63,51 @@
                 const shadowColor = event.isPrivate ? '#143862' : '#a82b2e';
             %>
                 <div class="col-12">
-                    <div class="calendar-card" 
+                    <div class="calendar-card flex-column flex-sm-row align-items-stretch align-items-sm-center gap-3" 
                          data-event="<%= JSON.stringify(event) %>"
                          onclick="openEventModal(this)">
+                        
+                        <div class="d-flex align-items-center gap-3 flex-grow-1" style="min-width: 0;">
+                            <div class="calendar-date-badge shadow-sm flex-shrink-0" style="background-color: <%= badgeColor %>; box-shadow: 0 4px 0 <%= shadowColor %>;">
+                                <span class="calendar-day"><%= day %></span>
+                                <span class="calendar-month"><%= month %></span>
+                            </div>
                             
-                        <div class="calendar-date-badge me-4 shadow-sm" style="background-color: <%= badgeColor %>; box-shadow: 0 4px 0 <%= shadowColor %>;">
-                            <span class="calendar-day"><%= day %></span>
-                            <span class="calendar-month"><%= month %></span>
+                            <div class="flex-grow-1" style="min-width: 0;">
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                    <h4 class="mb-0 fw-bold text-break" style="color: <%= badgeColor %>;"><%= event.title %></h4>
+                                    <% if (event.isPrivate) { %>
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem; font-family: var(--font-heading);">LEIDING ONLY</span>
+                                    <% } else if (event.showOnPublicPage && user && (user.role === 'admin' || user.role === 'media')) { %>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem; font-family: var(--font-heading);"><i class="bi bi-megaphone-fill me-1"></i>OP STARTPAGINA</span>
+                                    <% } %>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2 mt-1">
+                                    <% if (hasEndDate) { %>
+                                        <small class="text-muted d-flex align-items-center">
+                                            <i class="bi bi-calendar-range me-2 text-warning"></i> <%= dateDisplay %>
+                                        </small>
+                                    <% } %>
+                                    <% if (event.startTime) { %>
+                                        <small class="text-muted d-flex align-items-center">
+                                            <i class="bi bi-clock me-2 text-info"></i> <%= event.startTime %><% if (event.endTime) { %> - <%= event.endTime %><% } %>
+                                        </small>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <i class="bi bi-chevron-right fs-5 text-muted opacity-50 d-sm-none ms-auto flex-shrink-0"></i>
                         </div>
                         
-                        <div class="flex-grow-1">
-                            <div class="d-flex align-items-center gap-2 mb-1">
-                                <h4 class="mb-0 fw-bold" style="color: <%= badgeColor %>;"><%= event.title %></h4>
-                                <% if (event.isPrivate) { %>
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem; font-family: var(--font-heading);">LEIDING ONLY</span>
-                                <% } %>
-                            </div>
-                            <div class="d-flex flex-wrap gap-2 mt-1">
-                                <% if (hasEndDate) { %>
-                                    <small class="text-muted d-flex align-items-center">
-                                        <i class="bi bi-calendar-range me-2 text-warning"></i> <%= dateDisplay %>
-                                    </small>
-                                <% } %>
-                                <% if (event.startTime) { %>
-                                    <small class="text-muted d-flex align-items-center">
-                                        <i class="bi bi-clock me-2 text-info"></i> <%= event.startTime %><% if (event.endTime) { %> - <%= event.endTime %><% } %>
-                                    </small>
-                                <% } %>
-                            </div>
-                        </div>
-                        
-                        <div class="ms-3 d-none d-sm-block">
-                            <i class="bi bi-chevron-right fs-4 text-muted opacity-50"></i>
+                        <div class="d-flex align-items-center justify-content-end gap-2 flex-shrink-0 <%= (user && (user.role === 'admin' || user.role === 'media')) ? 'border-top pt-2 pt-sm-0 border-sm-0-reset' : 'd-none d-sm-flex' %>">
+                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center justify-content-center flex-grow-1 flex-sm-grow-0"
+                                        title="Rechtstreeks bewerken"
+                                        onclick="event.stopPropagation(); openEditEventModal(this.closest('.calendar-card'))">
+                                    <i class="bi bi-pencil-square me-1"></i><span>Bewerken</span>
+                                </button>
+                            <% } %>
+                            <i class="bi bi-chevron-right fs-4 text-muted opacity-50 d-none d-sm-inline"></i>
                         </div>
                     </div>
                 </div>
@@ -97,153 +116,5 @@
     <% } %>
 </div>
 
-<!-- Event Modal -->
-<div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 pb-0 pe-4 pt-4">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0">
-                <div class="container-fluid">
-                    <div class="row g-0">
-                        <!-- Date Sidebar -->
-                        <div class="col-md-4 bg-light p-4 d-flex flex-column align-items-center justify-content-center text-center border-end">
-                            <div class="calendar-date-badge mb-3 shadow-sm" id="modalDateBadge" style="width: 80px; height: 80px;">
-                                <span class="calendar-day fs-2" id="modalDay"></span>
-                                <span class="calendar-month fs-6" id="modalMonth"></span>
-                            </div>
-                            <div id="modalFullDate" class="fw-bold text-muted small mb-3"></div>
-                            <div id="modalTimeInfo" class="text-primary small">
-                                <i class="bi bi-clock me-1"></i> <span id="modalTimeText"></span>
-                            </div>
-                            <div id="modalPrivateBadge" class="mt-4 d-none">
-                                <span class="badge bg-info text-white rounded-pill px-3 py-2 shadow-sm" style="font-family: var(--font-heading); font-size: 0.7rem;">LEIDING ONLY</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Content Area -->
-                        <div class="col-md-8 p-4 p-lg-5">
-                            <h2 class="display-6 fw-bold mb-4 text-chiro-red" id="modalEventTitle" style="font-family: var(--font-heading);"></h2>
-                            
-                            <div class="event-description-container mb-5 fs-5">
-                                <div id="modalEventDesc"></div>
-                            </div>
-                            
-                            <div id="modalAttachmentsSection" class="d-none">
-                                <h5 class="fw-bold mb-3 d-flex align-items-center">
-                                    <i class="bi bi-paperclip me-2 text-primary"></i> Bijlagen
-                                </h5>
-                                <div id="modalAttachmentsList" class="list-group list-group-flush rounded-3 border">
-                                    <!-- Attachments will be injected here -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-0 justify-content-center pb-4 pt-0 bg-white">
-                <button type="button" class="btn btn-chiro px-4 rounded-pill shadow-sm" data-bs-dismiss="modal">Sluiten</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    function openEventModal(element) {
-        const eventJson = element.getAttribute('data-event');
-        if (!eventJson) return;
-        
-        const event = JSON.parse(eventJson);
-        
-        // Format date for modal
-        const [y, m, d] = event.date.split('-').map(Number);
-        const dateObj = new Date(y, m - 1, d);
-        const monthNames = ["JAN", "FEB", "MRT", "APR", "MEI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
-        const fullMonthNames = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
-        
-        document.getElementById('modalDay').textContent = dateObj.getDate();
-        document.getElementById('modalMonth').textContent = monthNames[dateObj.getMonth()];
-        
-        let fullDateText = `${dateObj.getDate()} ${fullMonthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
-        if (event.endDate && event.endDate !== event.date) {
-            const [ey, em, ed] = event.endDate.split('-').map(Number);
-            const endDateObj = new Date(ey, em - 1, ed);
-            fullDateText += ` t/m ${endDateObj.getDate()} ${fullMonthNames[endDateObj.getMonth()]} ${endDateObj.getFullYear()}`;
-        }
-        document.getElementById('modalFullDate').textContent = fullDateText;
-
-        // Time info
-        const timeInfo = document.getElementById('modalTimeInfo');
-        if (event.startTime) {
-            let timeText = event.startTime;
-            if (event.endTime) timeText += ` - ${event.endTime}`;
-            document.getElementById('modalTimeText').textContent = timeText;
-            timeInfo.classList.remove('d-none');
-        } else {
-            timeInfo.classList.add('d-none');
-        }
-        
-        // Badge color
-        const badge = document.getElementById('modalDateBadge');
-        const badgeColor = event.isPrivate ? 'var(--chiro-blue)' : 'var(--chiro-red)';
-        const shadowColor = event.isPrivate ? '#143862' : '#a82b2e';
-        badge.style.backgroundColor = badgeColor;
-        badge.style.boxShadow = `0 4px 0 ${shadowColor}`;
-
-        document.getElementById('modalEventTitle').textContent = event.title;
-        document.getElementById('modalEventTitle').style.color = badgeColor;
-        
-        const privateBadge = document.getElementById('modalPrivateBadge');
-        if (event.isPrivate) {
-            privateBadge.classList.remove('d-none');
-        } else {
-            privateBadge.classList.add('d-none');
-        }
-
-        // Use innerHTML to render HTML tags from the description
-        document.getElementById('modalEventDesc').innerHTML = event.description || '<span class="text-muted fst-italic">Geen beschrijving beschikbaar.</span>';
-        
-        // Handle Attachments
-        const attachmentsSection = document.getElementById('modalAttachmentsSection');
-        const attachmentsList = document.getElementById('modalAttachmentsList');
-        attachmentsList.innerHTML = '';
-        
-        let attachments = [];
-        try {
-            attachments = typeof event.attachments === 'string' ? JSON.parse(event.attachments) : (event.attachments || []);
-        } catch (e) {
-            console.error('Error parsing attachments:', e);
-        }
-
-        if (attachments && attachments.length > 0) {
-            attachmentsSection.classList.remove('d-none');
-            attachments.forEach(att => {
-                const a = document.createElement('a');
-                a.href = `/download?path=${encodeURIComponent(att.path)}&name=${encodeURIComponent(att.name)}`;
-                a.className = 'list-group-item list-group-item-action d-flex align-items-center py-3 border-start-0 border-end-0';
-                a.onclick = (e) => {
-                    e.preventDefault();
-                    openFilePreview(att.path, att.name);
-                    return false;
-                };
-                a.innerHTML = `
-                    <i class="bi bi-file-earmark-arrow-down fs-4 me-3 text-primary"></i>
-                    <div class="flex-grow-1">
-                        <div class="fw-bold text-dark">${att.name}</div>
-                        <small class="text-muted">Klik om te openen / downloaden</small>
-                    </div>
-                    <i class="bi bi-chevron-right text-muted small"></i>
-                `;
-                attachmentsList.appendChild(a);
-            });
-        } else {
-            attachmentsSection.classList.add('d-none');
-        }
-
-        const myModal = new bootstrap.Modal(document.getElementById('eventModal'));
-        myModal.show();
-    }
-</script>
-
+<%- include('../partials/event_modal') %>
 <%- include('../partials/footer') %>

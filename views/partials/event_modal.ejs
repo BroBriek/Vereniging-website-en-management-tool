@@ -1,54 +1,485 @@
-<!-- Reusable Event Details Modal -->
+<%
+var canManageEvents = typeof user !== 'undefined' && user && (user.role === 'admin' || user.role === 'media');
+%>
+<!-- Reusable Event Details & Direct Admin Edit Modal -->
 <div class="modal fade" id="eventModal" tabindex="-1" aria-labelledby="eventModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-4 position-relative">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
+        <div class="modal-content border-0 shadow-lg rounded-4 position-relative overflow-hidden">
             <span class="washi-tape washi-tape-red washi-tape-top-center"></span>
-            <div class="modal-header border-0 pb-0 pt-4 px-4">
+            <div class="modal-header border-0 pb-0 pt-4 px-3 px-sm-4 d-flex align-items-center justify-content-between">
+                <div id="eventModalModeBadgeWrap">
+                    <% if (canManageEvents) { %>
+                        <span id="eventModalAdminHint" class="badge bg-light text-secondary border rounded-pill px-3 py-1 small">
+                            <i class="bi bi-shield-check text-primary me-1"></i>Beheerder
+                        </span>
+                    <% } %>
+                </div>
                 <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Sluiten"></button>
             </div>
-            <div class="modal-body p-4 pt-0">
-                <div class="d-flex flex-column flex-sm-row gap-4 align-items-start align-items-sm-center mb-4">
-                    <div id="modalDateBadge" class="calendar-ticket-stamp mx-auto mx-sm-0" style="width: 80px; height: 80px;">
-                        <span id="modalDay" class="calendar-ticket-day fs-2"></span>
-                        <span id="modalMonth" class="calendar-ticket-month"></span>
-                    </div>
-                    <div>
-                        <h3 id="modalEventTitle" class="fw-bold mb-2 font-playful"></h3>
-                        <div class="d-flex flex-wrap gap-2 text-muted small">
-                            <span id="modalFullDate" class="badge bg-light text-dark border rounded-pill px-3 py-1"></span>
-                            <span id="modalTimeInfo" class="badge bg-light text-dark border rounded-pill px-3 py-1 d-none">
-                                <i class="bi bi-clock me-1 text-primary"></i><span id="modalTimeText"></span>
-                            </span>
+
+            <!-- VIEW PANE -->
+            <div id="eventModalViewPane">
+                <div class="modal-body p-3 p-sm-4 pt-3">
+                    <div class="d-flex flex-column flex-sm-row gap-3 gap-sm-4 align-items-start align-items-sm-center mb-4">
+                        <div id="modalDateBadge" class="calendar-ticket-stamp mx-auto mx-sm-0" style="width: 80px; height: 80px;">
+                            <span id="modalDay" class="calendar-ticket-day fs-2"></span>
+                            <span id="modalMonth" class="calendar-ticket-month"></span>
+                        </div>
+                        <div class="flex-grow-1 w-100" style="min-width: 0;">
+                            <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-sm-start gap-2 mb-2">
+                                <h3 id="modalEventTitle" class="fw-bold mb-0 font-playful text-center text-sm-start text-break"></h3>
+                                <span id="modalPrivateBadge" class="badge bg-info text-white rounded-pill px-3 py-1 d-none">
+                                    <i class="bi bi-lock-fill me-1"></i>Alleen Leiding
+                                </span>
+                                <% if (canManageEvents) { %>
+                                    <span id="modalPublicHomeBadge" class="badge bg-success text-white rounded-pill px-3 py-1 d-none">
+                                        <i class="bi bi-megaphone-fill me-1"></i>Op Startpagina
+                                    </span>
+                                <% } %>
+                            </div>
+                            <div class="d-flex flex-wrap justify-content-center justify-content-sm-start gap-2 text-muted small">
+                                <span id="modalFullDate" class="badge bg-light text-dark border rounded-pill px-3 py-1 text-wrap"></span>
+                                <span id="modalTimeInfo" class="badge bg-light text-dark border rounded-pill px-3 py-1 d-none">
+                                    <i class="bi bi-clock me-1 text-primary"></i><span id="modalTimeText"></span>
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="scrapbook-card p-4 bg-light border-0 mb-4">
-                    <h5 class="fw-bold text-dark font-playful mb-2">Over deze activiteit</h5>
-                    <div id="modalEventDesc" class="text-muted" style="line-height: 1.6;"></div>
-                </div>
+                    <div class="scrapbook-card p-3 p-sm-4 bg-light border-0 mb-4">
+                        <h5 class="fw-bold text-dark font-playful mb-2">Over deze activiteit</h5>
+                        <div id="modalEventDesc" class="text-muted event-description-container text-break" style="line-height: 1.6;"></div>
+                    </div>
 
-                <div id="modalAttachmentsSection" class="d-none">
-                    <h5 class="fw-bold text-dark font-playful mb-2">
-                        <i class="bi bi-paperclip me-1 text-primary"></i> Bijlagen
-                    </h5>
-                    <div id="modalAttachmentsList" class="list-group rounded-3 border-0 shadow-sm"></div>
+                    <div id="modalAttachmentsSection" class="d-none">
+                        <h5 class="fw-bold text-dark font-playful mb-2">
+                            <i class="bi bi-paperclip me-1 text-primary"></i> Bijlagen
+                        </h5>
+                        <div id="modalAttachmentsList" class="list-group rounded-3 border-0 shadow-sm"></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-between align-items-center p-3 p-sm-4 pt-0 flex-wrap gap-2">
+                    <% if (canManageEvents) { %>
+                        <div class="d-flex flex-wrap gap-2 align-items-center w-100 w-sm-auto modal-admin-footer-actions">
+                            <button type="button" id="btnSwitchToEditEvent" class="btn btn-primary btn-sm rounded-pill px-3 py-2 shadow-sm d-inline-flex align-items-center justify-content-center">
+                                <i class="bi bi-pencil-square me-1"></i>Bewerken
+                            </button>
+                            <form id="modalQuickTogglePublicForm" method="POST" class="d-inline">
+                                <input type="hidden" name="returnTo" class="modal-return-to-input" value="">
+                                <button type="submit" id="btnModalQuickTogglePublic" class="btn btn-outline-success btn-sm rounded-pill px-3 py-2 d-inline-flex align-items-center justify-content-center">
+                                    <i class="bi bi-megaphone me-1" id="iconModalQuickTogglePublic"></i>
+                                    <span id="textModalQuickTogglePublic">+ Startpagina</span>
+                                </button>
+                            </form>
+                            <form id="modalQuickDeleteForm" method="POST" class="d-inline" onsubmit="return confirm('Weet je zeker dat je deze activiteit definitief wilt verwijderen?');">
+                                <input type="hidden" name="returnTo" class="modal-return-to-input" value="">
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-2 d-inline-flex align-items-center justify-content-center" title="Verwijderen">
+                                    <i class="bi bi-trash"></i><span class="d-none d-md-inline ms-1">Verwijderen</span>
+                                </button>
+                            </form>
+                        </div>
+                    <% } else { %>
+                        <div></div>
+                    <% } %>
+                    <button type="button" class="btn btn-chiro btn-sm rounded-pill px-4 py-2 ms-auto" data-bs-dismiss="modal">Sluiten</button>
                 </div>
             </div>
-            <div class="modal-footer border-0 justify-content-end p-4 pt-0">
-                <button type="button" class="btn btn-chiro rounded-pill px-4" data-bs-dismiss="modal">Sluiten</button>
+
+            <% if (canManageEvents) { %>
+            <!-- EDIT / ADD PANE (Admin & Media) -->
+            <div id="eventModalEditPane" class="d-none">
+                <form id="eventModalForm" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="returnTo" id="eventModalReturnTo" class="modal-return-to-input" value="">
+                    <input type="hidden" name="isPrivate" id="modalHiddenIsPrivate" value="">
+                    <input type="hidden" name="showOnPublicPage" id="modalHiddenShowOnPublicPage" value="">
+
+                    <div class="modal-body p-3 p-sm-4 pt-2">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
+                            <h4 id="eventModalFormHeading" class="fw-bold font-playful mb-0 text-dark fs-5">
+                                <i class="bi bi-pencil-square text-primary me-2"></i>Activiteit Bewerken
+                            </h4>
+                            <button type="button" id="btnBackToEventView" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                <i class="bi bi-eye me-1"></i>Voorbeeld
+                            </button>
+                        </div>
+
+                        <!-- 1. Titel & Zichtbaarheid -->
+                        <div class="mb-3">
+                            <label for="modalEditTitle" class="form-label fw-bold text-dark small mb-1">Titel van de activiteit <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control event-modal-input" name="title" id="modalEditTitle" required placeholder="bv. Zondagse Vergadering, Christus Koning, Groepsweekend...">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark small mb-2">Voor wie is deze activiteit zichtbaar?</label>
+                            <div class="row g-2" id="modalVisibilityCards">
+                                <div class="col-12 col-md-4">
+                                    <label class="event-vis-card d-flex align-items-start gap-2 p-2 p-sm-3 border rounded-3 h-100 w-100" style="cursor: pointer;">
+                                        <input type="radio" name="visibilityMode" value="public" id="visModePublic" class="form-check-input event-vis-radio mt-1 flex-shrink-0" checked>
+                                        <div>
+                                            <div class="fw-bold text-dark small"><i class="bi bi-calendar3 text-info me-1"></i>Publieke Kalender</div>
+                                            <div class="text-muted" style="font-size: 0.75rem; line-height: 1.3;">Zichtbaar op de kalender voor alle leden & ouders.</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="event-vis-card d-flex align-items-start gap-2 p-2 p-sm-3 border rounded-3 h-100 w-100" style="cursor: pointer;">
+                                        <input type="radio" name="visibilityMode" value="public_home" id="visModePublicHome" class="form-check-input event-vis-radio mt-1 flex-shrink-0">
+                                        <div>
+                                            <div class="fw-bold text-dark small"><i class="bi bi-megaphone-fill text-success me-1"></i>Publiek + Startpagina</div>
+                                            <div class="text-muted" style="font-size: 0.75rem; line-height: 1.3;">Op de kalender én uitgelicht op de Homepagina.</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="event-vis-card d-flex align-items-start gap-2 p-2 p-sm-3 border rounded-3 h-100 w-100" style="cursor: pointer;">
+                                        <input type="radio" name="visibilityMode" value="private" id="visModePrivate" class="form-check-input event-vis-radio mt-1 flex-shrink-0">
+                                        <div>
+                                            <div class="fw-bold text-dark small"><i class="bi bi-lock-fill text-warning me-1"></i>Alleen Leiding</div>
+                                            <div class="text-muted" style="font-size: 0.75rem; line-height: 1.3;">Privé op de interne leidingskalender.</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Datum & Tijdstip met Snelkeuzes -->
+                        <div class="p-3 bg-light rounded-4 border mb-3">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                <span class="fw-bold text-dark small"><i class="bi bi-clock-history text-primary me-1"></i>Datum & Tijdstip</span>
+                                <div class="d-flex flex-wrap gap-1 align-items-center">
+                                    <span class="text-muted small me-1 d-none d-sm-inline" style="font-size: 0.78rem;">Snel invullen:</span>
+                                    <button type="button" class="btn btn-sm bg-white border rounded-pill px-2 py-0 small" style="font-size: 0.78rem;" onclick="applyEventTimePreset('sunday')">
+                                        ☀️ Zondag (14u-17u)
+                                    </button>
+                                    <button type="button" class="btn btn-sm bg-white border rounded-pill px-2 py-0 small" style="font-size: 0.78rem;" onclick="applyEventTimePreset('evening')">
+                                        🌙 Avond (20u-23u)
+                                    </button>
+                                    <button type="button" class="btn btn-sm bg-white border rounded-pill px-2 py-0 small" style="font-size: 0.78rem;" onclick="applyEventTimePreset('allday')">
+                                        📅 Hele dag
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-12 col-sm-6 col-md-3">
+                                    <label for="modalEditDate" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Begindatum <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control event-modal-input" name="date" id="modalEditDate" required>
+                                </div>
+                                <div class="col-12 col-sm-6 col-md-3">
+                                    <label for="modalEditEndDate" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Einddatum <span class="text-muted fw-normal">(opt.)</span></label>
+                                    <input type="date" class="form-control event-modal-input" name="endDate" id="modalEditEndDate">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label for="modalEditStartTime" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Startuur <span class="text-muted fw-normal">(opt.)</span></label>
+                                    <input type="time" class="form-control event-modal-input" name="startTime" id="modalEditStartTime">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label for="modalEditEndTime" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Einduur <span class="text-muted fw-normal">(opt.)</span></label>
+                                    <input type="time" class="form-control event-modal-input" name="endTime" id="modalEditEndTime">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Beschrijving -->
+                        <div class="mb-3">
+                            <label for="modalEditDescription" class="form-label fw-bold text-dark small mb-1">Beschrijving & Extra Info</label>
+                            <textarea class="form-control rich-editor" name="description" id="modalEditDescription" rows="3"></textarea>
+                        </div>
+
+                        <!-- 4. Bijlagen -->
+                        <div class="row g-2">
+                            <div class="col-12" id="modalExistingAttachmentsWrapper">
+                                <label class="form-label fw-bold text-dark small mb-1">Huidige Bijlagen</label>
+                                <div id="modalExistingAttachmentsList" class="list-group mb-2"></div>
+                            </div>
+                            <div class="col-12">
+                                <label for="modalEditAttachmentsInput" class="form-label fw-bold text-dark small mb-1">
+                                    <i class="bi bi-paperclip me-1"></i>Bijlagen / Documenten toevoegen
+                                </label>
+                                <input type="file" class="form-control event-modal-input" name="attachments" id="modalEditAttachmentsInput" multiple>
+                                <small class="text-muted" style="font-size: 0.78rem;">Max. 5 bestanden tegelijk (bv. brief, inschrijvingsstrookje of flyer).</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-0 bg-light px-3 px-sm-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <button type="button" id="btnCancelEditToView" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2">
+                            Annuleren
+                        </button>
+                        <button type="submit" id="btnSubmitEventModal" class="btn btn-success btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm ms-auto">
+                            <i class="bi bi-check-lg me-1"></i><span id="btnSubmitEventModalText">Wijzigingen Opslaan</span>
+                        </button>
+                    </div>
+                </form>
             </div>
+            <% } %>
         </div>
     </div>
 </div>
 
+<style>
+    #eventModal .event-modal-input {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.95rem !important;
+    }
+    #eventModal .event-modal-input:focus {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        box-shadow: 0 0 0 3px rgba(29, 78, 137, 0.12) !important;
+    }
+    #eventModal input[type="radio"].event-vis-radio {
+        padding: 0 !important;
+        width: 1.15em !important;
+        height: 1.15em !important;
+        border-radius: 50% !important;
+        border: 2px solid #94a3b8 !important;
+    }
+    #eventModal input[type="radio"].event-vis-radio:checked {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        background-color: var(--chiro-blue, #1d4e89) !important;
+    }
+    .event-vis-card {
+        transition: all 0.15s ease;
+        background-color: #fff;
+    }
+    .event-vis-card:hover {
+        border-color: var(--chiro-blue) !important;
+        background-color: #f8fafc;
+    }
+    .event-vis-card:has(input:checked) {
+        border-color: var(--chiro-blue) !important;
+        background-color: #eff6ff;
+        box-shadow: 0 0 0 2px rgba(29, 78, 137, 0.12);
+    }
+    @media (min-width: 576px) {
+        .modal-admin-footer-actions {
+            width: auto !important;
+        }
+        .border-sm-0-reset {
+            border-top: 0 !important;
+        }
+    }
+    .agenda-item,
+    .calendar-ticket-item,
+    .calendar-card {
+        box-sizing: border-box;
+        max-width: 100%;
+    }
+    .agenda-content {
+        overflow: hidden;
+        min-width: 0;
+    }
+</style>
+
 <script>
-    if (typeof window.openEventModal !== 'function') {
-        window.openEventModal = function(element) {
-            let eventJson = element.getAttribute('data-event');
-            if (!eventJson) return;
-            
-            let event;
+    (function() {
+        let currentModalEvent = null;
+        let isCreatingNewEvent = false;
+
+        function getCsrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+
+        function getReturnToPath() {
+            return window.location.pathname + window.location.search;
+        }
+
+        function syncVisibilityHiddenInputs() {
+            const selected = document.querySelector('input[name="visibilityMode"]:checked')?.value || 'public';
+            const privInput = document.getElementById('modalHiddenIsPrivate');
+            const pubInput = document.getElementById('modalHiddenShowOnPublicPage');
+            if (!privInput || !pubInput) return;
+
+            if (selected === 'private') {
+                privInput.value = 'on';
+                pubInput.value = '';
+            } else if (selected === 'public_home') {
+                privInput.value = '';
+                pubInput.value = 'on';
+            } else {
+                privInput.value = '';
+                pubInput.value = '';
+            }
+        }
+
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.name === 'visibilityMode') {
+                syncVisibilityHiddenInputs();
+            }
+        });
+
+        window.applyEventTimePreset = function(preset) {
+            const dateInput = document.getElementById('modalEditDate');
+            const endDateInput = document.getElementById('modalEditEndDate');
+            const startInput = document.getElementById('modalEditStartTime');
+            const endInput = document.getElementById('modalEditEndTime');
+            if (!startInput || !endInput) return;
+
+            if (preset === 'sunday') {
+                startInput.value = '14:00';
+                endInput.value = '17:00';
+                if (dateInput && !dateInput.value) {
+                    const d = new Date();
+                    const daysUntilSunday = (7 - d.getDay()) % 7;
+                    d.setDate(d.getDate() + daysUntilSunday);
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    dateInput.value = `${yyyy}-${mm}-${dd}`;
+                }
+            } else if (preset === 'evening') {
+                startInput.value = '20:00';
+                endInput.value = '23:00';
+            } else if (preset === 'allday') {
+                startInput.value = '';
+                endInput.value = '';
+                if (endDateInput) endDateInput.focus();
+            }
+        };
+
+        function ensureRichEditorContent(htmlContent) {
+            const descField = document.getElementById('modalEditDescription');
+            if (!descField) return;
+            descField.value = htmlContent || '';
+
+            if (!descField.classList.contains('rich-editor-initialized') && typeof window.initializeRichEditors === 'function') {
+                window.initializeRichEditors(descField);
+            }
+
+            const applyToQuill = () => {
+                const quillContainer = descField.parentElement.querySelector('.ql-container');
+                if (quillContainer && typeof Quill !== 'undefined') {
+                    const quill = Quill.find(quillContainer);
+                    if (quill) {
+                        quill.root.innerHTML = htmlContent || '';
+                    }
+                }
+            };
+            applyToQuill();
+            setTimeout(applyToQuill, 80);
+        }
+
+        function populateEditPane(event, isNew = false) {
+            const form = document.getElementById('eventModalForm');
+            if (!form) return;
+
+            const token = getCsrfToken();
+            const returnToInputs = document.querySelectorAll('.modal-return-to-input');
+            returnToInputs.forEach(inp => { inp.value = getReturnToPath(); });
+
+            const heading = document.getElementById('eventModalFormHeading');
+            const submitText = document.getElementById('btnSubmitEventModalText');
+            const backBtn = document.getElementById('btnBackToEventView');
+
+            if (isNew) {
+                form.action = `/admin/events` + (token ? `?_csrf=${encodeURIComponent(token)}` : '');
+                if (heading) heading.innerHTML = '<i class="bi bi-plus-circle text-success me-2"></i>Nieuwe Activiteit Toevoegen';
+                if (submitText) submitText.textContent = 'Opslaan & Toevoegen';
+                if (backBtn) backBtn.classList.add('d-none');
+            } else {
+                form.action = `/admin/events/${event.id}?_method=PUT` + (token ? `&_csrf=${encodeURIComponent(token)}` : '');
+                if (heading) heading.innerHTML = '<i class="bi bi-pencil-square text-primary me-2"></i>Activiteit Bewerken';
+                if (submitText) submitText.textContent = 'Wijzigingen Opslaan';
+                if (backBtn) backBtn.classList.remove('d-none');
+            }
+
+            document.getElementById('modalEditTitle').value = event.title || '';
+            document.getElementById('modalEditDate').value = event.date || '';
+            document.getElementById('modalEditEndDate').value = event.endDate || '';
+            document.getElementById('modalEditStartTime').value = event.startTime || '';
+            document.getElementById('modalEditEndTime').value = event.endTime || '';
+
+            const fileInput = document.getElementById('modalEditAttachmentsInput');
+            if (fileInput) fileInput.value = '';
+
+            // Set visibility radio
+            const visPrivate = document.getElementById('visModePrivate');
+            const visPublicHome = document.getElementById('visModePublicHome');
+            const visPublic = document.getElementById('visModePublic');
+            if (event.isPrivate) {
+                if (visPrivate) visPrivate.checked = true;
+            } else if (event.showOnPublicPage) {
+                if (visPublicHome) visPublicHome.checked = true;
+            } else {
+                if (visPublic) visPublic.checked = true;
+            }
+            syncVisibilityHiddenInputs();
+
+            // Existing attachments
+            const attWrapper = document.getElementById('modalExistingAttachmentsWrapper');
+            const attList = document.getElementById('modalExistingAttachmentsList');
+            if (attList) attList.innerHTML = '';
+
+            let attachments = [];
+            try {
+                attachments = typeof event.attachments === 'string' ? JSON.parse(event.attachments) : (event.attachments || []);
+            } catch (e) {
+                attachments = [];
+            }
+
+            if (attachments && attachments.length > 0) {
+                if (attWrapper) attWrapper.classList.remove('d-none');
+                attachments.forEach((att) => {
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'small fw-medium text-truncate me-2';
+                    nameSpan.innerHTML = `<i class="bi bi-file-earmark-text text-primary me-2"></i>`;
+                    nameSpan.appendChild(document.createTextNode(att.name));
+
+                    const actionDiv = document.createElement('div');
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'existingAttachments';
+                    hiddenInput.value = JSON.stringify(att);
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'btn btn-sm btn-outline-danger rounded-pill px-2 py-0';
+                    removeBtn.title = 'Bijlage verwijderen';
+                    removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                    removeBtn.onclick = function() {
+                        item.remove();
+                        if (attList && attList.children.length === 0 && attWrapper) {
+                            attWrapper.classList.add('d-none');
+                        }
+                    };
+
+                    actionDiv.appendChild(hiddenInput);
+                    actionDiv.appendChild(removeBtn);
+                    item.appendChild(nameSpan);
+                    item.appendChild(actionDiv);
+                    if (attList) attList.appendChild(item);
+                });
+            } else if (attWrapper) {
+                attWrapper.classList.add('d-none');
+            }
+
+            ensureRichEditorContent(event.description || '');
+        }
+
+        function setModalPane(mode) {
+            const viewPane = document.getElementById('eventModalViewPane');
+            const editPane = document.getElementById('eventModalEditPane');
+            if (!editPane) return;
+
+            if (mode === 'edit') {
+                if (viewPane) viewPane.classList.add('d-none');
+                editPane.classList.remove('d-none');
+                ensureRichEditorContent(isCreatingNewEvent ? (currentModalEvent?.description || '') : (currentModalEvent?.description || ''));
+            } else {
+                editPane.classList.add('d-none');
+                if (viewPane) viewPane.classList.remove('d-none');
+            }
+        }
+
+        function parseEventFromInput(elementOrEvent) {
+            if (!elementOrEvent) return null;
+            if (typeof elementOrEvent === 'object' && !(elementOrEvent instanceof Element)) {
+                return elementOrEvent;
+            }
+            let eventJson = elementOrEvent.getAttribute('data-event');
+            if (!eventJson) return null;
             try {
                 if (typeof eventJson === 'string') {
                     if (eventJson.startsWith('%7B') || eventJson.startsWith('%7b')) {
@@ -62,25 +493,37 @@
                             eventJson = txt.value;
                         }
                     }
-                    event = JSON.parse(eventJson);
-                } else {
-                    event = eventJson;
+                    return JSON.parse(eventJson);
                 }
+                return eventJson;
             } catch (err) {
                 console.error('Error parsing event data:', err);
-                return;
+                return null;
             }
-            
-            const [y, m, d] = event.date.split('-').map(Number);
+        }
+
+        window.openEventModal = function(elementOrEvent, startInEditMode = false) {
+            const event = parseEventFromInput(elementOrEvent);
+            if (!event) return;
+
+            currentModalEvent = event;
+            isCreatingNewEvent = false;
+
+            const [y, m, d] = (event.date || '2026-01-01').split('-').map(Number);
             const dateObj = new Date(y, m - 1, d);
             const monthNames = ["JAN", "FEB", "MRT", "APR", "MEI", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
             const fullMonthNames = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
-            
+
             const dayEl = document.getElementById('modalDay');
             const monthEl = document.getElementById('modalMonth');
             if (dayEl) dayEl.textContent = dateObj.getDate();
             if (monthEl) monthEl.textContent = monthNames[dateObj.getMonth()];
-            
+
+            const dateBadge = document.getElementById('modalDateBadge');
+            if (dateBadge) {
+                dateBadge.style.borderColor = event.isPrivate ? 'var(--chiro-blue)' : 'var(--chiro-red)';
+            }
+
             let fullDateText = `${dateObj.getDate()} ${fullMonthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
             if (event.endDate && event.endDate !== event.date) {
                 const [ey, em, ed] = event.endDate.split('-').map(Number);
@@ -103,16 +546,61 @@
 
             const titleEl = document.getElementById('modalEventTitle');
             if (titleEl) titleEl.textContent = event.title;
-            
+
+            const privateBadge = document.getElementById('modalPrivateBadge');
+            if (privateBadge) {
+                privateBadge.classList.toggle('d-none', !event.isPrivate);
+            }
+
+            const publicHomeBadge = document.getElementById('modalPublicHomeBadge');
+            if (publicHomeBadge) {
+                publicHomeBadge.classList.toggle('d-none', !(event.showOnPublicPage && !event.isPrivate));
+            }
+
             const descEl = document.getElementById('modalEventDesc');
             if (descEl) {
                 descEl.innerHTML = event.description || '<span class="text-muted fst-italic">Geen extra beschrijving beschikbaar.</span>';
             }
-            
+
+            const token = getCsrfToken();
+
+            // Quick Toggle Public Homepage form in View Pane
+            const togglePublicForm = document.getElementById('modalQuickTogglePublicForm');
+            const togglePublicBtn = document.getElementById('btnModalQuickTogglePublic');
+            const togglePublicIcon = document.getElementById('iconModalQuickTogglePublic');
+            const togglePublicText = document.getElementById('textModalQuickTogglePublic');
+            if (togglePublicForm && event.id) {
+                if (event.isPrivate) {
+                    togglePublicForm.classList.add('d-none');
+                } else {
+                    togglePublicForm.classList.remove('d-none');
+                    togglePublicForm.action = `/admin/events/${event.id}/toggle-public` + (token ? `?_csrf=${encodeURIComponent(token)}` : '');
+                    if (togglePublicBtn) {
+                        togglePublicBtn.className = `btn btn-sm rounded-pill px-3 py-2 d-inline-flex align-items-center justify-content-center ${event.showOnPublicPage ? 'btn-success text-white' : 'btn-outline-secondary'}`;
+                    }
+                    if (togglePublicIcon) {
+                        togglePublicIcon.className = `bi ${event.showOnPublicPage ? 'bi-megaphone-fill' : 'bi-megaphone'} me-1`;
+                    }
+                    if (togglePublicText) {
+                        togglePublicText.textContent = event.showOnPublicPage ? 'Op Startpagina' : '+ Startpagina';
+                    }
+                }
+            }
+
+            // Quick Delete form action
+            const deleteForm = document.getElementById('modalQuickDeleteForm');
+            if (deleteForm && event.id) {
+                deleteForm.action = `/admin/events/${event.id}?_method=DELETE` + (token ? `&_csrf=${encodeURIComponent(token)}` : '');
+            }
+
+            document.querySelectorAll('.modal-return-to-input').forEach(inp => {
+                inp.value = getReturnToPath();
+            });
+
             const attachmentsSection = document.getElementById('modalAttachmentsSection');
             const attachmentsList = document.getElementById('modalAttachmentsList');
             if (attachmentsList) attachmentsList.innerHTML = '';
-            
+
             let attachments = [];
             try {
                 attachments = typeof event.attachments === 'string' ? JSON.parse(event.attachments) : (event.attachments || []);
@@ -137,11 +625,11 @@
                     };
                     a.innerHTML = `
                         <i class="bi bi-file-earmark-arrow-down fs-4 me-3 text-primary"></i>
-                        <div class="flex-grow-1">
-                            <div class="fw-bold text-dark">${att.name}</div>
+                        <div class="flex-grow-1 text-truncate">
+                            <div class="fw-bold text-dark text-truncate">${att.name}</div>
                             <small class="text-muted">Klik om te downloaden / bekijken</small>
                         </div>
-                        <i class="bi bi-chevron-right text-muted small"></i>
+                        <i class="bi bi-chevron-right text-muted small ms-2"></i>
                     `;
                     if (attachmentsList) attachmentsList.appendChild(a);
                 });
@@ -149,11 +637,15 @@
                 attachmentsSection.classList.add('d-none');
             }
 
+            if (document.getElementById('eventModalEditPane')) {
+                populateEditPane(event, false);
+                setModalPane(startInEditMode ? 'edit' : 'view');
+            }
+
             const modalEl = document.getElementById('eventModal');
             if (modalEl) {
                 if (window.bootstrap && bootstrap.Modal) {
-                    const myModal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                    myModal.show();
+                    bootstrap.Modal.getOrCreateInstance(modalEl).show();
                 } else {
                     setTimeout(() => {
                         if (window.bootstrap && bootstrap.Modal) {
@@ -163,5 +655,65 @@
                 }
             }
         };
-    }
+
+        window.openEditEventModal = function(elementOrEvent) {
+            window.openEventModal(elementOrEvent, true);
+        };
+
+        window.openAddEventModal = function(defaults = {}) {
+            if (!document.getElementById('eventModalEditPane')) return;
+            isCreatingNewEvent = true;
+            currentModalEvent = {
+                title: defaults.title || '',
+                date: defaults.date || '',
+                endDate: defaults.endDate || '',
+                startTime: defaults.startTime || '',
+                endTime: defaults.endTime || '',
+                description: defaults.description || '',
+                isPrivate: Boolean(defaults.isPrivate),
+                showOnPublicPage: Boolean(defaults.showOnPublicPage),
+                attachments: defaults.attachments || []
+            };
+            populateEditPane(currentModalEvent, true);
+            setModalPane('edit');
+
+            const modalEl = document.getElementById('eventModal');
+            if (modalEl && window.bootstrap && bootstrap.Modal) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnSwitchEdit = document.getElementById('btnSwitchToEditEvent');
+            if (btnSwitchEdit) {
+                btnSwitchEdit.addEventListener('click', function() {
+                    if (currentModalEvent) {
+                        populateEditPane(currentModalEvent, false);
+                        setModalPane('edit');
+                    }
+                });
+            }
+
+            const btnBackView = document.getElementById('btnBackToEventView');
+            if (btnBackView) {
+                btnBackView.addEventListener('click', function() {
+                    setModalPane('view');
+                });
+            }
+
+            const btnCancelEdit = document.getElementById('btnCancelEditToView');
+            if (btnCancelEdit) {
+                btnCancelEdit.addEventListener('click', function() {
+                    if (isCreatingNewEvent) {
+                        const modalEl = document.getElementById('eventModal');
+                        if (modalEl && window.bootstrap && bootstrap.Modal) {
+                            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                        }
+                    } else {
+                        setModalPane('view');
+                    }
+                });
+            }
+        });
+    })();
 </script>

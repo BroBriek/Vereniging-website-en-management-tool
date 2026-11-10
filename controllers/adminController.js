@@ -388,25 +388,84 @@ exports.deleteLeader = async (req, res) => {
     }
 };
 
+const getSafeEventRedirect = (req, message, isError = false) => {
+    const rawReturnTo = (req.body && req.body.returnTo) || (req.query && req.query.returnTo) || '';
+    let baseTarget = '/admin/events';
+    if (typeof rawReturnTo === 'string' && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//')) {
+        baseTarget = rawReturnTo;
+    }
+    try {
+        const parsed = new URL(baseTarget, 'http://localhost');
+        parsed.searchParams.delete('success');
+        parsed.searchParams.delete('error');
+        if (message) {
+            parsed.searchParams.set(isError ? 'error' : 'success', message);
+        }
+        const search = parsed.search;
+        return `${parsed.pathname}${search}${parsed.hash}`;
+    } catch (e) {
+        if (!message) return '/admin/events';
+        return `/admin/events?${isError ? 'error' : 'success'}=${encodeURIComponent(message)}`;
+    }
+};
+
+const resolveEventVisibility = (body) => {
+    if (body && body.visibilityMode) {
+        if (body.visibilityMode === 'private') {
+            return { isPrivate: true, showOnPublicPage: false };
+        }
+        if (body.visibilityMode === 'public_home') {
+            return { isPrivate: false, showOnPublicPage: true };
+        }
+        if (body.visibilityMode === 'public') {
+            return { isPrivate: false, showOnPublicPage: false };
+        }
+    }
+    const isPrivate = body.isPrivate === 'on' || body.isPrivate === 'true' || body.isPrivate === true;
+    const showOnPublicPage = (body.showOnPublicPage === 'on' || body.showOnPublicPage === 'true' || body.showOnPublicPage === true) && !isPrivate;
+    return { isPrivate, showOnPublicPage };
+};
+
 exports.getEvents = async (req, res) => {
-    const allEvents = await Event.findAll({ order: [['date', 'DESC']] });
+    const allEvents = await Event.findAll({ order: [['date', 'ASC']] });
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - 3);
     cutoff.setHours(0, 0, 0, 0);
 
-    const activeEvents = [];
+    const upcomingEvents = [];
+    const recentPastEvents = [];
     const archivedEvents = [];
 
     allEvents.forEach(event => {
-        const referenceDate = new Date(`${event.endDate || event.date}T00:00:00`);
+        const endOrDate = event.endDate || event.date;
+        const referenceDate = new Date(`${endOrDate}T00:00:00`);
         if (event.isArchived || referenceDate < cutoff) {
             archivedEvents.push(event);
+        } else if (endOrDate >= todayStr) {
+            upcomingEvents.push(event);
         } else {
-            activeEvents.push(event);
+            recentPastEvents.push(event);
         }
     });
 
-    res.render('admin/events', { title: 'Beheer Kalender', activeEvents, archivedEvents, user: req.user });
+    // Upcoming events sorted soonest first (ASC), recent past events newest first (DESC)
+    upcomingEvents.sort((a, b) => a.date.localeCompare(b.date));
+    recentPastEvents.sort((a, b) => b.date.localeCompare(a.date));
+    archivedEvents.sort((a, b) => b.date.localeCompare(a.date));
+
+    const activeEvents = [...upcomingEvents, ...recentPastEvents];
+
+    res.render('admin/events', {
+        title: 'Beheer Kalender',
+        activeEvents,
+        upcomingEvents,
+        recentPastEvents,
+        archivedEvents,
+        todayStr,
+        user: req.user
+    });
 };
 
 exports.archiveEvent = async (req, res) => {
@@ -415,10 +474,16 @@ exports.archiveEvent = async (req, res) => {
         if (event) {
             await event.update({ isArchived: true });
         }
-        res.redirect('/admin/events');
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.json({ success: true, isArchived: true });
+        }
+        res.redirect(getSafeEventRedirect(req, 'Activiteit gearchiveerd.'));
     } catch (error) {
         console.error('Error archiving event:', error);
-        res.redirect('/admin/events?error=Kon evenement niet archiveren');
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(500).json({ success: false, error: 'Kon evenement niet archiveren' });
+        }
+        res.redirect(getSafeEventRedirect(req, 'Kon evenement niet archiveren', true));
     }
 };
 
@@ -426,32 +491,41 @@ exports.unarchiveEvent = async (req, res) => {
     try {
         const event = await Event.findByPk(req.params.id);
         if (event) {
-            // Note: If the event is older than 3 months, it will still show as archived in the view
-            // unless we also update the date, but usually unarchive means "I want to see it now".
-            // However, the current logic is dynamic. We might want to clear the manual archive flag.
             await event.update({ isArchived: false });
         }
-        res.redirect('/admin/events');
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.json({ success: true, isArchived: false });
+        }
+        res.redirect(getSafeEventRedirect(req, 'Activiteit hersteld uit het archief.'));
     } catch (error) {
         console.error('Error unarchiving event:', error);
-        res.redirect('/admin/events?error=Kon evenement niet dearchiveren');
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(500).json({ success: false, error: 'Kon evenement niet dearchiveren' });
+        }
+        res.redirect(getSafeEventRedirect(req, 'Kon evenement niet dearchiveren', true));
     }
 };
 
 exports.postEvent = async (req, res) => {
     try {
         const { title, date, endDate, startTime, endTime, description } = req.body;
-        const isPrivate = req.body.isPrivate === 'on';
-        const showOnPublicPage = (req.body.showOnPublicPage === 'on' || req.body.showOnPublicPage === 'true' || req.body.showOnPublicPage === true) && !isPrivate;
+        const { isPrivate, showOnPublicPage } = resolveEventVisibility(req.body);
         // If endDate is empty string, set it to null
         const finalEndDate = endDate && endDate.trim() !== '' ? endDate : null;
         const finalStartTime = startTime && startTime.trim() !== '' ? startTime : null;
         const finalEndTime = endTime && endTime.trim() !== '' ? endTime : null;
 
-        const attachments = req.files ? req.files.map(f => ({
+        let attachments = req.files ? req.files.map(f => ({
             name: f.originalname,
             path: `/uploads/${f.filename}`
         })) : [];
+
+        if (req.body.existingAttachments) {
+            const carriedOver = Array.isArray(req.body.existingAttachments)
+                ? req.body.existingAttachments.map(a => JSON.parse(a))
+                : [JSON.parse(req.body.existingAttachments)];
+            attachments = [...carriedOver, ...attachments];
+        }
 
         await Event.create({ 
             title, 
@@ -464,18 +538,17 @@ exports.postEvent = async (req, res) => {
             showOnPublicPage,
             attachments: JSON.stringify(attachments)
         });
-        res.redirect('/admin/events');
+        res.redirect(getSafeEventRedirect(req, 'Activiteit succesvol toegevoegd!'));
     } catch (error) {
         console.error('Error creating event:', error);
-        res.redirect('/admin/events?error=Kon evenement niet aanmaken');
+        res.redirect(getSafeEventRedirect(req, 'Kon evenement niet aanmaken', true));
     }
 };
 
 exports.updateEvent = async (req, res) => {
     try {
         const { title, date, endDate, startTime, endTime, description, existingAttachments } = req.body;
-        const isPrivate = req.body.isPrivate === 'on';
-        const showOnPublicPage = (req.body.showOnPublicPage === 'on' || req.body.showOnPublicPage === 'true' || req.body.showOnPublicPage === true) && !isPrivate;
+        const { isPrivate, showOnPublicPage } = resolveEventVisibility(req.body);
         const finalEndDate = endDate && endDate.trim() !== '' ? endDate : null;
         const finalStartTime = startTime && startTime.trim() !== '' ? startTime : null;
         const finalEndTime = endTime && endTime.trim() !== '' ? endTime : null;
@@ -509,10 +582,10 @@ exports.updateEvent = async (req, res) => {
                 attachments: JSON.stringify(attachments)
             });
         }
-        res.redirect('/admin/events');
+        res.redirect(getSafeEventRedirect(req, 'Activiteit succesvol bijgewerkt!'));
     } catch (error) {
         console.error('Error updating event:', error);
-        res.redirect('/admin/events?error=Kon evenement niet bijwerken');
+        res.redirect(getSafeEventRedirect(req, 'Kon evenement niet bijwerken', true));
     }
 };
 
@@ -526,20 +599,36 @@ exports.toggleEventPublic = async (req, res) => {
                 isPrivate: newShow ? false : event.isPrivate
             });
         }
-        res.redirect('/admin/events');
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.json({
+                success: true,
+                showOnPublicPage: event ? event.showOnPublicPage : false,
+                isPrivate: event ? event.isPrivate : false
+            });
+        }
+        res.redirect(getSafeEventRedirect(req, 'Zichtbaarheid op startpagina aangepast.'));
     } catch (error) {
         console.error('Error toggling event public status:', error);
-        res.redirect('/admin/events?error=Kon status niet wijzigen');
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(500).json({ success: false, error: 'Kon status niet wijzigen' });
+        }
+        res.redirect(getSafeEventRedirect(req, 'Kon status niet wijzigen', true));
     }
 };
 
 exports.deleteEvent = async (req, res) => {
     try {
         await Event.destroy({ where: { id: req.params.id } });
-        res.redirect('/admin/events');
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.json({ success: true });
+        }
+        res.redirect(getSafeEventRedirect(req, 'Activiteit verwijderd.'));
     } catch (error) {
         console.error('Error deleting event:', error);
-        res.redirect('/admin/events?error=Kon evenement niet verwijderen');
+        if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            return res.status(500).json({ success: false, error: 'Kon evenement niet verwijderen' });
+        }
+        res.redirect(getSafeEventRedirect(req, 'Kon evenement niet verwijderen', true));
     }
 };
 

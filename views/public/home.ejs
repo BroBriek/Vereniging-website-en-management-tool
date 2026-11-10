@@ -189,9 +189,19 @@ var boxInfoBtnUrl = (content.box_info_btn_url && content.box_info_btn_url.conten
                                 </div>
                                 <p class="text-muted small m-0">Mis geen enkel avontuur! Klik op een activiteit voor uren en details.</p>
                             </div>
-                            <a href="/kalender" class="btn btn-chiro-outline btn-sm rounded-pill px-3 font-playful d-inline-flex align-items-center flex-shrink-0">
-                                <span>Volledige kalender</span> <i class="bi bi-arrow-right ms-1"></i>
-                            </a>
+                            <div class="d-flex flex-wrap gap-2 align-items-center flex-shrink-0">
+                                <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                    <button type="button" class="btn btn-success btn-sm rounded-pill px-3 d-inline-flex align-items-center shadow-sm" onclick="openAddEventModal({ showOnPublicPage: true, isPrivate: false })">
+                                        <i class="bi bi-plus-circle me-1"></i> Activiteit
+                                    </button>
+                                    <a href="/admin/events" class="btn btn-outline-primary btn-sm rounded-pill px-3 d-inline-flex align-items-center">
+                                        <i class="bi bi-sliders me-1"></i> Beheren
+                                    </a>
+                                <% } %>
+                                <a href="/kalender" class="btn btn-chiro-outline btn-sm rounded-pill px-3 font-playful d-inline-flex align-items-center">
+                                    <span>Volledige kalender</span> <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
                         </div>
 
                         <div class="agenda-items-list mt-3">
@@ -265,7 +275,15 @@ var boxInfoBtnUrl = (content.box_info_btn_url && content.box_info_btn_url.conten
                                     </div>
 
                                     <!-- Arrow Button -->
-                                    <div class="agenda-arrow">
+                                    <div class="agenda-arrow d-flex align-items-center gap-2">
+                                        <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center"
+                                                    title="Rechtstreeks bewerken"
+                                                    onclick="event.stopPropagation(); openEditEventModal(this.closest('.agenda-item'))">
+                                                <i class="bi bi-pencil-square"></i><span class="d-none d-lg-inline ms-1">Bewerken</span>
+                                            </button>
+                                        <% } %>
                                         <span class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-none d-md-inline-flex align-items-center font-playful">
                                             Details <i class="bi bi-chevron-right ms-1"></i>
                                         </span>
@@ -291,9 +309,14 @@ var boxInfoBtnUrl = (content.box_info_btn_url && content.box_info_btn_url.conten
                             <p class="text-muted small mb-3" style="max-width: 460px; margin: 0 auto;">
                                 Er zijn momenteel geen activiteiten aangevinkt voor de startpagina. Vink in het kalenderbeheer <strong>'Toon op openbare pagina'</strong> aan om dit vak automatisch te vullen!
                             </p>
-                            <a href="/admin/events" class="btn btn-chiro btn-sm shadow-sm rounded-pill px-4">
-                                <i class="bi bi-gear-fill me-1"></i> Activiteiten Beheren
-                            </a>
+                            <div class="d-flex flex-wrap justify-content-center gap-2">
+                                <button type="button" class="btn btn-success btn-sm shadow-sm rounded-pill px-4" onclick="openAddEventModal({ showOnPublicPage: true, isPrivate: false })">
+                                    <i class="bi bi-plus-circle me-1"></i> Nieuwe Activiteit
+                                </button>
+                                <a href="/admin/events" class="btn btn-chiro btn-sm shadow-sm rounded-pill px-4">
+                                    <i class="bi bi-gear-fill me-1"></i> Activiteiten Beheren
+                                </a>
+                            </div>
                         </div>
                     </div>
                 <% } %>

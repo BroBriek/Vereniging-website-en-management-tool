@@ -368,7 +368,7 @@ exports.getLeaders = async (req, res) => {
 };
 
 exports.getCalendar = async (req, res) => {
-    if (req.user && req.user.role !== 'kookmoeke') {
+    if (req.user && req.user.role !== 'kookmoeke' && req.query.view !== 'public' && req.query.edit !== '1') {
         return res.redirect('/feed/calendar');
     }
     try {

@@ -27,8 +27,11 @@ var calendarLead = (content && content.calendar_lead && content.calendar_lead.co
                 <i class="bi bi-calendar-plus me-1"></i> Abonneer op Smartphone
             </a>
             <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
-                <a href="/admin/events" class="btn btn-outline-primary btn-sm rounded-pill shadow-sm">
-                    <i class="bi bi-calendar-plus me-1"></i> Activiteiten beheren
+                <button type="button" class="btn btn-success btn-sm rounded-pill shadow-sm px-3" onclick="openAddEventModal({ isPrivate: false })">
+                    <i class="bi bi-plus-circle me-1"></i> Activiteit Toevoegen
+                </button>
+                <a href="/admin/events" class="btn btn-outline-primary btn-sm rounded-pill shadow-sm px-3">
+                    <i class="bi bi-sliders me-1"></i> Overzicht Beheren
                 </a>
             <% } %>
         </div>
@@ -74,43 +77,53 @@ var calendarLead = (content && content.calendar_lead && content.calendar_lead.co
                 }
             %>
                 <div class="col-12">
-                    <div class="calendar-ticket-item d-flex align-items-center gap-3" 
+                    <div class="calendar-ticket-item d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-3" 
                          data-event="<%= JSON.stringify(event) %>"
                          onclick="openEventModal(this)">
                         
-                        <!-- Ticket Date Stamp -->
-                        <div class="calendar-ticket-stamp">
-                            <span class="calendar-ticket-day"><%= day %></span>
-                            <span class="calendar-ticket-month"><%= month %></span>
-                        </div>
-                        
-                        <!-- Event Info -->
-                        <div class="flex-grow-1">
-                            <h4 class="mb-1 text-chiro-blue fw-bold font-playful"><%= event.title %></h4>
-                            <div class="d-flex flex-wrap gap-2 mt-1 align-items-center">
-                                <% if (hasEndDate) { %>
-                                    <span class="badge bg-warning text-dark rounded-pill">
-                                        <i class="bi bi-calendar-range me-1"></i> <%= dateDisplay %>
-                                    </span>
-                                <% } %>
-                                <% if (event.startTime) { %>
-                                    <span class="badge bg-light text-muted border rounded-pill">
-                                        <i class="bi bi-clock me-1 text-primary"></i> <%= event.startTime %><% if (event.endTime) { %> - <%= event.endTime %><% } %>
-                                    </span>
-                                <% } %>
-                                <% if (event.location) { %>
-                                    <span class="badge bg-light text-muted border rounded-pill d-none d-md-inline-block">
-                                        <i class="bi bi-geo-alt me-1 text-danger"></i> <%= event.location %>
-                                    </span>
-                                <% } %>
+                        <div class="d-flex align-items-center gap-3 flex-grow-1" style="min-width: 0;">
+                            <!-- Ticket Date Stamp -->
+                            <div class="calendar-ticket-stamp">
+                                <span class="calendar-ticket-day"><%= day %></span>
+                                <span class="calendar-ticket-month"><%= month %></span>
                             </div>
+                            
+                            <!-- Event Info -->
+                            <div class="flex-grow-1" style="min-width: 0;">
+                                <h4 class="mb-1 text-chiro-blue fw-bold font-playful text-break"><%= event.title %></h4>
+                                <div class="d-flex flex-wrap gap-2 mt-1 align-items-center">
+                                    <% if (hasEndDate) { %>
+                                        <span class="badge bg-warning text-dark rounded-pill">
+                                            <i class="bi bi-calendar-range me-1"></i> <%= dateDisplay %>
+                                        </span>
+                                    <% } %>
+                                    <% if (event.startTime) { %>
+                                        <span class="badge bg-light text-muted border rounded-pill">
+                                            <i class="bi bi-clock me-1 text-primary"></i> <%= event.startTime %><% if (event.endTime) { %> - <%= event.endTime %><% } %>
+                                        </span>
+                                    <% } %>
+                                    <% if (event.location) { %>
+                                        <span class="badge bg-light text-muted border rounded-pill d-none d-md-inline-block">
+                                            <i class="bi bi-geo-alt me-1 text-danger"></i> <%= event.location %>
+                                        </span>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted d-sm-none ms-auto flex-shrink-0"></i>
                         </div>
                         
-                        <div class="ms-auto d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center justify-content-end gap-2 flex-shrink-0 <%= (user && (user.role === 'admin' || user.role === 'media')) ? 'border-top pt-2 pt-sm-0 border-sm-0-reset' : 'd-none d-sm-flex' %>">
+                            <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center justify-content-center flex-grow-1 flex-sm-grow-0"
+                                        title="Rechtstreeks bewerken"
+                                        onclick="event.stopPropagation(); openEditEventModal(this.closest('.calendar-ticket-item'))">
+                                    <i class="bi bi-pencil-square me-1"></i><span>Bewerken</span>
+                                </button>
+                            <% } %>
                             <span class="btn btn-sm btn-light rounded-pill px-3 d-none d-sm-inline-flex align-items-center font-playful">
                                 Details <i class="bi bi-chevron-right ms-1"></i>
                             </span>
-                            <i class="bi bi-chevron-right text-muted d-sm-none"></i>
                         </div>
                     </div>
                 </div>
