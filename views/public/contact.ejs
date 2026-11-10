@@ -18,11 +18,11 @@ var contactCap = (content && content.contact_polaroid_cap && content.contact_pol
         <span class="washi-tape washi-tape-yellow washi-tape-top-right"></span>
 
         <h1 class="journal-main-title mb-3" data-live-edit="contact_title" data-live-edit-type="text">
-            <%= contactTitle %>
+            <%- contactTitle %>
         </h1>
 
         <p class="journal-main-lead mb-0" data-live-edit="contact_lead" data-live-edit-type="text">
-            <%= contactLead %>
+            <%- contactLead %>
         </p>
     </header>
 
@@ -82,14 +82,14 @@ var contactCap = (content && content.contact_polaroid_cap && content.contact_pol
                 <!-- Taped Polaroid Snapshot -->
                 <div class="sidebar-polaroid p-2 mt-4">
                     <div class="polaroid-img-wrapper" data-live-edit="contact_polaroid_img" data-live-edit-type="image" data-live-edit-ratio="1.33333" style="aspect-ratio: 4/3;">
-                        <img src="<%= contactImg %>" alt="<%= contactCap %>" class="polaroid-img" loading="lazy">
+                        <img src="<%= contactImg %>" alt="<%= contactCap.replace(/<[^>]*>/g, '') %>" class="polaroid-img" loading="lazy">
                         <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
                             <div class="live-image-overlay">
                                 <i class="bi bi-crop"></i> <span>Foto aanpassen</span>
                             </div>
                         <% } %>
                     </div>
-                    <div class="polaroid-caption font-playful fs-5" data-live-edit="contact_polaroid_cap" data-live-edit-type="text"><%= contactCap %></div>
+                    <div class="polaroid-caption font-playful fs-5" data-live-edit="contact_polaroid_cap" data-live-edit-type="text"><%- contactCap %></div>
                 </div>
             </div>
         </div>

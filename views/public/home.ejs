@@ -91,7 +91,7 @@ var boxInfoBtnUrl = (content.box_info_btn_url && content.box_info_btn_url.conten
 <!-- Full-Width Hero Section at Top -->
 <section class="hero-fullwidth-section">
     <div class="hero-fullwidth-media" data-live-edit="hero_image" data-live-edit-type="image" data-live-edit-ratio="2.2">
-        <img src="<%= heroImage %>" alt="<%= heroTitle %>" class="hero-fullwidth-img" fetchpriority="high">
+        <img src="<%= heroImage %>" alt="<%= heroTitle.replace(/<[^>]*>/g, '') %>" class="hero-fullwidth-img" fetchpriority="high">
         <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
             <div class="live-image-overlay">
                 <i class="bi bi-crop"></i> <span>Hero foto bijsnijden / vervangen</span>
@@ -115,11 +115,11 @@ var boxInfoBtnUrl = (content.box_info_btn_url && content.box_info_btn_url.conten
 
             <div class="text-center py-2">
                 <h1 class="journal-main-title mb-3" data-live-edit="hero_title" data-live-edit-type="text">
-                    <%= heroTitle %>
+                    <%- heroTitle %>
                 </h1>
 
                 <p class="journal-main-lead mx-auto mb-4" style="max-width: 720px;" data-live-edit="hero_text" data-live-edit-type="text" data-multiline="true">
-                    <%= heroText %>
+                    <%- heroText %>
                 </p>
 
                 <div class="d-flex flex-wrap justify-content-center gap-3 align-items-center">
@@ -145,9 +145,9 @@ var boxInfoBtnUrl = (content.box_info_btn_url && content.box_info_btn_url.conten
                     <div class="journal-notebook-inner">
                         <div class="mb-4 pb-3 border-bottom border-dashed">
                             <span class="badge bg-warning text-dark px-3 py-2 rounded-pill font-playful mb-2" data-live-edit="logbook_badge" data-live-edit-type="text">
-                                <%= logbookBadge %>
+                                <%- logbookBadge %>
                             </span>
-                            <h2 class="notebook-title m-0" data-live-edit="logbook_title" data-live-edit-type="text"><%= logbookTitle %></h2>
+                            <h2 class="notebook-title m-0" data-live-edit="logbook_title" data-live-edit-type="text"><%- logbookTitle %></h2>
                         </div>
 
                         <div class="notebook-body mb-4" data-live-edit="intro" data-live-edit-type="rich">
@@ -310,20 +310,20 @@ var boxInfoBtnUrl = (content.box_info_btn_url && content.box_info_btn_url.conten
                         </div>
                         <div class="visa-grid">
                             <div class="visa-stamp visa-red">
-                                <div class="visa-num" data-live-edit="stat_1_num" data-live-edit-type="text"><%= stat1Num %></div>
-                                <div class="visa-lbl" data-live-edit="stat_1_lbl" data-live-edit-type="text"><%= stat1Lbl %></div>
+                                <div class="visa-num" data-live-edit="stat_1_num" data-live-edit-type="text"><%- stat1Num %></div>
+                                <div class="visa-lbl" data-live-edit="stat_1_lbl" data-live-edit-type="text"><%- stat1Lbl %></div>
                             </div>
                             <div class="visa-stamp visa-blue">
-                                <div class="visa-num" data-live-edit="stat_2_num" data-live-edit-type="text"><%= stat2Num %></div>
-                                <div class="visa-lbl" data-live-edit="stat_2_lbl" data-live-edit-type="text"><%= stat2Lbl %></div>
+                                <div class="visa-num" data-live-edit="stat_2_num" data-live-edit-type="text"><%- stat2Num %></div>
+                                <div class="visa-lbl" data-live-edit="stat_2_lbl" data-live-edit-type="text"><%- stat2Lbl %></div>
                             </div>
                             <div class="visa-stamp visa-yellow">
-                                <div class="visa-num" data-live-edit="stat_3_num" data-live-edit-type="text"><%= stat3Num %></div>
-                                <div class="visa-lbl" data-live-edit="stat_3_lbl" data-live-edit-type="text"><%= stat3Lbl %></div>
+                                <div class="visa-num" data-live-edit="stat_3_num" data-live-edit-type="text"><%- stat3Num %></div>
+                                <div class="visa-lbl" data-live-edit="stat_3_lbl" data-live-edit-type="text"><%- stat3Lbl %></div>
                             </div>
                             <div class="visa-stamp visa-brown">
-                                <div class="visa-num" data-live-edit="stat_4_num" data-live-edit-type="text"><%= stat4Num %></div>
-                                <div class="visa-lbl" data-live-edit="stat_4_lbl" data-live-edit-type="text"><%= stat4Lbl %></div>
+                                <div class="visa-num" data-live-edit="stat_4_num" data-live-edit-type="text"><%- stat4Num %></div>
+                                <div class="visa-lbl" data-live-edit="stat_4_lbl" data-live-edit-type="text"><%- stat4Lbl %></div>
                             </div>
                         </div>
                     </div>
@@ -333,9 +333,9 @@ var boxInfoBtnUrl = (content.box_info_btn_url && content.box_info_btn_url.conten
                         <span class="washi-tape washi-tape-red washi-tape-top-center" style="width: 75px; height: 18px; top: -9px;"></span>
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <i class="bi bi-balloon-heart-fill text-danger fs-4"></i>
-                            <h4 class="font-playful fs-5 m-0 text-dark" data-live-edit="box_join_title" data-live-edit-type="text"><%= boxJoinTitle %></h4>
+                            <h4 class="font-playful fs-5 m-0 text-dark" data-live-edit="box_join_title" data-live-edit-type="text"><%- boxJoinTitle %></h4>
                         </div>
-                        <p class="text-muted small mb-3" data-live-edit="box_join_text" data-live-edit-type="text" data-multiline="true"><%= boxJoinText %></p>
+                        <p class="text-muted small mb-3" data-live-edit="box_join_text" data-live-edit-type="text" data-multiline="true"><%- boxJoinText %></p>
                         <a href="<%= boxJoinBtnUrl %>" class="btn btn-chiro-outline btn-sm rounded-pill w-100 font-playful d-inline-flex justify-content-center align-items-center gap-1" data-live-edit-btn data-live-edit-text="box_join_btn_text" data-live-edit-url="box_join_btn_url">
                             <i class="bi bi-info-circle"></i> <span class="btn-label"><%= boxJoinBtnText %></span>
                         </a>
@@ -346,20 +346,20 @@ var boxInfoBtnUrl = (content.box_info_btn_url && content.box_info_btn_url.conten
                         <span class="washi-tape washi-tape-yellow washi-tape-top-center" style="width: 75px; height: 18px; top: -9px;"></span>
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <i class="bi bi-lightbulb-fill text-warning fs-4"></i>
-                            <h4 class="font-playful fs-5 m-0 text-dark" data-live-edit="box_info_title" data-live-edit-type="text"><%= boxInfoTitle %></h4>
+                            <h4 class="font-playful fs-5 m-0 text-dark" data-live-edit="box_info_title" data-live-edit-type="text"><%- boxInfoTitle %></h4>
                         </div>
                         <ul class="list-unstyled small text-muted mb-3 d-flex flex-column gap-2">
                             <li class="d-flex align-items-start gap-2">
                                 <i class="bi bi-check-circle-fill text-success flex-shrink-0 mt-1"></i>
-                                <span data-live-edit="box_info_item_1" data-live-edit-type="text"><%= boxInfoItem1 %></span>
+                                <span data-live-edit="box_info_item_1" data-live-edit-type="text"><%- boxInfoItem1 %></span>
                             </li>
                             <li class="d-flex align-items-start gap-2">
                                 <i class="bi bi-check-circle-fill text-success flex-shrink-0 mt-1"></i>
-                                <span data-live-edit="box_info_item_2" data-live-edit-type="text"><%= boxInfoItem2 %></span>
+                                <span data-live-edit="box_info_item_2" data-live-edit-type="text"><%- boxInfoItem2 %></span>
                             </li>
                             <li class="d-flex align-items-start gap-2">
                                 <i class="bi bi-check-circle-fill text-success flex-shrink-0 mt-1"></i>
-                                <span data-live-edit="box_info_item_3" data-live-edit-type="text"><%= boxInfoItem3 %></span>
+                                <span data-live-edit="box_info_item_3" data-live-edit-type="text"><%- boxInfoItem3 %></span>
                             </li>
                         </ul>
                         <a href="<%= boxInfoBtnUrl %>" class="text-chiro-blue fw-bold small text-decoration-none font-playful d-inline-flex align-items-center" data-live-edit-btn data-live-edit-text="box_info_btn_text" data-live-edit-url="box_info_btn_url">

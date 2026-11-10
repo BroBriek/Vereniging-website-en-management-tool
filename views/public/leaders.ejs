@@ -14,11 +14,11 @@ var leadersLead = (content && content.leaders_lead && content.leaders_lead.conte
         <span class="washi-tape washi-tape-yellow washi-tape-top-right"></span>
 
         <h1 class="journal-main-title mb-3" data-live-edit="leaders_title" data-live-edit-type="text">
-            <%= leadersTitle %>
+            <%- leadersTitle %>
         </h1>
 
         <p class="journal-main-lead mb-3" data-live-edit="leaders_lead" data-live-edit-type="text">
-            <%= leadersLead %>
+            <%- leadersLead %>
         </p>
 
         <% if (user && (user.role === 'admin' || user.role === 'media')) { %>

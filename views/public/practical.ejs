@@ -19,11 +19,11 @@ var practicalTag = (content.practical_polaroid_tag && content.practical_polaroid
         <span class="washi-tape washi-tape-yellow washi-tape-top-right"></span>
 
         <h1 class="journal-main-title mb-3" data-live-edit="practical_title" data-live-edit-type="text">
-            <%= practicalTitle %>
+            <%- practicalTitle %>
         </h1>
 
         <p class="journal-main-lead mb-4" data-live-edit="practical_lead" data-live-edit-type="text">
-            <%= practicalLead %>
+            <%- practicalLead %>
         </p>
 
         <!-- Quick Info Visas -->
@@ -87,15 +87,15 @@ var practicalTag = (content.practical_polaroid_tag && content.practical_polaroid
                 <div class="sidebar-polaroid polaroid-tilt-right">
                     <span class="washi-tape washi-tape-yellow washi-tape-top-center"></span>
                     <div class="polaroid-img-wrapper" data-live-edit="practical_polaroid_img" data-live-edit-type="image" data-live-edit-ratio="1">
-                        <img src="<%= practicalImg %>" alt="<%= practicalCap %>" class="polaroid-img" loading="lazy">
+                        <img src="<%= practicalImg %>" alt="<%= practicalCap.replace(/<[^>]*>/g, '') %>" class="polaroid-img" loading="lazy">
                         <% if (user && (user.role === 'admin' || user.role === 'media')) { %>
                             <div class="live-image-overlay">
                                 <i class="bi bi-crop"></i> <span>Foto bijsnijden / vervangen</span>
                             </div>
                         <% } %>
                     </div>
-                    <div class="polaroid-caption" data-live-edit="practical_polaroid_cap" data-live-edit-type="text"><%= practicalCap %></div>
-                    <div class="polaroid-tag" data-live-edit="practical_polaroid_tag" data-live-edit-type="text"><%= practicalTag %></div>
+                    <div class="polaroid-caption" data-live-edit="practical_polaroid_cap" data-live-edit-type="text"><%- practicalCap %></div>
+                    <div class="polaroid-tag" data-live-edit="practical_polaroid_tag" data-live-edit-type="text"><%- practicalTag %></div>
                 </div>
 
                 <!-- Navigation Postcards -->

@@ -1455,8 +1455,24 @@ body.navbar-open {
     margin-bottom: 1.25rem;
 }
 
-.notebook-body strong {
-    color: #0f172a;
+.notebook-body strong,
+.notebook-body b {
+    font-weight: 700;
+}
+
+.notebook-body blockquote {
+    border-left: 4px solid var(--chiro-blue);
+    background: rgba(29, 78, 216, 0.05);
+    padding: 0.75rem 1.25rem;
+    margin: 1rem 0;
+    border-radius: 0 12px 12px 0;
+    font-style: italic;
+}
+
+.notebook-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
 }
 
 /* Scrapbook Sidebar Snapshots */
@@ -1964,17 +1980,80 @@ body.navbar-open {
     display: block;
 }
 
-/* Rich Toolbar */
+/* Rich Toolbar & Floating Text Formatting Toolbar */
 .live-rich-toolbar {
     position: sticky;
     top: 65px;
-    z-index: 20;
-    max-width: fit-content;
+    z-index: 1040;
+    max-width: 100%;
+}
+
+.live-floating-text-toolbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1060;
+    max-width: calc(100vw - 24px);
 }
 
 .live-rich-toolbar .btn {
     font-size: 0.85rem;
     line-height: 1.2;
+}
+
+.live-toolbar-select {
+    width: auto !important;
+    min-width: 110px;
+    max-width: 155px;
+    font-size: 0.8rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+    border-radius: 999px;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    cursor: pointer;
+}
+
+.live-color-indicator {
+    display: block;
+    width: 14px;
+    height: 3.5px;
+    border-radius: 2px;
+    margin-top: 1px;
+}
+
+.live-toolbar-popover {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 1070;
+    min-width: 210px;
+}
+
+.live-toolbar-popover.show {
+    display: block;
+}
+
+.live-color-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.live-color-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.12);
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.live-color-swatch:hover {
+    transform: scale(1.18);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 /* Toast container */

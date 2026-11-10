@@ -17,11 +17,11 @@ var shirtImg = (content.shirt_image && content.shirt_image.content) ? content.sh
         <span class="washi-tape washi-tape-yellow washi-tape-top-right"></span>
 
         <h1 class="journal-main-title mb-3" data-live-edit="shirts_title" data-live-edit-type="text">
-            <%= shirtsTitle %>
+            <%- shirtsTitle %>
         </h1>
 
         <p class="journal-main-lead mb-0" data-live-edit="shirts_lead" data-live-edit-type="text">
-            <%= shirtsLead %>
+            <%- shirtsLead %>
         </p>
     </header>
 
@@ -31,7 +31,7 @@ var shirtImg = (content.shirt_image && content.shirt_image.content) ? content.sh
             <div class="position-sticky" style="top: 100px;">
                 <div class="sidebar-polaroid shirt-showcase-box p-4" style="box-shadow: 0 16px 35px rgba(0,0,0,0.08);">
                     <span class="washi-tape washi-tape-yellow washi-tape-top-center"></span>
-                    <div class="shirt-price-stamp" data-live-edit="shirt_price" data-live-edit-type="text"><%= shirtPrice %></div>
+                    <div class="shirt-price-stamp" data-live-edit="shirt_price" data-live-edit-type="text"><%- shirtPrice %></div>
 
                     <div class="polaroid-img-wrapper my-3" data-live-edit="shirt_image" data-live-edit-type="image" data-live-edit-ratio="1" style="aspect-ratio: 1/1; background-color: #f0f7ff;">
                         <% if (shirtImg) { %>
