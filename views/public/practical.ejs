@@ -5,6 +5,21 @@ var practicalBadge = (content.practical_badge && content.practical_badge.content
 var practicalTitle = (content.practical_title && content.practical_title.content) ? content.practical_title.content : 'Praktische Informatie';
 var practicalLead = (content.practical_lead && content.practical_lead.content) ? content.practical_lead.content : 'Van uren en vieruurtjes tot uniformen en lidgeld: ontdek hier alles wat je moet weten voor een topjaar!';
 
+var visa1Num = (content.practical_visa_1_num && content.practical_visa_1_num.content) ? content.practical_visa_1_num.content : '14u - 17u';
+var visa1Lbl = (content.practical_visa_1_lbl && content.practical_visa_1_lbl.content) ? content.practical_visa_1_lbl.content : 'Uren zondag';
+
+var visa2Num = (content.practical_visa_2_num && content.practical_visa_2_num.content) ? content.practical_visa_2_num.content : 'Middenschool';
+var visa2Lbl = (content.practical_visa_2_lbl && content.practical_visa_2_lbl.content) ? content.practical_visa_2_lbl.content : 'Speelplaats';
+
+var visa3Num = (content.practical_visa_3_num && content.practical_visa_3_num.content) ? content.practical_visa_3_num.content : '€35';
+var visa3Lbl = (content.practical_visa_3_lbl && content.practical_visa_3_lbl.content) ? content.practical_visa_3_lbl.content : 'Lidgeld / jaar';
+
+var visa4Num = (content.practical_visa_4_num && content.practical_visa_4_num.content) ? content.practical_visa_4_num.content : '€1 / €0,50';
+var visa4Lbl = (content.practical_visa_4_lbl && content.practical_visa_4_lbl.content) ? content.practical_visa_4_lbl.content : 'Drankje & koek';
+
+var notebookStamp = (content.practical_notebook_stamp && content.practical_notebook_stamp.content) ? content.practical_notebook_stamp.content : 'Leidraad & Afspraken';
+var notebookBadge = (content.practical_notebook_badge && content.practical_notebook_badge.content) ? content.practical_notebook_badge.content : 'Elke 2 weken zondag';
+
 var practicalImg = (content.practical_polaroid_img && content.practical_polaroid_img.content) ? content.practical_polaroid_img.content : '/uploads/image-1778686732775-690747244.JPG';
 var practicalCap = (content.practical_polaroid_cap && content.practical_polaroid_cap.content) ? content.practical_polaroid_cap.content : 'Klaar om te ravotten! 🌲';
 var practicalTag = (content.practical_polaroid_tag && content.practical_polaroid_tag.content) ? content.practical_polaroid_tag.content : 'ZONDAGMIDDAG 14U-17U';
@@ -29,20 +44,20 @@ var practicalTag = (content.practical_polaroid_tag && content.practical_polaroid
         <!-- Quick Info Visas -->
         <div class="visa-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); max-width: 800px;">
             <div class="visa-stamp visa-blue">
-                <div class="visa-num fs-5"><i class="bi bi-clock me-1"></i>14u - 17u</div>
-                <div class="visa-lbl">Uren zondag</div>
+                <div class="visa-num fs-5"><i class="bi bi-clock me-1"></i><span data-live-edit="practical_visa_1_num" data-live-edit-type="text"><%- visa1Num %></span></div>
+                <div class="visa-lbl" data-live-edit="practical_visa_1_lbl" data-live-edit-type="text"><%- visa1Lbl %></div>
             </div>
             <div class="visa-stamp visa-yellow">
-                <div class="visa-num fs-5"><i class="bi bi-geo-alt me-1"></i>Middenschool</div>
-                <div class="visa-lbl">Speelplaats</div>
+                <div class="visa-num fs-5"><i class="bi bi-geo-alt me-1"></i><span data-live-edit="practical_visa_2_num" data-live-edit-type="text"><%- visa2Num %></span></div>
+                <div class="visa-lbl" data-live-edit="practical_visa_2_lbl" data-live-edit-type="text"><%- visa2Lbl %></div>
             </div>
             <div class="visa-stamp visa-red">
-                <div class="visa-num fs-5"><i class="bi bi-cash me-1"></i>€35</div>
-                <div class="visa-lbl">Lidgeld / jaar</div>
+                <div class="visa-num fs-5"><i class="bi bi-cash me-1"></i><span data-live-edit="practical_visa_3_num" data-live-edit-type="text"><%- visa3Num %></span></div>
+                <div class="visa-lbl" data-live-edit="practical_visa_3_lbl" data-live-edit-type="text"><%- visa3Lbl %></div>
             </div>
             <div class="visa-stamp visa-brown">
-                <div class="visa-num fs-5"><i class="bi bi-cup-straw me-1"></i>€1 / €0,50</div>
-                <div class="visa-lbl">Drankje & koek</div>
+                <div class="visa-num fs-5"><i class="bi bi-cup-straw me-1"></i><span data-live-edit="practical_visa_4_num" data-live-edit-type="text"><%- visa4Num %></span></div>
+                <div class="visa-lbl" data-live-edit="practical_visa_4_lbl" data-live-edit-type="text"><%- visa4Lbl %></div>
             </div>
         </div>
     </header>
@@ -56,10 +71,10 @@ var practicalTag = (content.practical_polaroid_tag && content.practical_polaroid
                 <div class="scrapbook-notebook-inner">
                     <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-3">
                         <span class="scrapbook-stamp-label mb-0">
-                            <i class="bi bi-journal-text me-1"></i> Leidraad & Afspraken
+                            <i class="bi bi-journal-text me-1"></i> <span data-live-edit="practical_notebook_stamp" data-live-edit-type="text"><%- notebookStamp %></span>
                         </span>
-                        <span class="badge bg-light text-muted border rounded-pill small font-playful px-3 py-1">
-                            Elke 2 weken zondag
+                        <span class="badge bg-light text-muted border rounded-pill small font-playful px-3 py-1" data-live-edit="practical_notebook_badge" data-live-edit-type="text">
+                            <%- notebookBadge %>
                         </span>
                     </div>
 

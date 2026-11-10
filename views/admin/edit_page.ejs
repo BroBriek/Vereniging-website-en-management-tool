@@ -743,6 +743,44 @@
         </script>
         <% } %>
     <% } else { %>
+        <% if (slug === 'practical') { %>
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                    <h4 class="fw-bold mb-0 text-primary">
+                        <i class="bi bi-card-checklist me-2"></i>Korte Info Stempels (Bovenaan)
+                    </h4>
+                    <p class="text-muted small mb-0 mt-1">De 4 infovakjes bovenaan de praktische pagina (uren, locatie, lidgeld en vieruurtje).</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small fw-bold"><i class="bi bi-clock me-1"></i>Vak 1 Waarde</label>
+                            <input type="text" class="form-control form-control-sm" name="practical_visa_1_num" value="<%= contentMap.practical_visa_1_num ? contentMap.practical_visa_1_num.content : '14u - 17u' %>">
+                            <label class="form-label small text-muted mt-1">Vak 1 Label</label>
+                            <input type="text" class="form-control form-control-sm" name="practical_visa_1_lbl" value="<%= contentMap.practical_visa_1_lbl ? contentMap.practical_visa_1_lbl.content : 'Uren zondag' %>">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small fw-bold"><i class="bi bi-geo-alt me-1"></i>Vak 2 Waarde</label>
+                            <input type="text" class="form-control form-control-sm" name="practical_visa_2_num" value="<%= contentMap.practical_visa_2_num ? contentMap.practical_visa_2_num.content : 'Middenschool' %>">
+                            <label class="form-label small text-muted mt-1">Vak 2 Label</label>
+                            <input type="text" class="form-control form-control-sm" name="practical_visa_2_lbl" value="<%= contentMap.practical_visa_2_lbl ? contentMap.practical_visa_2_lbl.content : 'Speelplaats' %>">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small fw-bold"><i class="bi bi-cash me-1"></i>Vak 3 Waarde</label>
+                            <input type="text" class="form-control form-control-sm" name="practical_visa_3_num" value="<%= contentMap.practical_visa_3_num ? contentMap.practical_visa_3_num.content : '€35' %>">
+                            <label class="form-label small text-muted mt-1">Vak 3 Label</label>
+                            <input type="text" class="form-control form-control-sm" name="practical_visa_3_lbl" value="<%= contentMap.practical_visa_3_lbl ? contentMap.practical_visa_3_lbl.content : 'Lidgeld / jaar' %>">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small fw-bold"><i class="bi bi-cup-straw me-1"></i>Vak 4 Waarde</label>
+                            <input type="text" class="form-control form-control-sm" name="practical_visa_4_num" value="<%= contentMap.practical_visa_4_num ? contentMap.practical_visa_4_num.content : '€1 / €0,50' %>">
+                            <label class="form-label small text-muted mt-1">Vak 4 Label</label>
+                            <input type="text" class="form-control form-control-sm" name="practical_visa_4_lbl" value="<%= contentMap.practical_visa_4_lbl ? contentMap.practical_visa_4_lbl.content : 'Drankje & koek' %>">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
         <% if (slug === 'departments') { %>
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-body p-4">
