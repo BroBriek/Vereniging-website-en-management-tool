@@ -106,7 +106,9 @@ router.get('/uploads', ensureMedia, uploadController.getUploads);
 router.post('/uploads', ensureMedia, (req, res, next) => {
     upload.single('file')(req, res, (err) => {
         if (err) {
-            return res.redirect('/admin/uploads?error=' + encodeURIComponent(err.message));
+            const isPicker = req.query.picker === 'true';
+            const baseRedirect = isPicker ? '/admin/uploads?picker=true&' : '/admin/maintenance?tab=uploads&';
+            return res.redirect(baseRedirect + 'error=' + encodeURIComponent(err.message));
         }
         next();
     });

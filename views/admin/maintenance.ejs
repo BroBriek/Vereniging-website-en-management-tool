@@ -222,6 +222,9 @@
                 <button class="nav-link" onclick="switchTab(event, 'announcements')">
                     <i class="bi bi-megaphone"></i> Aankondigingen
                 </button>
+                <button class="nav-link" onclick="switchTab(event, 'uploads')">
+                    <i class="bi bi-images"></i> Bestanden & Foto's
+                </button>
             </div>
         </div>
 
@@ -474,6 +477,11 @@
                     <!-- Announcements Tab -->
                     <div id="announcements" class="tab-content d-none">
                         <%- include('announcements') %>
+                    </div>
+
+                    <!-- Uploads Tab -->
+                    <div id="uploads" class="tab-content d-none">
+                        <%- include('uploads') %>
                     </div>
 
                 </div>

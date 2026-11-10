@@ -2,6 +2,10 @@ const fs = require('fs');
 const path = require('path');
 
 exports.getUploads = (req, res) => {
+    if (req.query.picker !== 'true') {
+        return res.redirect('/admin/maintenance?tab=uploads');
+    }
+
     const uploadDir = path.join(__dirname, '../public/uploads');
     if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
@@ -23,16 +27,19 @@ exports.getUploads = (req, res) => {
             files: fileList, 
             user: req.user,
             error: req.query.error,
-            success: req.query.success
+            success: req.query.success,
+            isStandalone: true
         });
     });
 };
 
 exports.postUpload = (req, res) => {
+    const isPicker = req.query.picker === 'true';
+    const baseRedirect = isPicker ? '/admin/uploads?picker=true&' : '/admin/maintenance?tab=uploads&';
     if (!req.file) {
-        return res.redirect('/admin/uploads?error=' + encodeURIComponent('Geen bestand geselecteerd.'));
+        return res.redirect(baseRedirect + 'error=' + encodeURIComponent('Geen bestand geselecteerd.'));
     }
-    res.redirect('/admin/uploads?success=' + encodeURIComponent('Bestand succesvol geüpload!'));
+    res.redirect(baseRedirect + 'success=' + encodeURIComponent('Bestand succesvol geüpload!'));
 };
 
 exports.deleteUpload = (req, res) => {
@@ -49,7 +56,8 @@ exports.deleteUpload = (req, res) => {
             console.error(err);
             // Don't crash if file doesn't exist, just redirect
         }
-        res.redirect('/admin/uploads');
+        const isPicker = req.query.picker === 'true';
+        res.redirect(isPicker ? '/admin/uploads?picker=true' : '/admin/maintenance?tab=uploads&success=' + encodeURIComponent('Bestand verwijderd!'));
     });
 };
 

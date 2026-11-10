@@ -1090,11 +1090,24 @@ exports.getMaintenanceTools = async (req, res) => {
             ],
             order: [['createdAt', 'DESC']]
         });
+
+        const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        const files = fs.readdirSync(uploadDir).filter(file => {
+            try {
+                return fs.statSync(path.join(uploadDir, file)).isFile();
+            } catch (e) {
+                return false;
+            }
+        });
         
         res.render('admin/maintenance', { 
             title: 'Onderhoudstools',
             user: req.user,
-            announcements
+            announcements,
+            files
         });
     } catch (error) {
         console.error('Maintenance tools error:', error);
