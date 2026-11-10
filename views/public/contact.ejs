@@ -1,12 +1,13 @@
 <%- include('../partials/header') %>
 
 <%
-var contactBadge = (content && content.contact_badge && content.contact_badge.content) ? content.contact_badge.content : '✉️ Zeg Eens Hallo • Contact';
-var contactTitle = (content && content.contact_title && content.contact_title.content) ? content.contact_title.content : 'Contacteer Ons';
-var contactLead = (content && content.contact_lead && content.contact_lead.content) ? content.contact_lead.content : 'Heb je een vraag over onze werking, wil je een keertje komen proberen of wil je de leiding iets laten weten? Stuur ons gerust een bericht!';
+var pageContent = (typeof content !== 'undefined' && content) ? content : {};
+var contactBadge = (pageContent.contact_badge && pageContent.contact_badge.content) ? pageContent.contact_badge.content : '✉️ Zeg Eens Hallo • Contact';
+var contactTitle = (pageContent.contact_title && pageContent.contact_title.content) ? pageContent.contact_title.content : 'Contacteer Ons';
+var contactLead = (pageContent.contact_lead && pageContent.contact_lead.content) ? pageContent.contact_lead.content : 'Heb je een vraag over onze werking, wil je een keertje komen proberen of wil je de leiding iets laten weten? Stuur ons gerust een bericht!';
 
-var contactImg = (content && content.contact_polaroid_img && content.contact_polaroid_img.content) ? content.contact_polaroid_img.content : '/uploads/image-1791810054939-717577279.jpeg';
-var contactCap = (content && content.contact_polaroid_cap && content.contact_polaroid_cap.content) ? content.contact_polaroid_cap.content : 'Onze Chiro-thuisbasis 🌲';
+var contactImg = (pageContent.contact_polaroid_img && pageContent.contact_polaroid_img.content) ? pageContent.contact_polaroid_img.content : '/uploads/image-1791810054939-717577279.jpeg';
+var contactCap = (pageContent.contact_polaroid_cap && pageContent.contact_polaroid_cap.content) ? pageContent.contact_polaroid_cap.content : 'Onze Chiro-thuisbasis 🌲';
 %>
 
 <div class="scrapbook-canvas<% if (user && (user.role === 'admin' || user.role === 'media')) { %> admin-logged-in<% } %>" data-page-slug="contact">

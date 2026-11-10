@@ -745,6 +745,7 @@ exports.getContact = async (req, res) => {
 exports.postContact = async (req, res) => {
     const { orgFullName, contactEmail } = getOrgConfig();
     const captchaEnabled = isCaptchaEnabled();
+    const content = await getContent('contact');
 
     if (SettingsService.get('disable_contact_form')) {
         return res.render('public/contact', { 
@@ -753,7 +754,8 @@ exports.postContact = async (req, res) => {
             contactFormDisabled: true, 
             error: 'Deze functie is tijdelijk nog niet beschikbaar',
             recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null,
-            captchaEnabled
+            captchaEnabled,
+            content
         });
     }
 
@@ -763,7 +765,7 @@ exports.postContact = async (req, res) => {
     // Honeypot check: if 'website' is filled, it's likely a bot.
     if (website) {
         console.log(`Spam detected: Honeypot filled by ${email}`);
-        return res.render('public/contact', { title: 'Contact', success: true, recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null, captchaEnabled });
+        return res.render('public/contact', { title: 'Contact', success: true, recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null, captchaEnabled, content });
     }
 
     // reCAPTCHA v3 verification (only in production or when explicitly enabled)
@@ -773,7 +775,8 @@ exports.postContact = async (req, res) => {
                 title: 'Contact', 
                 error: 'Er is een fout opgetreden bij de spam-check. Probeer het opnieuw.',
                 recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
-                captchaEnabled: true
+                captchaEnabled: true,
+                content
             });
         }
 
@@ -789,7 +792,8 @@ exports.postContact = async (req, res) => {
                     title: 'Contact', 
                     error: 'Ons systeem vermoedt dat dit bericht spam is. Probeer het later opnieuw of stuur een mail via je eigen mailprogramma.',
                     recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
-                    captchaEnabled: true
+                    captchaEnabled: true,
+                    content
                 });
             }
         } catch (captchaErr) {
@@ -798,7 +802,8 @@ exports.postContact = async (req, res) => {
                 title: 'Contact', 
                 error: 'Er ging iets mis bij de verificatie. Probeer het later opnieuw.',
                 recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
-                captchaEnabled: true
+                captchaEnabled: true,
+                content
             });
         }
     }
@@ -815,10 +820,10 @@ exports.postContact = async (req, res) => {
                    <p>${message.replace(/\n/g, '<br>')}</p>`
         });
         
-        res.render('public/contact', { title: 'Contact', success: true, recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null, captchaEnabled });
+        res.render('public/contact', { title: 'Contact', success: true, recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null, captchaEnabled, content });
     } catch (error) {
         console.error('Email error:', error);
-        res.render('public/contact', { title: 'Contact', error: 'Er ging iets mis bij het versturen. Probeer het later opnieuw.', recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null, captchaEnabled });
+        res.render('public/contact', { title: 'Contact', error: 'Er ging iets mis bij het versturen. Probeer het later opnieuw.', recaptchaSiteKey: captchaEnabled ? process.env.RECAPTCHA_SITE_KEY : null, captchaEnabled, content });
     }
 };
 
