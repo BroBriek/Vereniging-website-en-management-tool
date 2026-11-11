@@ -333,18 +333,55 @@ exports.postRegisterFormConfig = async (req, res) => {
     }
 };
 
+const getLeaderGroupOrderLiteral = () => sequelize.literal(`CASE LOWER(TRIM("Leader"."group"))
+    WHEN 'ribbel' THEN 1
+    WHEN 'ribbels' THEN 1
+    WHEN 'speelclub' THEN 2
+    WHEN 'speelclubbers' THEN 2
+    WHEN 'rakwi' THEN 3
+    WHEN 'rakwis' THEN 3
+    WHEN 'rakwi''s' THEN 3
+    WHEN 'tito' THEN 4
+    WHEN 'titos' THEN 4
+    WHEN 'tito''s' THEN 4
+    WHEN 'keti' THEN 5
+    WHEN 'ketis' THEN 5
+    WHEN 'keti''s' THEN 5
+    WHEN 'aspi' THEN 6
+    WHEN 'aspis' THEN 6
+    WHEN 'aspi''s' THEN 6
+    WHEN 'hoofdleiding' THEN 7
+    ELSE 8
+END`);
+
 exports.getLeaders = async (req, res) => {
-    const leaders = await Leader.findAll({ order: [['group', 'ASC']] });
+    const leaders = await Leader.findAll({
+        order: [
+            [getLeaderGroupOrderLiteral(), 'ASC'],
+            ['is_head_leader', 'DESC'],
+            ['name', 'ASC']
+        ]
+    });
     res.render('admin/leaders', { title: 'Beheer Leiding', leaders, user: req.user });
 };
 
 exports.postLeader = async (req, res) => {
     try {
         const { name, group, years_active, study, extra_info, birth_date, phone_number } = req.body;
-        const is_head_leader = req.body.is_head_leader === 'on';
+        const is_head_leader = req.body.is_head_leader === 'on' || req.body.is_head_leader === 'true' || req.body.is_head_leader === true;
         const image = req.file ? `/uploads/${req.file.filename}` : null;
-        await Leader.create({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader, phone_number: phone_number || null });
-        res.redirect('/admin/leaders');
+        await Leader.create({
+            name,
+            group,
+            years_active: years_active || 1,
+            study,
+            extra_info,
+            image,
+            birth_date: birth_date || null,
+            is_head_leader,
+            phone_number: phone_number || null
+        });
+        res.redirect('/admin/leaders?success=' + encodeURIComponent(`Leiding "${name}" succesvol toegevoegd!`));
     } catch (error) {
         console.error('Error creating leader:', error);
         res.redirect('/admin/leaders?error=Kon leiding niet aanmaken');
@@ -362,16 +399,26 @@ exports.getEditLeader = async (req, res) => {
 exports.updateLeader = async (req, res) => {
     try {
         const { name, group, years_active, study, extra_info, birth_date, phone_number } = req.body;
-        const is_head_leader = req.body.is_head_leader === 'on';
+        const is_head_leader = req.body.is_head_leader === 'on' || req.body.is_head_leader === 'true' || req.body.is_head_leader === true;
         const leader = await Leader.findByPk(req.params.id);
         if (leader) {
             let image = leader.image;
             if (req.file) {
                 image = `/uploads/${req.file.filename}`;
             }
-            await leader.update({ name, group, years_active, study, extra_info, image, birth_date, is_head_leader, phone_number: phone_number || null });
+            await leader.update({
+                name,
+                group,
+                years_active: years_active || 1,
+                study,
+                extra_info,
+                image,
+                birth_date: birth_date || null,
+                is_head_leader,
+                phone_number: phone_number || null
+            });
         }
-        res.redirect('/admin/leaders');
+        res.redirect('/admin/leaders?success=' + encodeURIComponent(`Gegevens van "${name || 'leiding'}" bijgewerkt!`));
     } catch (error) {
         console.error('Error updating leader:', error);
         res.redirect('/admin/leaders?error=Kon leiding niet bijwerken');
@@ -381,7 +428,7 @@ exports.updateLeader = async (req, res) => {
 exports.deleteLeader = async (req, res) => {
     try {
         await Leader.destroy({ where: { id: req.params.id } });
-        res.redirect('/admin/leaders');
+        res.redirect('/admin/leaders?success=' + encodeURIComponent('Leiding verwijderd.'));
     } catch (error) {
         console.error('Error deleting leader:', error);
         res.redirect('/admin/leaders?error=Kon leiding niet verwijderen');
@@ -1199,9 +1246,26 @@ exports.getUsers = async (req, res) => {
             where: {
                 username: { [require('sequelize').Op.ne]: 'admin' } // Exclude 'admin'
             },
-            attributes: ['id', 'username', 'role', 'isActive', 'profilePicture'],
-            order: [['username', 'ASC']]
-        });        res.render('admin/users', { title: 'Beheer Gebruikers', users, user: req.user });
+            attributes: ['id', 'username', 'role', 'isActive', 'profilePicture', 'email'],
+            include: [{
+                model: FeedGroup,
+                as: 'accessibleGroups',
+                attributes: ['id', 'name', 'year'],
+                through: { attributes: [] }
+            }],
+            order: [
+                [sequelize.literal(`CASE "User"."role"
+                    WHEN 'admin' THEN 1
+                    WHEN 'media' THEN 2
+                    WHEN 'leader' THEN 3
+                    WHEN 'kookmoeke' THEN 4
+                    ELSE 5
+                END`), 'ASC'],
+                ['username', 'ASC']
+            ]
+        });
+        const groups = await FeedGroup.findAll({ order: [['year', 'DESC'], ['name', 'ASC']] });
+        res.render('admin/users', { title: 'Beheer Gebruikers', users, groups, user: req.user });
     } catch (error) {
         console.error('Error getting users:', error);
         res.redirect('/admin');
@@ -1221,21 +1285,35 @@ exports.postUser = async (req, res) => {
         }
         const newUser = await User.create({ username: name, password, role, firstLogin: role === 'kookmoeke' ? false : true });
 
-        // Auto-assign to latest group if not admin
-        if (role !== 'admin') {
-            const latestGroup = await FeedGroup.findOne({
-                order: [['year', 'DESC'], ['createdAt', 'DESC']]
-            });
-            if (latestGroup) {
-                await UserGroupAccess.create({
-                    userId: newUser.id,
-                    feedGroupId: latestGroup.id,
-                    role: 'member'
+        // Assign groups if explicitly selected, or auto-assign to latest group if not admin/kookmoeke
+        if (role !== 'admin' && role !== 'kookmoeke') {
+            if (req.body.hasExplicitGroups === '1') {
+                const selected = req.body.groups;
+                let selectedIds = [];
+                if (Array.isArray(selected)) selectedIds = selected.map(id => parseInt(id)).filter(Boolean);
+                else if (selected) selectedIds = [parseInt(selected)].filter(Boolean);
+                if (selectedIds.length > 0) {
+                    await UserGroupAccess.bulkCreate(selectedIds.map(gid => ({
+                        userId: newUser.id,
+                        feedGroupId: gid,
+                        role: 'member'
+                    })));
+                }
+            } else {
+                const latestGroup = await FeedGroup.findOne({
+                    order: [['year', 'DESC'], ['createdAt', 'DESC']]
                 });
+                if (latestGroup) {
+                    await UserGroupAccess.create({
+                        userId: newUser.id,
+                        feedGroupId: latestGroup.id,
+                        role: 'member'
+                    });
+                }
             }
         }
 
-        res.redirect('/admin/users');
+        res.redirect('/admin/users?success=' + encodeURIComponent(`Gebruiker "${name}" succesvol toegevoegd!`));
     } catch (error) {
         console.error('Error creating user:', error);
         res.redirect('/admin/users?error=Kon gebruiker niet aanmaken');
@@ -1252,7 +1330,7 @@ exports.deleteUser = async (req, res) => {
         if (user) {
             await user.destroy();
         }
-        res.redirect('/admin/users');
+        res.redirect('/admin/users?success=' + encodeURIComponent('Gebruiker verwijderd.'));
     } catch (error) {
         console.error('Error deleting user:', error);
         res.redirect('/admin/users?error=Kon gebruiker niet verwijderen.');
@@ -1265,6 +1343,7 @@ exports.toggleUserStatus = async (req, res) => {
     }
     try {
         const target = await User.findByPk(req.params.id);
+        let statusMsg = 'Status bijgewerkt.';
         if (target) {
             // Toggle isActive. If it's null/undefined, treat as true (active), so toggle to false.
             // If it is false, toggle to true.
@@ -1275,10 +1354,13 @@ exports.toggleUserStatus = async (req, res) => {
             if (!newStatus) {
                 // If deactivated/archived, rotate calendarToken so old subscriptions immediately stop working
                 updates.calendarToken = crypto.randomBytes(24).toString('hex');
+                statusMsg = `"${target.username}" verplaatst naar inactief / oud-leiding.`;
+            } else {
+                statusMsg = `"${target.username}" is weer actief gemaakt!`;
             }
             await target.update(updates);
         }
-        res.redirect('/admin/users');
+        res.redirect('/admin/users?success=' + encodeURIComponent(statusMsg));
     } catch (error) {
         console.error('Error toggling user status:', error);
         res.redirect('/admin/users?error=Kon status niet wijzigen.');
@@ -1438,6 +1520,9 @@ exports.updateUser = async (req, res) => {
                 });
                 
                 if (exists) {
+                    if (req.body.fromModal === '1') {
+                        return res.redirect('/admin/users?error=Gebruikersnaam bestaat al');
+                    }
                     return res.redirect(`/admin/users/${target.id}/edit?error=Gebruikersnaam bestaat al`);
                 }
                 updates.username = newUsername;
@@ -1462,11 +1547,11 @@ exports.updateUser = async (req, res) => {
         // Admins have access to all implicitly; clear explicit entries
         await UserGroupAccess.destroy({ where: { userId: target.id } });
 
-        if (role !== 'admin' && selectedIds.length > 0) {
+        if (role !== 'admin' && role !== 'kookmoeke' && selectedIds.length > 0) {
             await UserGroupAccess.bulkCreate(selectedIds.map(gid => ({ userId: target.id, feedGroupId: gid, role: 'member' })));
         }
 
-        res.redirect('/admin/users');
+        res.redirect('/admin/users?success=' + encodeURIComponent(`Gebruiker "${updates.username || target.username}" succesvol bijgewerkt!`));
     } catch (error) {
         console.error('Error updating user:', error);
         res.redirect('/admin/users?error=Kon gebruiker niet bijwerken');

@@ -1,16 +1,368 @@
+<%- include('../partials/header') %>
+
+<%
+const allUsers = (users || []).map(u => {
+    const plain = u.toJSON ? u.toJSON() : u;
+    return {
+        ...plain,
+        displayName: typeof capitalizeName === 'function' ? capitalizeName(plain.username) : plain.username,
+        avatarColor: typeof getAvatarColor === 'function' ? getAvatarColor(plain.username) : '#1d4e89',
+        initials: (plain.username || '?').substring(0, 2).toUpperCase(),
+        accessibleGroups: Array.isArray(plain.accessibleGroups) ? plain.accessibleGroups : []
+    };
+});
+
+const allFeedGroups = (typeof groups !== 'undefined' && Array.isArray(groups))
+    ? groups.map(g => (g.toJSON ? g.toJSON() : g))
+    : [];
+
+const currentUserId = user ? user.id : null;
+
+const activeRegularUsers = allUsers.filter(u => u.isActive !== false && u.role !== 'kookmoeke');
+const kookmoekeUsers = allUsers.filter(u => u.role === 'kookmoeke');
+const inactiveRegularUsers = allUsers.filter(u => u.isActive === false && u.role !== 'kookmoeke');
+
+const countAllActive = activeRegularUsers.length + kookmoekeUsers.filter(u => u.isActive !== false).length;
+const countAdmins = activeRegularUsers.filter(u => u.role === 'admin').length;
+const countMedia = activeRegularUsers.filter(u => u.role === 'media').length;
+const countLeaders = activeRegularUsers.filter(u => !u.role || u.role === 'leader').length;
+const countKookmoekes = kookmoekeUsers.length;
+const countInactive = inactiveRegularUsers.length;
+%>
+
+<!-- Polaroid Photo Preview Overlay -->
+<div id="polaroid-overlay" class="polaroid-overlay d-none" onclick="closePolaroid()">
+    <div class="polaroid-container" onclick="event.stopPropagation()">
+        <div class="polaroid-photo">
+            <img id="polaroid-image" src="" alt="Profielfoto">
+        </div>
+        <div class="polaroid-caption" id="polaroid-caption"></div>
+    </div>
+</div>
+
+<!-- Top Header -->
+<div class="admin-users-header mb-4">
+    <div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <a href="/admin" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="bi bi-arrow-left me-1"></i> Dashboard
+            </a>
+            <a href="/admin/feedgroups" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center" title="Beheer toegang per leidingshoekje">
+                <i class="bi bi-chat-heart me-1"></i> Leidingshoekjes
+            </a>
+        </div>
+        <h1 class="mb-1 fw-bold"><i class="bi bi-person-badge-fill text-primary me-2"></i>Gebruikers Beheren</h1>
+        <p class="text-muted small mb-0">Overzicht van alle accounts georganiseerd per rol. Kookmoeke-accounts staan in een apart onderdeel onderaan.</p>
+    </div>
+    <div class="admin-users-header-actions">
+        <button type="button" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center flex-grow-1 flex-sm-grow-0" onclick="openAddUserModal('leader')">
+            <i class="bi bi-person-plus-fill me-2"></i> Nieuwe Gebruiker
+        </button>
+        <a href="/admin/info" class="btn btn-info text-white rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;" title="Algemene Hulp & Info">
+            <i class="bi bi-info-circle"></i>
+        </a>
+    </div>
+</div>
+
+<% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+            <div><%= error %></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Sluiten"></button>
+    </div>
+<% } %>
+
+<% if (typeof success !== 'undefined' && success) { %>
+    <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-check-circle-fill fs-5 me-2"></i>
+            <div><%= success %></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Sluiten"></button>
+    </div>
+<% } %>
+
+<!-- Filter Tabs & Search / Sort Toolbar Card -->
+<div class="admin-toolbar-card shadow-sm rounded-4 mb-4">
+    <div class="p-3 p-md-4">
+        <!-- Role & Category Filter Pills -->
+        <div class="admin-filter-pills pb-3 mb-3 border-bottom" id="userFilterPills" role="tablist">
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold user-filter-btn btn-primary text-white shadow-sm" data-filter="all-active">
+                <i class="bi bi-collection me-1"></i> Alle Actieve
+                <span class="badge rounded-pill ms-1 bg-white text-primary"><%= countAllActive %></span>
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold user-filter-btn btn-light text-secondary border" data-filter="admin">
+                <i class="bi bi-shield-lock-fill text-danger me-1"></i> Administrators
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary"><%= countAdmins %></span>
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold user-filter-btn btn-light text-secondary border" data-filter="media">
+                <i class="bi bi-megaphone-fill text-primary me-1"></i> Media
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary"><%= countMedia %></span>
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold user-filter-btn btn-light text-secondary border" data-filter="leader">
+                <i class="bi bi-people-fill text-info me-1"></i> Leiding
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary"><%= countLeaders %></span>
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold user-filter-btn btn-light text-secondary border" data-filter="kookmoeke">
+                <i class="bi bi-heart-fill text-warning me-1"></i> Kookmoekes
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary"><%= countKookmoekes %></span>
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold user-filter-btn btn-light text-secondary border ms-lg-auto" data-filter="inactive">
+                <i class="bi bi-clock-history me-1"></i> Oud-Leiding / Inactief
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary"><%= countInactive %></span>
+            </button>
+        </div>
+
+        <!-- Search & Sort Controls -->
+        <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-7 col-lg-8">
+                <div class="position-relative">
+                    <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 16px; pointer-events: none;"></i>
+                    <input type="search" id="adminUserSearch" class="form-control admin-filter-control ps-5" placeholder="Zoek op gebruikersnaam, rol of leidingshoekje...">
+                </div>
+            </div>
+            <div class="col-12 col-md-5 col-lg-4">
+                <select id="adminUserSort" class="form-select admin-filter-control" aria-label="Sorteer gebruikers">
+                    <option value="role-default">🛡️ Per Rol (Standaard)</option>
+                    <option value="name-asc">🔤 Naam (A - Z)</option>
+                    <option value="name-desc">🔤 Naam (Z - A)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Summary Bar -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 px-1">
+    <div class="text-muted small fw-medium" id="userResultsSummary">
+        Gebruikers laden...
+    </div>
+    <button type="button" id="btnResetUserFilters" class="btn btn-link btn-sm text-decoration-none p-0 d-none" onclick="resetAdminUserFilters()">
+        <i class="bi bi-x-circle me-1"></i>Alle filters wissen
+    </button>
+</div>
+
+<!-- 1. Main Regular Users Container (Grouped by Role by default: Admin -> Media -> Leiding) -->
+<div id="adminRegularUsersContainer" class="mb-4"></div>
+
+<!-- 2. Separate Dedicated Section for Kookmoeke Accounts -->
+<div id="adminKookmoekeWrapper" class="mb-5">
+    <div class="kookmoeke-section-card rounded-4 p-3 p-md-4 shadow-sm">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 pb-3 mb-3 border-bottom border-warning-subtle">
+            <div>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-bold fs-6 shadow-sm">
+                        <i class="bi bi-heart-fill text-danger me-1"></i> Kookmoeke Accounts
+                    </span>
+                    <span class="badge bg-white text-secondary border rounded-pill px-3 py-1" id="kookmoekeSectionCountBadge">
+                        <%= countKookmoekes %>
+                    </span>
+                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill px-2 py-1 small">
+                        Apart Accounttype
+                    </span>
+                </div>
+                <p class="text-muted small mb-0">
+                    Speciale accounts voor de kookploeg. Zij hebben een eigen omgeving (Kampboekje & Tetterhoekje) los van de gewone leidingsaccounts.
+                </p>
+            </div>
+            <button type="button" class="btn btn-warning text-dark fw-bold btn-sm rounded-pill px-3 py-2 shadow-sm d-inline-flex align-items-center flex-shrink-0" onclick="openAddUserModal('kookmoeke')">
+                <i class="bi bi-plus-circle-fill me-1"></i> Kookmoeke Toevoegen
+            </button>
+        </div>
+        <div id="adminKookmoekeListContainer"></div>
+    </div>
+</div>
+
+<!-- 3. Collapsible Section for Inactive / Oud-Leiding Accounts (when in default 'all-active' view) -->
+<div id="adminInactiveCollapsibleSection" class="mb-5">
+    <button class="btn btn-outline-secondary rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#inactiveUsersCollapse" aria-expanded="false" aria-controls="inactiveUsersCollapse">
+        <i class="bi bi-clock-history"></i>
+        <span>Oud-Leiding & Inactieve Accounts (<%= countInactive %>)</span>
+        <i class="bi bi-chevron-down small"></i>
+    </button>
+
+    <div class="collapse mt-3" id="inactiveUsersCollapse">
+        <div class="admin-toolbar-card rounded-4 p-3 p-md-4 shadow-sm bg-light">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div>
+                    <h5 class="fw-bold text-secondary mb-0"><i class="bi bi-archive me-2"></i>Oud-Leiding (Inactief)</h5>
+                    <p class="text-muted small mb-0">Deze accounts kunnen niet meer inloggen of de kalender synchroniseren, maar hun oude berichten blijven bewaard.</p>
+                </div>
+            </div>
+            <div id="adminInactiveCollapseContainer"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Empty State -->
+<div id="adminUsersEmptyState" class="admin-toolbar-card shadow-sm rounded-4 text-center py-5 mb-5 d-none">
+    <div class="p-4">
+        <i class="bi bi-person-x display-3 text-muted opacity-50 mb-3 d-block"></i>
+        <h4 class="fw-bold text-dark mb-1">Geen gebruikers gevonden</h4>
+        <p class="text-muted mb-3">Er zijn geen gebruikers die overeenkomen met je huidige zoekopdracht of filter.</p>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="resetAdminUserFilters()">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Filters herstellen
+            </button>
+            <button type="button" class="btn btn-success rounded-pill px-4" onclick="openAddUserModal('leader')">
+                <i class="bi bi-person-plus me-1"></i> Nieuwe Gebruiker Toevoegen
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Reusable Add / Edit User Modal (Same Design Language as Event Modal & Leader Modal) -->
+<div class="modal fade" id="userModalAdmin" tabindex="-1" aria-labelledby="userModalAdminLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
+        <div class="modal-content border-0 shadow-lg rounded-4 position-relative overflow-hidden">
+            <span class="washi-tape washi-tape-red washi-tape-top-center"></span>
+            <div class="modal-header border-0 pb-0 pt-4 px-3 px-sm-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="badge bg-light text-secondary border rounded-pill px-3 py-1 small">
+                        <i class="bi bi-shield-check text-primary me-1"></i>Gebruikersbeheer
+                    </span>
+                </div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+            </div>
+
+            <form id="userModalForm" action="/admin/users" method="POST">
+                <input type="hidden" name="fromModal" value="1">
+                <input type="hidden" name="hasExplicitGroups" value="1">
+
+                <div class="modal-body p-3 p-sm-4 pt-2">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
+                        <h4 id="userModalHeading" class="fw-bold font-playful mb-0 text-dark fs-5">
+                            <i class="bi bi-person-plus-fill text-success me-2"></i>Nieuwe Gebruiker Toevoegen
+                        </h4>
+                    </div>
+
+                    <!-- 1. Rol / Accounttype Kiezen -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small mb-2">Kies rol / accounttype <span class="text-danger">*</span></label>
+                        <div class="row g-2" id="userModalRoleCards">
+                            <div class="col-12 col-sm-6">
+                                <label class="user-role-card d-flex align-items-start gap-2 p-2 p-sm-3 border rounded-3 h-100 w-100" style="cursor: pointer;">
+                                    <input type="radio" name="role" value="leader" id="roleRadioLeader" class="form-check-input user-role-radio mt-1 flex-shrink-0" checked>
+                                    <div>
+                                        <div class="fw-bold text-dark small"><i class="bi bi-people-fill text-info me-1"></i>Leiding</div>
+                                        <div class="text-muted" style="font-size: 0.76rem; line-height: 1.3;">Standaard leidingsaccount voor leidingshoekjes, kalender en spelendatabank.</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="user-role-card d-flex align-items-start gap-2 p-2 p-sm-3 border rounded-3 h-100 w-100" style="cursor: pointer;">
+                                    <input type="radio" name="role" value="media" id="roleRadioMedia" class="form-check-input user-role-radio mt-1 flex-shrink-0">
+                                    <div>
+                                        <div class="fw-bold text-dark small"><i class="bi bi-megaphone-fill text-primary me-1"></i>Media (Website & Formulieren)</div>
+                                        <div class="text-muted" style="font-size: 0.76rem; line-height: 1.3;">Leiding + beheer van publieke pagina's, leiding, kalender en formulieren.</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="user-role-card d-flex align-items-start gap-2 p-2 p-sm-3 border rounded-3 h-100 w-100" style="cursor: pointer;">
+                                    <input type="radio" name="role" value="admin" id="roleRadioAdmin" class="form-check-input user-role-radio mt-1 flex-shrink-0">
+                                    <div>
+                                        <div class="fw-bold text-dark small"><i class="bi bi-shield-lock-fill text-danger me-1"></i>Administrator</div>
+                                        <div class="text-muted" style="font-size: 0.76rem; line-height: 1.3;">Volledige toegang tot alle beheerfuncties, inschrijvingen, financiën en instellingen.</div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label class="user-role-card user-role-card-kookmoeke d-flex align-items-start gap-2 p-2 p-sm-3 border rounded-3 h-100 w-100" style="cursor: pointer;">
+                                    <input type="radio" name="role" value="kookmoeke" id="roleRadioKookmoeke" class="form-check-input user-role-radio mt-1 flex-shrink-0">
+                                    <div>
+                                        <div class="fw-bold text-dark small">
+                                            <i class="bi bi-heart-fill text-warning me-1"></i>Kookmoeke
+                                            <span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill ms-1" style="font-size: 0.65rem;">Apart type</span>
+                                        </div>
+                                        <div class="text-muted" style="font-size: 0.76rem; line-height: 1.3;">Speciaal account voor de kookploeg (toegang tot Kampboekje & Tetterhoekje).</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Inloggegevens -->
+                    <div class="p-3 bg-light rounded-4 border mb-3">
+                        <div class="fw-bold text-dark small mb-2">
+                            <i class="bi bi-key-fill text-primary me-1"></i>Inloggegevens
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="userModalUsername" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Gebruikersnaam <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control admin-modal-input" name="username" id="userModalUsername" required placeholder="bv. voornaam of bijnaam" autocomplete="off">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="userModalPassword" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;" id="userModalPasswordLabel">Wachtwoord <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control admin-modal-input" name="password" id="userModalPassword" required placeholder="Kies een wachtwoord..." autocomplete="new-password">
+                                    <button class="btn btn-outline-secondary px-3" type="button" onclick="toggleUserModalPassword()" title="Toon/verberg wachtwoord" style="border-radius: 0 12px 12px 0;">
+                                        <i class="bi bi-eye" id="userModalPasswordEye"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mt-1" id="userModalPasswordHint" style="font-size: 0.75rem;">De gebruiker kan dit wachtwoord achteraf zelf wijzigen.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Toegang tot Leidingshoekjes -->
+                    <div class="p-3 bg-light rounded-4 border">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <span class="fw-bold text-dark small"><i class="bi bi-chat-heart-fill text-primary me-1"></i>Toegang tot Leidingshoekjes</span>
+                            <div id="userModalGroupsQuickBtns" class="d-flex gap-1">
+                                <button type="button" class="btn btn-sm bg-white border rounded-pill px-2 py-0 small" style="font-size: 0.75rem;" onclick="setAllUserModalGroups(true)">Alles selecteren</button>
+                                <button type="button" class="btn btn-sm bg-white border rounded-pill px-2 py-0 small" style="font-size: 0.75rem;" onclick="setAllUserModalGroups(false)">Niets</button>
+                            </div>
+                        </div>
+
+                        <div id="userModalAdminAccessNotice" class="alert alert-info py-2 px-3 mb-0 small rounded-3 d-none">
+                            <i class="bi bi-shield-check me-1"></i>Administrators hebben automatisch toegang tot alle leidingshoekjes.
+                        </div>
+
+                        <div id="userModalKookmoekeAccessNotice" class="alert alert-warning py-2 px-3 mb-0 small rounded-3 d-none">
+                            <i class="bi bi-heart-fill text-danger me-1"></i>Kookmoeke-accounts hebben een eigen omgeving (Kampboekje & Tetterhoekje) en horen niet in de gewone leidingshoekjes.
+                        </div>
+
+                        <div id="userModalGroupsGrid" class="row g-2">
+                            <% if (allFeedGroups.length === 0) { %>
+                                <div class="col-12 text-muted small fst-italic">Er zijn nog geen leidingshoekjes aangemaakt.</div>
+                            <% } else { %>
+                                <% allFeedGroups.forEach((g, idx) => { %>
+                                    <div class="col-12 col-sm-6 col-md-4">
+                                        <label class="admin-check-card d-flex align-items-center gap-2 p-2 border rounded-3 bg-white w-100" style="cursor: pointer;">
+                                            <input class="form-check-input admin-modal-checkbox user-group-checkbox m-0 flex-shrink-0" type="checkbox" name="groups" value="<%= g.id %>" data-is-latest="<%= idx === 0 ? '1' : '0' %>">
+                                            <span class="small fw-medium text-dark text-truncate">
+                                                <%= g.name %> <% if (g.year) { %><span class="text-muted">(<%= g.year %>)</span><% } %>
+                                            </span>
+                                        </label>
+                                    </div>
+                                <% }) %>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 bg-light px-3 px-sm-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2" data-bs-dismiss="modal">
+                        Annuleren
+                    </button>
+                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm ms-auto">
+                        <i class="bi bi-check-lg me-1"></i><span id="userModalSubmitText">Gebruiker Toevoegen</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Embedded Users Data -->
+<script id="adminUsersDataJson" type="application/json">
+<%- JSON.stringify({ users: allUsers, currentUserId }).replace(/<\//g, '<\\/') %>
+</script>
+
 <style>
-    .avatar-circle-sm {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 0.8rem;
-    }
-    /* Polaroid Overlay */
     .polaroid-overlay {
         position: fixed;
         top: 0;
@@ -31,8 +383,7 @@
         transform: rotate(-2deg);
         transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         max-width: 90%;
-        width: auto;
-        display: inline-block;
+        border-radius: 6px;
     }
     .polaroid-container:hover {
         transform: rotate(0deg) scale(1.02);
@@ -44,6 +395,7 @@
         display: block;
         background-color: #eee;
         border: 1px solid #ddd;
+        object-fit: cover;
     }
     .polaroid-caption {
         font-family: 'Patrick Hand', 'Brush Script MT', cursive;
@@ -53,210 +405,846 @@
         color: #2c3e50;
         line-height: 1;
     }
+
+    .admin-users-header {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .admin-users-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    @media (min-width: 992px) {
+        .admin-users-header {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .admin-users-header-actions {
+            width: auto;
+            flex-shrink: 0;
+        }
+    }
+
+    .admin-toolbar-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+    }
+    .admin-filter-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+    }
+    @media (max-width: 575.98px) {
+        .admin-filter-pills {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 0.5rem !important;
+        }
+        .admin-filter-pills::-webkit-scrollbar {
+            display: none;
+        }
+        .admin-filter-pills .user-filter-btn {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+    }
+    .admin-filter-control {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 50rem !important;
+        padding: 0.55rem 1rem !important;
+        font-size: 0.95rem !important;
+        background-color: #f8fafc !important;
+        font-family: system-ui, -apple-system, sans-serif !important;
+    }
+    .admin-filter-control.ps-5 {
+        padding-left: 2.5rem !important;
+    }
+    .admin-filter-control:focus {
+        background-color: #ffffff !important;
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        box-shadow: 0 0 0 3px rgba(29, 78, 137, 0.1) !important;
+    }
+
+    .admin-role-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.65rem 1rem;
+        border-radius: 14px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 0.85rem;
+    }
+    .admin-role-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.35rem 0.9rem;
+        border-radius: 50rem;
+        color: #ffffff;
+        font-family: var(--font-heading, 'Fredoka', sans-serif);
+        font-weight: 600;
+        font-size: 0.95rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .kookmoeke-section-card {
+        background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+        border: 2px solid #fde68a;
+    }
+
+    .admin-user-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 0.9rem 1.15rem;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.85rem;
+    }
+    .admin-user-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+    .admin-user-card.is-kookmoeke-card {
+        border-color: #fde68a;
+    }
+    .admin-user-card.is-kookmoeke-card:hover {
+        border-color: #f59e0b;
+    }
+    .admin-user-card.is-inactive-card {
+        background: #f8fafc;
+        opacity: 0.9;
+    }
+    .admin-user-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 2px solid #f1f5f9;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+    }
+    .admin-user-avatar:hover {
+        transform: scale(1.06);
+    }
+    .admin-user-initials {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #ffffff;
+        font-family: var(--font-heading, 'Fredoka', sans-serif);
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    .admin-user-name-btn {
+        color: #1e293b;
+        text-decoration: none;
+        cursor: pointer;
+        font-family: var(--font-heading, 'Fredoka', sans-serif);
+        font-size: 1.05rem;
+    }
+    .admin-user-name-btn:hover {
+        color: var(--chiro-blue, #1d4e89);
+        text-decoration: underline;
+    }
+
+    /* Modal Styles */
+    #userModalAdmin .admin-modal-input {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.95rem !important;
+        font-family: system-ui, -apple-system, sans-serif !important;
+    }
+    #userModalAdmin .admin-modal-input:focus {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        box-shadow: 0 0 0 3px rgba(29, 78, 137, 0.12) !important;
+    }
+    #userModalAdmin input[type="radio"].user-role-radio {
+        padding: 0 !important;
+        width: 1.15em !important;
+        height: 1.15em !important;
+        border-radius: 50% !important;
+        border: 2px solid #94a3b8 !important;
+    }
+    #userModalAdmin input[type="radio"].user-role-radio:checked {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        background-color: var(--chiro-blue, #1d4e89) !important;
+    }
+    .user-role-card {
+        transition: all 0.15s ease;
+        background-color: #fff;
+    }
+    .user-role-card:hover {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        background-color: #f8fafc;
+    }
+    .user-role-card:has(input:checked) {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        background-color: #eff6ff;
+        box-shadow: 0 0 0 2px rgba(29, 78, 137, 0.12);
+    }
+    .user-role-card-kookmoeke:has(input:checked) {
+        border-color: #f59e0b !important;
+        background-color: #fffbeb;
+        box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.18);
+    }
+    #userModalAdmin .admin-modal-checkbox {
+        width: 1.15em !important;
+        height: 1.15em !important;
+        padding: 0 !important;
+        border-radius: 5px !important;
+        border: 2px solid #94a3b8 !important;
+    }
+    #userModalAdmin .admin-modal-checkbox:checked {
+        background-color: var(--chiro-blue, #1d4e89) !important;
+        border-color: var(--chiro-blue, #1d4e89) !important;
+    }
+    .admin-check-card:has(input:checked) {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        background-color: #eff6ff !important;
+    }
 </style>
 
-<div id="polaroid-overlay" class="polaroid-overlay d-none" onclick="closePolaroid()">
-    <div class="polaroid-container" onclick="event.stopPropagation()">
-        <div class="polaroid-photo">
-            <img id="polaroid-image" src="" alt="Profile Picture">
-        </div>
-        <div class="polaroid-caption" id="polaroid-caption"></div>
-    </div>
-</div>
-
 <script>
-function showPolaroid(src, name) {
-    document.getElementById('polaroid-image').src = src;
-    document.getElementById('polaroid-caption').textContent = name;
-    document.getElementById('polaroid-overlay').classList.remove('d-none');
-    document.body.style.overflow = 'hidden';
-}
-function closePolaroid() {
-    document.getElementById('polaroid-overlay').classList.add('d-none');
-    document.body.style.overflow = '';
-}
+    function showPolaroid(src, name) {
+        document.getElementById('polaroid-image').src = src;
+        document.getElementById('polaroid-caption').textContent = name;
+        document.getElementById('polaroid-overlay').classList.remove('d-none');
+        document.body.style.overflow = 'hidden';
+    }
+    function closePolaroid() {
+        document.getElementById('polaroid-overlay').classList.add('d-none');
+        document.body.style.overflow = '';
+    }
+
+    (function() {
+        const rawDataEl = document.getElementById('adminUsersDataJson');
+        const parsedData = rawDataEl ? JSON.parse(rawDataEl.textContent || '{}') : {};
+        const allUsers = parsedData.users || [];
+        const currentUserId = parsedData.currentUserId || null;
+
+        const ROLE_META = {
+            admin: {
+                key: 'admin',
+                label: 'Administrators',
+                singular: 'Admin',
+                color: '#dc3545',
+                badgeClass: 'bg-danger text-white',
+                icon: 'bi-shield-lock-fill',
+                desc: 'Volledige toegang tot alle beheerfuncties, inschrijvingen en instellingen',
+                order: 1
+            },
+            media: {
+                key: 'media',
+                label: 'Media (Website & Formulieren)',
+                singular: 'Media',
+                color: '#2563eb',
+                badgeClass: 'bg-primary text-white',
+                icon: 'bi-megaphone-fill',
+                desc: "Beheer van publieke pagina's, leiding, kalender en formulieren",
+                order: 2
+            },
+            leader: {
+                key: 'leader',
+                label: 'Leiding',
+                singular: 'Leiding',
+                color: '#0891b2',
+                badgeClass: 'bg-info text-white',
+                icon: 'bi-people-fill',
+                desc: 'Toegang tot leidingshoekjes, leidingskalender en spelendatabank',
+                order: 3
+            },
+            kookmoeke: {
+                key: 'kookmoeke',
+                label: 'Kookmoekes',
+                singular: 'Kookmoeke',
+                color: '#f59e0b',
+                badgeClass: 'bg-warning text-dark',
+                icon: 'bi-heart-fill',
+                desc: 'Apart accounttype voor de kookploeg (Kampboekje & Tetterhoekje)',
+                order: 4
+            }
+        };
+
+        let activeFilter = 'all-active';
+        let searchQuery = '';
+        let sortMode = 'role-default';
+
+        function getCsrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        window.toggleUserModalPassword = function() {
+            const inp = document.getElementById('userModalPassword');
+            const eye = document.getElementById('userModalPasswordEye');
+            if (!inp || !eye) return;
+            if (inp.type === 'password') {
+                inp.type = 'text';
+                eye.className = 'bi bi-eye-slash';
+            } else {
+                inp.type = 'password';
+                eye.className = 'bi bi-eye';
+            }
+        };
+
+        window.setAllUserModalGroups = function(checked) {
+            document.querySelectorAll('#userModalGroupsGrid .user-group-checkbox').forEach(cb => {
+                cb.checked = Boolean(checked);
+            });
+        };
+
+        function syncUserModalRoleUI() {
+            const selectedRole = document.querySelector('#userModalRoleCards input[name="role"]:checked')?.value || 'leader';
+            const adminNotice = document.getElementById('userModalAdminAccessNotice');
+            const kookmoekeNotice = document.getElementById('userModalKookmoekeAccessNotice');
+            const groupsGrid = document.getElementById('userModalGroupsGrid');
+            const quickBtns = document.getElementById('userModalGroupsQuickBtns');
+
+            if (selectedRole === 'admin') {
+                if (adminNotice) adminNotice.classList.remove('d-none');
+                if (kookmoekeNotice) kookmoekeNotice.classList.add('d-none');
+                if (groupsGrid) groupsGrid.classList.add('d-none');
+                if (quickBtns) quickBtns.classList.add('d-none');
+            } else if (selectedRole === 'kookmoeke') {
+                if (adminNotice) adminNotice.classList.add('d-none');
+                if (kookmoekeNotice) kookmoekeNotice.classList.remove('d-none');
+                if (groupsGrid) groupsGrid.classList.add('d-none');
+                if (quickBtns) quickBtns.classList.add('d-none');
+            } else {
+                if (adminNotice) adminNotice.classList.add('d-none');
+                if (kookmoekeNotice) kookmoekeNotice.classList.add('d-none');
+                if (groupsGrid) groupsGrid.classList.remove('d-none');
+                if (quickBtns) quickBtns.classList.remove('d-none');
+            }
+        }
+
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.name === 'role' && e.target.closest('#userModalRoleCards')) {
+                syncUserModalRoleUI();
+            }
+        });
+
+        window.openAddUserModal = function(defaultRole = 'leader') {
+            const form = document.getElementById('userModalForm');
+            if (form) {
+                form.action = '/admin/users';
+                form.reset();
+            }
+
+            document.getElementById('userModalHeading').innerHTML = '<i class="bi bi-person-plus-fill text-success me-2"></i>Nieuwe Gebruiker Toevoegen';
+            document.getElementById('userModalSubmitText').textContent = 'Gebruiker Toevoegen';
+
+            const pwdInput = document.getElementById('userModalPassword');
+            const pwdLabel = document.getElementById('userModalPasswordLabel');
+            const pwdHint = document.getElementById('userModalPasswordHint');
+            const pwdEye = document.getElementById('userModalPasswordEye');
+            if (pwdInput) {
+                pwdInput.required = true;
+                pwdInput.type = 'password';
+                pwdInput.value = '';
+                pwdInput.placeholder = 'Kies een wachtwoord...';
+            }
+            if (pwdEye) pwdEye.className = 'bi bi-eye';
+            if (pwdLabel) pwdLabel.innerHTML = 'Wachtwoord <span class="text-danger">*</span>';
+            if (pwdHint) pwdHint.textContent = 'De gebruiker kan dit wachtwoord achteraf zelf wijzigen.';
+
+            const roleRadios = document.querySelectorAll('#userModalRoleCards input[name="role"]');
+            roleRadios.forEach(r => {
+                r.checked = (r.value === defaultRole);
+            });
+
+            // Pre-select latest FeedGroup for new users
+            document.querySelectorAll('#userModalGroupsGrid .user-group-checkbox').forEach(cb => {
+                cb.checked = (cb.getAttribute('data-is-latest') === '1');
+            });
+
+            syncUserModalRoleUI();
+
+            const modalEl = document.getElementById('userModalAdmin');
+            if (modalEl && window.bootstrap) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                setTimeout(() => {
+                    document.getElementById('userModalUsername')?.focus();
+                }, 200);
+            }
+        };
+
+        window.openEditUserModalById = function(userId) {
+            const target = allUsers.find(u => Number(u.id) === Number(userId));
+            if (!target) return;
+
+            const form = document.getElementById('userModalForm');
+            if (form) {
+                form.action = `/admin/users/${target.id}?_method=PUT`;
+            }
+
+            document.getElementById('userModalHeading').innerHTML = `<i class="bi bi-pencil-square text-primary me-2"></i>Gebruiker Bewerken: ${escapeHtml(target.displayName)}`;
+            document.getElementById('userModalSubmitText').textContent = 'Wijzigingen Opslaan';
+
+            document.getElementById('userModalUsername').value = target.username || '';
+
+            const pwdInput = document.getElementById('userModalPassword');
+            const pwdLabel = document.getElementById('userModalPasswordLabel');
+            const pwdHint = document.getElementById('userModalPasswordHint');
+            const pwdEye = document.getElementById('userModalPasswordEye');
+            if (pwdInput) {
+                pwdInput.required = false;
+                pwdInput.type = 'password';
+                pwdInput.value = '';
+                pwdInput.placeholder = 'Laat leeg om huidig wachtwoord te behouden...';
+            }
+            if (pwdEye) pwdEye.className = 'bi bi-eye';
+            if (pwdLabel) pwdLabel.innerHTML = 'Nieuw Wachtwoord <span class="text-muted fw-normal">(optioneel)</span>';
+            if (pwdHint) pwdHint.textContent = 'Vul enkel in als je het wachtwoord van deze gebruiker wilt resetten.';
+
+            const targetRole = target.role || 'leader';
+            document.querySelectorAll('#userModalRoleCards input[name="role"]').forEach(r => {
+                r.checked = (r.value === targetRole);
+            });
+
+            const accessIds = (target.accessibleGroups || []).map(g => Number(g.id));
+            document.querySelectorAll('#userModalGroupsGrid .user-group-checkbox').forEach(cb => {
+                cb.checked = accessIds.includes(Number(cb.value));
+            });
+
+            syncUserModalRoleUI();
+
+            const modalEl = document.getElementById('userModalAdmin');
+            if (modalEl && window.bootstrap) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+        };
+
+        function buildUserCardHtml(u, showRoleBadge = true) {
+            const roleKey = u.role || 'leader';
+            const meta = ROLE_META[roleKey] || ROLE_META.leader;
+            const isSelf = Number(u.id) === Number(currentUserId);
+            const isInactive = u.isActive === false;
+            const csrfToken = getCsrfToken();
+
+            let avatarHtml = '';
+            if (u.profilePicture) {
+                avatarHtml = `
+                    <img src="${escapeHtml(u.profilePicture)}" 
+                         alt="${escapeHtml(u.displayName)}" 
+                         class="admin-user-avatar shadow-sm"
+                         title="Klik om profielfoto te bekijken"
+                         onclick="showPolaroid('${escapeHtml(u.profilePicture)}', '${escapeHtml(u.displayName.replace(/'/g, "\\'"))}')">
+                `;
+            } else {
+                avatarHtml = `
+                    <div class="admin-user-initials shadow-sm" style="background-color: ${escapeHtml(u.avatarColor)}; ${isInactive ? 'opacity: 0.6;' : ''}">
+                        ${escapeHtml(u.initials)}
+                    </div>
+                `;
+            }
+
+            let roleBadgeHtml = '';
+            if (isInactive) {
+                roleBadgeHtml = `<span class="badge bg-secondary rounded-pill" style="font-size: 0.72rem;">Oud-Leiding / Inactief</span>`;
+            } else if (showRoleBadge) {
+                if (roleKey === 'kookmoeke') {
+                    roleBadgeHtml = `<span class="badge bg-warning text-dark rounded-pill" style="font-size: 0.72rem;"><i class="bi bi-heart-fill text-danger me-1"></i>Kookmoeke</span>`;
+                } else {
+                    roleBadgeHtml = `<span class="badge ${meta.badgeClass} rounded-pill" style="font-size: 0.72rem;"><i class="bi ${meta.icon} me-1"></i>${escapeHtml(meta.singular)}</span>`;
+                }
+            }
+
+            let subInfoHtml = '';
+            if (roleKey === 'admin') {
+                subInfoHtml = `<span class="text-muted small"><i class="bi bi-unlock-fill text-danger me-1"></i>Toegang tot alle leidingshoekjes & beheer</span>`;
+            } else if (roleKey === 'kookmoeke') {
+                subInfoHtml = `<span class="text-muted small"><i class="bi bi-journal-bookmark-fill text-warning me-1"></i>Kampboekje & Tetterhoekje</span>`;
+            } else {
+                const groupsList = u.accessibleGroups || [];
+                if (groupsList.length > 0) {
+                    const names = groupsList.slice(0, 2).map(g => escapeHtml(g.name + (g.year ? ` (${g.year})` : ''))).join(', ');
+                    const extraCount = groupsList.length > 2 ? ` +${groupsList.length - 2}` : '';
+                    subInfoHtml = `<span class="text-muted small text-truncate d-inline-block" style="max-width: 100%;"><i class="bi bi-chat-heart text-primary me-1"></i>${names}${extraCount}</span>`;
+                } else {
+                    subInfoHtml = `<span class="text-muted small fst-italic"><i class="bi bi-exclamation-circle me-1"></i>Geen leidingshoekje gekoppeld</span>`;
+                }
+            }
+
+            let actionsHtml = '';
+            if (isInactive) {
+                actionsHtml = `
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1" onclick="openEditUserModalById(${u.id})" title="Bewerken">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <form action="/admin/users/${u.id}/toggle-status?_method=PUT" method="POST" class="d-inline m-0">
+                        <input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">
+                        <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 d-inline-flex align-items-center" title="Maak weer actief">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i><span class="d-none d-sm-inline">Activeren</span>
+                        </button>
+                    </form>
+                    <form action="/admin/users/${u.id}?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je ${escapeHtml(u.displayName.replace(/'/g, "\\'"))} definitief wilt verwijderen?');" class="d-inline m-0">
+                        <input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" title="Definitief verwijderen">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                `;
+            } else {
+                actionsHtml = `
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 d-inline-flex align-items-center" onclick="openEditUserModalById(${u.id})" title="Gebruiker bewerken">
+                        <i class="bi bi-pencil-square me-1"></i><span class="d-none d-sm-inline">Bewerken</span>
+                    </button>
+                    ${!isSelf ? `
+                        <form action="/admin/users/${u.id}/toggle-status?_method=PUT" method="POST" class="d-inline m-0">
+                            <input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">
+                            <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-1" title="Zet op non-actief (Oud-leiding)">
+                                <i class="bi bi-archive"></i>
+                            </button>
+                        </form>
+                        <form action="/admin/users/${u.id}?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je ${escapeHtml(u.displayName.replace(/'/g, "\\'"))} wilt verwijderen?');" class="d-inline m-0">
+                            <input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" title="Verwijderen">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    ` : ''}
+                `;
+            }
+
+            return `
+                <div class="col-12 col-xl-6">
+                    <div class="admin-user-card ${roleKey === 'kookmoeke' ? 'is-kookmoeke-card' : ''} ${isInactive ? 'is-inactive-card' : ''}">
+                        <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1" style="min-width: 0;">
+                            ${avatarHtml}
+                            <div class="flex-grow-1" style="min-width: 0;">
+                                <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
+                                    <a href="javascript:void(0)" class="admin-user-name-btn fw-bold me-1 text-truncate" onclick="openEditUserModalById(${u.id})">
+                                        ${escapeHtml(u.displayName)}
+                                    </a>
+                                    ${isSelf ? `<span class="badge bg-light text-primary border rounded-pill" style="font-size: 0.7rem;">Ik</span>` : ''}
+                                    ${roleBadgeHtml}
+                                </div>
+                                <div class="d-flex align-items-center text-truncate">
+                                    ${subInfoHtml}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                            ${actionsHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function sortUsersList(list) {
+            return [...list].sort((a, b) => {
+                if (sortMode === 'name-desc') {
+                    return (b.username || '').localeCompare(a.username || '', 'nl');
+                }
+                return (a.username || '').localeCompare(b.username || '', 'nl');
+            });
+        }
+
+        function matchesSearch(u, q) {
+            if (!q) return true;
+            const roleMeta = ROLE_META[u.role || 'leader'] || ROLE_META.leader;
+            const groupNames = (u.accessibleGroups || []).map(g => `${g.name} ${g.year || ''}`).join(' ');
+            const haystack = [
+                u.username || '',
+                u.displayName || '',
+                u.role || '',
+                roleMeta.label || '',
+                roleMeta.singular || '',
+                u.email || '',
+                groupNames
+            ].join(' ').toLowerCase();
+            return haystack.includes(q);
+        }
+
+        function renderUsers() {
+            const regContainer = document.getElementById('adminRegularUsersContainer');
+            const kookWrapper = document.getElementById('adminKookmoekeWrapper');
+            const kookContainer = document.getElementById('adminKookmoekeListContainer');
+            const kookCountBadge = document.getElementById('kookmoekeSectionCountBadge');
+            const inactiveSection = document.getElementById('adminInactiveCollapsibleSection');
+            const inactiveCollapseContainer = document.getElementById('adminInactiveCollapseContainer');
+            const emptyState = document.getElementById('adminUsersEmptyState');
+            const summaryEl = document.getElementById('userResultsSummary');
+            const resetBtn = document.getElementById('btnResetUserFilters');
+
+            const q = searchQuery.trim().toLowerCase();
+            const hasActiveFilters = activeFilter !== 'all-active' || q !== '' || sortMode !== 'role-default';
+            if (resetBtn) resetBtn.classList.toggle('d-none', !hasActiveFilters);
+
+            // Populate the bottom Inactive Collapse container
+            const inactiveUsers = sortUsersList(allUsers.filter(u => u.isActive === false && u.role !== 'kookmoeke'));
+            if (inactiveCollapseContainer) {
+                if (inactiveUsers.length === 0) {
+                    inactiveCollapseContainer.innerHTML = '<p class="text-muted small mb-0 fst-italic">Geen inactieve oud-leiding accounts.</p>';
+                } else {
+                    inactiveCollapseContainer.innerHTML = `<div class="row g-3">${inactiveUsers.map(u => buildUserCardHtml(u, true)).join('')}</div>`;
+                }
+            }
+
+            // Case 1: Viewing specifically 'kookmoeke' filter
+            if (activeFilter === 'kookmoeke') {
+                regContainer.innerHTML = '';
+                regContainer.classList.add('d-none');
+                if (inactiveSection) inactiveSection.classList.add('d-none');
+
+                const filteredKook = sortUsersList(allUsers.filter(u => u.role === 'kookmoeke' && matchesSearch(u, q)));
+                if (summaryEl) {
+                    summaryEl.textContent = `${filteredKook.length} Kookmoeke-${filteredKook.length === 1 ? 'account' : 'accounts'} weergegeven`;
+                }
+                if (kookCountBadge) kookCountBadge.textContent = filteredKook.length;
+
+                if (filteredKook.length === 0 && q !== '') {
+                    kookWrapper.classList.add('d-none');
+                    emptyState.classList.remove('d-none');
+                } else {
+                    emptyState.classList.add('d-none');
+                    kookWrapper.classList.remove('d-none');
+                    kookContainer.innerHTML = filteredKook.length > 0
+                        ? `<div class="row g-3">${filteredKook.map(u => buildUserCardHtml(u, false)).join('')}</div>`
+                        : `<div class="text-muted small fst-italic py-2">Nog geen Kookmoeke-accounts aangemaakt. Klik rechtsboven op "Kookmoeke Toevoegen".</div>`;
+                }
+                return;
+            }
+
+            // Case 2: Viewing specifically 'inactive' filter
+            if (activeFilter === 'inactive') {
+                kookWrapper.classList.add('d-none');
+                if (inactiveSection) inactiveSection.classList.add('d-none');
+
+                const filteredInactive = sortUsersList(allUsers.filter(u => u.isActive === false && matchesSearch(u, q)));
+                if (summaryEl) {
+                    summaryEl.textContent = `${filteredInactive.length} inactieve ${filteredInactive.length === 1 ? 'gebruiker' : 'gebruikers'} (Oud-Leiding)`;
+                }
+
+                if (filteredInactive.length === 0) {
+                    regContainer.innerHTML = '';
+                    regContainer.classList.add('d-none');
+                    emptyState.classList.remove('d-none');
+                } else {
+                    emptyState.classList.add('d-none');
+                    regContainer.classList.remove('d-none');
+                    regContainer.innerHTML = `
+                        <div class="admin-role-header">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="admin-role-pill" style="background-color: #64748b;">
+                                    <i class="bi bi-clock-history"></i> Oud-Leiding & Inactieve Accounts
+                                </span>
+                                <span class="badge bg-white text-secondary border rounded-pill px-2 py-1">${filteredInactive.length}</span>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            ${filteredInactive.map(u => buildUserCardHtml(u, true)).join('')}
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            // Case 3: Viewing 'all-active' or a specific regular role ('admin', 'media', 'leader')
+            const matchingRegular = allUsers.filter(u => {
+                if (u.isActive === false || u.role === 'kookmoeke') return false;
+                const roleKey = u.role || 'leader';
+                if (activeFilter !== 'all-active' && roleKey !== activeFilter) return false;
+                return matchesSearch(u, q);
+            });
+
+            const matchingKookmoekes = sortUsersList(allUsers.filter(u => u.role === 'kookmoeke' && matchesSearch(u, q)));
+
+            // Show Kookmoeke wrapper when in 'all-active' view (unless searching and 0 kookmoeke matches while regular matches exist)
+            const showKookSection = (activeFilter === 'all-active') && (q === '' || matchingKookmoekes.length > 0);
+            if (kookWrapper) {
+                kookWrapper.classList.toggle('d-none', !showKookSection);
+                if (showKookSection) {
+                    if (kookCountBadge) kookCountBadge.textContent = matchingKookmoekes.length;
+                    kookContainer.innerHTML = matchingKookmoekes.length > 0
+                        ? `<div class="row g-3">${matchingKookmoekes.map(u => buildUserCardHtml(u, false)).join('')}</div>`
+                        : `<div class="text-muted small fst-italic py-2">Geen Kookmoeke-accounts gevonden.</div>`;
+                }
+            }
+
+            if (inactiveSection) {
+                inactiveSection.classList.toggle('d-none', activeFilter !== 'all-active' || q !== '');
+            }
+
+            const totalShown = matchingRegular.length + (showKookSection ? matchingKookmoekes.length : 0);
+            if (summaryEl) {
+                if (activeFilter === 'all-active') {
+                    summaryEl.textContent = `${matchingRegular.length} actieve leidings-/beheeraccounts + ${matchingKookmoekes.length} kookmoeke-accounts`;
+                } else {
+                    const meta = ROLE_META[activeFilter];
+                    summaryEl.textContent = `${matchingRegular.length} ${meta ? meta.label : 'gebruikers'} weergegeven`;
+                }
+            }
+
+            if (totalShown === 0) {
+                regContainer.innerHTML = '';
+                regContainer.classList.add('d-none');
+                kookWrapper.classList.add('d-none');
+                emptyState.classList.remove('d-none');
+                return;
+            }
+            emptyState.classList.add('d-none');
+
+            if (matchingRegular.length === 0) {
+                regContainer.innerHTML = '';
+                regContainer.classList.add('d-none');
+                return;
+            }
+            regContainer.classList.remove('d-none');
+
+            // Default: Organize people on role by default ('admin', 'media', 'leader')
+            if (sortMode === 'role-default' && activeFilter === 'all-active') {
+                const roleOrder = ['admin', 'media', 'leader'];
+                let html = '';
+
+                roleOrder.forEach(rKey => {
+                    const list = sortUsersList(matchingRegular.filter(u => (u.role || 'leader') === rKey));
+                    if (list.length === 0) return;
+
+                    const meta = ROLE_META[rKey];
+                    html += `
+                        <section class="mb-4">
+                            <div class="admin-role-header">
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <span class="admin-role-pill" style="background-color: ${meta.color};">
+                                        <i class="bi ${meta.icon}"></i> ${escapeHtml(meta.label)}
+                                    </span>
+                                    <span class="badge bg-white text-secondary border rounded-pill px-2 py-1">
+                                        ${list.length} ${list.length === 1 ? 'account' : 'accounts'}
+                                    </span>
+                                    <span class="text-muted small d-none d-lg-inline ms-1">${escapeHtml(meta.desc)}</span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 small" onclick="openAddUserModal('${rKey}')">
+                                    <i class="bi bi-plus-lg me-1"></i>${escapeHtml(meta.singular)} toevoegen
+                                </button>
+                            </div>
+                            <div class="row g-3">
+                                ${list.map(u => buildUserCardHtml(u, false)).join('')}
+                            </div>
+                        </section>
+                    `;
+                });
+
+                regContainer.innerHTML = html;
+            } else {
+                const sorted = sortUsersList(matchingRegular);
+                const meta = ROLE_META[activeFilter];
+                let headerHtml = '';
+                if (activeFilter !== 'all-active' && meta) {
+                    headerHtml = `
+                        <div class="admin-role-header mb-3">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="admin-role-pill" style="background-color: ${meta.color};">
+                                    <i class="bi ${meta.icon}"></i> ${escapeHtml(meta.label)}
+                                </span>
+                                <span class="badge bg-white text-secondary border rounded-pill px-2 py-1">
+                                    ${sorted.length} ${sorted.length === 1 ? 'account' : 'accounts'}
+                                </span>
+                                <span class="text-muted small d-none d-lg-inline ms-1">${escapeHtml(meta.desc)}</span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 small" onclick="openAddUserModal('${activeFilter}')">
+                                <i class="bi bi-plus-lg me-1"></i>${escapeHtml(meta.singular)} toevoegen
+                            </button>
+                        </div>
+                    `;
+                }
+
+                regContainer.innerHTML = `
+                    ${headerHtml}
+                    <div class="row g-3">
+                        ${sorted.map(u => buildUserCardHtml(u, activeFilter === 'all-active')).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        window.resetAdminUserFilters = function() {
+            activeFilter = 'all-active';
+            searchQuery = '';
+            sortMode = 'role-default';
+            const searchInp = document.getElementById('adminUserSearch');
+            const sortSel = document.getElementById('adminUserSort');
+            if (searchInp) searchInp.value = '';
+            if (sortSel) sortSel.value = 'role-default';
+            updateFilterPillStyles();
+            renderUsers();
+        };
+
+        function updateFilterPillStyles() {
+            document.querySelectorAll('.user-filter-btn').forEach(btn => {
+                const isSelected = btn.getAttribute('data-filter') === activeFilter;
+                btn.classList.toggle('btn-primary', isSelected);
+                btn.classList.toggle('text-white', isSelected);
+                btn.classList.toggle('shadow-sm', isSelected);
+                btn.classList.toggle('btn-light', !isSelected);
+                btn.classList.toggle('text-secondary', !isSelected);
+                btn.classList.toggle('border', !isSelected);
+
+                const badge = btn.querySelector('.badge');
+                if (badge) {
+                    badge.className = `badge rounded-pill ms-1 ${isSelected ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary'}`;
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.user-filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    activeFilter = this.getAttribute('data-filter') || 'all-active';
+                    updateFilterPillStyles();
+                    renderUsers();
+                });
+            });
+
+            const searchInp = document.getElementById('adminUserSearch');
+            if (searchInp) {
+                searchInp.addEventListener('input', function() {
+                    searchQuery = this.value || '';
+                    renderUsers();
+                });
+            }
+
+            const sortSel = document.getElementById('adminUserSort');
+            if (sortSel) {
+                sortSel.addEventListener('change', function() {
+                    sortMode = this.value || 'role-default';
+                    renderUsers();
+                });
+            }
+
+            renderUsers();
+        });
+    })();
 </script>
 
-<%- include('../partials/header') %>
-<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
-    <h1 class="mb-0">Gebruikers Beheren</h1>
-    <div class="d-flex gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end">
-        <a href="/admin" class="btn btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
-            <i class="bi bi-arrow-left me-1"></i> <span class="d-none d-sm-inline">Terug naar Dashboard</span><span class="d-inline d-sm-none">Terug</span>
-        </a>
-        <a href="/admin/info" class="btn btn-info text-white rounded-pill px-3" title="Algemene Hulp & Info">
-            <i class="bi bi-info-circle me-1"></i> Info
-        </a>
-    </div>
-</div>
-
-<% if (typeof error !== 'undefined' && error) { %>
-    <div class="alert alert-danger"><%= error %></div>
-<% } %>
-
-<div class="card mb-4">
-    <div class="card-header">Nieuwe Gebruiker Toevoegen</div>
-    <div class="card-body">
-        <form action="/admin/users" method="POST">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label>Gebruikersnaam</label>
-                    <input type="text" class="form-control" name="username" required>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label>Wachtwoord</label>
-                    <input type="password" class="form-control" name="password" required>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label>Rol</label>
-                    <select class="form-select" name="role">
-                        <option value="leader">Leiding (Geen Admin)</option>
-                        <option value="kookmoeke">Kookmoeke</option>
-                        <option value="media">Media (Website & Formulieren)</option>
-                        <option value="admin">Administrator</option>
-                    </select>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-success">Toevoegen</button>
-        </form>
-    </div>
-</div>
-
-<% 
-    const activeUsers = users.filter(u => u.isActive !== false);
-    const inactiveUsers = users.filter(u => u.isActive === false);
-%>
-
-<h3>Actieve Gebruikers</h3>
-<div class="table-responsive">
-    <table class="table table-striped align-middle">
-        <thead>
-            <tr>
-                <th style="width: 45px;"></th>
-                <th>Gebruikersnaam</th>
-                <th class="d-none d-md-table-cell">Rol</th>
-                <th class="text-end">Actie</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% activeUsers.forEach(u => { %>
-                <tr>
-                    <td>
-                        <% if (u.profilePicture) { %>
-                            <img src="<%= u.profilePicture %>" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(u.username) %>" onclick="showPolaroid('<%= u.profilePicture %>', '<%= capitalizeName(u.username) %>')">
-                        <% } else { %>
-                            <div class="avatar-circle-sm" style="background-color: <%= getAvatarColor(u.username) %>;">
-                                <%= u.username.substring(0, 2).toUpperCase() %>
-                            </div>
-                        <% } %>
-                    </td>
-                    <td>
-                        <div class="fw-bold"><%= capitalizeName(u.username) %></div>
-                        <div class="d-md-none small">
-                            <% if(u.role === 'admin') { %>
-                                <span class="badge bg-danger">Admin</span>
-                            <% } else if(u.role === 'kookmoeke') { %>
-                                <span class="badge bg-warning text-dark"><i class="bi bi-heart-fill me-1"></i>Kookmoeke</span>
-                            <% } else if(u.role === 'media') { %>
-                                <span class="badge bg-secondary">Media</span>
-                            <% } else { %>
-                                <span class="badge bg-info">Leiding</span>
-                            <% } %>
-                        </div>
-                    </td>
-                    <td class="d-none d-md-table-cell">
-                        <% if(u.role === 'admin') { %>
-                            <span class="badge bg-danger">Admin</span>
-                        <% } else if(u.role === 'kookmoeke') { %>
-                            <span class="badge bg-warning text-dark"><i class="bi bi-heart-fill me-1"></i>Kookmoeke</span>
-                        <% } else if(u.role === 'media') { %>
-                            <span class="badge bg-secondary">Media</span>
-                        <% } else { %>
-                            <span class="badge bg-info">Leiding</span>
-                        <% } %>
-                    </td>
-                    <td class="text-end">
-                        <div class="btn-group">
-                            <a href="/admin/users/<%= u.id %>/edit" class="btn btn-sm btn-outline-primary" title="Bewerken">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <% if (user.id !== u.id) { %>
-                                <form action="/admin/users/<%= u.id %>/toggle-status?_method=PUT" method="POST" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm btn-outline-warning" title="Zet op non-actief (oud-leiding)">
-                                        <i class="bi bi-archive"></i>
-                                    </button>
-                                </form>
-                                <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijderen"><i class="bi bi-trash"></i></button>
-                                </form>
-                            <% } else { %>
-                                <span class="text-muted small p-2">(Ik)</span>
-                            <% } %>
-                        </div>
-                    </td>
-                </tr>
-            <% }) %>
-        </tbody>
-    </table>
-</div>
-
-<div class="mt-5">
-    <button class="btn btn-secondary w-100 w-md-auto" type="button" data-bs-toggle="collapse" data-bs-target="#inactiveUsersList" aria-expanded="false" aria-controls="inactiveUsersList">
-        <i class="bi bi-clock-history"></i> Toon Oud-Leiding (<%= inactiveUsers.length %>)
-    </button>
-    
-    <div class="collapse mt-3" id="inactiveUsersList">
-        <div class="card card-body bg-light border-0 shadow-sm">
-            <h4 class="text-muted mb-4">Oud-Leiding (Inactief)</h4>
-            <% if (inactiveUsers.length === 0) { %>
-                <p class="text-muted">Geen oud-leiding.</p>
-            <% } else { %>
-                <div class="table-responsive">
-                    <table class="table table-sm text-muted align-middle">
-                        <thead>
-                            <tr>
-                                <th style="width: 45px;"></th>
-                                <th>Gebruikersnaam</th>
-                                <th class="d-none d-md-table-cell">Rol</th>
-                                <th class="text-end">Actie</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% inactiveUsers.forEach(u => { %>
-                                <tr>
-                                    <td>
-                                        <% if (u.profilePicture) { %>
-                                            <img src="<%= u.profilePicture %>" class="rounded-circle border shadow-sm" style="width: 32px; height: 32px; object-fit: cover; cursor: pointer;" alt="<%= capitalizeName(u.username) %>" onclick="showPolaroid('<%= u.profilePicture %>', '<%= capitalizeName(u.username) %>')">
-                                        <% } else { %>
-                                            <div class="avatar-circle-sm" style="background-color: <%= getAvatarColor(u.username) %>; opacity: 0.6;">
-                                                <%= u.username.substring(0, 2).toUpperCase() %>
-                                            </div>
-                                        <% } %>
-                                    </td>
-                                    <td>
-                                        <div class="fw-bold"><%= capitalizeName(u.username) %></div>
-                                        <div class="d-md-none small"><span class="badge bg-secondary">Oud-Leiding</span></div>
-                                    </td>
-                                    <td class="d-none d-md-table-cell"><span class="badge bg-secondary">Oud-Leiding</span></td>
-                                    <td class="text-end">
-                                        <div class="btn-group">
-                                            <form action="/admin/users/<%= u.id %>/toggle-status?_method=PUT" method="POST" style="display:inline;">
-                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Maak weer actief">
-                                                    <i class="bi bi-arrow-counterclockwise"></i>
-                                                </button>
-                                            </form>
-                                            <form action="/admin/users/<%= u.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Definitief verwijderen?');" style="display:inline;">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijderen"><i class="bi bi-trash"></i></button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <% }) %>
-                        </tbody>
-                    </table>
-                </div>
-            <% } %>
-        </div>
-    </div>
-</div>
 <%- include('../partials/footer') %>

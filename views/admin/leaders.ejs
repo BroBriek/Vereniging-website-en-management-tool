@@ -1,125 +1,987 @@
 <%- include('../partials/header') %>
-<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
-    <h1 class="mb-0">Leiding Beheren</h1>
-    <div class="d-flex gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end">
-        <a href="/admin" class="btn btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
-            <i class="bi bi-arrow-left me-1"></i> <span class="d-none d-sm-inline">Terug naar Dashboard</span><span class="d-inline d-sm-none">Terug</span>
-        </a>
-        <button class="btn btn-success rounded-pill px-3 d-inline-flex align-items-center flex-grow-1 flex-sm-grow-0 justify-content-center" data-bs-toggle="modal" data-bs-target="#addLeaderModal">
-            <i class="bi bi-plus-circle me-1"></i> Leiding Toevoegen
+
+<%
+const allLeaders = (leaders || []).map(l => (l.toJSON ? l.toJSON() : l));
+
+const CHIRO_GROUPS = [
+    { key: 'Ribbels', label: 'Ribbels', color: '#9b59b6', bgLight: '#f5eef8', icon: 'bi-balloon-fill' },
+    { key: 'Speelclub', label: 'Speelclub', color: '#eab308', bgLight: '#fefce8', icon: 'bi-sun-fill' },
+    { key: "Rakwi's", label: "Rakwi's", color: '#27ae60', bgLight: '#eafaf1', icon: 'bi-compass-fill' },
+    { key: "Tito's", label: "Tito's", color: '#e74c3c', bgLight: '#fdedec', icon: 'bi-fire' },
+    { key: "Keti's", label: "Keti's", color: '#2980b9', bgLight: '#ebf5fb', icon: 'bi-lightning-charge-fill' },
+    { key: "Aspi's", label: "Aspi's", color: '#d35400', bgLight: '#fdf2e9', icon: 'bi-stars' },
+    { key: 'Hoofdleiding', label: 'Hoofdleiding', color: '#db3e41', bgLight: '#fff1f2', icon: 'bi-star-fill' }
+];
+
+const countAll = allLeaders.length;
+const countHeadLeaders = allLeaders.filter(l => l.is_head_leader || l.group === 'Hoofdleiding').length;
+const groupCounts = {};
+CHIRO_GROUPS.forEach(g => {
+    if (g.key === 'Hoofdleiding') {
+        groupCounts[g.key] = countHeadLeaders;
+    } else {
+        groupCounts[g.key] = allLeaders.filter(l => l.group === g.key).length;
+    }
+});
+%>
+
+<!-- Polaroid Photo Preview Overlay -->
+<div id="polaroid-overlay" class="polaroid-overlay d-none" onclick="closeLeaderPolaroid()">
+    <div class="polaroid-container" onclick="event.stopPropagation()">
+        <div class="polaroid-photo">
+            <img id="polaroid-image" src="" alt="Leiding Foto">
+        </div>
+        <div class="polaroid-caption" id="polaroid-caption"></div>
+    </div>
+</div>
+
+<!-- Top Header -->
+<div class="admin-leaders-header mb-4">
+    <div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <a href="/admin" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="bi bi-arrow-left me-1"></i> Dashboard
+            </a>
+            <a href="/leiding" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center" title="Bekijk de publieke leidingspagina">
+                <i class="bi bi-globe2 me-1"></i> Publieke Leidingspagina
+            </a>
+        </div>
+        <h1 class="mb-1 fw-bold"><i class="bi bi-people-fill text-primary me-2"></i>Leiding Beheren</h1>
+        <p class="text-muted small mb-0">Overzicht van de leidingsploeg per afdeling. Zoek, filter op groep of klik op een leider om gegevens en foto meteen aan te passen.</p>
+    </div>
+    <div class="admin-leaders-header-actions">
+        <button type="button" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center flex-grow-1 flex-sm-grow-0" onclick="openAddLeaderModal()">
+            <i class="bi bi-plus-circle-fill me-2"></i> Leiding Toevoegen
         </button>
-        <a href="/admin/info" class="btn btn-info text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Algemene Hulp & Info">
+        <a href="/admin/info" class="btn btn-info text-white rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width: 42px; height: 42px;" title="Algemene Hulp & Info">
             <i class="bi bi-info-circle"></i>
         </a>
     </div>
 </div>
 
-<!-- Add Leader Modal -->
-<div class="modal fade" id="addLeaderModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Nieuwe Leiding Toevoegen</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+            <div><%= error %></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Sluiten"></button>
+    </div>
+<% } %>
+
+<% if (typeof success !== 'undefined' && success) { %>
+    <div class="alert alert-success alert-dismissible fade show rounded-4 shadow-sm border-0 mb-4" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-check-circle-fill fs-5 me-2"></i>
+            <div><%= success %></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Sluiten"></button>
+    </div>
+<% } %>
+
+<!-- Filter Tabs & Search / Sort Toolbar Card -->
+<div class="admin-toolbar-card shadow-sm rounded-4 mb-4">
+    <div class="p-3 p-md-4">
+        <!-- Group Filter Pills -->
+        <div class="admin-filter-pills pb-3 mb-3 border-bottom" id="leaderFilterPills" role="tablist">
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold leader-filter-btn btn-primary text-white shadow-sm" data-filter="all">
+                <i class="bi bi-collection me-1"></i> Alle Leiding
+                <span class="badge rounded-pill ms-1 bg-white text-primary"><%= countAll %></span>
+            </button>
+            <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold leader-filter-btn btn-light text-secondary border" data-filter="Hoofdleiding">
+                <i class="bi bi-star-fill text-danger me-1"></i> Hoofdleiding
+                <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary"><%= countHeadLeaders %></span>
+            </button>
+            <% CHIRO_GROUPS.filter(g => g.key !== 'Hoofdleiding').forEach(g => { %>
+                <button type="button" class="btn btn-sm rounded-pill px-3 py-2 fw-semibold leader-filter-btn btn-light text-secondary border d-inline-flex align-items-center" data-filter="<%= g.key %>">
+                    <span class="rounded-circle d-inline-block me-2" style="width: 10px; height: 10px; background-color: <%= g.color %>;"></span>
+                    <%= g.label %>
+                    <span class="badge rounded-pill ms-1 bg-secondary-subtle text-secondary"><%= groupCounts[g.key] || 0 %></span>
+                </button>
+            <% }) %>
+        </div>
+
+        <!-- Search & Sort Controls -->
+        <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-7 col-lg-8">
+                <div class="position-relative">
+                    <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 16px; pointer-events: none;"></i>
+                    <input type="search" id="adminLeaderSearch" class="form-control admin-filter-control ps-5" placeholder="Zoek op naam, afdeling, studie/werk, telefoon of extra info...">
+                </div>
             </div>
-            <div class="modal-body">
-                <form action="/admin/leaders" method="POST" enctype="multipart/form-data">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="fw-bold">Naam</label>
-                            <input type="text" class="form-control" name="name" required placeholder="bv. Briek Wozniak">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="fw-bold">Groep</label>
-                            <select class="form-select" name="group">
-                                <option>Ribbels</option>
-                                <option>Speelclub</option>
-                                <option>Rakwi's</option>
-                                <option>Tito's</option>
-                                <option>Keti's</option>
-                                <option>Aspi's</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="fw-bold">Aantal jaren leiding</label>
-                            <input type="number" class="form-control" name="years_active" required value="1">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="fw-bold">Studie/Werk</label>
-                            <input type="text" class="form-control" name="study" placeholder="bv. Student Rechten">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="fw-bold">Geboortedatum</label>
-                            <input type="date" class="form-control" name="birth_date">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="fw-bold">Telefoonnummer <span class="text-muted fw-normal">(optioneel)</span></label>
-                            <input type="tel" class="form-control" name="phone_number" placeholder="bv. +32 470 12 34 56">
-                        </div>
-                        <div class="col-md-6 mb-3 d-flex align-items-center pt-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="is_head_leader" id="headLeaderCheck">
-                                <label class="form-check-label fw-bold" for="headLeaderCheck">
-                                    Hoofdleiding?
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label class="fw-bold">Extra Info</label>
-                            <textarea class="form-control" name="extra_info" rows="2" placeholder="bv. Favoriete kampgerecht, hobby's..."></textarea>
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label class="fw-bold">Foto</label>
-                            <input type="file" class="form-control" name="image">
-                        </div>
-                    </div>
-                    <div class="text-end mt-3">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
-                        <button type="submit" class="btn btn-success">Opslaan & Toevoegen</button>
-                    </div>
-                </form>
+            <div class="col-12 col-md-5 col-lg-4">
+                <select id="adminLeaderSort" class="form-select admin-filter-control" aria-label="Sorteer leiding">
+                    <option value="group-default">🛡️ Per Afdeling (Ribbels → Aspi's)</option>
+                    <option value="name-asc">🔤 Naam (A - Z)</option>
+                    <option value="name-desc">🔤 Naam (Z - A)</option>
+                    <option value="years-desc">⭐ Ervaring (Meeste jaren eerst)</option>
+                    <option value="years-asc">🌱 Ervaring (Minste jaren eerst)</option>
+                </select>
             </div>
         </div>
     </div>
 </div>
 
-<h3>Huidige Leiding</h3>
-<div class="table-responsive">
-    <table class="table table-striped align-middle">
-        <thead>
-            <tr>
-                <th>Naam</th>
-                <th>Groep</th>
-                <th class="d-none d-md-table-cell">Jaren</th>
-                <th class="d-none d-md-table-cell">Telefoon</th>
-                <th class="text-end">Actie</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% leaders.forEach(leader => { %>
-                <tr>
-                    <td>
-                        <div class="fw-bold"><%= leader.name %></div>
-                        <% if (leader.is_head_leader) { %>
-                            <span class="badge bg-danger small">Hoofdleiding</span>
-                        <% } %>
-                    </td>
-                    <td><%= leader.group %></td>
-                    <td class="d-none d-md-table-cell"><%= leader.years_active %></td>
-                    <td class="d-none d-md-table-cell"><%= leader.phone_number || '-' %></td>
-                    <td class="text-end">
-                        <div class="btn-group">
-                            <a href="/admin/leaders/<%= leader.id %>/edit" class="btn btn-sm btn-outline-primary" title="Bewerken">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form action="/admin/leaders/<%= leader.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Zeker weten?');" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Verwijderen"><i class="bi bi-trash"></i></button>
+<!-- Results Summary Bar -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 px-1">
+    <div class="text-muted small fw-medium" id="leaderResultsSummary">
+        Leiding laden...
+    </div>
+    <button type="button" id="btnResetLeaderFilters" class="btn btn-link btn-sm text-decoration-none p-0 d-none" onclick="resetAdminLeaderFilters()">
+        <i class="bi bi-x-circle me-1"></i>Alle filters wissen
+    </button>
+</div>
+
+<!-- Dynamic Grouped Leaders Container -->
+<div id="adminLeadersListContainer" class="mb-5"></div>
+
+<!-- Empty State -->
+<div id="adminLeadersEmptyState" class="admin-toolbar-card shadow-sm rounded-4 text-center py-5 mb-5 d-none">
+    <div class="p-4">
+        <i class="bi bi-people display-3 text-muted opacity-50 mb-3 d-block"></i>
+        <h4 class="fw-bold text-dark mb-1" id="leaderEmptyStateTitle">Geen leiding gevonden</h4>
+        <p class="text-muted mb-3" id="leaderEmptyStateText">Er zijn geen leiders of leidsters die overeenkomen met je zoekopdracht of filter.</p>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="resetAdminLeaderFilters()">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Filters herstellen
+            </button>
+            <button type="button" class="btn btn-success rounded-pill px-4" onclick="openAddLeaderModal()">
+                <i class="bi bi-plus-circle me-1"></i> Nieuwe Leiding Toevoegen
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Reusable Add / Edit Leader Modal (Same Design Language as Event Modal) -->
+<div class="modal fade" id="leaderModalAdmin" tabindex="-1" aria-labelledby="leaderModalAdminLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
+        <div class="modal-content border-0 shadow-lg rounded-4 position-relative overflow-hidden">
+            <span class="washi-tape washi-tape-red washi-tape-top-center"></span>
+            <div class="modal-header border-0 pb-0 pt-4 px-3 px-sm-4 d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="badge bg-light text-secondary border rounded-pill px-3 py-1 small">
+                        <i class="bi bi-people-fill text-primary me-1"></i>Leidingbeheer
+                    </span>
+                </div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal" aria-label="Sluiten"></button>
+            </div>
+
+            <form id="leaderModalForm" action="/admin/leaders" method="POST" enctype="multipart/form-data">
+                <div class="modal-body p-3 p-sm-4 pt-2">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
+                        <h4 id="leaderModalHeading" class="fw-bold font-playful mb-0 text-dark fs-5">
+                            <i class="bi bi-person-plus-fill text-success me-2"></i>Nieuwe Leiding Toevoegen
+                        </h4>
+                    </div>
+
+                    <!-- 1. Naam & Hoofdleiding -->
+                    <div class="row g-3 mb-3 align-items-end">
+                        <div class="col-12 col-md-8">
+                            <label for="leaderModalName" class="form-label fw-bold text-dark small mb-1">Volledige Naam <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control admin-modal-input" name="name" id="leaderModalName" required placeholder="bv. Briek Wozniak">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="admin-check-card d-flex align-items-center gap-2 p-2 px-3 border rounded-3 w-100" style="cursor: pointer; min-height: 44px;">
+                                <input class="form-check-input admin-modal-checkbox m-0 flex-shrink-0" type="checkbox" name="is_head_leader" id="leaderModalIsHead">
+                                <span class="fw-bold text-dark small"><i class="bi bi-star-fill text-danger me-1"></i>Hoofdleiding</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 2. Afdeling / Groep Kiezen -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark small mb-2">Afdeling / Groep <span class="text-danger">*</span></label>
+                        <div class="row g-2" id="leaderModalGroupCards">
+                            <% CHIRO_GROUPS.filter(g => g.key !== 'Hoofdleiding').forEach((g, idx) => { %>
+                                <div class="col-6 col-sm-4 col-md-2">
+                                    <label class="leader-group-select-card d-flex flex-column align-items-center justify-content-center p-2 border rounded-3 h-100 w-100 text-center" style="cursor: pointer;">
+                                        <input type="radio" name="group" value="<%= g.key %>" class="form-check-input leader-group-radio d-none" <%= idx === 0 ? 'checked' : '' %>>
+                                        <span class="rounded-circle d-inline-flex align-items-center justify-content-center text-white mb-1 shadow-sm" style="width: 30px; height: 30px; background-color: <%= g.color %>;">
+                                            <i class="bi <%= g.icon %> small"></i>
+                                        </span>
+                                        <span class="fw-bold text-dark" style="font-size: 0.82rem;"><%= g.label %></span>
+                                    </label>
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+
+                    <!-- 3. Persoonlijke Details Box -->
+                    <div class="p-3 bg-light rounded-4 border mb-3">
+                        <div class="fw-bold text-dark small mb-2">
+                            <i class="bi bi-card-list text-primary me-1"></i>Gegevens & Ervaring
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <label for="leaderModalYears" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Jaren leiding <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm px-2" onclick="stepLeaderYears(-1)" tabindex="-1"><i class="bi bi-dash"></i></button>
+                                    <input type="number" class="form-control admin-modal-input text-center" name="years_active" id="leaderModalYears" min="1" max="30" required value="1">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm px-2" onclick="stepLeaderYears(1)" tabindex="-1"><i class="bi bi-plus"></i></button>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-5">
+                                <label for="leaderModalStudy" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Studie / Werk <span class="text-muted fw-normal">(opt.)</span></label>
+                                <input type="text" class="form-control admin-modal-input" name="study" id="leaderModalStudy" placeholder="bv. Student Rechten">
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-4">
+                                <label for="leaderModalBirthDate" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Geboortedatum <span class="text-muted fw-normal">(opt.)</span></label>
+                                <input type="date" class="form-control admin-modal-input" name="birth_date" id="leaderModalBirthDate">
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label for="leaderModalPhone" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Telefoonnummer <span class="text-muted fw-normal">(optioneel)</span></label>
+                                <input type="tel" class="form-control admin-modal-input" name="phone_number" id="leaderModalPhone" placeholder="bv. +32 470 12 34 56">
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <label for="leaderModalExtra" class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Extra Weetjes / Info <span class="text-muted fw-normal">(opt.)</span></label>
+                                <input type="text" class="form-control admin-modal-input" name="extra_info" id="leaderModalExtra" placeholder="bv. Favoriete kampgerecht, hobby's...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Foto Upload & Voorbeeld -->
+                    <div class="p-3 bg-light rounded-4 border">
+                        <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3">
+                            <div id="leaderModalImagePreviewWrap" class="rounded-4 overflow-hidden border bg-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 76px; height: 76px;">
+                                <img id="leaderModalImagePreview" src="" alt="Voorbeeld" class="w-100 h-100 object-fit-cover d-none">
+                                <i id="leaderModalImagePlaceholder" class="bi bi-person-bounding-box fs-2 text-muted opacity-50"></i>
+                            </div>
+                            <div class="flex-grow-1 w-100">
+                                <label for="leaderModalImageInput" class="form-label fw-bold text-dark small mb-1">
+                                    <i class="bi bi-camera-fill text-primary me-1"></i><span id="leaderModalImageLabel">Foto van de leiding</span>
+                                </label>
+                                <input type="file" class="form-control admin-modal-input" name="image" id="leaderModalImageInput" accept="image/*" onchange="previewLeaderModalImage(this)">
+                                <small class="text-muted d-block mt-1" id="leaderModalImageHint" style="font-size: 0.78rem;">Kies een duidelijke portretfoto voor op de website.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 bg-light px-3 px-sm-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2" data-bs-dismiss="modal">
+                        Annuleren
+                    </button>
+                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm ms-auto">
+                        <i class="bi bi-check-lg me-1"></i><span id="leaderModalSubmitText">Opslaan & Toevoegen</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Embedded Leaders Data -->
+<script id="adminLeadersDataJson" type="application/json">
+<%- JSON.stringify(allLeaders).replace(/<\//g, '<\\/') %>
+</script>
+
+<style>
+    .polaroid-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+    }
+    .polaroid-container {
+        background-color: white;
+        padding: 15px 15px 45px 15px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        transform: rotate(-2deg);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        max-width: 90%;
+        border-radius: 6px;
+    }
+    .polaroid-container:hover {
+        transform: rotate(0deg) scale(1.02);
+    }
+    .polaroid-photo img {
+        max-width: 80vw;
+        max-height: 70vh;
+        min-width: 240px;
+        display: block;
+        background-color: #eee;
+        border: 1px solid #ddd;
+        object-fit: cover;
+    }
+    .polaroid-caption {
+        font-family: 'Patrick Hand', 'Brush Script MT', cursive;
+        font-size: 1.9rem;
+        text-align: center;
+        margin-top: 18px;
+        color: #2c3e50;
+        line-height: 1.1;
+    }
+
+    .admin-leaders-header {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .admin-leaders-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    @media (min-width: 992px) {
+        .admin-leaders-header {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .admin-leaders-header-actions {
+            width: auto;
+            flex-shrink: 0;
+        }
+    }
+
+    .admin-toolbar-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+    }
+    .admin-filter-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+    }
+    @media (max-width: 575.98px) {
+        .admin-filter-pills {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 0.5rem !important;
+        }
+        .admin-filter-pills::-webkit-scrollbar {
+            display: none;
+        }
+        .admin-filter-pills .leader-filter-btn {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+    }
+    .admin-filter-control {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 50rem !important;
+        padding: 0.55rem 1rem !important;
+        font-size: 0.95rem !important;
+        background-color: #f8fafc !important;
+        font-family: system-ui, -apple-system, sans-serif !important;
+    }
+    .admin-filter-control.ps-5 {
+        padding-left: 2.5rem !important;
+    }
+    .admin-filter-control:focus {
+        background-color: #ffffff !important;
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        box-shadow: 0 0 0 3px rgba(29, 78, 137, 0.1) !important;
+    }
+
+    .admin-dept-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.65rem 1rem;
+        border-radius: 14px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 0.85rem;
+    }
+    .admin-dept-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.35rem 0.9rem;
+        border-radius: 50rem;
+        color: #ffffff;
+        font-family: var(--font-heading, 'Fredoka', sans-serif);
+        font-weight: 600;
+        font-size: 0.95rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .admin-leader-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 0.95rem 1.15rem;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    .admin-leader-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+    .admin-leader-avatar {
+        width: 62px;
+        height: 62px;
+        border-radius: 14px;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 2px solid #f1f5f9;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+    }
+    .admin-leader-avatar:hover {
+        transform: scale(1.05);
+    }
+    .admin-leader-initials {
+        width: 62px;
+        height: 62px;
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #ffffff;
+        font-family: var(--font-heading, 'Fredoka', sans-serif);
+        font-weight: 700;
+        font-size: 1.15rem;
+        line-height: 1;
+    }
+    .admin-leader-name-btn {
+        color: #1e293b;
+        text-decoration: none;
+        cursor: pointer;
+        font-family: var(--font-heading, 'Fredoka', sans-serif);
+        font-size: 1.08rem;
+    }
+    .admin-leader-name-btn:hover {
+        color: var(--chiro-blue, #1d4e89);
+        text-decoration: underline;
+    }
+
+    /* Modal Form Inputs */
+    #leaderModalAdmin .admin-modal-input {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.95rem !important;
+        font-family: system-ui, -apple-system, sans-serif !important;
+    }
+    #leaderModalAdmin .admin-modal-input:focus {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        box-shadow: 0 0 0 3px rgba(29, 78, 137, 0.12) !important;
+    }
+    #leaderModalAdmin .admin-modal-checkbox {
+        width: 1.2em !important;
+        height: 1.2em !important;
+        padding: 0 !important;
+        border-radius: 6px !important;
+        border: 2px solid #94a3b8 !important;
+    }
+    #leaderModalAdmin .admin-modal-checkbox:checked {
+        background-color: var(--chiro-red, #db3e41) !important;
+        border-color: var(--chiro-red, #db3e41) !important;
+    }
+    .admin-check-card,
+    .leader-group-select-card {
+        transition: all 0.15s ease;
+        background-color: #fff;
+    }
+    .admin-check-card:hover,
+    .leader-group-select-card:hover {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        background-color: #f8fafc;
+    }
+    .admin-check-card:has(input:checked) {
+        border-color: var(--chiro-red, #db3e41) !important;
+        background-color: #fff1f2;
+    }
+    .leader-group-select-card:has(input:checked) {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        background-color: #eff6ff;
+        box-shadow: 0 0 0 2px rgba(29, 78, 137, 0.15);
+    }
+</style>
+
+<script>
+    (function() {
+        const rawDataEl = document.getElementById('adminLeadersDataJson');
+        const allLeaders = rawDataEl ? JSON.parse(rawDataEl.textContent || '[]') : [];
+
+        const GROUP_META = {
+            "Ribbels": { label: "Ribbels", color: "#9b59b6", order: 1 },
+            "Speelclub": { label: "Speelclub", color: "#eab308", order: 2 },
+            "Rakwi's": { label: "Rakwi's", color: "#27ae60", order: 3 },
+            "Tito's": { label: "Tito's", color: "#e74c3c", order: 4 },
+            "Keti's": { label: "Keti's", color: "#2980b9", order: 5 },
+            "Aspi's": { label: "Aspi's", color: "#d35400", order: 6 },
+            "Hoofdleiding": { label: "Hoofdleiding", color: "#db3e41", order: 7 }
+        };
+
+        let activeFilter = 'all';
+        let searchQuery = '';
+        let sortMode = 'group-default';
+
+        function getCsrfToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getInitials(name) {
+            if (!name) return '?';
+            const parts = name.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        function formatBirthDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        window.showLeaderPolaroid = function(src, name, group) {
+            const img = document.getElementById('polaroid-image');
+            const cap = document.getElementById('polaroid-caption');
+            const overlay = document.getElementById('polaroid-overlay');
+            if (!img || !cap || !overlay) return;
+            img.src = src;
+            cap.textContent = group ? `${name} (${group})` : name;
+            overlay.classList.remove('d-none');
+            document.body.style.overflow = 'hidden';
+        };
+
+        window.closeLeaderPolaroid = function() {
+            const overlay = document.getElementById('polaroid-overlay');
+            if (overlay) overlay.classList.add('d-none');
+            document.body.style.overflow = '';
+        };
+
+        window.stepLeaderYears = function(delta) {
+            const inp = document.getElementById('leaderModalYears');
+            if (!inp) return;
+            const current = parseInt(inp.value, 10) || 1;
+            inp.value = Math.max(1, Math.min(30, current + delta));
+        };
+
+        window.previewLeaderModalImage = function(input) {
+            const previewImg = document.getElementById('leaderModalImagePreview');
+            const placeholder = document.getElementById('leaderModalImagePlaceholder');
+            if (!previewImg || !placeholder) return;
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('d-none');
+                    placeholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        };
+
+        function setLeaderModalGroup(groupName) {
+            const radios = document.querySelectorAll('#leaderModalGroupCards input[name="group"]');
+            let matched = false;
+            radios.forEach(r => {
+                if (r.value === groupName) {
+                    r.checked = true;
+                    matched = true;
+                } else {
+                    r.checked = false;
+                }
+            });
+            if (!matched && radios.length > 0) {
+                radios[0].checked = true;
+            }
+        }
+
+        window.openAddLeaderModal = function(preselectedGroup) {
+            const form = document.getElementById('leaderModalForm');
+            const token = getCsrfToken();
+            if (form) {
+                form.action = '/admin/leaders' + (token ? `?_csrf=${encodeURIComponent(token)}` : '');
+                form.reset();
+            }
+
+            document.getElementById('leaderModalHeading').innerHTML = '<i class="bi bi-person-plus-fill text-success me-2"></i>Nieuwe Leiding Toevoegen';
+            document.getElementById('leaderModalSubmitText').textContent = 'Opslaan & Toevoegen';
+            document.getElementById('leaderModalImageLabel').textContent = 'Foto van de leiding';
+            document.getElementById('leaderModalImageHint').textContent = 'Kies een duidelijke portretfoto voor op de website.';
+            document.getElementById('leaderModalYears').value = 1;
+            document.getElementById('leaderModalIsHead').checked = (preselectedGroup === 'Hoofdleiding');
+
+            if (preselectedGroup && preselectedGroup !== 'Hoofdleiding') {
+                setLeaderModalGroup(preselectedGroup);
+            } else {
+                setLeaderModalGroup('Ribbels');
+            }
+
+            const previewImg = document.getElementById('leaderModalImagePreview');
+            const placeholder = document.getElementById('leaderModalImagePlaceholder');
+            if (previewImg) {
+                previewImg.src = '';
+                previewImg.classList.add('d-none');
+            }
+            if (placeholder) placeholder.classList.remove('d-none');
+
+            const modalEl = document.getElementById('leaderModalAdmin');
+            if (modalEl && window.bootstrap) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+        };
+
+        window.openEditLeaderModalById = function(leaderId) {
+            const leader = allLeaders.find(l => Number(l.id) === Number(leaderId));
+            if (!leader) return;
+
+            const form = document.getElementById('leaderModalForm');
+            const token = getCsrfToken();
+            if (form) {
+                form.action = `/admin/leaders/${leader.id}?_method=PUT` + (token ? `&_csrf=${encodeURIComponent(token)}` : '');
+            }
+
+            document.getElementById('leaderModalHeading').innerHTML = `<i class="bi bi-pencil-square text-primary me-2"></i>Leiding Bewerken: ${escapeHtml(leader.name)}`;
+            document.getElementById('leaderModalSubmitText').textContent = 'Wijzigingen Opslaan';
+            document.getElementById('leaderModalImageLabel').textContent = 'Nieuwe foto kiezen (optioneel)';
+            document.getElementById('leaderModalImageHint').textContent = leader.image ? 'Laat leeg om de huidige foto te behouden.' : 'Nog geen foto ingesteld. Upload een foto voor op de website.';
+
+            document.getElementById('leaderModalName').value = leader.name || '';
+            document.getElementById('leaderModalYears').value = leader.years_active || 1;
+            document.getElementById('leaderModalStudy').value = leader.study || '';
+            document.getElementById('leaderModalBirthDate').value = leader.birth_date || '';
+            document.getElementById('leaderModalPhone').value = leader.phone_number || '';
+            document.getElementById('leaderModalExtra').value = leader.extra_info || '';
+            document.getElementById('leaderModalIsHead').checked = Boolean(leader.is_head_leader);
+
+            const fileInput = document.getElementById('leaderModalImageInput');
+            if (fileInput) fileInput.value = '';
+
+            setLeaderModalGroup(leader.group || 'Ribbels');
+
+            const previewImg = document.getElementById('leaderModalImagePreview');
+            const placeholder = document.getElementById('leaderModalImagePlaceholder');
+            if (leader.image && previewImg && placeholder) {
+                previewImg.src = leader.image;
+                previewImg.classList.remove('d-none');
+                placeholder.classList.add('d-none');
+            } else if (previewImg && placeholder) {
+                previewImg.src = '';
+                previewImg.classList.add('d-none');
+                placeholder.classList.remove('d-none');
+            }
+
+            const modalEl = document.getElementById('leaderModalAdmin');
+            if (modalEl && window.bootstrap) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+        };
+
+        function buildLeaderCardHtml(leader, showGroupBadge) {
+            const meta = GROUP_META[leader.group] || { label: leader.group || 'Overige', color: '#64748b' };
+            const csrfToken = getCsrfToken();
+
+            let avatarHtml = '';
+            if (leader.image) {
+                avatarHtml = `
+                    <img src="${escapeHtml(leader.image)}" 
+                         alt="${escapeHtml(leader.name)}" 
+                         class="admin-leader-avatar shadow-sm"
+                         title="Klik om foto te vergroten"
+                         onclick="showLeaderPolaroid('${escapeHtml(leader.image)}', '${escapeHtml(leader.name.replace(/'/g, "\\'"))}', '${escapeHtml((leader.group || '').replace(/'/g, "\\'"))}')">
+                `;
+            } else {
+                avatarHtml = `
+                    <div class="admin-leader-initials shadow-sm" style="background-color: ${meta.color};" title="Nog geen foto geüpload" onclick="openEditLeaderModalById(${leader.id})">
+                        <span>${escapeHtml(getInitials(leader.name))}</span>
+                        <span style="font-size: 0.58rem; font-weight: 500; opacity: 0.85; margin-top: 2px;"><i class="bi bi-camera"></i></span>
+                    </div>
+                `;
+            }
+
+            const badgesHtml = [];
+            if (showGroupBadge && leader.group) {
+                badgesHtml.push(`<span class="badge rounded-pill text-white" style="background-color: ${meta.color}; font-size: 0.72rem;">${escapeHtml(leader.group)}</span>`);
+            }
+            if (leader.is_head_leader) {
+                badgesHtml.push(`<span class="badge bg-danger text-white rounded-pill" style="font-size: 0.72rem;"><i class="bi bi-star-fill me-1"></i>Hoofdleiding</span>`);
+            }
+            badgesHtml.push(`<span class="badge bg-light text-secondary border rounded-pill" style="font-size: 0.72rem;">${Number(leader.years_active) || 1}e jaar</span>`);
+
+            const detailsHtml = [];
+            if (leader.study) {
+                detailsHtml.push(`<span class="text-muted small d-inline-flex align-items-center"><i class="bi bi-mortarboard text-primary me-1"></i>${escapeHtml(leader.study)}</span>`);
+            }
+            if (leader.phone_number) {
+                const cleanTel = leader.phone_number.replace(/\s+/g, '');
+                detailsHtml.push(`<a href="tel:${escapeHtml(cleanTel)}" class="text-muted small text-decoration-none d-inline-flex align-items-center"><i class="bi bi-telephone text-success me-1"></i>${escapeHtml(leader.phone_number)}</a>`);
+            }
+            if (leader.birth_date) {
+                detailsHtml.push(`<span class="text-muted small d-inline-flex align-items-center"><i class="bi bi-gift text-danger me-1"></i>${escapeHtml(formatBirthDate(leader.birth_date))}</span>`);
+            }
+
+            return `
+                <div class="col-12 col-xl-6">
+                    <div class="admin-leader-card">
+                        <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1" style="min-width: 0;">
+                            ${avatarHtml}
+                            <div class="flex-grow-1" style="min-width: 0;">
+                                <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
+                                    <a href="javascript:void(0)" class="admin-leader-name-btn fw-bold me-1 text-truncate" onclick="openEditLeaderModalById(${leader.id})">
+                                        ${escapeHtml(leader.name)}
+                                    </a>
+                                    ${badgesHtml.join(' ')}
+                                </div>
+                                ${detailsHtml.length > 0 ? `<div class="d-flex flex-wrap align-items-center column-gap-3 row-gap-1">${detailsHtml.join('')}</div>` : '<div class="text-muted small fst-italic" style="font-size: 0.8rem;">Geen extra contact- of studiegegevens</div>'}
+                                ${leader.extra_info ? `<div class="text-muted text-truncate mt-1" style="font-size: 0.8rem;"><i class="bi bi-chat-quote me-1 opacity-75"></i>${escapeHtml(leader.extra_info)}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 d-inline-flex align-items-center" onclick="openEditLeaderModalById(${leader.id})" title="Bewerken">
+                                <i class="bi bi-pencil-square me-1"></i><span class="d-none d-sm-inline">Bewerken</span>
+                            </button>
+                            <form action="/admin/leaders/${leader.id}?_method=DELETE" method="POST" onsubmit="return confirm('Weet je zeker dat je ${escapeHtml(leader.name.replace(/'/g, "\\'"))} wilt verwijderen?');" class="d-inline m-0">
+                                <input type="hidden" name="_csrf" value="${escapeHtml(csrfToken)}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" title="Verwijderen">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </form>
                         </div>
-                    </td>
-                </tr>
-            <% }) %>
-        </tbody>
-    </table>
-</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLeaders() {
+            const container = document.getElementById('adminLeadersListContainer');
+            const emptyState = document.getElementById('adminLeadersEmptyState');
+            const summaryEl = document.getElementById('leaderResultsSummary');
+            const resetBtn = document.getElementById('btnResetLeaderFilters');
+            if (!container || !emptyState) return;
+
+            const q = searchQuery.trim().toLowerCase();
+
+            const filtered = allLeaders.filter(l => {
+                if (activeFilter === 'Hoofdleiding') {
+                    if (!l.is_head_leader && l.group !== 'Hoofdleiding') return false;
+                } else if (activeFilter !== 'all') {
+                    if (l.group !== activeFilter) return false;
+                }
+
+                if (q) {
+                    const haystack = [
+                        l.name || '',
+                        l.group || '',
+                        l.study || '',
+                        l.phone_number || '',
+                        l.extra_info || '',
+                        l.is_head_leader ? 'hoofdleiding' : ''
+                    ].join(' ').toLowerCase();
+                    if (!haystack.includes(q)) return false;
+                }
+                return true;
+            });
+
+            const hasActiveFilters = activeFilter !== 'all' || q !== '' || sortMode !== 'group-default';
+            if (resetBtn) resetBtn.classList.toggle('d-none', !hasActiveFilters);
+
+            if (summaryEl) {
+                summaryEl.textContent = `${filtered.length} ${filtered.length === 1 ? 'leider/leidster' : 'leiders & leidsters'} weergegeven` + (activeFilter !== 'all' ? ` in ${activeFilter}` : '');
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('d-none');
+                return;
+            }
+            emptyState.classList.add('d-none');
+
+            // Group by department if sortMode is 'group-default' and activeFilter is 'all'
+            if (sortMode === 'group-default' && activeFilter === 'all') {
+                const orderedGroups = ["Ribbels", "Speelclub", "Rakwi's", "Tito's", "Keti's", "Aspi's", "Hoofdleiding"];
+                const buckets = {};
+                orderedGroups.forEach(g => { buckets[g] = []; });
+                const otherBucket = [];
+
+                filtered.forEach(l => {
+                    if (buckets[l.group]) {
+                        buckets[l.group].push(l);
+                    } else {
+                        otherBucket.push(l);
+                    }
+                });
+
+                let html = '';
+                orderedGroups.forEach(groupKey => {
+                    const list = buckets[groupKey];
+                    if (!list || list.length === 0) return;
+
+                    list.sort((a, b) => {
+                        if (Boolean(b.is_head_leader) !== Boolean(a.is_head_leader)) {
+                            return b.is_head_leader ? 1 : -1;
+                        }
+                        return (a.name || '').localeCompare(b.name || '', 'nl');
+                    });
+
+                    const meta = GROUP_META[groupKey] || { label: groupKey, color: '#64748b' };
+                    html += `
+                        <section class="mb-4">
+                            <div class="admin-dept-header">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="admin-dept-pill" style="background-color: ${meta.color};">
+                                        ${escapeHtml(meta.label)}
+                                    </span>
+                                    <span class="badge bg-white text-secondary border rounded-pill px-2 py-1">
+                                        ${list.length} ${list.length === 1 ? 'lid' : 'leden'}
+                                    </span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 small" onclick="openAddLeaderModal('${escapeHtml(groupKey.replace(/'/g, "\\'"))}')">
+                                    <i class="bi bi-plus-lg me-1"></i>Toevoegen aan ${escapeHtml(meta.label)}
+                                </button>
+                            </div>
+                            <div class="row g-3">
+                                ${list.map(l => buildLeaderCardHtml(l, false)).join('')}
+                            </div>
+                        </section>
+                    `;
+                });
+
+                if (otherBucket.length > 0) {
+                    html += `
+                        <section class="mb-4">
+                            <div class="admin-dept-header">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="admin-dept-pill" style="background-color: #64748b;">Overige</span>
+                                    <span class="badge bg-white text-secondary border rounded-pill px-2 py-1">${otherBucket.length}</span>
+                                </div>
+                            </div>
+                            <div class="row g-3">
+                                ${otherBucket.map(l => buildLeaderCardHtml(l, true)).join('')}
+                            </div>
+                        </section>
+                    `;
+                }
+
+                container.innerHTML = html;
+            } else {
+                const sorted = [...filtered];
+                sorted.sort((a, b) => {
+                    if (sortMode === 'name-asc') return (a.name || '').localeCompare(b.name || '', 'nl');
+                    if (sortMode === 'name-desc') return (b.name || '').localeCompare(a.name || '', 'nl');
+                    if (sortMode === 'years-desc') return (Number(b.years_active) || 0) - (Number(a.years_active) || 0);
+                    if (sortMode === 'years-asc') return (Number(a.years_active) || 0) - (Number(b.years_active) || 0);
+                    const orderA = GROUP_META[a.group]?.order || 99;
+                    const orderB = GROUP_META[b.group]?.order || 99;
+                    if (orderA !== orderB) return orderA - orderB;
+                    return (a.name || '').localeCompare(b.name || '', 'nl');
+                });
+
+                const meta = GROUP_META[activeFilter];
+                let headerHtml = '';
+                if (activeFilter !== 'all' && meta) {
+                    headerHtml = `
+                        <div class="admin-dept-header mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="admin-dept-pill" style="background-color: ${meta.color};">
+                                    ${escapeHtml(meta.label)}
+                                </span>
+                                <span class="badge bg-white text-secondary border rounded-pill px-2 py-1">
+                                    ${sorted.length} ${sorted.length === 1 ? 'leider/leidster' : 'leiders & leidsters'}
+                                </span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 small" onclick="openAddLeaderModal('${escapeHtml(activeFilter.replace(/'/g, "\\'"))}')">
+                                <i class="bi bi-plus-lg me-1"></i>Toevoegen aan ${escapeHtml(meta.label)}
+                            </button>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = `
+                    ${headerHtml}
+                    <div class="row g-3">
+                        ${sorted.map(l => buildLeaderCardHtml(l, activeFilter === 'all' || activeFilter === 'Hoofdleiding')).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        window.resetAdminLeaderFilters = function() {
+            activeFilter = 'all';
+            searchQuery = '';
+            sortMode = 'group-default';
+            const searchInp = document.getElementById('adminLeaderSearch');
+            const sortSel = document.getElementById('adminLeaderSort');
+            if (searchInp) searchInp.value = '';
+            if (sortSel) sortSel.value = 'group-default';
+            updateFilterPillStyles();
+            renderLeaders();
+        };
+
+        function updateFilterPillStyles() {
+            document.querySelectorAll('.leader-filter-btn').forEach(btn => {
+                const isSelected = btn.getAttribute('data-filter') === activeFilter;
+                btn.classList.toggle('btn-primary', isSelected);
+                btn.classList.toggle('text-white', isSelected);
+                btn.classList.toggle('shadow-sm', isSelected);
+                btn.classList.toggle('btn-light', !isSelected);
+                btn.classList.toggle('text-secondary', !isSelected);
+                btn.classList.toggle('border', !isSelected);
+
+                const badge = btn.querySelector('.badge');
+                if (badge) {
+                    badge.className = `badge rounded-pill ms-1 ${isSelected ? 'bg-white text-primary' : 'bg-secondary-subtle text-secondary'}`;
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.leader-filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    activeFilter = this.getAttribute('data-filter') || 'all';
+                    updateFilterPillStyles();
+                    renderLeaders();
+                });
+            });
+
+            const searchInp = document.getElementById('adminLeaderSearch');
+            if (searchInp) {
+                searchInp.addEventListener('input', function() {
+                    searchQuery = this.value || '';
+                    renderLeaders();
+                });
+            }
+
+            const sortSel = document.getElementById('adminLeaderSort');
+            if (sortSel) {
+                sortSel.addEventListener('change', function() {
+                    sortMode = this.value || 'group-default';
+                    renderLeaders();
+                });
+            }
+
+            renderLeaders();
+        });
+    })();
+</script>
+
 <%- include('../partials/footer') %>

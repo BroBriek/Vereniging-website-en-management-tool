@@ -1,78 +1,162 @@
 <%- include('../partials/header') %>
+
+<%
+const CHIRO_GROUPS = [
+    { key: 'Ribbels', label: 'Ribbels', color: '#9b59b6', icon: 'bi-balloon-fill' },
+    { key: 'Speelclub', label: 'Speelclub', color: '#eab308', icon: 'bi-sun-fill' },
+    { key: "Rakwi's", label: "Rakwi's", color: '#27ae60', icon: 'bi-compass-fill' },
+    { key: "Tito's", label: "Tito's", color: '#e74c3c', icon: 'bi-fire' },
+    { key: "Keti's", label: "Keti's", color: '#2980b9', icon: 'bi-lightning-charge-fill' },
+    { key: "Aspi's", label: "Aspi's", color: '#d35400', icon: 'bi-stars' }
+];
+%>
+
 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
-    <h1 class="mb-0">Leiding Bewerken</h1>
-    <div class="d-flex gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end">
-        <a href="/admin/leaders" class="btn btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
-            <i class="bi bi-arrow-left me-1"></i> <span class="d-none d-sm-inline">Terug naar Leiding</span><span class="d-inline d-sm-none">Terug</span>
-        </a>
-        <a href="/admin/info" class="btn btn-info text-white rounded-pill px-3" title="Algemene Hulp & Info">
-            <i class="bi bi-info-circle me-1"></i> Info
+    <div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <a href="/admin/leaders" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="bi bi-arrow-left me-1"></i> Terug naar Leiding
+            </a>
+            <a href="/leiding" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-inline-flex align-items-center">
+                <i class="bi bi-globe2 me-1"></i> Publieke Leidingspagina
+            </a>
+        </div>
+        <h1 class="mb-0 fw-bold"><i class="bi bi-pencil-square text-primary me-2"></i>Leiding Bewerken: <%= leader.name %></h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/admin/info" class="btn btn-info text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 42px; height: 42px;" title="Algemene Hulp & Info">
+            <i class="bi bi-info-circle"></i>
         </a>
     </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-header">Leiding Bewerken: <%= leader.name %></div>
-    <div class="card-body">
-        <form action="/admin/leaders/<%= leader.id %>?_method=PUT" method="POST" enctype="multipart/form-data">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label>Naam</label>
-                    <input type="text" class="form-control" name="name" value="<%= leader.name %>" required>
+<div class="admin-edit-card shadow-lg rounded-4 position-relative overflow-hidden bg-white border mb-5">
+    <span class="washi-tape washi-tape-red washi-tape-top-center"></span>
+    <form action="/admin/leaders/<%= leader.id %>?_method=PUT" method="POST" enctype="multipart/form-data">
+        <div class="p-3 p-sm-4 pt-4">
+            <div class="row g-3 mb-3 align-items-end">
+                <div class="col-12 col-md-8">
+                    <label class="form-label fw-bold text-dark small mb-1">Volledige Naam <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control admin-modal-input" name="name" value="<%= leader.name %>" required>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label>Groep</label>
-                    <select class="form-select" name="group">
-                        <% const groups = ["Ribbels", "Speelclub", "Rakwi's", "Tito's", "Keti's", "Aspi's", "Hoofdleiding"]; %>
-                        <% groups.forEach(g => { %>
-                            <option value="<%= g %>" <%= leader.group === g ? 'selected' : '' %>><%= g %></option>
-                        <% }) %>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label>Aantal jaren leiding</label>
-                    <input type="number" class="form-control" name="years_active" value="<%= leader.years_active %>" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label>Studie/Werk</label>
-                    <input type="text" class="form-control" name="study" value="<%= leader.study %>">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label>Geboortedatum</label>
-                    <input type="date" class="form-control" name="birth_date" value="<%= leader.birth_date %>">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label>Telefoonnummer <span class="text-muted fw-normal">(optioneel)</span></label>
-                    <input type="tel" class="form-control" name="phone_number" value="<%= leader.phone_number || '' %>" placeholder="bv. +32 470 12 34 56">
-                </div>
-                <div class="col-md-6 mb-3 d-flex align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="is_head_leader" id="headLeaderCheck" <%= leader.is_head_leader ? 'checked' : '' %>>
-                        <label class="form-check-label" for="headLeaderCheck">
-                            Hoofdleiding?
-                        </label>
-                    </div>
-                </div>
-                <div class="col-md-12 mb-3">
-                    <label>Extra Info</label>
-                    <textarea class="form-control" name="extra_info" rows="2"><%= leader.extra_info %></textarea>
-                </div>
-                <div class="col-md-12 mb-3">
-                    <label>Huidige Foto</label>
-                    <% if(leader.image) { %>
-                        <div class="mb-2">
-                            <img src="<%= leader.image %>" alt="Huidige foto" style="max-height: 100px;">
-                        </div>
-                    <% } else { %>
-                        <p>Geen foto.</p>
-                    <% } %>
-                    <label>Nieuwe Foto (laat leeg om huidige te behouden)</label>
-                    <input type="file" class="form-control" name="image">
+                <div class="col-12 col-md-4">
+                    <label class="admin-check-card d-flex align-items-center gap-2 p-2 px-3 border rounded-3 w-100" style="cursor: pointer; min-height: 44px;">
+                        <input class="form-check-input admin-modal-checkbox m-0 flex-shrink-0" type="checkbox" name="is_head_leader" id="headLeaderCheck" <%= leader.is_head_leader ? 'checked' : '' %>>
+                        <span class="fw-bold text-dark small"><i class="bi bi-star-fill text-danger me-1"></i>Hoofdleiding</span>
+                    </label>
                 </div>
             </div>
-            <button type="submit" class="btn btn-success">Opslaan</button>
-        </form>
-    </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold text-dark small mb-2">Afdeling / Groep <span class="text-danger">*</span></label>
+                <div class="row g-2">
+                    <% CHIRO_GROUPS.forEach(g => { %>
+                        <div class="col-6 col-sm-4 col-md-2">
+                            <label class="leader-group-select-card d-flex flex-column align-items-center justify-content-center p-2 border rounded-3 h-100 w-100 text-center" style="cursor: pointer;">
+                                <input type="radio" name="group" value="<%= g.key %>" class="form-check-input d-none" <%= leader.group === g.key ? 'checked' : '' %>>
+                                <span class="rounded-circle d-inline-flex align-items-center justify-content-center text-white mb-1 shadow-sm" style="width: 30px; height: 30px; background-color: <%= g.color %>;">
+                                    <i class="bi <%= g.icon %> small"></i>
+                                </span>
+                                <span class="fw-bold text-dark" style="font-size: 0.82rem;"><%= g.label %></span>
+                            </label>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+
+            <div class="p-3 bg-light rounded-4 border mb-3">
+                <div class="fw-bold text-dark small mb-2">
+                    <i class="bi bi-card-list text-primary me-1"></i>Gegevens & Ervaring
+                </div>
+                <div class="row g-2">
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Aantal jaren leiding <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control admin-modal-input" name="years_active" value="<%= leader.years_active %>" min="1" required>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-5">
+                        <label class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Studie / Werk</label>
+                        <input type="text" class="form-control admin-modal-input" name="study" value="<%= leader.study || '' %>">
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-4">
+                        <label class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Geboortedatum</label>
+                        <input type="date" class="form-control admin-modal-input" name="birth_date" value="<%= leader.birth_date || '' %>">
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Telefoonnummer <span class="text-muted fw-normal">(optioneel)</span></label>
+                        <input type="tel" class="form-control admin-modal-input" name="phone_number" value="<%= leader.phone_number || '' %>" placeholder="bv. +32 470 12 34 56">
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <label class="form-label small fw-bold text-secondary mb-1" style="font-size: 0.78rem;">Extra Info</label>
+                        <input type="text" class="form-control admin-modal-input" name="extra_info" value="<%= leader.extra_info || '' %>">
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 bg-light rounded-4 border">
+                <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-3">
+                    <div class="rounded-4 overflow-hidden border bg-white d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 84px; height: 84px;">
+                        <% if (leader.image) { %>
+                            <img src="<%= leader.image %>" alt="Huidige foto" class="w-100 h-100 object-fit-cover">
+                        <% } else { %>
+                            <i class="bi bi-person-bounding-box fs-2 text-muted opacity-50"></i>
+                        <% } %>
+                    </div>
+                    <div class="flex-grow-1 w-100">
+                        <label class="form-label fw-bold text-dark small mb-1">
+                            <i class="bi bi-camera-fill text-primary me-1"></i>Nieuwe Foto (laat leeg om huidige te behouden)
+                        </label>
+                        <input type="file" class="form-control admin-modal-input" name="image" accept="image/*">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-light px-3 px-sm-4 py-3 border-top d-flex justify-content-between align-items-center">
+            <a href="/admin/leaders" class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-2">Annuleren</a>
+            <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm">
+                <i class="bi bi-check-lg me-1"></i>Wijzigingen Opslaan
+            </button>
+        </div>
+    </form>
 </div>
+
+<style>
+    .admin-modal-input {
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.95rem !important;
+        font-family: system-ui, -apple-system, sans-serif !important;
+    }
+    .admin-modal-input:focus {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        box-shadow: 0 0 0 3px rgba(29, 78, 137, 0.12) !important;
+    }
+    .admin-modal-checkbox {
+        width: 1.2em !important;
+        height: 1.2em !important;
+        padding: 0 !important;
+        border-radius: 6px !important;
+        border: 2px solid #94a3b8 !important;
+    }
+    .admin-modal-checkbox:checked {
+        background-color: var(--chiro-red, #db3e41) !important;
+        border-color: var(--chiro-red, #db3e41) !important;
+    }
+    .admin-check-card,
+    .leader-group-select-card {
+        transition: all 0.15s ease;
+        background-color: #fff;
+    }
+    .admin-check-card:has(input:checked) {
+        border-color: var(--chiro-red, #db3e41) !important;
+        background-color: #fff1f2;
+    }
+    .leader-group-select-card:has(input:checked) {
+        border-color: var(--chiro-blue, #1d4e89) !important;
+        background-color: #eff6ff;
+        box-shadow: 0 0 0 2px rgba(29, 78, 137, 0.15);
+    }
+</style>
 
 <%- include('../partials/footer') %>
